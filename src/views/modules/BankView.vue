@@ -170,12 +170,9 @@ const setWithdrawAmount = (type) => {
 
 const loadData = async () => {
   try {
-    const [bankResponse, playerResponse] = await Promise.all([
-      api.get('/bank'),
-      api.get('/user')
-    ])
-    taxRate.value = bankResponse.data.taxRate || 15
-    player.value = playerResponse.data
+    const response = await api.get('/bank')
+    taxRate.value = response.data.taxRate || response.data.settings?.transfer_fee || 15
+    player.value = response.data.player
   } catch (err) {
     console.error('Error loading bank:', err)
   } finally {

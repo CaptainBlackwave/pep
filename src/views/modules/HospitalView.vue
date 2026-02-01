@@ -135,13 +135,10 @@ const setQuickAmount = (percent) => {
 
 const loadData = async () => {
   try {
-    const [hospitalResponse, playerResponse] = await Promise.all([
-      api.get('/hospital'),
-      api.get('/user')
-    ])
-    costPerHp.value = hospitalResponse.data.costPerHp || 100
-    fullHealCost.value = hospitalResponse.data.fullHealCost || 0
-    player.value = playerResponse.data
+    const response = await api.get('/hospital')
+    costPerHp.value = response.data.costPerHp || 100
+    fullHealCost.value = response.data.fullHealCost || 0
+    player.value = response.data.player
   } catch (err) {
     console.error('Error loading hospital:', err)
   } finally {

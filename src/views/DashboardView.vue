@@ -8,12 +8,19 @@
             <h1 class="logo-title">OpenPBBG</h1>
           </div>
           
-          <!-- User Stats -->
+          <!-- User Stats with XP Bar -->
           <div v-if="dashboardData" class="user-stats">
-            <div class="stat-item">
-              <span class="stat-label">Rank:</span>
-              <span class="stat-value">{{ dashboardData.player.current_rank?.name || 'Thug' }}</span>
+            <!-- Rank & XP Progress -->
+            <div class="navbar-rank-xp">
+              <div class="rank-info">
+                <span class="rank-name">{{ dashboardData.player.current_rank?.name || 'Thug' }}</span>
+              </div>
+              <div class="navbar-xp-bar">
+                <div class="xp-bar" :style="{ width: xpProgressPercent + '%' }"></div>
+              </div>
+              <span class="xp-label">{{ formatNumber(dashboardData.player.experience) }} XP</span>
             </div>
+            
             <div class="stat-item">
               <span>💵</span>
               <span class="stat-value-green">${{ formatNumber(dashboardData.player.cash) }}</span>
@@ -25,6 +32,10 @@
             <div class="stat-item">
               <span>⚡</span>
               <span class="stat-value-yellow">{{ dashboardData.player.energy }}/{{ dashboardData.player.max_energy }}</span>
+            </div>
+            <div class="stat-item location-item">
+              <span>📍</span>
+              <span>{{ dashboardData.player.location?.name || 'Unknown' }}</span>
             </div>
           </div>
 
@@ -53,31 +64,16 @@
       </div>
 
       <div v-else-if="dashboardData" class="dashboard-content">
-        <!-- Player Info -->
-        <div class="player-info-card">
-          <h2 class="welcome-title">Welcome, {{ dashboardData.player.username }}!</h2>
-          <div class="player-info-grid">
-            <div>
-              <p class="info-label">Rank</p>
-              <p class="info-value">{{ dashboardData.player.current_rank?.name || 'Thug' }}</p>
-            </div>
-            <div>
-              <p class="info-label">Location</p>
-              <p class="info-value">{{ dashboardData.player.location?.name || 'Unknown' }}</p>
-            </div>
-            <div>
-              <p class="info-label">Experience</p>
-              <p class="info-value">{{ formatNumber(dashboardData.player.experience) }} XP</p>
-            </div>
-          </div>
-        </div>
-
+        <!-- Announcements Banner -->
+        <AnnouncementsBanner />
+        
         <!-- Game Features Grid -->
         <div>
           <h3 class="features-title">Game Features</h3>
           <div class="features-grid">
+            <!-- Unlocked Modules -->
             <router-link
-              v-for="module in dashboardData.modules"
+              v-for="module in unlockedModules"
               :key="module.name"
               :to="getModuleRoute(module.name)"
               class="module-card"
@@ -86,6 +82,20 @@
               <div class="module-name">{{ module.display_name || module.name }}</div>
               <div class="module-description">{{ module.description || 'Play now' }}</div>
             </router-link>
+            
+            <!-- Locked Modules -->
+            <div
+              v-for="module in lockedModules"
+              :key="module.name"
+              class="module-card locked"
+            >
+              <div class="lock-overlay">
+                <span class="lock-icon">🔒</span>
+              </div>
+              <div class="module-icon locked-icon">{{ getModuleIcon(module.name) }}</div>
+              <div class="module-name">{{ module.display_name || module.name }}</div>
+              <div class="module-unlock">Level {{ module.required_level }}</div>
+            </div>
           </div>
         </div>
       </div>
@@ -94,10 +104,11 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import api from '@/services/api'
+import AnnouncementsBanner from '@/components/AnnouncementsBanner.vue'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -105,6 +116,36 @@ const authStore = useAuthStore()
 const loading = ref(true)
 const error = ref(null)
 const dashboardData = ref(null)
+
+// Filter modules by lock status
+const unlockedModules = computed(() => {
+  if (!dashboardData.value?.modules) return []
+  return dashboardData.value.modules.filter(m => !m.locked)
+})
+
+const lockedModules = computed(() => {
+  if (!dashboardData.value?.modules) return []
+  return dashboardData.value.modules.filter(m => m.locked)
+})
+
+// XP progress calculations
+const nextRankXp = computed(() => {
+  if (!dashboardData.value?.player?.current_rank) return 1000
+  // Estimate next rank XP requirement (can be adjusted based on actual rank data)
+  const currentRankXp = dashboardData.value.player.current_rank.experience_required || 0
+  return currentRankXp + 500 // Simple progression
+})
+
+const xpProgressPercent = computed(() => {
+  if (!dashboardData.value?.player) return 0
+  const currentXp = dashboardData.value.player.experience || 0
+  const prevRankXp = dashboardData.value.player.current_rank?.experience_required || 0
+  const nextXp = nextRankXp.value
+  
+  if (nextXp <= prevRankXp) return 100
+  const progress = ((currentXp - prevRankXp) / (nextXp - prevRankXp)) * 100
+  return Math.min(Math.max(progress, 0), 100)
+})
 
 const moduleIcons = {
   'crimes': '🔫',
@@ -143,18 +184,22 @@ function getModuleRoute(name) {
     'bank': '/bank',
     'combat': '/combat',
     'bounty': '/bounty',
+    'bounties': '/bounty',
     'drugs': '/drugs',
     'theft': '/theft',
     'racing': '/racing',
     'travel': '/travel',
     'inventory': '/inventory',
+    'shop': '/shop',
     'properties': '/properties',
     'gang': '/gang',
+    'gangs': '/gang',
     'missions': '/missions',
     'achievements': '/achievements',
     'leaderboards': '/leaderboards',
     'forum': '/forum',
     'organized-crime': '/organized-crime',
+    'organized_crimes': '/organized-crime',
     'detective': '/detective',
     'bullets': '/bullets'
   }
@@ -228,17 +273,17 @@ onMounted(() => {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 4rem;
+  height: 3rem;
 }
 
 .logo-container {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .logo-title {
-  font-size: 1.5rem;
+  font-size: 1.125rem;
   font-weight: 700;
   color: #22d3ee;
 }
@@ -247,8 +292,8 @@ onMounted(() => {
 .user-stats {
   display: none;
   align-items: center;
-  gap: 1.5rem;
-  font-size: 0.875rem;
+  gap: 0.75rem;
+  font-size: 0.8125rem;
 }
 
 @media (min-width: 768px) {
@@ -257,10 +302,55 @@ onMounted(() => {
   }
 }
 
+/* Navbar Rank & XP */
+.navbar-rank-xp {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding-right: 0.75rem;
+  border-right: 1px solid #374151;
+}
+
+.rank-info {
+  display: flex;
+  align-items: center;
+}
+
+.rank-name {
+  color: #22d3ee;
+  font-weight: 700;
+}
+
+.navbar-xp-bar {
+  width: 70px;
+  height: 5px;
+  background-color: #374151;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.navbar-xp-bar .xp-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #22d3ee, #06b6d4);
+  border-radius: 9999px;
+  transition: width 0.3s ease;
+}
+
+.xp-label {
+  color: #9ca3af;
+  font-size: 0.6875rem;
+}
+
 .stat-item {
   display: flex;
   align-items: center;
-  gap: 0.5rem;
+  gap: 0.375rem;
+}
+
+.location-item {
+  padding-left: 0.75rem;
+  border-left: 1px solid #374151;
+  color: #d1d5db;
 }
 
 .stat-label {
@@ -291,20 +381,22 @@ onMounted(() => {
 .user-actions {
   display: flex;
   align-items: center;
-  gap: 1rem;
+  gap: 0.75rem;
 }
 
 .username {
   color: #ffffff;
+  font-size: 0.875rem;
 }
 
 .logout-button {
-  padding: 0.5rem 1rem;
+  padding: 0.375rem 0.875rem;
   background-color: #dc2626;
   color: #ffffff;
   border-radius: 0.25rem;
   border: none;
   cursor: pointer;
+  font-size: 0.875rem;
   transition: background-color 0.15s;
 }
 
@@ -387,11 +479,100 @@ onMounted(() => {
   border: 1px solid #374151;
 }
 
+.player-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-bottom: 1rem;
+}
+
 .welcome-title {
   font-size: 1.5rem;
   font-weight: 700;
   color: #ffffff;
-  margin-bottom: 1rem;
+  margin: 0;
+}
+
+.location-badge {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background-color: #374151;
+  padding: 0.5rem 1rem;
+  border-radius: 9999px;
+  color: #d1d5db;
+  font-size: 0.875rem;
+}
+
+.location-icon {
+  font-size: 1rem;
+}
+
+/* Rank & XP Section */
+.rank-xp-section {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+@media (min-width: 640px) {
+  .rank-xp-section {
+    flex-direction: row;
+    align-items: center;
+    gap: 1.5rem;
+  }
+}
+
+.rank-info {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  white-space: nowrap;
+}
+
+.rank-label {
+  color: #9ca3af;
+  font-size: 0.875rem;
+}
+
+.rank-name {
+  color: #22d3ee;
+  font-weight: 700;
+  font-size: 1.125rem;
+}
+
+.xp-progress-container {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+.xp-bar-wrapper {
+  height: 0.75rem;
+  background-color: #374151;
+  border-radius: 9999px;
+  overflow: hidden;
+}
+
+.xp-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #22d3ee, #06b6d4);
+  border-radius: 9999px;
+  transition: width 0.5s ease;
+}
+
+.xp-text {
+  display: flex;
+  justify-content: space-between;
+  font-size: 0.75rem;
+  color: #9ca3af;
+}
+
+.xp-next {
+  color: #6b7280;
 }
 
 .player-info-grid {
@@ -446,11 +627,56 @@ onMounted(() => {
   transform: scale(1);
   text-decoration: none;
   display: block;
+  position: relative;
+  overflow: hidden;
 }
 
-.module-card:hover {
+.module-card:hover:not(.locked) {
   background: linear-gradient(to bottom right, #06b6d4, #1d4ed8);
   transform: scale(1.05);
+}
+
+/* Locked Module Styles */
+.module-card.locked {
+  background: linear-gradient(to bottom right, #374151, #1f2937);
+  cursor: not-allowed;
+  opacity: 0.85;
+}
+
+.module-card.locked:hover {
+  transform: scale(1.02);
+}
+
+.lock-overlay {
+  position: absolute;
+  top: 0.5rem;
+  right: 0.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  border-radius: 50%;
+  width: 2rem;
+  height: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.lock-icon {
+  font-size: 1rem;
+}
+
+.locked-icon {
+  filter: grayscale(70%);
+  opacity: 0.6;
+}
+
+.module-unlock {
+  color: #fbbf24;
+  font-size: 0.75rem;
+  font-weight: 600;
+  margin-top: 0.25rem;
+  display: flex;
+  align-items: center;
+  gap: 0.25rem;
 }
 
 .module-icon {

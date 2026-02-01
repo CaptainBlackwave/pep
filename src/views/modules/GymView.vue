@@ -105,13 +105,10 @@ const formatMoney = (val) => new Intl.NumberFormat('en-US', { style: 'currency',
 
 const loadData = async () => {
   try {
-    const [gymResponse, playerResponse] = await Promise.all([
-      api.get('/gym'),
-      api.get('/user')
-    ])
-    costs.value = gymResponse.data.costs || {}
-    maxPerSession.value = gymResponse.data.maxPerSession || 50
-    player.value = playerResponse.data
+    const response = await api.get('/gym')
+    costs.value = response.data.trainingInfo?.costs || response.data.costs || {}
+    maxPerSession.value = response.data.trainingInfo?.max_per_session || response.data.maxPerSession || 50
+    player.value = response.data.player
   } catch (err) {
     console.error('Error loading gym:', err)
   } finally {

@@ -158,14 +158,11 @@ const loadData = async () => {
     loading.value = true
     error.value = null
     
-    // Load crimes list
-    const crimesResponse = await api.get('/crimes')
-    crimes.value = crimesResponse.data.crimes || []
-    remainingCooldown.value = Math.floor(crimesResponse.data.cooldown || 0)
-    
-    // Load player data
-    const playerResponse = await api.get('/user')
-    player.value = playerResponse.data
+    // Load crimes list and player data
+    const response = await api.get('/crimes')
+    crimes.value = response.data.crimes || []
+    remainingCooldown.value = Math.floor(response.data.cooldown || 0)
+    player.value = response.data.player
     
     // Start cooldown timer if needed
     if (remainingCooldown.value > 0) {

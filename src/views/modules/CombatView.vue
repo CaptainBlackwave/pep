@@ -36,6 +36,10 @@
               <p class="stat-value">{{ getEquippedWeapon() }}</p>
             </div>
             <div class="stat-item">
+              <p class="stat-label">Bullets</p>
+              <p class="stat-value" :class="{ 'low-ammo': player.bullets < 10 }">🔫 {{ player.bullets || 0 }}</p>
+            </div>
+            <div class="stat-item">
               <p class="stat-label">Armor</p>
               <p class="stat-value">{{ getEquippedArmor() }}</p>
             </div>
@@ -167,6 +171,8 @@
           <h3>💡 Combat Tips</h3>
           <ul>
             <li>• Equip better weapons and armor from the Shop to increase damage and defense</li>
+            <li>• <strong>Guns require bullets!</strong> Pistol uses 1, Shotgun uses 2, AK-47 uses 5 per attack</li>
+            <li>• Buy bullets from the Shop or use melee weapons like the Baseball Bat (no ammo needed)</li>
             <li>• Higher ranked players have better stats but give more respect when defeated</li>
             <li>• If you miss your attack, the defender will counter-attack you</li>
             <li>• Killing a player steals 10% of their cash and 5% of their respect</li>
@@ -368,6 +374,15 @@ onMounted(() => {
   margin: 0;
 }
 
+.stat-value.low-ammo {
+  color: #dc2626;
+  animation: pulse 1.5s infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.6; }
+}
 
 .health-bar-container {
   display: flex;

@@ -3,7 +3,7 @@ services:
     build: .
     container_name: openpbbg_frontend
     ports:
-      - "5175:5173"
+      - "5175:5175"
     volumes:
       - .:/app
       - /app/node_modules

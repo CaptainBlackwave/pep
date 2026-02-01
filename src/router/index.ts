@@ -23,6 +23,8 @@ import AchievementsView from '../views/modules/AchievementsView.vue'
 import LeaderboardsView from '../views/modules/LeaderboardsView.vue'
 import ForumView from '../views/modules/ForumView.vue'
 import OrganizedCrimeView from '../views/modules/OrganizedCrimeView.vue'
+import ShopView from '../views/modules/ShopView.vue'
+import TicketsView from '../views/TicketsView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -170,9 +172,21 @@ const router = createRouter({
       meta: { requiresAuth: true }
     },
     {
+      path: '/tickets',
+      name: 'tickets',
+      component: TicketsView,
+      meta: { requiresAuth: true }
+    },
+    {
       path: '/organized-crime',
       name: 'organized-crime',
       component: OrganizedCrimeView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/shop',
+      name: 'shop',
+      component: ShopView,
       meta: { requiresAuth: true }
     },
   ],
