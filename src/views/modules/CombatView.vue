@@ -1,183 +1,189 @@
 <template>
-  <div class="combat-page">
-    <header class="combat-header">
-      <h1>⚔️ Combat</h1>
-      <router-link to="/dashboard" class="back-link">← Dashboard</router-link>
-    </header>
+  <div class="combat-view">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state">
+      <div class="spinner"></div>
+    </div>
 
-    <div class="container">
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading combat arena...</p>
+    <!-- Error State -->
+    <div v-else-if="error" class="error-message">
+      {{ error }}
+    </div>
+
+    <!-- Combat Screen (Active Fight) -->
+    <div v-else-if="activeFight" class="combat-screen">
+      <!-- Fight Timer -->
+      <div class="fight-timer">
+        FIGHT EXPIRE: {{ fightTimer }}
       </div>
 
-      <!-- Main Content -->
-      <div v-else class="combat-content">
-        <!-- Player Stats -->
-        <div class="player-stats">
-          <h2>Your Combat Stats</h2>
-          <div class="stats-grid">
-            <div class="stat-item">
-              <p class="stat-label">Health</p>
+      <div class="combat-arena">
+        <!-- Player Panel -->
+        <div class="player-panel">
+          <div class="fighter-header">
+            <div class="fighter-avatar">LF</div>
+            <div class="fighter-info">
+              <h3 class="fighter-name">{{ player.username || 'Player' }}</h3>
               <div class="health-bar-container">
                 <div class="health-bar">
-                  <div 
-                    class="health-fill"
-                    :class="getHealthClass(player.health, player.max_health)"
-                    :style="`width: ${getHealthPercentage(player.health, player.max_health)}%`"
-                  ></div>
+                  <div class="health-fill" :style="{ width: getHealthPercentage(player.health, player.max_health) + '%' }"></div>
                 </div>
                 <span class="health-text">{{ player.health }}/{{ player.max_health }}</span>
               </div>
             </div>
-            <div class="stat-item">
-              <p class="stat-label">Weapon</p>
-              <p class="stat-value">{{ getEquippedWeapon() }}</p>
-            </div>
-            <div class="stat-item">
-              <p class="stat-label">Bullets</p>
-              <p class="stat-value" :class="{ 'low-ammo': player.bullets < 10 }">🔫 {{ player.bullets || 0 }}</p>
-            </div>
-            <div class="stat-item">
-              <p class="stat-label">Armor</p>
-              <p class="stat-value">{{ getEquippedArmor() }}</p>
-            </div>
-            <div class="stat-item">
-              <p class="stat-label">Rank</p>
-              <p class="stat-value rank-badge">{{ player.rank || 'Thug' }}</p>
-            </div>
-          </div>
-        </div>
-
-        <div class="combat-grid">
-          <!-- Available Targets -->
-          <div class="targets-section">
-            <h2>🎯 Available Targets</h2>
-
-            <div v-if="player.health <= 0" class="alert alert-dead">
-              <p class="alert-title">☠️ You are dead!</p>
-              <p class="alert-text">Visit the hospital to recover.</p>
-            </div>
-
-            <div v-if="availableTargets.length === 0" class="empty-state">
-              <p class="empty-title">No targets available</p>
-              <p class="empty-subtitle">No players are in your location or online</p>
-            </div>
-
-            <div v-else class="targets-list">
-              <div 
-                v-for="target in availableTargets" 
-                :key="target.id"
-                class="target-card"
-              >
-                <div class="target-header">
-                  <div class="target-info">
-                    <div class="target-name-row">
-                      <h3>{{ target.username }}</h3>
-                      <span class="rank-badge">{{ target.rank || 'Thug' }}</span>
-                    </div>
-                  </div>
-                </div>
-
-                <div class="target-health">
-                  <span class="health-label">HP:</span>
-                  <div class="health-bar">
-                    <div 
-                      class="health-fill"
-                      :class="getHealthClass(target.health, target.max_health)"
-                      :style="`width: ${getHealthPercentage(target.health, target.max_health)}%`"
-                    ></div>
-                  </div>
-                  <span class="health-text">{{ target.health }}/{{ target.max_health }}</span>
-                </div>
-
-                <button 
-                  @click="attack(target)"
-                  :disabled="player.health <= 0 || processing"
-                  class="btn btn-attack"
-                >
-                  ⚔️ Attack
-                </button>
-              </div>
-            </div>
           </div>
 
-          <!-- Combat History -->
-          <div class="history-section">
-            <h2>📜 Combat History</h2>
-
-            <div v-if="combatHistory.length === 0" class="empty-state">
-              <p class="empty-title">No combat history</p>
-              <p class="empty-subtitle">Attack someone to see logs here</p>
-            </div>
-
-            <div v-else class="history-list">
-              <div 
-                v-for="log in combatHistory" 
-                :key="log.id"
-                class="history-card"
-              >
-                <div class="history-header">
-                  <div class="history-info">
-                    <div class="history-outcome">
-                      <span :class="getOutcomeClass(log.outcome)">
-                        {{ getOutcomeText(log.outcome) }}
-                      </span>
-                      <span class="history-divider">•</span>
-                      <span class="history-time">
-                        {{ formatDate(log.created_at) }}
-                      </span>
-                    </div>
-                    
-                    <p class="history-text" v-if="log.attacker_id === player.id">
-                      You attacked <strong>{{ log.defender?.username }}</strong>
-                    </p>
-                    <p class="history-text" v-else>
-                      <strong>{{ log.attacker?.username }}</strong> attacked you
-                    </p>
-                  </div>
-                </div>
-
-                <div class="history-stats">
-                  <div class="history-stat">
-                    <p class="stat-label">Damage</p>
-                    <p class="stat-damage">{{ log.damage_dealt }}</p>
-                  </div>
-                  <div class="history-stat" v-if="log.cash_stolen > 0">
-                    <p class="stat-label">Cash Stolen</p>
-                    <p class="stat-cash">${{ formatNumber(log.cash_stolen) }}</p>
-                  </div>
-                  <div class="history-stat" v-if="log.respect_gained > 0">
-                    <p class="stat-label">Respect</p>
-                    <p class="stat-respect">+{{ log.respect_gained }}</p>
-                  </div>
-                  <div class="history-stat" v-if="log.weapon">
-                    <p class="stat-label">Weapon</p>
-                    <p class="stat-weapon">{{ log.weapon.name }}</p>
-                  </div>
-                </div>
-
-                <div v-if="log.outcome === 'killed'" class="kill-banner">
-                  <p>☠️ {{ log.defender?.username }} was killed!</p>
-                </div>
+          <!-- Equipment Slots -->
+          <div class="equipment-slots">
+            <div v-for="item in playerEquipment" :key="item.slot" class="equip-slot">
+              <div class="item-icon">{{ item.icon }}</div>
+              <div class="item-durability" :class="getDurabilityClass(item.durability)">
+                {{ item.durability }}%
               </div>
             </div>
           </div>
         </div>
 
-        <!-- Combat Tips -->
-        <div class="tips-section">
-          <h3>💡 Combat Tips</h3>
-          <ul>
-            <li>• Equip better weapons and armor from the Shop to increase damage and defense</li>
-            <li>• <strong>Guns require bullets!</strong> Pistol uses 1, Shotgun uses 2, AK-47 uses 5 per attack</li>
-            <li>• Buy bullets from the Shop or use melee weapons like the Baseball Bat (no ammo needed)</li>
-            <li>• Higher ranked players have better stats but give more respect when defeated</li>
-            <li>• If you miss your attack, the defender will counter-attack you</li>
-            <li>• Killing a player steals 10% of their cash and 5% of their respect</li>
-            <li>• Keep your health high by visiting the Hospital after battles</li>
-          </ul>
+        <!-- Enemy Panel -->
+        <div class="enemy-panel">
+          <div class="fighter-header">
+            <div class="fighter-avatar">👤</div>
+            <div class="fighter-info">
+              <div class="enemy-title">
+                <h3 class="fighter-name">{{ activeFight.enemy.name }}</h3>
+                <span class="enemy-level">LEVEL {{ activeFight.enemy.level }}</span>
+              </div>
+              <div class="health-bar-container">
+                <div class="health-bar">
+                  <div class="health-fill enemy" :style="{ width: getHealthPercentage(activeFight.enemy.health, activeFight.enemy.max_health) + '%' }"></div>
+                </div>
+                <span class="health-text">{{ activeFight.enemy.health }}/{{ activeFight.enemy.max_health }}</span>
+              </div>
+            </div>
+          </div>
+
+          <!-- Enemy Stats -->
+          <div class="enemy-stats">
+            <div class="difficulty-skulls">
+              <span v-for="n in 5" :key="n" class="skull" :class="{ active: n <= activeFight.enemy.difficulty }">💀</span>
+            </div>
+            <div class="weakness-info">Weakness: {{ activeFight.enemy.weakness }}</div>
+            <div class="stats-grid">
+              <div class="stat-row">
+                <span class="stat-label">STRENGTH</span>
+                <span class="stat-value">{{ formatNumber(activeFight.enemy.strength) }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">DEFENSE</span>
+                <span class="stat-value">{{ formatNumber(activeFight.enemy.defense) }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">SPEED</span>
+                <span class="stat-value">{{ formatNumber(activeFight.enemy.speed) }}</span>
+              </div>
+              <div class="stat-row">
+                <span class="stat-label">AGILITY</span>
+                <span class="stat-value">{{ formatNumber(activeFight.enemy.agility) }}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Weapons Section -->
+      <div class="weapons-section">
+        <div v-for="weapon in weapons" :key="weapon.id" class="weapon-card">
+          <div class="weapon-icon">{{ weapon.icon }}</div>
+          <div class="weapon-info">
+            <h4 class="weapon-name">{{ weapon.name }}</h4>
+            <div class="weapon-stats">
+              <span class="weapon-stat">🎯 {{ weapon.damage }}</span>
+              <span class="weapon-stat">🔫 {{ weapon.accuracy }}</span>
+              <span v-if="weapon.ammo !== undefined" class="weapon-stat">Ammo: {{ weapon.ammo.current }}/{{ weapon.ammo.max }}</span>
+            </div>
+            <div v-if="weapon.durability" class="weapon-durability">
+              {{ weapon.durability }}%
+            </div>
+          </div>
+          <button
+            @click="attackWithWeapon(weapon)"
+            :disabled="processing || weapon.ammo?.current === 0"
+            class="attack-btn"
+            :class="{ 'out-of-ammo': weapon.ammo?.current === 0 }"
+          >
+            {{ weapon.ammo?.current === 0 ? 'OUT OF AMMO' : 'ATTACK' }}
+          </button>
+        </div>
+      </div>
+
+      <!-- Action Buttons -->
+      <div class="action-buttons">
+        <button @click="autoAttack" :disabled="processing" class="auto-attack-btn">AUTO ATTACK</button>
+        <button @click="runAway" :disabled="processing" class="run-away-btn">RUN AWAY</button>
+      </div>
+
+      <!-- Fight Log -->
+      <div class="fight-log">
+        <h3 class="log-title">FIGHT LOG</h3>
+        <div class="log-messages">
+          <div v-for="(log, index) in fightLogs" :key="index" class="log-message" :class="log.type">
+            {{ log.message }}
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Area Selection Screen -->
+    <div v-else-if="selectedLocation" class="area-selection">
+      <!-- Back Button -->
+      <button @click="backToLocations" class="back-btn">
+        <span>←</span> GO BACK
+      </button>
+
+      <!-- Location Header -->
+      <div class="location-header-card">
+        <h2 class="location-title">{{ selectedLocation.name?.toUpperCase() }}</h2>
+        <div class="location-energy">
+          <span class="energy-icon">⚡</span>
+          <span class="energy-value">{{ selectedLocation.energy_cost || 20 }}</span>
+        </div>
+      </div>
+
+      <!-- Areas Grid -->
+      <div class="areas-grid">
+        <div v-for="area in selectedLocation.areas" :key="area.id" class="area-card">
+          <div class="area-content">
+            <h3 class="area-name">{{ area.name?.toUpperCase() }}</h3>
+            <div class="difficulty-skulls">
+              <span v-for="n in 5" :key="n" class="skull" :class="{ active: n <= area.difficulty }">💀</span>
+            </div>
+          </div>
+          <button @click="startHunt(area)" class="hunt-btn">HUNT</button>
+        </div>
+      </div>
+    </div>
+
+    <!-- Location Selection Screen -->
+    <div v-else class="location-selection">
+      <div class="selection-header">
+        <h1>SELECT A LOCATION TO CONTINUE</h1>
+      </div>
+
+      <div class="locations-grid">
+        <div
+          v-for="location in locations"
+          :key="location.id"
+          class="location-card"
+          @click="selectLocation(location)"
+        >
+          <div class="location-overlay"></div>
+          <div class="location-content">
+            <h3 class="location-name">{{ location.name?.toUpperCase() }}</h3>
+            <div class="location-energy">
+              <span class="energy-icon">⚡</span>
+              <span class="energy-value">{{ location.energy_cost || 20 }}</span>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -185,541 +191,789 @@
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue';
+import { ref, onMounted, onUnmounted, computed } from 'vue';
 import api from '@/services/api';
 
-const player = ref({});
-const availableTargets = ref([]);
-const combatHistory = ref([]);
 const loading = ref(true);
 const processing = ref(false);
+const error = ref(null);
+
+const locations = ref([]);
+const selectedLocation = ref(null);
+const activeFight = ref(null);
+const player = ref({});
+const weapons = ref([]);
+const playerEquipment = ref([]);
+const fightLogs = ref([]);
+const fightTimer = ref('09:50');
+let timerInterval = null;
 
 const formatNumber = (num) => {
   return new Intl.NumberFormat('en-US').format(num);
-};
-
-const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleString();
 };
 
 const getHealthPercentage = (health, maxHealth) => {
   return Math.round((health / maxHealth) * 100);
 };
 
-const getHealthClass = (health, maxHealth) => {
-  const percentage = (health / maxHealth) * 100;
-  if (percentage > 60) return 'health-high';
-  if (percentage > 30) return 'health-medium';
-  return 'health-low';
-};
-
-const getEquippedWeapon = () => {
-  const weapon = player.value.equipped_items?.find(i => i.slot === 'weapon');
-  return weapon?.item?.name || 'Fists';
-};
-
-const getEquippedArmor = () => {
-  const armor = player.value.equipped_items?.find(i => i.slot === 'armor');
-  return armor?.item?.name || 'None';
-};
-
-const getOutcomeClass = (outcome) => {
-  if (outcome === 'killed') return 'outcome-killed';
-  if (outcome === 'success') return 'outcome-success';
-  return 'outcome-miss';
-};
-
-const getOutcomeText = (outcome) => {
-  if (outcome === 'killed') return 'KILLED';
-  if (outcome === 'success') return 'HIT';
-  return 'MISS';
+const getDurabilityClass = (durability) => {
+  if (durability > 70) return 'high';
+  if (durability > 30) return 'medium';
+  return 'low';
 };
 
 const loadCombatData = async () => {
   try {
     loading.value = true;
-    const response = await api.get('/combat');
+    const response = await api.get('/combat/locations');
+    locations.value = response.data.locations || [];
     player.value = response.data.player || {};
-    availableTargets.value = response.data.availableTargets || [];
-    combatHistory.value = response.data.combatHistory || [];
-  } catch (error) {
-    console.error('Failed to load combat data:', error);
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to load combat data';
   } finally {
     loading.value = false;
   }
 };
 
-const attack = async (target) => {
-  if (!confirm(`Attack ${target.username}?`)) return;
+const selectLocation = (location) => {
+  selectedLocation.value = location;
+};
+
+const backToLocations = () => {
+  selectedLocation.value = null;
+  activeFight.value = null;
+};
+
+const startHunt = async (area) => {
+  try {
+    processing.value = true;
+    const response = await api.post(`/combat/hunt`, {
+      location_id: selectedLocation.value.id,
+      area_id: area.id
+    });
+
+    // Initialize fight
+    activeFight.value = {
+      fight_id: response.data.fight_id,
+      enemy: response.data.enemy,
+      area: area
+    };
+
+    // Setup weapons
+    weapons.value = response.data.weapons || [];
+    playerEquipment.value = response.data.equipment || [];
+    fightLogs.value = [];
+
+    // Start fight timer
+    startFightTimer();
+  } catch (err) {
+    alert(err.response?.data?.message || 'Failed to start hunt');
+  } finally {
+    processing.value = false;
+  }
+};
+
+const attackWithWeapon = async (weapon) => {
   if (processing.value) return;
 
   try {
     processing.value = true;
-    await api.post('/combat/attack', { defender_id: target.id });
-    await loadCombatData();
-  } catch (error) {
-    console.error('Attack failed:', error);
-    alert(error.response?.data?.message || 'Attack failed');
+    const response = await api.post('/combat/attack-npc', {
+      fight_id: activeFight.value.fight_id,
+      weapon_id: weapon.id
+    });
+
+    // Update fight state
+    activeFight.value.enemy.health = response.data.enemy.health;
+    player.value.health = response.data.player.health;
+
+    // Add to fight log
+    fightLogs.value.unshift({
+      type: response.data.result,
+      message: response.data.message
+    });
+
+    // Check if fight ended
+    if (response.data.ended) {
+      stopFightTimer();
+      alert(response.data.end_message);
+      backToLocations();
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Attack failed');
   } finally {
     processing.value = false;
+  }
+};
+
+const autoAttack = async () => {
+  if (processing.value) return;
+
+  try {
+    processing.value = true;
+    const response = await api.post('/combat/auto-attack-npc', {
+      fight_id: activeFight.value.fight_id
+    });
+
+    // Update fight state
+    activeFight.value.enemy.health = response.data.enemy.health;
+    player.value.health = response.data.player.health;
+
+    // Add logs
+    response.data.logs.forEach(log => {
+      fightLogs.value.unshift(log);
+    });
+
+    if (response.data.ended) {
+      stopFightTimer();
+      alert(response.data.end_message);
+      backToLocations();
+    }
+  } catch (err) {
+    alert(err.response?.data?.message || 'Auto attack failed');
+  } finally {
+    processing.value = false;
+  }
+};
+
+const runAway = () => {
+  if (confirm('Are you sure you want to run away?')) {
+    stopFightTimer();
+    backToLocations();
+  }
+};
+
+const startFightTimer = () => {
+  let seconds = 590; // 9:50
+  timerInterval = setInterval(() => {
+    seconds--;
+    const mins = Math.floor(seconds / 60);
+    const secs = seconds % 60;
+    fightTimer.value = `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+
+    if (seconds <= 0) {
+      stopFightTimer();
+      alert('Fight expired! You ran away.');
+      backToLocations();
+    }
+  }, 1000);
+};
+
+const stopFightTimer = () => {
+  if (timerInterval) {
+    clearInterval(timerInterval);
+    timerInterval = null;
   }
 };
 
 onMounted(() => {
   loadCombatData();
 });
+
+onUnmounted(() => {
+  stopFightTimer();
+});
 </script>
 
 <style scoped>
-.combat-page {
+.combat-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #fee2e2 0%, #fecaca 100%);
-  padding: 20px;
-}
-
-.combat-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1400px;
-  margin: 0 auto 30px;
-}
-
-.combat-header h1 {
-  font-size: 2rem;
-  font-weight: bold;
-  color: #991b1b;
-  margin: 0;
-}
-
-.back-link {
-  padding: 10px 20px;
-  background: #dc2626;
-  color: white;
-  text-decoration: none;
-  border-radius: 8px;
-  font-weight: 600;
-  transition: background 0.3s;
-}
-
-.back-link:hover {
-  background: #b91c1c;
-}
-
-.container {
-  max-width: 1400px;
+  padding: 2rem;
+  max-width: 1600px;
   margin: 0 auto;
 }
 
+/* Loading */
 .loading-state {
-  background: white;
-  border-radius: 12px;
-  padding: 60px;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  display: flex;
+  justify-content: center;
+  padding: 4rem;
 }
 
 .spinner {
   width: 50px;
   height: 50px;
-  margin: 0 auto 20px;
-  border: 4px solid #e5e7eb;
-  border-top: 4px solid #dc2626;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #00bcd4;
   border-radius: 50%;
   animation: spin 1s linear infinite;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-.player-stats {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 24px;
-  margin-bottom: 24px;
+/* Error */
+.error-message {
+  background: rgba(220, 38, 38, 0.2);
+  border: 1px solid rgba(220, 38, 38, 0.5);
+  color: #fca5a5;
+  padding: 1rem;
+  border-radius: 8px;
+  margin-bottom: 1.5rem;
 }
 
-.player-stats h2 {
+/* SCREEN 1: Location Selection */
+.selection-header {
+  text-align: center;
+  margin-bottom: 2rem;
+}
+
+.selection-header h1 {
+  color: #e2e8f0;
   font-size: 1.5rem;
-  font-weight: bold;
-  color: #1f2937;
-  margin: 0 0 20px 0;
+  font-weight: 400;
+  letter-spacing: 1px;
+  margin: 0;
 }
 
-.stats-grid {
+.locations-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
-  gap: 20px;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
 }
 
-.stat-item {
+.location-card {
+  position: relative;
+  height: 120px;
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8), rgba(51, 65, 85, 0.6));
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+  cursor: pointer;
+  transition: all 0.3s;
+}
+
+.location-card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.4);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.location-overlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.3);
+  z-index: 1;
+}
+
+.location-content {
+  position: relative;
+  z-index: 2;
+  height: 100%;
   display: flex;
-  flex-direction: column;
-  gap: 8px;
+  align-items: center;
+  justify-content: space-between;
+  padding: 1.5rem 2rem;
 }
 
-.stat-label {
-  font-size: 0.875rem;
-  color: #6b7280;
+.location-name {
+  color: #e2e8f0;
+  font-size: 1.5rem;
+  font-weight: 600;
+  letter-spacing: 1px;
   margin: 0;
 }
 
-.stat-value {
-  font-size: 1.125rem;
-  font-weight: bold;
-  color: #1f2937;
+.location-energy {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  background: rgba(0, 0, 0, 0.5);
+  padding: 0.5rem 1rem;
+  border-radius: 6px;
+}
+
+.energy-icon {
+  font-size: 1.2rem;
+}
+
+.energy-value {
+  color: #fbbf24;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+/* SCREEN 2: Area Selection */
+.back-btn {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 0.75rem 1.5rem;
+  color: #e2e8f0;
+  font-size: 1rem;
+  font-weight: 600;
+  cursor: pointer;
+  margin-bottom: 1.5rem;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: rgba(30, 41, 59, 0.8);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.location-header-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  margin-bottom: 2rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.location-title {
+  color: #e2e8f0;
+  font-size: 1.75rem;
+  font-weight: 600;
+  letter-spacing: 1px;
   margin: 0;
 }
 
-.stat-value.low-ammo {
-  color: #dc2626;
-  animation: pulse 1.5s infinite;
+.areas-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 1.5rem;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 1; }
-  50% { opacity: 0.6; }
+.area-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  transition: all 0.2s;
+}
+
+.area-card:hover {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(255, 255, 255, 0.2);
+}
+
+.area-content {
+  flex: 1;
+}
+
+.area-name {
+  color: #e2e8f0;
+  font-size: 1.15rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0 0 0.75rem 0;
+}
+
+.difficulty-skulls {
+  display: flex;
+  gap: 0.25rem;
+}
+
+.skull {
+  font-size: 1rem;
+  filter: grayscale(1);
+  opacity: 0.3;
+}
+
+.skull.active {
+  filter: grayscale(0);
+  opacity: 1;
+}
+
+.hunt-btn {
+  padding: 0.75rem 2rem;
+  background: #4ade80;
+  border: none;
+  border-radius: 6px;
+  color: #064e3b;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+  margin-left: 1.5rem;
+}
+
+.hunt-btn:hover {
+  background: #22c55e;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(74, 222, 128, 0.4);
+}
+
+/* SCREEN 3: Combat Screen */
+.fight-timer {
+  text-align: right;
+  color: #cbd5e1;
+  font-size: 0.95rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+  margin-bottom: 1.5rem;
+}
+
+.combat-arena {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.player-panel,
+.enemy-panel {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+}
+
+.fighter-header {
+  display: flex;
+  align-items: flex-start;
+  gap: 1rem;
+  margin-bottom: 1.5rem;
+}
+
+.fighter-avatar {
+  width: 60px;
+  height: 60px;
+  background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+  border-radius: 8px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.5rem;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.fighter-info {
+  flex: 1;
+  min-width: 0;
+}
+
+.fighter-name {
+  color: #e2e8f0;
+  font-size: 1.25rem;
+  font-weight: 600;
+  margin: 0 0 0.5rem 0;
+}
+
+.enemy-title {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.enemy-level {
+  padding: 0.25rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
 }
 
 .health-bar-container {
   display: flex;
   align-items: center;
-  gap: 12px;
+  gap: 0.75rem;
 }
 
 .health-bar {
   flex: 1;
-  height: 12px;
-  background: #e5e7eb;
-  border-radius: 6px;
+  height: 8px;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
   overflow: hidden;
 }
 
 .health-fill {
   height: 100%;
-  transition: width 0.3s, background 0.3s;
-  border-radius: 6px;
+  background: #ef4444;
+  border-radius: 4px;
+  transition: width 0.3s;
 }
 
-.health-fill.health-high {
-  background: #10b981;
-}
-
-.health-fill.health-medium {
-  background: #f59e0b;
-}
-
-.health-fill.health-low {
+.health-fill.enemy {
   background: #ef4444;
 }
 
 .health-text {
-  font-size: 0.875rem;
+  color: #cbd5e1;
+  font-size: 0.9rem;
   font-weight: 600;
-  color: #1f2937;
   white-space: nowrap;
 }
 
-.combat-grid {
+.equipment-slots {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
-  gap: 24px;
-  margin-bottom: 24px;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0.75rem;
 }
 
-.targets-section,
-.history-section {
-  background: white;
-  border-radius: 12px;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  padding: 24px;
-}
-
-.targets-section h2,
-.history-section h2 {
-  font-size: 1.5rem;
-  font-weight: bold;
-  color: #1f2937;
-  margin: 0 0 20px 0;
-}
-
-.alert {
-  padding: 16px;
-  border-radius: 8px;
-  margin-bottom: 20px;
-}
-
-.alert-dead {
-  background: #fee2e2;
-  border-left: 4px solid #ef4444;
-}
-
-.alert-title {
-  font-weight: bold;
-  color: #991b1b;
-  margin: 0 0 4px 0;
-}
-
-.alert-text {
-  color: #b91c1c;
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-.empty-state {
+.equip-slot {
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 6px;
+  padding: 0.75rem;
   text-align: center;
-  padding: 40px 20px;
-  background: #f9fafb;
-  border-radius: 8px;
 }
 
-.empty-title {
-  font-size: 1.125rem;
-  color: #6b7280;
-  margin: 0 0 8px 0;
+.item-icon {
+  font-size: 1.5rem;
+  margin-bottom: 0.5rem;
 }
 
-.empty-subtitle {
-  font-size: 0.875rem;
-  color: #9ca3af;
-  margin: 0;
-}
-
-.targets-list,
-.history-list {
-  display: flex;
-  flex-direction: column;
-  gap: 16px;
-}
-
-.history-list {
-  max-height: 600px;
-  overflow-y: auto;
-}
-
-.target-card {
-  background: white;
-  border: 2px solid #fecaca;
-  border-radius: 12px;
-  padding: 20px;
-  transition: all 0.3s;
-}
-
-.target-card:hover {
-  border-color: #dc2626;
-  box-shadow: 0 4px 12px rgba(220, 38, 38, 0.2);
-}
-
-.target-header {
-  margin-bottom: 16px;
-}
-
-.target-name-row {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  flex-wrap: wrap;
-}
-
-.target-name-row h3 {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: #1f2937;
-  margin: 0;
-}
-
-.rank-text {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.target-health {
-  display: flex;
-  align-items: center;
-  gap: 12px;
-  margin-bottom: 16px;
-}
-
-.health-label {
-  font-size: 0.75rem;
-  color: #6b7280;
-}
-
-.btn {
-  padding: 12px 24px;
-  border: none;
-  border-radius: 8px;
+.item-durability {
+  font-size: 0.85rem;
   font-weight: 600;
-  font-size: 1rem;
-  cursor: pointer;
-  transition: all 0.3s;
-  width: 100%;
 }
 
-.btn:disabled {
-  opacity: 0.5;
+.item-durability.high {
+  color: #4ade80;
+}
+
+.item-durability.medium {
+  color: #fbbf24;
+}
+
+.item-durability.low {
+  color: #ef4444;
+}
+
+.enemy-stats {
+  margin-top: 1rem;
+}
+
+.weakness-info {
+  color: #94a3b8;
+  font-size: 0.9rem;
+  margin: 0.75rem 0;
+}
+
+.stats-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 0.75rem;
+}
+
+.stat-row {
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px;
+  padding: 0.5rem 0.75rem;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.stat-label {
+  color: #94a3b8;
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 0.5px;
+}
+
+.stat-value {
+  color: #e2e8f0;
+  font-weight: 700;
+}
+
+.weapons-section {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 1.5rem;
+  margin-bottom: 1.5rem;
+}
+
+.weapon-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
+  text-align: center;
+}
+
+.weapon-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
+
+.weapon-name {
+  color: #e2e8f0;
+  font-size: 1.1rem;
+  font-weight: 600;
+  margin: 0 0 0.75rem 0;
+}
+
+.weapon-stats {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 0.75rem;
+}
+
+.weapon-stat {
+  color: #94a3b8;
+  font-size: 0.9rem;
+}
+
+.weapon-durability {
+  color: #fbbf24;
+  font-size: 0.9rem;
+  font-weight: 600;
+  margin-bottom: 1rem;
+}
+
+.attack-btn {
+  width: 100%;
+  padding: 0.75rem;
+  background: #0891b2;
+  border: none;
+  border-radius: 6px;
+  color: white;
+  font-weight: 700;
+  font-size: 0.95rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.attack-btn:hover:not(:disabled) {
+  background: #06b6d4;
+  transform: translateY(-2px);
+}
+
+.attack-btn:disabled {
+  background: #374151;
+  color: #6b7280;
   cursor: not-allowed;
 }
 
-.btn-attack {
-  background: #dc2626;
+.attack-btn.out-of-ammo {
+  background: rgba(100, 116, 139, 0.5);
+}
+
+.action-buttons {
+  display: flex;
+  justify-content: center;
+  gap: 1rem;
+  margin-bottom: 2rem;
+}
+
+.auto-attack-btn,
+.run-away-btn {
+  padding: 0.75rem 2rem;
+  border: none;
+  border-radius: 6px;
+  font-weight: 700;
+  font-size: 1rem;
+  letter-spacing: 0.5px;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.auto-attack-btn {
+  background: #0891b2;
   color: white;
 }
 
-.btn-attack:hover:not(:disabled) {
-  background: #b91c1c;
+.auto-attack-btn:hover:not(:disabled) {
+  background: #06b6d4;
+  transform: translateY(-2px);
 }
 
-.history-card {
-  background: white;
-  border: 1px solid #e5e7eb;
-  border-radius: 12px;
-  padding: 16px;
+.run-away-btn {
+  background: #ef4444;
+  color: white;
 }
 
-.history-header {
-  margin-bottom: 16px;
+.run-away-btn:hover:not(:disabled) {
+  background: #dc2626;
+  transform: translateY(-2px);
 }
 
-.history-outcome {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  margin-bottom: 8px;
+.fight-log {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem;
 }
 
-.outcome-killed {
-  font-weight: bold;
-  color: #dc2626;
-}
-
-.outcome-success {
-  font-weight: bold;
-  color: #10b981;
-}
-
-.outcome-miss {
-  font-weight: bold;
-  color: #f59e0b;
-}
-
-.history-divider {
-  color: #d1d5db;
-}
-
-.history-time {
-  font-size: 0.875rem;
-  color: #6b7280;
-}
-
-.history-text {
-  font-size: 0.875rem;
-  color: #1f2937;
-  margin: 0;
-}
-
-.history-text strong {
+.log-title {
+  color: #e2e8f0;
+  font-size: 1.1rem;
   font-weight: 600;
+  letter-spacing: 0.5px;
+  margin: 0 0 1rem 0;
 }
 
-.history-stats {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(100px, 1fr));
-  gap: 12px;
-  margin-top: 12px;
-}
-
-.history-stat {
+.log-messages {
   display: flex;
   flex-direction: column;
-  gap: 4px;
+  gap: 0.5rem;
+  max-height: 300px;
+  overflow-y: auto;
 }
 
-.stat-damage {
-  font-weight: bold;
-  color: #dc2626;
-  margin: 0;
+.log-message {
+  padding: 0.75rem 1rem;
+  border-radius: 6px;
+  font-size: 0.95rem;
+  line-height: 1.5;
 }
 
-.stat-cash {
-  font-weight: bold;
-  color: #10b981;
-  margin: 0;
+.log-message.enemy {
+  background: rgba(220, 38, 38, 0.2);
+  border-left: 3px solid #ef4444;
+  color: #fca5a5;
 }
 
-.stat-respect {
-  font-weight: bold;
-  color: #c084fc;
-  margin: 0;
+.log-message.player {
+  background: rgba(34, 197, 94, 0.2);
+  border-left: 3px solid #22c55e;
+  color: #86efac;
 }
 
-.stat-weapon {
-  font-weight: bold;
-  color: #1f2937;
-  margin: 0;
+.log-message.miss {
+  background: rgba(100, 116, 139, 0.2);
+  border-left: 3px solid #64748b;
+  color: #cbd5e1;
 }
 
-.kill-banner {
-  margin-top: 12px;
-  padding-top: 12px;
-  border-top: 2px solid #fecaca;
-}
-
-.kill-banner p {
-  font-weight: bold;
-  color: #dc2626;
-  margin: 0;
-  font-size: 0.875rem;
-}
-
-.tips-section {
-  background: #dbeafe;
-  border-left: 4px solid #3b82f6;
-  border-radius: 8px;
-  padding: 20px;
-}
-
-.tips-section h3 {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1e40af;
-  margin: 0 0 12px 0;
-}
-
-.tips-section ul {
-  margin: 0;
-  padding: 0;
-  list-style: none;
-  color: #1e40af;
-}
-
-.tips-section li {
-  font-size: 0.875rem;
-  margin-bottom: 6px;
-}
-
+/* Responsive */
 @media (max-width: 1024px) {
-  .combat-grid {
+  .combat-arena {
+    grid-template-columns: 1fr;
+  }
+
+  .weapons-section {
+    grid-template-columns: 1fr;
+  }
+
+  .locations-grid,
+  .areas-grid {
     grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 768px) {
-  .combat-header {
-    flex-direction: column;
-    gap: 16px;
-    text-align: center;
+  .combat-view {
+    padding: 1rem;
   }
 
   .stats-grid {
     grid-template-columns: 1fr;
   }
 
-  .combat-grid {
-    grid-template-columns: 1fr;
+  .equipment-slots {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 </style>

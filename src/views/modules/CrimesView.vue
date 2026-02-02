@@ -1,507 +1,232 @@
 <template>
-  <div class="crimes-container">
-    <!-- Header with Player Stats -->
-    <div class="header">
-      <div class="header-content">
-        <router-link to="/dashboard" class="back-link">
-          ← Back to Dashboard
-        </router-link>
-        <div class="stats-bar">
-          <div class="stat-item">
-            <span class="stat-icon">💰</span> {{ formatMoney(player?.cash || 0) }}
-          </div>
-          <div class="stat-item">
-            <span class="stat-icon">⚡</span> {{ player?.energy || 0 }}/{{ player?.max_energy || 100 }}
-          </div>
-          <div class="stat-item">
-            <span class="stat-icon">❤️</span> {{ player?.health || 0 }}/{{ player?.max_health || 100 }}
+  <div class="crimes-view">
+    <h2 class="view-title">SELECT A LOCATION TO CONTINUE</h2>
+
+    <div class="locations-grid">
+      <div class="location-card" @click="selectLocation(1)">
+        <div class="location-bg street"></div>
+        <div class="location-info">
+          <h3 class="location-name">STREET CORNER</h3>
+          <div class="location-badges">
+            <span class="energy-badge">☢️ 1</span>
           </div>
         </div>
       </div>
-    </div>
 
-    <div class="content-wrapper">
-      <h1 class="page-title">🔫 Crimes</h1>
-
-      <!-- Cooldown Timer -->
-      <div v-if="remainingCooldown > 0" class="cooldown-alert">
-        <p class="cooldown-text">
-          ⏱️ Cooldown: {{ formatTime(remainingCooldown) }}
-        </p>
-      </div>
-
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="spinner"></div>
-        <p class="loading-text">Loading crimes...</p>
-      </div>
-
-      <!-- Error State -->
-      <div v-else-if="error" class="error-alert">
-        <p class="error-text">{{ error }}</p>
-      </div>
-
-      <!-- Crimes Grid -->
-      <div v-else class="crimes-grid">
-        <div
-          v-for="crime in crimes"
-          :key="crime.id"
-          class="crime-card"
-          :class="{ 'disabled': !canAttemptCrime(crime) }"
-        >
-          <h3 class="crime-name">{{ crime.name }}</h3>
-          <p class="crime-description">{{ crime.description }}</p>
-
-          <div class="crime-stats">
-            <div class="stat-row">
-              <span>Success Rate:</span>
-              <span class="success-rate">{{ Math.round(crime.success_rate * 100) }}%</span>
-            </div>
-            <div class="stat-row">
-              <span>Energy Cost:</span>
-              <span class="energy-cost">{{ crime.energy_cost }}</span>
-            </div>
-            <div class="stat-row">
-              <span>Reward:</span>
-              <span class="reward">{{ formatMoney(crime.min_cash) }} - {{ formatMoney(crime.max_cash) }}</span>
-            </div>
-            <div v-if="crime.required_rank" class="stat-row">
-              <span>Required Rank:</span>
-              <span class="required-rank">{{ crime.required_rank }}</span>
-            </div>
+      <div class="location-card" @click="selectLocation(2)">
+        <div class="location-bg alley"></div>
+        <div class="location-info">
+          <h3 class="location-name">DARK ALLEY</h3>
+          <div class="location-badges">
+            <span class="energy-badge">☢️ 1</span>
           </div>
-
-          <button
-            @click="attemptCrime(crime)"
-            :disabled="!canAttemptCrime(crime) || processing"
-            class="crime-button"
-            :class="canAttemptCrime(crime) && !processing ? 'enabled' : 'disabled'"
-          >
-            {{ processing ? 'Processing...' : 'Attempt Crime' }}
-          </button>
         </div>
       </div>
 
-      <!-- Result Modal -->
-      <div v-if="result" class="modal-overlay" @click="result = null">
-        <div 
-          class="modal-content"
-          :class="result.success ? 'success' : 'failure'"
-          @click.stop
-        >
-          <h3 class="modal-title" :class="result.success ? 'success' : 'failure'">
-            {{ result.success ? '✅ Success!' : '❌ Failed!' }}
-          </h3>
-          <p class="modal-message">{{ result.message }}</p>
-          <button
-            @click="result = null"
-            class="modal-close"
-          >
-            Close
-          </button>
+      <div class="location-card" @click="selectLocation(3)">
+        <div class="location-bg store"></div>
+        <div class="location-info">
+          <h3 class="location-name">CONVENIENCE STORE</h3>
+          <div class="location-badges">
+            <span class="energy-badge">☢️ 2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="location-card" @click="selectLocation(4)">
+        <div class="location-bg residential"></div>
+        <div class="location-info">
+          <h3 class="location-name">RESIDENTIAL AREA</h3>
+          <div class="location-badges">
+            <span class="energy-badge">☢️ 2</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="location-card" @click="selectLocation(5)">
+        <div class="location-bg warehouse"></div>
+        <div class="location-info">
+          <h3 class="location-name">WAREHOUSE DISTRICT</h3>
+          <div class="location-badges">
+            <span class="energy-badge">☢️ 3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="location-card" @click="selectLocation(6)">
+        <div class="location-bg downtown"></div>
+        <div class="location-info">
+          <h3 class="location-name">DOWNTOWN BANK</h3>
+          <div class="location-badges">
+            <span class="energy-badge">☢️ 3</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="location-card" @click="selectLocation(7)">
+        <div class="location-bg casino"></div>
+        <div class="location-info">
+          <h3 class="location-name">CASINO</h3>
+          <div class="location-badges">
+            <span class="min-level">MIN LEVEL 25</span>
+            <span class="energy-badge">☢️ 5</span>
+          </div>
+        </div>
+      </div>
+
+      <div class="location-card" @click="selectLocation(8)">
+        <div class="location-bg mansion"></div>
+        <div class="location-info">
+          <h3 class="location-name">MANSION DISTRICT</h3>
+          <div class="location-badges">
+            <span class="min-level">MIN LEVEL 45</span>
+            <span class="energy-badge">☢️ 5</span>
+          </div>
         </div>
       </div>
     </div>
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue'
+<script setup lang="ts">
 import { useRouter } from 'vue-router'
-import api from '@/services/api'
 
 const router = useRouter()
 
-const player = ref(null)
-const crimes = ref([])
-const loading = ref(true)
-const error = ref(null)
-const processing = ref(false)
-const remainingCooldown = ref(0)
-const result = ref(null)
-
-let cooldownInterval = null
-
-const formatMoney = (amount) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0
-  }).format(amount)
+const selectLocation = (id: number) => {
+  router.push(`/crimes/${id}`)
 }
-
-const formatTime = (seconds) => {
-  if (seconds <= 0) return '0s'
-  const hours = Math.floor(seconds / 3600)
-  const minutes = Math.floor((seconds % 3600) / 60)
-  const secs = seconds % 60
-  
-  if (hours > 0) {
-    return `${hours}h ${minutes}m ${secs}s`
-  } else if (minutes > 0) {
-    return `${minutes}m ${secs}s`
-  } else {
-    return `${secs}s`
-  }
-}
-
-const canAttemptCrime = (crime) => {
-  if (!player.value) return false
-  if (remainingCooldown.value > 0) return false
-  if (player.value.energy < crime.energy_cost) return false
-  // Rank requirement is now checked by the backend
-  return true
-}
-
-const loadData = async () => {
-  try {
-    loading.value = true
-    error.value = null
-    
-    // Load crimes list and player data
-    const response = await api.get('/crimes')
-    crimes.value = response.data.crimes || []
-    remainingCooldown.value = Math.floor(response.data.cooldown || 0)
-    player.value = response.data.player
-    
-    // Start cooldown timer if needed
-    if (remainingCooldown.value > 0) {
-      startCooldownTimer()
-    }
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load crimes'
-    console.error('Error loading crimes:', err)
-  } finally {
-    loading.value = false
-  }
-}
-
-const startCooldownTimer = () => {
-  if (cooldownInterval) {
-    clearInterval(cooldownInterval)
-  }
-  
-  cooldownInterval = setInterval(() => {
-    if (remainingCooldown.value > 0) {
-      remainingCooldown.value--
-    } else {
-      clearInterval(cooldownInterval)
-      cooldownInterval = null
-    }
-  }, 1000)
-}
-
-const attemptCrime = async (crime) => {
-  if (!canAttemptCrime(crime) || processing.value) return
-  
-  try {
-    processing.value = true
-    const response = await api.post('/crimes/attempt', {
-      crime_id: crime.id
-    })
-    
-    result.value = {
-      success: response.data.success,
-      message: response.data.message
-    }
-    
-    // Update player data
-    player.value.cash = response.data.player.cash
-    player.value.energy = response.data.player.energy
-    player.value.experience = response.data.player.experience
-    
-    // Set cooldown
-    remainingCooldown.value = Math.floor(response.data.cooldown || 0)
-    if (remainingCooldown.value > 0) {
-      startCooldownTimer()
-    }
-  } catch (err) {
-    result.value = {
-      success: false,
-      message: err.response?.data?.message || 'Failed to attempt crime'
-    }
-    console.error('Error attempting crime:', err)
-  } finally {
-    processing.value = false
-  }
-}
-
-onMounted(() => {
-  loadData()
-})
-
-onUnmounted(() => {
-  if (cooldownInterval) {
-    clearInterval(cooldownInterval)
-  }
-})
 </script>
 
 <style scoped>
-.crimes-container {
-  min-height: 100vh;
-  background: linear-gradient(to bottom right, #111827, #581c87, #111827);
-}
-
-.header {
-  background-color: rgba(31, 41, 55, 0.5);
-  backdrop-filter: blur(8px);
-  border-bottom: 1px solid rgba(168, 85, 247, 0.3);
-  padding: 1rem;
-}
-
-.header-content {
-  max-width: 80rem;
+.crimes-view {
+  max-width: 1400px;
   margin: 0 auto;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
 }
 
-.back-link {
-  color: #c084fc;
-  text-decoration: none;
-}
-
-.back-link:hover {
-  color: #d8b4fe;
-}
-
-.stats-bar {
-  display: flex;
-  gap: 1.5rem;
-  font-size: 0.875rem;
-}
-
-.stat-item {
-  color: #d1d5db;
-}
-
-.stat-icon {
-  color: #c084fc;
-}
-
-.content-wrapper {
-  max-width: 80rem;
-  margin: 0 auto;
-  padding: 1.5rem;
-}
-
-.page-title {
-  font-size: 2.25rem;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 2rem;
-}
-
-.cooldown-alert {
-  background-color: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 0.5rem;
-  padding: 1rem;
-  margin-bottom: 1.5rem;
-}
-
-.cooldown-text {
-  color: #fca5a5;
+.view-title {
   text-align: center;
+  font-size: 1.125rem;
+  font-weight: 600;
+  letter-spacing: 0.05em;
+  color: #cbd5e1;
 }
 
-.loading-state {
-  text-align: center;
-  padding: 3rem 0;
-}
-
-.spinner {
-  display: inline-block;
-  width: 3rem;
-  height: 3rem;
-  border: 2px solid transparent;
-  border-bottom-color: #a855f7;
-  border-radius: 50%;
-  animation: spin 1s linear infinite;
-}
-
-@keyframes spin {
-  to { transform: rotate(360deg); }
-}
-
-.loading-text {
-  color: #9ca3af;
-  margin-top: 1rem;
-}
-
-.error-alert {
-  background-color: rgba(239, 68, 68, 0.2);
-  border: 1px solid rgba(239, 68, 68, 0.5);
-  border-radius: 0.5rem;
-  padding: 1.5rem;
-}
-
-.error-text {
-  color: #fca5a5;
-}
-
-.crimes-grid {
+.locations-grid {
   display: grid;
-  grid-template-columns: 1fr;
+  grid-template-columns: repeat(2, 1fr);
   gap: 1.5rem;
 }
 
-@media (min-width: 768px) {
-  .crimes-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 1024px) {
-  .crimes-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-.crime-card {
-  background-color: rgba(31, 41, 55, 0.5);
-  backdrop-filter: blur(8px);
-  border: 1px solid rgba(168, 85, 247, 0.3);
+.location-card {
+  position: relative;
+  height: 180px;
+  background: rgba(30, 41, 59, 0.6);
+  border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 0.5rem;
-  padding: 1.5rem;
-  transition: border-color 0.3s;
-}
-
-.crime-card:hover {
-  border-color: rgba(168, 85, 247, 0.6);
-}
-
-.crime-card.disabled {
-  opacity: 0.5;
-}
-
-.crime-name {
-  font-size: 1.25rem;
-  font-weight: bold;
-  color: white;
-  margin-bottom: 0.5rem;
-}
-
-.crime-description {
-  color: #9ca3af;
-  font-size: 0.875rem;
-  margin-bottom: 1rem;
-}
-
-.crime-stats {
-  display: flex;
-  flex-direction: column;
-  gap: 0.5rem;
-  margin-bottom: 1rem;
-  font-size: 0.875rem;
-}
-
-.stat-row {
-  display: flex;
-  justify-content: space-between;
-  color: #d1d5db;
-}
-
-.success-rate,
-.reward {
-  color: #4ade80;
-}
-
-.energy-cost {
-  color: #facc15;
-}
-
-.required-rank {
-  color: #c084fc;
-}
-
-.crime-button {
-  width: 100%;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  font-weight: bold;
-  border: none;
+  overflow: hidden;
   cursor: pointer;
   transition: all 0.3s;
 }
 
-.crime-button.enabled {
-  background: linear-gradient(to right, #9333ea, #ec4899);
-  color: white;
+.location-card:hover {
+  transform: translateY(-4px);
+  border-color: #00bcd4;
+  box-shadow: 0 8px 24px rgba(0, 188, 212, 0.2);
 }
 
-.crime-button.enabled:hover {
-  background: linear-gradient(to right, #a855f7, #f472b6);
-}
-
-.crime-button.disabled {
-  background-color: #374151;
-  color: #6b7280;
-  cursor: not-allowed;
-}
-
-.modal-overlay {
-  position: fixed;
+.location-bg {
+  position: absolute;
   inset: 0;
-  background-color: rgba(0, 0, 0, 0.8);
+  background-size: cover;
+  background-position: center;
+  opacity: 0.4;
+  transition: opacity 0.3s;
+}
+
+.location-card:hover .location-bg {
+  opacity: 0.6;
+}
+
+.location-bg.street {
+  background: linear-gradient(135deg, #64748b 0%, #475569 100%);
+}
+
+.location-bg.alley {
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+}
+
+.location-bg.store {
+  background: linear-gradient(135deg, #0891b2 0%, #0e7490 100%);
+}
+
+.location-bg.residential {
+  background: linear-gradient(135deg, #7c3aed 0%, #6d28d9 100%);
+}
+
+.location-bg.warehouse {
+  background: linear-gradient(135deg, #ea580c 0%, #c2410c 100%);
+}
+
+.location-bg.downtown {
+  background: linear-gradient(135deg, #dc2626 0%, #b91c1c 100%);
+}
+
+.location-bg.casino {
+  background: linear-gradient(135deg, #ca8a04 0%, #a16207 100%);
+}
+
+.location-bg.mansion {
+  background: linear-gradient(135deg, #7c2d12 0%, #431407 100%);
+}
+
+.location-info {
+  position: relative;
+  z-index: 1;
+  height: 100%;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem;
+}
+
+.location-name {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #ffffff;
+  margin: 0;
+  text-shadow: 0 2px 8px rgba(0, 0, 0, 0.8);
+}
+
+.location-badges {
   display: flex;
   align-items: center;
-  justify-content: center;
-  z-index: 50;
+  gap: 0.5rem;
+  align-self: flex-end;
 }
 
-.modal-content {
-  background-color: #1f2937;
-  border: 2px solid;
-  border-radius: 0.5rem;
-  padding: 2rem;
-  max-width: 28rem;
-  width: 100%;
-  margin: 0 1rem;
+.energy-badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.25rem 0.625rem;
+  background: rgba(15, 20, 25, 0.8);
+  border-radius: 0.25rem;
+  font-weight: 600;
+  font-size: 0.875rem;
+  color: #10b981;
 }
 
-.modal-content.success {
-  border-color: #22c55e;
+.min-level {
+  font-size: 0.625rem;
+  font-weight: 600;
+  color: #ef4444;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
 }
 
-.modal-content.failure {
-  border-color: #ef4444;
-}
-
-.modal-title {
-  font-size: 1.5rem;
-  font-weight: bold;
-  margin-bottom: 1rem;
-}
-
-.modal-title.success {
-  color: #4ade80;
-}
-
-.modal-title.failure {
-  color: #f87171;
-}
-
-.modal-message {
-  color: white;
-  margin-bottom: 1.5rem;
-}
-
-.modal-close {
-  width: 100%;
-  padding: 0.5rem 1rem;
-  background-color: #9333ea;
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: bold;
-  cursor: pointer;
-  transition: background-color 0.3s;
-}
-
-.modal-close:hover {
-  background-color: #a855f7;
+@media (max-width: 768px) {
+  .locations-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

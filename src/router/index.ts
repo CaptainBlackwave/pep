@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
+import GameLayout from '../layouts/GameLayout.vue'
 import LoginView from '../views/LoginView.vue'
 import RegisterView from '../views/RegisterView.vue'
-import DashboardView from '../views/DashboardView.vue'
+import HomeView from '../views/HomeView.vue'
 import CrimesView from '../views/modules/CrimesView.vue'
+import CrimeActionView from '../views/modules/CrimeActionView.vue'
 import GymView from '../views/modules/GymView.vue'
 import HospitalView from '../views/modules/HospitalView.vue'
 import BankView from '../views/modules/BankView.vue'
@@ -39,7 +41,7 @@ const router = createRouter({
   routes: [
     {
       path: '/',
-      redirect: '/login'
+      redirect: '/dashboard'
     },
     {
       path: '/login',
@@ -54,197 +56,212 @@ const router = createRouter({
       meta: { requiresGuest: true }
     },
     {
-      path: '/dashboard',
-      name: 'dashboard',
-      component: DashboardView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/crimes',
-      name: 'crimes',
-      component: CrimesView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/gym',
-      name: 'gym',
-      component: GymView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/hospital',
-      name: 'hospital',
-      component: HospitalView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/bank',
-      name: 'bank',
-      component: BankView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/travel',
-      name: 'travel',
-      component: TravelView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/drugs',
-      name: 'drugs',
-      component: DrugsView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/theft',
-      name: 'theft',
-      component: TheftView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/racing',
-      name: 'racing',
-      component: RacingView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/jail',
-      name: 'jail',
-      component: JailView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/inventory',
-      name: 'inventory',
-      component: InventoryView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/properties',
-      name: 'properties',
-      component: PropertiesView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/combat',
-      name: 'combat',
-      component: CombatView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/bounty',
-      name: 'bounty',
-      component: BountyView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/detective',
-      name: 'detective',
-      component: DetectiveView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/bullets',
-      name: 'bullets',
-      component: BulletsView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/gang',
-      name: 'gang',
-      component: GangView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/missions',
-      name: 'missions',
-      component: MissionsView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/achievements',
-      name: 'achievements',
-      component: AchievementsView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/leaderboards',
-      name: 'leaderboards',
-      component: LeaderboardsView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/forum',
-      name: 'forum',
-      component: ForumView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/tickets',
-      name: 'tickets',
-      component: TicketsView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/organized-crime',
-      name: 'organized-crime',
-      component: OrganizedCrimeView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/shop',
-      name: 'shop',
-      component: ShopView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/chat',
-      name: 'chat',
-      component: ChatView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/profile',
-      name: 'profile',
-      component: ProfileView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/activity',
-      name: 'activity',
-      component: ActivityView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/wiki',
-      name: 'wiki',
-      component: WikiView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/employment',
-      name: 'employment',
-      component: EmploymentView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/education',
-      name: 'education',
-      component: EducationView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/stocks',
-      name: 'stocks',
-      component: StocksView,
-      meta: { requiresAuth: true }
-    },
-    {
-      path: '/casino',
-      name: 'casino',
-      component: CasinoView,
-      meta: { requiresAuth: true }
-    },
+      path: '/',
+      component: GameLayout,
+      meta: { requiresAuth: true },
+      children: [
+        {
+          path: 'dashboard',
+          name: 'dashboard',
+          component: HomeView
+        },
+        {
+          path: 'home',
+          name: 'home',
+          component: HomeView
+        },
+        {
+          path: 'city',
+          name: 'city',
+          component: () => import('../views/modules/CityView.vue')
+        },
+        {
+          path: 'inventory',
+          name: 'inventory',
+          component: InventoryView
+        },
+        {
+          path: 'missions',
+          name: 'missions',
+          component: MissionsView
+        },
+        {
+          path: 'combat',
+          name: 'combat',
+          component: CombatView
+        },
+        {
+          path: 'scavenge',
+          name: 'scavenge',
+          component: () => import('../views/modules/ScavengeView.vue')
+        },
+        {
+          path: 'travel',
+          name: 'travel',
+          component: TravelView
+        },
+        {
+          path: 'skills',
+          name: 'skills',
+          component: () => import('../views/modules/SkillsView.vue')
+        },
+        {
+          path: 'forums',
+          name: 'forums',
+          component: ForumView
+        },
+        {
+          path: 'profile',
+          name: 'profile',
+          component: ProfileView
+        },
+        {
+          path: 'gym',
+          name: 'gym',
+          component: GymView
+        },
+        {
+          path: 'hospital',
+          name: 'hospital',
+          component: HospitalView
+        },
+        {
+          path: 'bank',
+          name: 'bank',
+          component: BankView
+        },
+        {
+          path: 'crimes',
+          name: 'crimes',
+          component: CrimesView
+        },
+        {
+          path: 'crimes/:id',
+          name: 'crime-action',
+          component: CrimeActionView
+        },
+        {
+          path: 'travel',
+          name: 'travel',
+          component: TravelView
+        },
+        {
+          path: 'drugs',
+          name: 'drugs',
+          component: DrugsView
+        },
+        {
+          path: 'theft',
+          name: 'theft',
+          component: TheftView
+        },
+        {
+          path: 'racing',
+          name: 'racing',
+          component: RacingView
+        },
+        {
+          path: 'jail',
+          name: 'jail',
+          component: JailView
+        },
+        {
+          path: 'properties',
+          name: 'properties',
+          component: PropertiesView
+        },
+        {
+          path: 'combat',
+          name: 'combat',
+          component: CombatView
+        },
+        {
+          path: 'bounty',
+          name: 'bounty',
+          component: BountyView
+        },
+        {
+          path: 'detective',
+          name: 'detective',
+          component: DetectiveView
+        },
+        {
+          path: 'bullets',
+          name: 'bullets',
+          component: BulletsView
+        },
+        {
+          path: 'gang',
+          name: 'gang',
+          component: GangView
+        },
+        {
+          path: 'missions',
+          name: 'missions',
+          component: MissionsView
+        },
+        {
+          path: 'achievements',
+          name: 'achievements',
+          component: AchievementsView
+        },
+        {
+          path: 'leaderboards',
+          name: 'leaderboards',
+          component: LeaderboardsView
+        },
+        {
+          path: 'tickets',
+          name: 'tickets',
+          component: TicketsView
+        },
+        {
+          path: 'organized-crime',
+          name: 'organized-crime',
+          component: OrganizedCrimeView
+        },
+        {
+          path: 'shop',
+          name: 'shop',
+          component: ShopView
+        },
+        {
+          path: 'chat',
+          name: 'chat',
+          component: ChatView
+        },
+        {
+          path: 'activity',
+          name: 'activity',
+          component: ActivityView
+        },
+        {
+          path: 'wiki',
+          name: 'wiki',
+          component: WikiView
+        },
+        {
+          path: 'employment',
+          name: 'employment',
+          component: EmploymentView
+        },
+        {
+          path: 'education',
+          name: 'education',
+          component: EducationView
+        },
+        {
+          path: 'stocks',
+          name: 'stocks',
+          component: StocksView
+        },
+        {
+          path: 'casino',
+          name: 'casino',
+          component: CasinoView
+        }
+      ]
+    }
   ],
 })
 

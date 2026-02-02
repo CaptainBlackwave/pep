@@ -1,197 +1,140 @@
 <template>
-  <div class="forum-container">
-    <div class="page-header">
-      <h1>💬 Forum</h1>
-      <div class="header-actions">
-        <button v-if="selectedTopic" @click="backToTopics" class="back-btn">← Back to Topics</button>
-        <button v-else-if="selectedCategory" @click="backToCategories" class="back-btn">← Back to Categories</button>
-        <router-link v-else to="/dashboard" class="back-link">← Back to Dashboard</router-link>
-      </div>
+  <div class="forum-view">
+    <!-- Loading State -->
+    <div v-if="loading" class="loading-state">
+      <div class="spinner"></div>
     </div>
 
-    <div class="content-wrapper">
-      <!-- Loading State -->
-      <div v-if="loading" class="loading-state">
-        <div class="spinner"></div>
-        <p>Loading forum...</p>
+    <!-- Topic View -->
+    <div v-else-if="selectedTopic" class="topic-view">
+      <div class="topic-header">
+        <button @click="backToTopics" class="back-btn">
+          <span>←</span> {{ selectedCategory?.name || 'BACK' }}
+        </button>
       </div>
 
-      <!-- Error State -->
-      <div v-else-if="error" class="error-state">
-        <p>{{ error }}</p>
-        <button @click="fetchCategories" class="retry-btn">Retry</button>
-      </div>
-
-      <!-- Topic View -->
-      <div v-else-if="selectedTopic" class="topic-view">
-        <div class="topic-header-card">
-          <h2>{{ selectedTopic.title }}</h2>
-          <div class="topic-meta">
-            <span class="meta-item">
-              <span class="meta-icon">👤</span>
-              Posted by {{ selectedTopic.user?.username || 'Unknown' }}
-            </span>
-            <span class="meta-item">
-              <span class="meta-icon">📅</span>
-              {{ formatDate(selectedTopic.created_at) }}
-            </span>
-            <span class="meta-item">
-              <span class="meta-icon">💬</span>
-              {{ formatNumber(replies.length) }} replies
-            </span>
+      <!-- Posts -->
+      <div class="posts-list">
+        <!-- Original Post -->
+        <div class="post-card">
+          <div class="post-avatar">
+            <div class="avatar">
+              {{ selectedTopic.user?.username?.[0]?.toUpperCase() || '?' }}
+            </div>
+            <div class="post-author">{{ selectedTopic.user?.username || 'Unknown' }}</div>
           </div>
-          <div class="topic-content">
-            {{ selectedTopic.content }}
+          <div class="post-content">
+            <div class="post-time">{{ formatTimeAgo(selectedTopic.created_at) }}</div>
+            <div class="post-title">{{ selectedTopic.title }}</div>
+            <div class="post-text">{{ selectedTopic.content }}</div>
           </div>
         </div>
 
         <!-- Replies -->
-        <div class="replies-section">
-          <h3>Replies</h3>
-          <div v-if="replies.length === 0" class="empty-state">
-            <p>No replies yet. Be the first to reply!</p>
-          </div>
-          <div v-else class="replies-list">
-            <div v-for="reply in replies" :key="reply.id" class="reply-card">
-              <div class="reply-avatar">
-                {{ reply.user?.username?.[0]?.toUpperCase() || '?' }}
-              </div>
-              <div class="reply-content">
-                <div class="reply-header">
-                  <span class="reply-author">{{ reply.user?.username || 'Unknown' }}</span>
-                  <span class="reply-date">{{ formatDate(reply.created_at) }}</span>
-                </div>
-                <div class="reply-text">{{ reply.content }}</div>
-              </div>
+        <div v-for="reply in replies" :key="reply.id" class="post-card">
+          <div class="post-avatar">
+            <div class="avatar">
+              {{ reply.user?.username?.[0]?.toUpperCase() || '?' }}
             </div>
+            <div class="post-author">{{ reply.user?.username || 'Unknown' }}</div>
           </div>
-        </div>
-
-        <!-- Reply Form -->
-        <div class="reply-form">
-          <h3>Post a Reply</h3>
-          <textarea
-            v-model="newReply"
-            placeholder="Write your reply..."
-            class="reply-textarea"
-          ></textarea>
-          <button @click="postReply" class="btn-post-reply">Post Reply</button>
-        </div>
-      </div>
-
-      <!-- Category Topics View -->
-      <div v-else-if="selectedCategory" class="category-view">
-        <div class="category-header-card">
-          <div class="category-title-section">
-            <h2>{{ getCategoryIcon(selectedCategory.name) }} {{ selectedCategory.name }}</h2>
-            <p>{{ selectedCategory.description }}</p>
-          </div>
-          <button @click="showNewTopicModal = true" class="btn-new-topic">+ New Topic</button>
-        </div>
-
-        <div v-if="topics.length === 0" class="empty-state">
-          <div class="empty-icon">📝</div>
-          <p>No topics in this category yet. Be the first to start a discussion!</p>
-        </div>
-        
-        <div v-else class="topics-list">
-          <div
-            v-for="topic in topics"
-            :key="topic.id"
-            class="topic-card"
-            @click="viewTopic(topic.id)"
-          >
-            <div class="topic-info">
-              <h3 class="topic-title">{{ topic.title }}</h3>
-              <div class="topic-meta">
-                <span class="meta-item">
-                  <span class="meta-icon">👤</span>
-                  {{ topic.user?.username || 'Unknown' }}
-                </span>
-                <span class="meta-item">
-                  <span class="meta-icon">📅</span>
-                  {{ formatDate(topic.created_at) }}
-                </span>
-                <span class="meta-item">
-                  <span class="meta-icon">💬</span>
-                  {{ formatNumber(topic.reply_count || 0) }} replies
-                </span>
-              </div>
-            </div>
-            <div class="arrow-icon">→</div>
+          <div class="post-content">
+            <div class="post-time">{{ formatTimeAgo(reply.created_at) }}</div>
+            <div class="post-text">{{ reply.content }}</div>
           </div>
         </div>
       </div>
 
-      <!-- Categories List View -->
-      <div v-else>
-        <div class="forum-card">
-          <div class="card-header">
-            <h2>Forum Categories</h2>
-            <p class="subtitle">Join the conversation with the community</p>
-          </div>
+      <!-- Reply Form -->
+      <div class="reply-section">
+        <div class="reply-header">ADD REPLY</div>
+        <div class="editor-toolbar">
+          <button class="toolbar-btn" title="Bold"><strong>B</strong></button>
+          <button class="toolbar-btn" title="Italic"><em>I</em></button>
+          <button class="toolbar-btn" title="Strikethrough"><s>S</s></button>
+          <span class="toolbar-divider"></span>
+          <button class="toolbar-btn" title="Quote">""</button>
+          <button class="toolbar-btn" title="Code">&lt;/&gt;</button>
+          <button class="toolbar-btn" title="Image">🖼</button>
+        </div>
+        <textarea
+          v-model="newReply"
+          placeholder="Write your message..."
+          class="reply-textarea"
+          maxlength="10000"
+        ></textarea>
+        <div class="reply-footer">
+          <span class="char-count">{{ newReply.length }}/10000</span>
+          <button @click="postReply" :disabled="!newReply.trim()" class="post-btn">
+            POST
+          </button>
+        </div>
+      </div>
+    </div>
 
-          <div class="categories-list">
-            <div
-              v-for="category in categories"
-              :key="category.id"
-              class="category-item"
-              @click="viewCategory(category.id)"
-            >
-              <div class="category-icon">
-                {{ getCategoryIcon(category.name) }}
-              </div>
-              <div class="category-content">
-                <h3 class="category-name">{{ category.name }}</h3>
-                <p class="category-description">{{ category.description }}</p>
-                <div class="category-meta">
-                  <span class="meta-item">
-                    <span class="meta-icon">📝</span>
-                    {{ formatNumber(category.topic_count) }} topics
-                  </span>
-                  <span class="meta-item">
-                    <span class="meta-icon">💬</span>
-                    {{ formatNumber(category.post_count) }} posts
-                  </span>
-                </div>
-              </div>
-              <div class="category-stats">
-                <div class="stat-number">{{ formatNumber(category.topic_count) }}</div>
-                <div class="stat-label">Topics</div>
-              </div>
-              <div class="arrow-icon">→</div>
-            </div>
+    <!-- Category Topics View -->
+    <div v-else-if="selectedCategory" class="category-view">
+      <div class="category-header">
+        <button @click="backToCategories" class="back-btn">
+          <span>←</span> FORUMS
+        </button>
+        <h1 class="category-title">{{ selectedCategory.name?.toUpperCase() }}</h1>
+        <button @click="showNewTopicModal = true" class="add-topic-btn">
+          ADD TOPIC
+        </button>
+      </div>
 
-            <div v-if="!categories || categories.length === 0" class="empty-state">
-              <div class="empty-icon">💭</div>
-              <p>No forum categories available yet.</p>
-            </div>
-          </div>
+      <div class="topics-table">
+        <div class="table-header">
+          <div class="col-topics">TOPICS</div>
+          <div class="col-replies">REPLIES</div>
+          <div class="col-author">AUTHOR</div>
+          <div class="col-last">LAST POST</div>
         </div>
 
-        <!-- Quick Stats -->
-        <div class="stats-grid">
-          <div class="stat-card">
-            <div class="stat-icon">📊</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(totalTopics) }}</div>
-              <div class="stat-label">Total Topics</div>
-            </div>
+        <div v-if="topics.length === 0" class="empty-topics">
+          <p>No topics yet. Be the first to start a discussion!</p>
+        </div>
+
+        <div
+          v-for="topic in topics"
+          :key="topic.id"
+          class="topic-row"
+          @click="viewTopic(topic.id)"
+        >
+          <div class="col-topics">
+            <span class="topic-icon">💬</span>
+            <span class="topic-name">{{ topic.title }}</span>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">💬</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ formatNumber(totalPosts) }}</div>
-              <div class="stat-label">Total Posts</div>
+          <div class="col-replies">{{ topic.replies || 0 }}</div>
+          <div class="col-author">
+            <div class="user-avatar">
+              {{ topic.author?.[0]?.toUpperCase() || '?' }}
             </div>
+            <span class="user-name">{{ topic.author || 'Unknown' }}</span>
           </div>
-          <div class="stat-card">
-            <div class="stat-icon">👥</div>
-            <div class="stat-info">
-              <div class="stat-value">{{ categories.length }}</div>
-              <div class="stat-label">Categories</div>
-            </div>
-          </div>
+          <div class="col-last">{{ topic.updated_at || '-' }}</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Categories List View -->
+    <div v-else class="categories-view">
+      <h1 class="forum-title">FORUMS</h1>
+
+      <div v-if="!categories || categories.length === 0" class="empty-categories">
+        <p>No forum categories available yet.</p>
+      </div>
+
+      <div v-else class="categories-list">
+        <div
+          v-for="category in categories"
+          :key="category.id"
+          class="category-card"
+          @click="viewCategory(category.id)"
+        >
+          <h2 class="category-name">{{ category.name?.toUpperCase() }}</h2>
+          <p class="category-desc">{{ category.description }}</p>
         </div>
       </div>
     </div>
@@ -199,13 +142,25 @@
 
   <!-- New Topic Modal -->
   <div v-if="showNewTopicModal" class="modal-overlay" @click="showNewTopicModal = false">
-    <div class="modal-content" @click.stop>
-      <h3>Create New Topic</h3>
-      <input v-model="newTopicTitle" placeholder="Topic title" class="input-field" />
-      <textarea v-model="newTopicContent" placeholder="Topic content..." class="textarea-field"></textarea>
+    <div class="modal-card" @click.stop>
+      <h2>Create New Topic</h2>
+      <input
+        v-model="newTopicTitle"
+        placeholder="Topic title"
+        class="input-field"
+      />
+      <textarea
+        v-model="newTopicContent"
+        placeholder="What's on your mind..."
+        class="textarea-field"
+      ></textarea>
       <div class="modal-actions">
-        <button @click="createTopic" class="btn-primary">Create Topic</button>
-        <button @click="showNewTopicModal = false" class="btn-secondary">Cancel</button>
+        <button @click="createTopic" :disabled="!newTopicTitle.trim() || !newTopicContent.trim()" class="btn-primary">
+          Create Topic
+        </button>
+        <button @click="showNewTopicModal = false" class="btn-secondary">
+          Cancel
+        </button>
       </div>
     </div>
   </div>
@@ -229,18 +184,10 @@ const newTopicContent = ref('');
 const showNewTopicModal = ref(false);
 const newReply = ref('');
 
-const totalTopics = computed(() => 
-  categories.value.reduce((sum, cat) => sum + (cat.topic_count || 0), 0)
-);
-
-const totalPosts = computed(() => 
-  categories.value.reduce((sum, cat) => sum + (cat.post_count || 0), 0)
-);
-
 const fetchCategories = async () => {
   loading.value = true;
   error.value = null;
-  
+
   try {
     const response = await api.get('/forum');
     categories.value = response.data.categories || response.data || [];
@@ -295,7 +242,7 @@ const backToTopics = () => {
 
 const createTopic = async () => {
   if (!newTopicTitle.value.trim() || !newTopicContent.value.trim()) return;
-  
+
   try {
     await api.post(`/forum/category/${selectedCategory.value.id}/topic`, {
       title: newTopicTitle.value,
@@ -313,7 +260,7 @@ const createTopic = async () => {
 
 const postReply = async () => {
   if (!newReply.value.trim()) return;
-  
+
   try {
     await api.post(`/forum/topic/${selectedTopic.value.id}/reply`, {
       content: newReply.value
@@ -326,41 +273,18 @@ const postReply = async () => {
   }
 };
 
-const formatNumber = (num) => {
-  return new Intl.NumberFormat('en-US').format(num || 0);
-};
-
-const formatDate = (dateString) => {
-  if (!dateString) return 'N/A';
+const formatTimeAgo = (dateString) => {
+  if (!dateString) return 'Recently';
   const date = new Date(dateString);
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric',
-    hour: '2-digit',
-    minute: '2-digit'
-  });
-};
+  const now = new Date();
+  const diffMs = now - date;
+  const diffDays = Math.floor(diffMs / (1000 * 60 * 60 * 24));
 
-const getCategoryIcon = (name) => {
-  const icons = {
-    'General Discussion': '💭',
-    'Game Updates': '📢',
-    'Help & Support': '🆘',
-    'Suggestions': '💡',
-    'Off Topic': '🎲',
-    'Bug Reports': '🐛',
-    'Gangs': '🎭',
-    'Trading': '💰',
-  };
-  
-  for (const [key, icon] of Object.entries(icons)) {
-    if (name.toLowerCase().includes(key.toLowerCase())) {
-      return icon;
-    }
-  }
-  
-  return '📌';
+  if (diffDays === 0) return 'Today';
+  if (diffDays === 1) return '1 day ago';
+  if (diffDays < 30) return `${diffDays} days ago`;
+  if (diffDays < 365) return `${Math.floor(diffDays / 30)} months ago`;
+  return `${Math.floor(diffDays / 365)} years ago`;
 };
 
 onMounted(() => {
@@ -369,613 +293,564 @@ onMounted(() => {
 </script>
 
 <style scoped>
-.forum-container {
+.forum-view {
   min-height: 100vh;
-  background: linear-gradient(135deg, #dbeafe 0%, #bfdbfe 50%, #93c5fd 100%);
-  padding: 2rem 1rem;
-}
-
-.page-header {
-  max-width: 1200px;
-  margin: 0 auto 2rem;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
-}
-
-.page-header h1 {
-  font-size: 2.5rem;
-  font-weight: 800;
-  color: #1e3a8a;
-  margin: 0;
-  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-.back-link {
-  color: #1d4ed8;
-  text-decoration: none;
-  font-weight: 600;
-  font-size: 1rem;
-  padding: 0.5rem 1rem;
-  border-radius: 0.5rem;
-  background: white;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.back-link:hover {
-  background: #eff6ff;
-  transform: translateX(-4px);
-}
-
-.content-wrapper {
-  max-width: 1200px;
+  padding: 2rem;
+  max-width: 1400px;
   margin: 0 auto;
 }
 
-.loading-state,
-.error-state {
-  background: white;
-  border-radius: 1rem;
-  padding: 3rem;
-  text-align: center;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* Loading */
+.loading-state {
+  display: flex;
+  justify-content: center;
+  padding: 4rem;
 }
 
 .spinner {
   width: 50px;
   height: 50px;
-  border: 4px solid #dbeafe;
-  border-top: 4px solid #3b82f6;
+  border: 4px solid rgba(255, 255, 255, 0.1);
+  border-top-color: #00bcd4;
   border-radius: 50%;
   animation: spin 1s linear infinite;
-  margin: 0 auto 1rem;
 }
 
 @keyframes spin {
-  0% { transform: rotate(0deg); }
-  100% { transform: rotate(360deg); }
+  to { transform: rotate(360deg); }
 }
 
-.error-state p {
-  color: #991b1b;
-  font-size: 1.1rem;
-  margin-bottom: 1rem;
-}
-
-.retry-btn {
-  background: #3b82f6;
-  color: white;
-  border: none;
-  padding: 0.75rem 2rem;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.retry-btn:hover {
-  background: #2563eb;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
-}
-
-.forum-card {
-  background: white;
-  border-radius: 1rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  overflow: hidden;
-  margin-bottom: 2rem;
-}
-
-.card-header {
-  padding: 2rem;
-  background: linear-gradient(135deg, #eff6ff, #dbeafe);
-  border-bottom: 2px solid #bfdbfe;
-}
-
-.card-header h2 {
+/* Categories View */
+.forum-title {
+  text-align: center;
   font-size: 2rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin: 0 0 0.5rem;
-}
-
-.subtitle {
-  color: #475569;
-  font-size: 1rem;
-  margin: 0;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: #94a3b8;
+  margin-bottom: 3rem;
 }
 
 .categories-list {
-  padding: 1rem;
-}
-
-.category-item {
   display: flex;
-  align-items: center;
-  gap: 1.5rem;
-  padding: 1.5rem;
-  margin-bottom: 1rem;
-  border: 2px solid #e0f2fe;
-  border-radius: 0.75rem;
-  background: white;
-  cursor: pointer;
-  transition: all 0.3s ease;
-}
-
-.category-item:hover {
-  border-color: #3b82f6;
-  background: #f0f9ff;
-  transform: translateX(4px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
-}
-
-.category-icon {
-  font-size: 2.5rem;
-  flex-shrink: 0;
-}
-
-.category-content {
-  flex: 1;
-}
-
-.category-name {
-  font-size: 1.25rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin: 0 0 0.5rem;
-}
-
-.category-description {
-  color: #64748b;
-  font-size: 0.95rem;
-  margin: 0 0 0.75rem;
-  line-height: 1.5;
-}
-
-.category-meta {
-  display: flex;
-  gap: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.meta-item {
-  display: flex;
-  align-items: center;
-  gap: 0.25rem;
-  color: #475569;
-  font-size: 0.875rem;
-  font-weight: 500;
-}
-
-.meta-icon {
-  font-size: 1rem;
-}
-
-.category-stats {
-  text-align: center;
-  padding: 0.5rem 1rem;
-  background: linear-gradient(135deg, #dbeafe, #bfdbfe);
-  border-radius: 0.5rem;
-  flex-shrink: 0;
-}
-
-.stat-number {
-  font-size: 1.75rem;
-  font-weight: 700;
-  color: #1e40af;
-}
-
-.stat-label {
-  font-size: 0.75rem;
-  color: #475569;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-.arrow-icon {
-  font-size: 1.5rem;
-  color: #3b82f6;
-  flex-shrink: 0;
-}
-
-.empty-state {
-  text-align: center;
-  padding: 3rem 1rem;
-}
-
-.empty-icon {
-  font-size: 4rem;
-  margin-bottom: 1rem;
-}
-
-.empty-state p {
-  color: #94a3b8;
-  font-size: 1.1rem;
-}
-
-.stats-grid {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  flex-direction: column;
   gap: 1rem;
-}
-
-.stat-card {
-  background: white;
-  border-radius: 0.75rem;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  align-items: center;
-  gap: 1rem;
-  transition: all 0.3s ease;
-}
-
-.stat-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.15);
-}
-
-.stat-card .stat-icon {
-  font-size: 2.5rem;
-  flex-shrink: 0;
-}
-
-.stat-info {
-  flex: 1;
-}
-
-.stat-card .stat-value {
-  font-size: 1.875rem;
-  font-weight: 700;
-  color: #1e3a8a;
-  margin-bottom: 0.25rem;
-}
-
-.stat-card .stat-label {
-  color: #64748b;
-  font-size: 0.875rem;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-}
-
-@media (max-width: 768px) {
-  .page-header h1 {
-    font-size: 2rem;
-  }
-
-  .category-item {
-    flex-direction: column;
-    align-items: flex-start;
-    gap: 1rem;
-  }
-
-  .category-icon {
-    font-size: 2rem;
-  }
-
-  .category-stats {
-    align-self: flex-start;
-  }
-
-  .arrow-icon {
-    display: none;
-  }
-
-  .stats-grid {
-    grid-template-columns: 1fr;
-  }
-}
-
-/* Topic and Reply Views */
-.topic-view, .category-view {
   max-width: 1200px;
   margin: 0 auto;
 }
 
-.topic-header-card, .category-header-card {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
+.category-card {
+  background: rgba(30, 41, 59, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1.5rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s;
 }
 
-.topic-header-card h2 {
-  color: #1e3a8a;
-  margin: 0 0 1rem 0;
-  font-size: 2rem;
+.category-card:hover {
+  background: rgba(30, 41, 59, 0.7);
+  border-color: rgba(255, 255, 255, 0.2);
 }
 
-.topic-meta {
-  display: flex;
-  gap: 1.5rem;
-  margin-bottom: 1.5rem;
-  flex-wrap: wrap;
-}
-
-.topic-content {
-  color: #1f2937;
-  line-height: 1.6;
-  white-space: pre-wrap;
-}
-
-.category-title-section {
-  flex: 1;
-}
-
-.category-title-section h2 {
-  color: #1e3a8a;
+.category-name {
+  font-size: 1.1rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #e2e8f0;
   margin: 0 0 0.5rem 0;
 }
 
-.category-title-section p {
-  color: #6b7280;
+.category-desc {
+  color: #94a3b8;
+  margin: 0;
+  font-size: 0.95rem;
+}
+
+/* Category View (Topics List) */
+.category-header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 2rem;
+  padding-bottom: 1rem;
+}
+
+.back-btn {
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
+  padding: 0.5rem 1rem;
+  border-radius: 4px;
+  cursor: pointer;
+  font-size: 0.9rem;
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  transition: all 0.2s;
+}
+
+.back-btn:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: rgba(255, 255, 255, 0.3);
+}
+
+.category-title {
+  font-size: 1.75rem;
+  font-weight: 400;
+  letter-spacing: 2px;
+  color: #e2e8f0;
   margin: 0;
 }
 
-.btn-new-topic {
-  padding: 0.75rem 1.5rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
+.add-topic-btn {
+  background: #4ade80;
+  color: #000;
   border: none;
-  border-radius: 0.5rem;
+  padding: 0.6rem 1.5rem;
+  border-radius: 4px;
   font-weight: 600;
+  font-size: 0.9rem;
   cursor: pointer;
-  transition: all 0.3s ease;
+  letter-spacing: 0.5px;
+  transition: background 0.2s;
 }
 
-.btn-new-topic:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
+.add-topic-btn:hover {
+  background: #3bc96f;
 }
 
-.topics-list {
-  display: flex;
-  flex-direction: column;
+/* Topics Table */
+.topics-table {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.table-header {
+  display: grid;
+  grid-template-columns: 2fr 120px 200px 200px;
   gap: 1rem;
+  padding: 1rem 1.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #94a3b8;
 }
 
-.topic-card {
-  background: white;
-  border-radius: 1rem;
-  padding: 1.5rem;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  display: flex;
-  justify-content: space-between;
+.table-header .col-topics,
+.table-header .col-replies,
+.table-header .col-author,
+.table-header .col-last {
+  display: block;
+}
+
+.topic-row {
+  display: grid;
+  grid-template-columns: 2fr 120px 200px 200px;
+  gap: 1rem;
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+  cursor: pointer;
+  transition: background 0.2s;
   align-items: center;
-  cursor: pointer;
-  transition: all 0.3s ease;
 }
 
-.topic-card:hover {
-  transform: translateX(5px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.2);
+.topic-row:last-child {
+  border-bottom: none;
 }
 
-.topic-info {
-  flex: 1;
+.topic-row:hover {
+  background: rgba(255, 255, 255, 0.03);
 }
 
-.topic-title {
-  color: #1e3a8a;
-  margin: 0 0 0.5rem 0;
-  font-size: 1.25rem;
-}
-
-.replies-section {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
-  margin-bottom: 2rem;
-}
-
-.replies-section h3 {
-  color: #1e3a8a;
-  margin: 0 0 1.5rem 0;
-}
-
-.replies-list {
+.col-topics {
   display: flex;
-  flex-direction: column;
-  gap: 1rem;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.reply-card {
+.topic-icon {
+  font-size: 1.2rem;
+  opacity: 0.5;
+}
+
+.topic-name {
+  color: #e2e8f0;
+  font-size: 0.95rem;
+}
+
+.col-replies {
+  color: #94a3b8;
+  font-size: 0.95rem;
+  text-align: center;
+}
+
+.col-author,
+.col-last {
   display: flex;
-  gap: 1rem;
-  padding: 1rem;
-  background: #f9fafb;
-  border-radius: 0.5rem;
-  border-left: 3px solid #3b82f6;
+  align-items: center;
+  gap: 0.75rem;
 }
 
-.reply-avatar {
-  width: 40px;
-  height: 40px;
+.user-avatar {
+  width: 32px;
+  height: 32px;
   border-radius: 50%;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
+  background: linear-gradient(135deg, #00bcd4, #0097a7);
   display: flex;
   align-items: center;
   justify-content: center;
   color: white;
-  font-weight: bold;
+  font-size: 0.85rem;
+  font-weight: 600;
   flex-shrink: 0;
 }
 
-.reply-content {
-  flex: 1;
+.user-name {
+  color: #cbd5e1;
+  font-size: 0.9rem;
 }
 
-.reply-header {
+/* Topic View (Posts) */
+.topic-header {
+  margin-bottom: 1.5rem;
+}
+
+/* Posts */
+.posts-list {
   display: flex;
-  justify-content: space-between;
-  margin-bottom: 0.5rem;
+  flex-direction: column;
+  gap: 0.75rem;
+  margin-bottom: 1.5rem;
 }
 
-.reply-author {
-  color: #1e3a8a;
+.post-card {
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
+  display: grid;
+  grid-template-columns: 100px 1fr;
+  gap: 1rem;
+}
+
+.post-avatar {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.avatar {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #00bcd4, #0097a7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: white;
+  font-size: 1.2rem;
+  font-weight: 700;
+}
+
+.post-author {
+  color: #cbd5e1;
+  font-size: 0.9rem;
+  font-weight: 500;
+  text-align: center;
+}
+
+.post-content {
+  position: relative;
+}
+
+.post-time {
+  position: absolute;
+  top: 0;
+  right: 0;
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.post-title {
+  font-size: 1.15rem;
   font-weight: 600;
+  color: #e2e8f0;
+  margin-bottom: 0.75rem;
+  padding-top: 0.25rem;
 }
 
-.reply-date {
-  color: #6b7280;
-  font-size: 0.875rem;
-}
-
-.reply-text {
-  color: #1f2937;
+.post-text {
+  color: #cbd5e1;
   line-height: 1.6;
+  padding-top: 0.75rem;
   white-space: pre-wrap;
 }
 
-.reply-form {
-  background: white;
-  border-radius: 1rem;
-  padding: 2rem;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+/* Reply Section */
+.reply-section {
+  background: rgba(15, 23, 42, 0.5);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 8px;
+  padding: 1rem;
 }
 
-.reply-form h3 {
-  color: #1e3a8a;
-  margin: 0 0 1rem 0;
+.reply-header {
+  font-size: 0.85rem;
+  font-weight: 600;
+  letter-spacing: 1px;
+  color: #94a3b8;
+  margin-bottom: 0.75rem;
+}
+
+.editor-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.5rem 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border-radius: 4px 4px 0 0;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-bottom: none;
+}
+
+.toolbar-btn {
+  background: transparent;
+  border: none;
+  color: #94a3b8;
+  padding: 0.25rem 0.5rem;
+  cursor: pointer;
+  font-size: 0.95rem;
+  transition: color 0.2s;
+}
+
+.toolbar-btn:hover {
+  color: #e2e8f0;
+}
+
+.toolbar-divider {
+  width: 1px;
+  height: 16px;
+  background: rgba(255, 255, 255, 0.1);
+  margin: 0 0.25rem;
 }
 
 .reply-textarea {
   width: 100%;
   min-height: 120px;
-  padding: 1rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.5rem;
+  padding: 0.75rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 0 0 4px 4px;
+  color: #e2e8f0;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.95rem;
   resize: vertical;
-  margin-bottom: 1rem;
-}
-
-.reply-textarea:focus {
   outline: none;
-  border-color: #3b82f6;
 }
 
-.btn-post-reply {
-  padding: 0.75rem 2rem;
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: all 0.3s ease;
+.reply-textarea::placeholder {
+  color: #64748b;
 }
 
-.btn-post-reply:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(59, 130, 246, 0.4);
-}
-
-.back-btn {
-  padding: 0.5rem 1rem;
-  background: white;
-  color: #1d4ed8;
-  border: none;
-  border-radius: 0.5rem;
-  font-weight: 600;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: all 0.3s ease;
-}
-
-.back-btn:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
-}
-
-.header-actions {
+.reply-footer {
   display: flex;
-  gap: 1rem;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: 0.75rem;
 }
 
+.char-count {
+  color: #64748b;
+  font-size: 0.85rem;
+}
+
+.post-btn {
+  background: #4ade80;
+  color: #000;
+  border: none;
+  padding: 0.6rem 2rem;
+  border-radius: 4px;
+  font-weight: 600;
+  font-size: 0.9rem;
+  cursor: pointer;
+  letter-spacing: 0.5px;
+  transition: background 0.2s;
+}
+
+.post-btn:hover:not(:disabled) {
+  background: #3bc96f;
+}
+
+.post-btn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
+/* Modal */
 .modal-overlay {
   position: fixed;
   top: 0;
   left: 0;
   right: 0;
   bottom: 0;
-  background: rgba(0, 0, 0, 0.5);
+  background: rgba(0, 0, 0, 0.8);
   display: flex;
   align-items: center;
   justify-content: center;
   z-index: 1000;
+  backdrop-filter: blur(4px);
 }
 
-.modal-content {
-  background: white;
+.modal-card {
+  background: rgba(15, 23, 42, 0.95);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 8px;
   padding: 2rem;
-  border-radius: 1rem;
-  width: 600px;
-  max-width: 90%;
-  max-height: 90vh;
-  overflow-y: auto;
+  max-width: 600px;
+  width: 90%;
 }
 
-.modal-content h3 {
-  color: #1e3a8a;
+.modal-card h2 {
+  font-size: 1.5rem;
+  color: #e2e8f0;
   margin: 0 0 1.5rem 0;
 }
 
-.input-field, .textarea-field {
+.input-field,
+.textarea-field {
   width: 100%;
   padding: 0.75rem;
-  border: 2px solid #e5e7eb;
-  border-radius: 0.5rem;
+  background: rgba(0, 0, 0, 0.3);
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  border-radius: 4px;
+  color: #e2e8f0;
   font-family: inherit;
-  font-size: 1rem;
+  font-size: 0.95rem;
   margin-bottom: 1rem;
+  outline: none;
+}
+
+.input-field:focus,
+.textarea-field:focus {
+  border-color: #00bcd4;
 }
 
 .textarea-field {
-  min-height: 150px;
+  min-height: 200px;
   resize: vertical;
 }
 
-.input-field:focus, .textarea-field:focus {
-  outline: none;
-  border-color: #3b82f6;
+.input-field::placeholder,
+.textarea-field::placeholder {
+  color: #64748b;
 }
 
 .modal-actions {
   display: flex;
   gap: 1rem;
-  justify-content: flex-end;
 }
 
-.btn-primary, .btn-secondary {
+.btn-primary,
+.btn-secondary {
   padding: 0.75rem 1.5rem;
   border: none;
-  border-radius: 0.5rem;
+  border-radius: 4px;
   font-weight: 600;
   cursor: pointer;
-  transition: all 0.3s ease;
+  transition: all 0.2s;
+  flex: 1;
 }
 
 .btn-primary {
-  background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%);
-  color: white;
+  background: #4ade80;
+  color: #000;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: #3bc96f;
+}
+
+.btn-primary:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
 }
 
 .btn-secondary {
-  background: #e5e7eb;
-  color: #1f2937;
+  background: transparent;
+  border: 1px solid rgba(255, 255, 255, 0.2);
+  color: #94a3b8;
 }
 
-.btn-primary:hover, .btn-secondary:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+.btn-secondary:hover {
+  background: rgba(255, 255, 255, 0.05);
+}
+
+/* Empty States */
+.empty-categories,
+.empty-topics {
+  text-align: center;
+  padding: 3rem;
+  color: #64748b;
+}
+
+/* Responsive */
+@media (max-width: 968px) {
+  .table-header,
+  .topic-row {
+    grid-template-columns: 2fr 80px 150px 150px;
+    gap: 0.75rem;
+  }
+}
+
+@media (max-width: 768px) {
+  .forum-view {
+    padding: 1rem;
+  }
+
+  .category-header,
+  .topic-header {
+    flex-direction: column;
+    gap: 1rem;
+    align-items: stretch;
+  }
+
+  .topic-title {
+    text-align: left;
+  }
+
+  .table-header {
+    display: none;
+  }
+
+  .topic-row {
+    grid-template-columns: 1fr;
+    gap: 0.5rem;
+  }
+
+  .col-topics {
+    grid-column: 1;
+  }
+
+  .col-replies,
+  .col-author,
+  .col-last {
+    display: none;
+  }
+
+  .post-card {
+    grid-template-columns: 1fr;
+    gap: 1rem;
+  }
+
+  .post-avatar {
+    flex-direction: row;
+    justify-content: flex-start;
+  }
 }
 </style>
 
