@@ -26,8 +26,23 @@ export default defineConfig({
     strictPort: false,
     allowedHosts: ['frontend.openpbbg.orb.local', 'frontend.orb.local', 'localhost', '.orb.local'],
     hmr: {
-      host: 'frontend.orb.local',
+      clientPort: 5175,
       protocol: 'ws',
+    },
+    proxy: {
+      '/api': {
+        target: 'http://host.docker.internal:8001',
+        changeOrigin: true,
+        secure: false,
+        configure: (proxy, options) => {
+          proxy.on('error', (err, _req, _res) => {
+            console.log('proxy error', err);
+          });
+          proxy.on('proxyReq', (proxyReq, req, _res) => {
+            console.log('Sending Request to the Target:', req.method, req.url);
+          });
+        },
+      },
     },
   },
 })

@@ -67,6 +67,26 @@
         <!-- Announcements Banner -->
         <AnnouncementsBanner />
         
+        <!-- Quick Navigation -->
+        <div class="quick-nav">
+          <router-link to="/profile" class="quick-nav-item">
+            <span class="quick-icon">👤</span>
+            <span>Profile</span>
+          </router-link>
+          <router-link to="/chat" class="quick-nav-item">
+            <span class="quick-icon">💬</span>
+            <span>Chat</span>
+          </router-link>
+          <router-link to="/activity" class="quick-nav-item">
+            <span class="quick-icon">📰</span>
+            <span>Activity</span>
+          </router-link>
+          <router-link to="/wiki" class="quick-nav-item">
+            <span class="quick-icon">📚</span>
+            <span>Wiki</span>
+          </router-link>
+        </div>
+        
         <!-- Game Features Grid -->
         <div>
           <h3 class="features-title">Game Features</h3>
@@ -168,7 +188,11 @@ const moduleIcons = {
   'leaderboards': '📊',
   'racing': '🏁',
   'drugs': '💊',
-  'properties': '🏠'
+  'properties': '🏠',
+  'chat': '💬',
+  'profile': '👤',
+  'activity': '📰',
+  'wiki': '📚'
 }
 
 function getModuleIcon(name) {
@@ -201,7 +225,11 @@ function getModuleRoute(name) {
     'organized-crime': '/organized-crime',
     'organized_crimes': '/organized-crime',
     'detective': '/detective',
-    'bullets': '/bullets'
+    'bullets': '/bullets',
+    'chat': '/chat',
+    'profile': '/profile',
+    'activity': '/activity',
+    'wiki': '/wiki'
   }
   return routes[name.toLowerCase()] || '/dashboard'
 }
@@ -469,6 +497,39 @@ onMounted(() => {
   display: flex;
   flex-direction: column;
   gap: 2rem;
+}
+
+/* Quick Navigation */
+.quick-nav {
+  display: flex;
+  gap: 1rem;
+  flex-wrap: wrap;
+  margin-bottom: 1rem;
+}
+
+.quick-nav-item {
+  flex: 1;
+  min-width: 150px;
+  padding: 1rem;
+  background: linear-gradient(135deg, #16213e 0%, #0f3460 100%);
+  border-radius: 0.5rem;
+  border: 1px solid #0f3460;
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  text-decoration: none;
+  color: white;
+  transition: all 0.3s ease;
+}
+
+.quick-nav-item:hover {
+  transform: translateY(-3px);
+  border-color: #e94560;
+  box-shadow: 0 4px 8px rgba(233, 69, 96, 0.2);
+}
+
+.quick-icon {
+  font-size: 1.5rem;
 }
 
 /* Player Info Card */

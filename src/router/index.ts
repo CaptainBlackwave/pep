@@ -25,6 +25,10 @@ import ForumView from '../views/modules/ForumView.vue'
 import OrganizedCrimeView from '../views/modules/OrganizedCrimeView.vue'
 import ShopView from '../views/modules/ShopView.vue'
 import TicketsView from '../views/TicketsView.vue'
+import ChatView from '../views/modules/ChatView.vue'
+import ProfileView from '../views/modules/ProfileView.vue'
+import ActivityView from '../views/modules/ActivityView.vue'
+import WikiView from '../views/modules/WikiView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -187,6 +191,30 @@ const router = createRouter({
       path: '/shop',
       name: 'shop',
       component: ShopView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/chat',
+      name: 'chat',
+      component: ChatView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/profile',
+      name: 'profile',
+      component: ProfileView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/activity',
+      name: 'activity',
+      component: ActivityView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/wiki',
+      name: 'wiki',
+      component: WikiView,
       meta: { requiresAuth: true }
     },
   ],
