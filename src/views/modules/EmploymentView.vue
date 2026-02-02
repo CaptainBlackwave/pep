@@ -7,27 +7,27 @@
       <div class="job-header">
         <div>
           <h2>Current Position</h2>
-          <h3>{{ currentJob.position.title }}</h3>
-          <p class="company-name">{{ currentJob.position.company.name }}</p>
+          <h3>{{ currentJob.position?.title }}</h3>
+          <p class="company-name">{{ currentJob.company?.name }}</p>
         </div>
         <button @click="quitJob" class="btn-quit">Quit Job</button>
       </div>
       <div class="job-stats">
         <div class="stat">
           <span class="label">Salary</span>
-          <span class="value">${{ currentJob.position.salary.toLocaleString() }}</span>
+          <span class="value">${{ (currentJob.salary || 0).toLocaleString() }}</span>
         </div>
         <div class="stat">
           <span class="label">Shifts Worked</span>
-          <span class="value">{{ currentJob.shifts_worked }}</span>
+          <span class="value">{{ currentJob.total_days_worked || 0 }}</span>
         </div>
         <div class="stat">
           <span class="label">Performance</span>
-          <span class="value">{{ currentJob.performance_rating.toFixed(1) }}</span>
+          <span class="value">{{ (currentJob.performance_rating || 0).toFixed(1) }}</span>
         </div>
         <div class="stat">
           <span class="label">Total Earned</span>
-          <span class="value">${{ currentJob.total_earned.toLocaleString() }}</span>
+          <span class="value">${{ (currentJob.total_earned || 0).toLocaleString() }}</span>
         </div>
       </div>
       <button @click="work" :disabled="working || hasWorkedToday" class="btn-work">
@@ -56,27 +56,27 @@
 
       <div class="jobs-grid">
         <div v-for="position in filteredPositions" :key="position.id" class="job-card">
-          <div class="job-icon">{{ getSectorIcon(position.company.sector) }}</div>
+          <div class="job-icon">{{ getSectorIcon(position.company?.type) }}</div>
           <div class="job-info">
             <h3>{{ position.title }}</h3>
-            <p class="company">{{ position.company.name }}</p>
+            <p class="company">{{ position.company?.name }}</p>
             <p class="description">{{ position.description }}</p>
             
             <div class="requirements">
               <div class="req">
                 <span class="req-label">Required Stats:</span>
-                <span class="req-value">{{ position.requirements }}</span>
+                <span class="req-value">Level {{ position.required_level || 1 }}</span>
               </div>
             </div>
             
             <div class="job-details">
               <div class="detail">
                 <span class="label">💰 Salary</span>
-                <span class="value">${{ position.salary.toLocaleString() }}</span>
+                <span class="value">${{ (position.base_salary || 0).toLocaleString() }}</span>
               </div>
               <div class="detail">
                 <span class="label">📊 Level</span>
-                <span class="value">{{ position.required_level }}</span>
+                <span class="value">{{ position.required_level || 1 }}</span>
               </div>
             </div>
             
@@ -109,13 +109,13 @@ const workSuccess = ref(false)
 
 const sectors = computed(() => {
   const sectorSet = new Set(['All'])
-  positions.value.forEach(p => sectorSet.add(p.company.sector))
+  positions.value.forEach(p => sectorSet.add(p.company.type))
   return Array.from(sectorSet)
 })
 
 const filteredPositions = computed(() => {
   if (selectedSector.value === 'All') return positions.value
-  return positions.value.filter(p => p.company.sector === selectedSector.value)
+  return positions.value.filter(p => p.company.type === selectedSector.value)
 })
 
 const getSectorIcon = (sector) => {

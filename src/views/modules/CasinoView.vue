@@ -24,7 +24,7 @@
           <span class="stat-icon">❌</span>
           <div>
             <span class="stat-label">Total Lost</span>
-            <span class="stat-value negative">${{{ stats.total_lost?.toLocaleString() || 0 }}</span>
+            <span class="stat-value negative">${{ stats.total_lost?.toLocaleString() || 0 }}</span>
           </div>
         </div>
         <div class="stat-box">

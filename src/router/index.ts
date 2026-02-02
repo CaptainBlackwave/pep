@@ -29,6 +29,10 @@ import ChatView from '../views/modules/ChatView.vue'
 import ProfileView from '../views/modules/ProfileView.vue'
 import ActivityView from '../views/modules/ActivityView.vue'
 import WikiView from '../views/modules/WikiView.vue'
+import EmploymentView from '../views/modules/EmploymentView.vue'
+import EducationView from '../views/modules/EducationView.vue'
+import StocksView from '../views/modules/StocksView.vue'
+import CasinoView from '../views/modules/CasinoView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -215,6 +219,30 @@ const router = createRouter({
       path: '/wiki',
       name: 'wiki',
       component: WikiView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/employment',
+      name: 'employment',
+      component: EmploymentView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/education',
+      name: 'education',
+      component: EducationView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/stocks',
+      name: 'stocks',
+      component: StocksView,
+      meta: { requiresAuth: true }
+    },
+    {
+      path: '/casino',
+      name: 'casino',
+      component: CasinoView,
       meta: { requiresAuth: true }
     },
   ],

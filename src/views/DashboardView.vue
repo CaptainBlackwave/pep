@@ -192,7 +192,11 @@ const moduleIcons = {
   'chat': '💬',
   'profile': '👤',
   'activity': '📰',
-  'wiki': '📚'
+  'wiki': '📚',
+  'employment': '💼',
+  'education': '🎓',
+  'stocks': '📈',
+  'casino': '🎰'
 }
 
 function getModuleIcon(name) {
@@ -229,7 +233,11 @@ function getModuleRoute(name) {
     'chat': '/chat',
     'profile': '/profile',
     'activity': '/activity',
-    'wiki': '/wiki'
+    'wiki': '/wiki',
+    'employment': '/employment',
+    'education': '/education',
+    'stocks': '/stocks',
+    'casino': '/casino'
   }
   return routes[name.toLowerCase()] || '/dashboard'
 }
