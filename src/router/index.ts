@@ -141,11 +141,6 @@ const router = createRouter({
           component: CrimeActionView
         },
         {
-          path: 'travel',
-          name: 'travel',
-          component: TravelView
-        },
-        {
           path: 'drugs',
           name: 'drugs',
           component: DrugsView
@@ -171,11 +166,6 @@ const router = createRouter({
           component: PropertiesView
         },
         {
-          path: 'combat',
-          name: 'combat',
-          component: CombatView
-        },
-        {
           path: 'bounty',
           name: 'bounty',
           component: BountyView
@@ -194,11 +184,6 @@ const router = createRouter({
           path: 'gang',
           name: 'gang',
           component: GangView
-        },
-        {
-          path: 'missions',
-          name: 'missions',
-          component: MissionsView
         },
         {
           path: 'achievements',
