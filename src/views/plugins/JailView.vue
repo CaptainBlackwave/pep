@@ -33,7 +33,7 @@ const formatTime = (seconds) => {
   const hours = Math.floor(seconds / 3600);
   const minutes = Math.floor((seconds % 3600) / 60);
   const secs = seconds % 60;
-  
+
   if (hours > 0) {
     return `${hours}h ${minutes}m ${secs}s`;
   } else if (minutes > 0) {
@@ -54,7 +54,7 @@ const loadJailData = async () => {
     loading.value = true;
     error.value = null;
     const response = await api.get('/jail');
-    
+
     jailedPlayers.value = response.data.jailedPlayers || [];
     player.value = response.data.player || null;
     playerStatus.value = response.data.playerStatus || null;
@@ -71,7 +71,7 @@ const loadJailData = async () => {
 let interval = null;
 onMounted(async () => {
   await loadJailData();
-  
+
   if (timeRemaining.value > 0) {
     interval = setInterval(() => {
       if (timeRemaining.value > 0) {
@@ -103,10 +103,10 @@ const showFlash = (message, type = 'success') => {
 // Bust out action
 const bustOut = async (playerId) => {
   if (processing.value) return;
-  
+
   processing.value = true;
   selectedPlayer.value = playerId;
-  
+
   try {
     const response = await api.post(`/jail/${playerId}/bustout`);
     showFlash(response.data.message, 'success');
@@ -123,9 +123,9 @@ const bustOut = async (playerId) => {
 // Bail out action
 const bailOutAction = async () => {
   if (processing.value) return;
-  
+
   processing.value = true;
-  
+
   try {
     const response = await api.post('/jail/bailout');
     showFlash(response.data.message, 'success');

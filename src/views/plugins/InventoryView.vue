@@ -51,7 +51,7 @@ const loadInventory = async () => {
     loading.value = true;
     error.value = null;
     const response = await api.get('/inventory');
-    
+
     inventory.value = response.data.inventory || [];
     player.value = response.data.player || null;
   } catch (err) {
@@ -78,9 +78,9 @@ const showFlash = (message, type = 'success') => {
 // Equip item
 const equip = async (inventoryId) => {
   if (processing.value) return;
-  
+
   processing.value = true;
-  
+
   try {
     const response = await api.post(`/inventory/equip/${inventoryId}`);
     showFlash(response.data.message || 'Item equipped successfully', 'success');
@@ -96,9 +96,9 @@ const equip = async (inventoryId) => {
 // Unequip item
 const unequip = async (inventoryId) => {
   if (processing.value) return;
-  
+
   processing.value = true;
-  
+
   try {
     const response = await api.post(`/inventory/unequip/${inventoryId}`);
     showFlash(response.data.message || 'Item unequipped successfully', 'success');
@@ -114,13 +114,13 @@ const unequip = async (inventoryId) => {
 // Use item
 const useItem = async (inventoryId) => {
   if (processing.value) return;
-  
+
   if (!confirm('Are you sure you want to use this item?')) {
     return;
   }
-  
+
   processing.value = true;
-  
+
   try {
     const response = await api.post(`/inventory/use/${inventoryId}`);
     showFlash(response.data.message || 'Item used successfully', 'success');
@@ -136,15 +136,15 @@ const useItem = async (inventoryId) => {
 // Sell item
 const sell = async (inventoryId, _maxQuantity) => {
   if (processing.value) return;
-  
+
   const quantity = 1; // TODO: add quantity selector using _maxQuantity
-  
+
   if (!confirm(`Are you sure you want to sell ${quantity} of this item?`)) {
     return;
   }
-  
+
   processing.value = true;
-  
+
   try {
     const response = await api.post(`/inventory/sell/${inventoryId}`, { quantity });
     showFlash(response.data.message || 'Item sold successfully', 'success');
@@ -240,36 +240,36 @@ const goToShop = () => {
 
       <!-- Filter Tabs -->
       <div class="filter-tabs">
-        <button 
-          @click="selectedFilter = 'all'" 
+        <button
+          @click="selectedFilter = 'all'"
           :class="{ active: selectedFilter === 'all' }"
           class="filter-tab"
         >
           All Items
         </button>
-        <button 
-          @click="selectedFilter = 'weapon'" 
+        <button
+          @click="selectedFilter = 'weapon'"
           :class="{ active: selectedFilter === 'weapon' }"
           class="filter-tab"
         >
           ⚔️ Weapons
         </button>
-        <button 
-          @click="selectedFilter = 'armor'" 
+        <button
+          @click="selectedFilter = 'armor'"
           :class="{ active: selectedFilter === 'armor' }"
           class="filter-tab"
         >
           🛡️ Armor
         </button>
-        <button 
-          @click="selectedFilter = 'vehicle'" 
+        <button
+          @click="selectedFilter = 'vehicle'"
           :class="{ active: selectedFilter === 'vehicle' }"
           class="filter-tab"
         >
           🚗 Vehicles
         </button>
-        <button 
-          @click="selectedFilter = 'consumable'" 
+        <button
+          @click="selectedFilter = 'consumable'"
           :class="{ active: selectedFilter === 'consumable' }"
           class="filter-tab"
         >
@@ -291,16 +291,16 @@ const goToShop = () => {
                 {{ item.item.rarity }}
               </span>
             </div>
-            
+
             <p class="item-description">{{ item.item.description }}</p>
-            
+
             <!-- Stats -->
             <div v-if="item.item.stats && Object.keys(item.item.stats).length > 0" class="item-stats">
               <span v-for="(value, stat) in item.item.stats" :key="stat" class="stat-tag">
                 {{ stat }}: +{{ value }}
               </span>
             </div>
-            
+
             <!-- Quantity and Price -->
             <div class="item-footer">
               <p class="item-quantity">
@@ -310,27 +310,27 @@ const goToShop = () => {
                 Sell: ${{ formatNumber(item.item.sell_price * item.quantity) }}
               </p>
             </div>
-            
+
             <!-- Actions -->
             <div class="item-actions">
-              <button 
-                v-if="!item.equipped && item.item.type !== 'consumable' && item.item.type !== 'misc'" 
+              <button
+                v-if="!item.equipped && item.item.type !== 'consumable' && item.item.type !== 'misc'"
                 @click="equip(item.id)"
                 :disabled="processing"
                 class="action-button equip-button"
               >
                 Equip
               </button>
-              <button 
-                v-if="item.item.type === 'consumable'" 
+              <button
+                v-if="item.item.type === 'consumable'"
                 @click="useItem(item.id)"
                 :disabled="processing"
                 class="action-button use-button"
               >
                 Use
               </button>
-              <button 
-                v-if="item.item.tradeable && !item.equipped" 
+              <button
+                v-if="item.item.tradeable && !item.equipped"
                 @click="sell(item.id, item.quantity)"
                 :disabled="processing"
                 class="action-button sell-button"

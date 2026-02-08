@@ -77,7 +77,7 @@ const loadShop = async () => {
     loading.value = true;
     error.value = null;
     const response = await api.get('/inventory/shop');
-    
+
     items.value = response.data.items || [];
     player.value = response.data.player || null;
   } catch (err) {
@@ -104,23 +104,23 @@ const showFlash = (message, type = 'success') => {
 // Buy item
 const buyItem = async (item) => {
   if (processing.value) return;
-  
+
   if (!canAfford(item)) {
     showFlash(`You don't have enough cash! Need $${formatNumber(item.price)}`, 'error');
     return;
   }
-  
+
   if (!meetsLevel(item)) {
     showFlash(`You need to be level ${item.requirements.level} to buy this!`, 'error');
     return;
   }
-  
+
   processing.value = true;
-  
+
   try {
     const response = await api.post(`/inventory/buy/${item.id}`);
     showFlash(response.data.message || 'Item purchased successfully!', 'success');
-    
+
     // Update player data from response
     if (response.data.player) {
       player.value = response.data.player;
