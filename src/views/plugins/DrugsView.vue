@@ -1,4 +1,4 @@
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, computed } from 'vue';
 import api from '@/services/api';
 
@@ -14,31 +14,31 @@ const player = ref({
 });
 
 // Form state
-const buyQuantity = ref<{ [key: number]: number }>({});
-const sellQuantity = ref<{ [key: number]: number }>({});
-const buyProcessing = ref<{ [key: number]: boolean }>({});
-const sellProcessing = ref<{ [key: number]: boolean }>({});
+const buyQuantity = ref({});
+const sellQuantity = ref({});
+const buyProcessing = ref({});
+const sellProcessing = ref({});
 
 // Fetch data on mount
 const fetchData = async () => {
   loading.value = true;
   error.value = '';
-  
+
   try {
     const response = await api.get('/drugs');
     drugPrices.value = response.data.drugPrices || [];
     playerDrugs.value = response.data.playerDrugs || [];
     totalValue.value = response.data.totalValue || 0;
     player.value = response.data.player || player.value;
-    
+
     // Initialize quantities
-    drugPrices.value.forEach((drug: any) => {
+    drugPrices.value.forEach((drug) => {
       buyQuantity.value[drug.id] = 1;
     });
-    playerDrugs.value.forEach((playerDrug: any) => {
+    playerDrugs.value.forEach((playerDrug) => {
       sellQuantity.value[playerDrug.id] = 1;
     });
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load drug data';
   } finally {
     loading.value = false;
@@ -50,32 +50,32 @@ onMounted(() => {
 });
 
 // Buy drug
-const buy = async (drug: any) => {
+const buy = async (drug) => {
   if (buyProcessing.value[drug.id]) return;
-  
+
   const quantity = buyQuantity.value[drug.id] || 1;
   const cost = drug.price * quantity;
-  
+
   if (player.value.cash < cost) {
     alert('Not enough cash!');
     return;
   }
-  
+
   buyProcessing.value[drug.id] = true;
   error.value = '';
-  
+
   try {
     const response = await api.post('/drugs/buy', {
       drug_id: drug.id,
       quantity: quantity
     });
-    
+
     // Update data
     if (response.data.success) {
       await fetchData();
       buyQuantity.value[drug.id] = 1;
     }
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to buy drugs';
   } finally {
     buyProcessing.value[drug.id] = false;
@@ -83,31 +83,31 @@ const buy = async (drug: any) => {
 };
 
 // Sell drug
-const sell = async (playerDrug: any) => {
+const sell = async (playerDrug) => {
   if (sellProcessing.value[playerDrug.id]) return;
-  
+
   const quantity = sellQuantity.value[playerDrug.id] || 1;
-  
+
   if (quantity > playerDrug.quantity) {
     alert('Not enough drugs to sell!');
     return;
   }
-  
+
   sellProcessing.value[playerDrug.id] = true;
   error.value = '';
-  
+
   try {
     const response = await api.post('/drugs/sell', {
       drug_id: playerDrug.drug.id,
       quantity: quantity
     });
-    
+
     // Update data
     if (response.data.success) {
       await fetchData();
       sellQuantity.value[playerDrug.id] = 1;
     }
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to sell drugs';
   } finally {
     sellProcessing.value[playerDrug.id] = false;
@@ -115,45 +115,45 @@ const sell = async (playerDrug: any) => {
 };
 
 // Helper functions
-const getRiskColor = (chance: number) => {
+const getRiskColor = (chance) => {
   if (chance < 10) return 'risk-low';
   if (chance < 20) return 'risk-medium';
   if (chance < 30) return 'risk-high';
   return 'risk-very-high';
 };
 
-const getRiskLabel = (chance: number) => {
+const getRiskLabel = (chance) => {
   if (chance < 10) return 'Low Risk';
   if (chance < 20) return 'Medium Risk';
   if (chance < 30) return 'High Risk';
   return 'Very High Risk';
 };
 
-const formatNumber = (num: number) => {
+const formatNumber = (num) => {
   return num?.toLocaleString() || '0';
 };
 
-const getDrugPrice = (drugId: number) => {
-  const drug = drugPrices.value.find((d: any) => d.id === drugId);
+const getDrugPrice = (drugId) => {
+  const drug = drugPrices.value.find((d) => d.id === drugId);
   return drug?.price || 0;
 };
 
-const calculateBuyCost = (drugId: number) => {
-  const drug = drugPrices.value.find((d: any) => d.id === drugId);
+const calculateBuyCost = (drugId) => {
+  const drug = drugPrices.value.find((d) => d.id === drugId);
   const quantity = buyQuantity.value[drugId] || 1;
   return (drug?.price || 0) * quantity;
 };
 
-const calculateSellRevenue = (playerDrugId: number) => {
-  const playerDrug = playerDrugs.value.find((pd: any) => pd.id === playerDrugId);
+const calculateSellRevenue = (playerDrugId) => {
+  const playerDrug = playerDrugs.value.find((pd) => pd.id === playerDrugId);
   if (!playerDrug) return 0;
   const price = getDrugPrice(playerDrug.drug.id);
   const quantity = sellQuantity.value[playerDrugId] || 1;
   return price * quantity;
 };
 
-const calculateTotalValue = (playerDrugId: number) => {
-  const playerDrug = playerDrugs.value.find((pd: any) => pd.id === playerDrugId);
+const calculateTotalValue = (playerDrugId) => {
+  const playerDrug = playerDrugs.value.find((pd) => pd.id === playerDrugId);
   if (!playerDrug) return 0;
   const price = getDrugPrice(playerDrug.drug.id);
   return price * playerDrug.quantity;
@@ -186,7 +186,7 @@ const calculateTotalValue = (playerDrugId: number) => {
       <div class="warning-banner">
         <div class="warning-icon">
           <svg width="24" height="24" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                   d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z">
             </path>
           </svg>
@@ -242,15 +242,15 @@ const calculateTotalValue = (playerDrugId: number) => {
               </div>
 
               <div class="drug-actions">
-                <input 
-                  v-model.number="buyQuantity[drug.id]" 
-                  type="number" 
-                  min="1" 
-                  max="1000" 
+                <input
+                  v-model.number="buyQuantity[drug.id]"
+                  type="number"
+                  min="1"
+                  max="1000"
                   placeholder="Quantity"
                   class="quantity-input">
-                <button 
-                  @click="buy(drug)" 
+                <button
+                  @click="buy(drug)"
                   :disabled="player.cash < calculateBuyCost(drug.id) || buyProcessing[drug.id]"
                   class="action-button buy-button">
                   <span v-if="buyProcessing[drug.id]">Buying...</span>
@@ -285,15 +285,15 @@ const calculateTotalValue = (playerDrugId: number) => {
               </div>
 
               <div class="drug-actions">
-                <input 
-                  v-model.number="sellQuantity[playerDrug.id]" 
-                  type="number" 
-                  min="1" 
-                  :max="playerDrug.quantity" 
+                <input
+                  v-model.number="sellQuantity[playerDrug.id]"
+                  type="number"
+                  min="1"
+                  :max="playerDrug.quantity"
                   placeholder="Quantity"
                   class="quantity-input">
-                <button 
-                  @click="sell(playerDrug)" 
+                <button
+                  @click="sell(playerDrug)"
                   :disabled="sellQuantity[playerDrug.id] > playerDrug.quantity || sellProcessing[playerDrug.id]"
                   class="action-button sell-button">
                   <span v-if="sellProcessing[playerDrug.id]">Selling...</span>
@@ -311,7 +311,7 @@ const calculateTotalValue = (playerDrugId: number) => {
           <div class="tip-banner">
             <div class="tip-icon">
               <svg width="20" height="20" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" 
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                       d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z">
                 </path>
               </svg>

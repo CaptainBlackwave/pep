@@ -78,10 +78,14 @@
         <button @click="backToCategories" class="back-btn">
           <span>←</span> FORUMS
         </button>
-        <h1 class="category-title">{{ selectedCategory.name?.toUpperCase() }}</h1>
-        <button @click="showNewTopicModal = true" class="add-topic-btn">
-          ADD TOPIC
-        </button>
+            <div style="display:flex; align-items:center; gap:1rem;">
+              <h1 class="category-title">{{ selectedCategory.name?.toUpperCase() }}</h1>
+              <input v-model="searchQuery" @keyup.enter="searchTopics" placeholder="Search topics..." class="search-input" />
+              <button @click="searchTopics" class="btn-secondary">Search</button>
+            </div>
+            <button @click="showNewTopicModal = true" class="add-topic-btn">
+              ADD TOPIC
+            </button>
       </div>
 
       <div class="topics-table">
@@ -92,7 +96,7 @@
           <div class="col-last">LAST POST</div>
         </div>
 
-        <div v-if="topics.length === 0" class="empty-topics">
+        <div v-if="!topics || topics.length === 0" class="empty-topics">
           <p>No topics yet. Be the first to start a discussion!</p>
         </div>
 
@@ -100,11 +104,12 @@
           v-for="topic in topics"
           :key="topic.id"
           class="topic-row"
-          @click="viewTopic(topic.id)"
         >
+          <div style="flex:1; display:flex; align-items:center; gap:1rem;" @click="viewTopic(topic.id)">
           <div class="col-topics">
             <span class="topic-icon">💬</span>
             <span class="topic-name">{{ topic.title }}</span>
+          </div>
           </div>
           <div class="col-replies">{{ topic.replies || 0 }}</div>
           <div class="col-author">
@@ -114,6 +119,17 @@
             <span class="user-name">{{ topic.author || 'Unknown' }}</span>
           </div>
           <div class="col-last">{{ topic.updated_at || '-' }}</div>
+          <div class="col-actions">
+            <button class="action-btn" @click.stop="toggleLockTopic(topic)">{{ topic.locked ? 'Unlock' : 'Lock' }}</button>
+            <button class="action-btn" @click.stop="toggleStickyTopic(topic)">{{ topic.sticky ? 'Unsticky' : 'Sticky' }}</button>
+            <button class="action-btn danger" @click.stop="deleteTopic(topic)">Delete</button>
+          </div>
+        </div>
+
+        <div class="pagination" v-if="topicsMeta">
+          <button @click="changePage(topicsMeta.current_page - 1)" :disabled="topicsMeta.current_page <= 1">Prev</button>
+          <span>Page {{ topicsMeta.current_page }} of {{ topicsMeta.last_page }}</span>
+          <button @click="changePage(topicsMeta.current_page + 1)" :disabled="topicsMeta.current_page >= topicsMeta.last_page">Next</button>
         </div>
       </div>
     </div>
@@ -183,6 +199,8 @@ const newTopicTitle = ref('');
 const newTopicContent = ref('');
 const showNewTopicModal = ref(false);
 const newReply = ref('');
+const searchQuery = ref('');
+const topicsMeta = ref(null);
 
 const fetchCategories = async () => {
   loading.value = true;
@@ -199,12 +217,19 @@ const fetchCategories = async () => {
   }
 };
 
-const viewCategory = async (categoryId) => {
+const viewCategory = async (categoryId, page = 1) => {
   loading.value = true;
   try {
-    const response = await api.get(`/forum/category/${categoryId}`);
+    const resp = await api.get(`/forum/category/${categoryId}`, {
+      params: { search: searchQuery.value || undefined, per_page: 20, page }
+    });
+
     selectedCategory.value = categories.value.find(c => c.id === categoryId);
-    topics.value = response.data.topics || response.data || [];
+
+    // Laravel paginator returns data in resp.data.topics.data
+    const topicsData = (resp.data.topics?.data ?? resp.data.topics ?? resp.data) || [];
+    topics.value = topicsData;
+    topicsMeta.value = resp.data.topics?.meta ?? null;
     selectedTopic.value = null;
   } catch (err) {
     console.error('Error fetching topics:', err);
@@ -214,12 +239,38 @@ const viewCategory = async (categoryId) => {
   }
 };
 
+const searchTopics = async () => {
+  if (!selectedCategory.value) return;
+  await viewCategory(selectedCategory.value.id, 1);
+};
+
+const changePage = async (page) => {
+  if (!selectedCategory.value) return;
+  if (!topicsMeta.value) return;
+  if (page < 1 || page > topicsMeta.value.last_page) return;
+  await viewCategory(selectedCategory.value.id, page);
+};
+
 const viewTopic = async (topicId) => {
   loading.value = true;
   try {
     const response = await api.get(`/forum/topic/${topicId}`);
-    selectedTopic.value = response.data.topic || response.data;
-    replies.value = response.data.replies || response.data.posts || [];
+
+    const topicData = response.data.topic || response.data;
+    // posts may be paginated (resp.data.posts.data)
+    const posts = response.data.posts?.data ?? response.data.posts ?? response.data.replies ?? [];
+
+    // The API returns the original post as the first item in posts; adapt selectedTopic shape
+    const original = posts && posts.length ? posts[0] : null;
+
+    selectedTopic.value = Object.assign({}, topicData, {
+      user: { username: topicData.author || 'Unknown' },
+      content: original?.content || topicData.content || '',
+      created_at: original?.created_at || topicData.created_at || null,
+    });
+
+    // Replies are the posts excluding the first/original
+    replies.value = posts && posts.length > 1 ? posts.slice(1) : [];
   } catch (err) {
     console.error('Error fetching topic:', err);
     error.value = 'Failed to load topic';
@@ -270,6 +321,39 @@ const postReply = async () => {
   } catch (err) {
     console.error('Error posting reply:', err);
     alert('Failed to post reply: ' + (err.response?.data?.message || err.message));
+  }
+};
+
+// Admin moderation actions
+const toggleLockTopic = async (topic) => {
+  try {
+    await api.patch(`/admin/forum/topics/${topic.id}/toggle-lock`);
+    // refresh
+    if (selectedCategory.value) await viewCategory(selectedCategory.value.id, topicsMeta?.value?.current_page || 1);
+  } catch (err) {
+    console.error('Failed to toggle lock:', err);
+    alert('Failed to toggle lock');
+  }
+};
+
+const toggleStickyTopic = async (topic) => {
+  try {
+    await api.patch(`/admin/forum/topics/${topic.id}/toggle-sticky`);
+    if (selectedCategory.value) await viewCategory(selectedCategory.value.id, topicsMeta?.value?.current_page || 1);
+  } catch (err) {
+    console.error('Failed to toggle sticky:', err);
+    alert('Failed to toggle sticky');
+  }
+};
+
+const deleteTopic = async (topic) => {
+  if (!confirm('Delete this topic? This action cannot be undone.')) return;
+  try {
+    await api.delete(`/admin/forum/topics/${topic.id}`);
+    if (selectedCategory.value) await viewCategory(selectedCategory.value.id, topicsMeta?.value?.current_page || 1);
+  } catch (err) {
+    console.error('Failed to delete topic:', err);
+    alert('Failed to delete topic');
   }
 };
 

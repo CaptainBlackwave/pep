@@ -101,7 +101,7 @@
             </div>
 
             <div class="forgot-link">
-              <a href="#">Forgot password?</a>
+              <router-link to="/forgot-password">Forgot password?</router-link>
             </div>
           </div>
 

@@ -78,20 +78,46 @@
       </div>
 
       <div class="header-right">
-        <button class="icon-btn" title="Messages">
+        <router-link to="/chat" class="icon-btn" title="Messages">
           <span>✉️</span>
-        </button>
-        <button class="icon-btn" title="Notifications">
-          <span>🔔</span>
-        </button>
+          <span v-if="chatCount > 0" class="badge">{{ chatCount > 99 ? '99+' : chatCount }}</span>
+        </router-link>
+        <div class="notifications-menu">
+          <button class="icon-btn" title="Notifications" @click.stop="toggleNotifications">
+            <span>🔔</span>
+            <span v-if="unreadNotifications > 0" class="badge">{{ unreadNotifications > 99 ? '99+' : unreadNotifications }}</span>
+          </button>
+          <div v-if="showNotifications" class="notifications-dropdown">
+            <div class="notifications-header">
+              <span>Notifications</span>
+              <button v-if="unreadNotifications > 0" @click="markAllNotificationsRead" class="mark-read-btn">Mark all read</button>
+            </div>
+            <div class="notifications-list">
+              <div v-if="notificationsStore.notifications.length === 0" class="no-notifications">
+                No notifications
+              </div>
+              <div v-for="notification in notificationsStore.notifications.slice(0, 10)"
+                   :key="notification.id"
+                   class="notification-item"
+                   :class="{ unread: !notification.read_at }"
+                   @click="markNotificationRead(notification.id)">
+                <div class="notification-title">{{ notification.title }}</div>
+                <div class="notification-message">{{ notification.message }}</div>
+                <div class="notification-time">{{ formatTime(notification.created_at) }}</div>
+              </div>
+            </div>
+            <router-link to="/notifications" class="notifications-footer">View all notifications</router-link>
+          </div>
+        </div>
         <div class="user-menu">
-          <button class="user-btn" @click="toggleUserMenu">
+          <button class="user-btn" @click.stop="toggleUserMenu">
             <span class="username">{{ username }}</span>
             <span class="dropdown-icon">▼</span>
           </button>
           <div v-if="showUserMenu" class="user-dropdown">
             <router-link to="/profile" class="dropdown-item">Profile</router-link>
             <router-link to="/settings" class="dropdown-item">Settings</router-link>
+            <router-link v-if="playerStore.isAdmin" to="/admin" class="dropdown-item">Admin Panel</router-link>
             <button @click="logout" class="dropdown-item">Logout</button>
           </div>
         </div>
@@ -174,60 +200,89 @@
   </div>
 </template>
 
-<script setup lang="ts">
-import { ref, computed } from 'vue'
+<script setup>
+import { ref, computed, onMounted, onUnmounted } from 'vue'
 import { useRouter } from 'vue-router'
+import { usePlayerStore } from '@/stores/player'
+import { useNotificationsStore } from '@/stores/notifications'
+import { useChatStore } from '@/stores/chat'
+import { useAuthStore } from '@/stores/auth'
 
 const router = useRouter()
+const playerStore = usePlayerStore()
+const notificationsStore = useNotificationsStore()
+const chatStore = useChatStore()
+const authStore = useAuthStore()
 
-// User data
-const username = ref('LF')
+// UI State
 const showUserMenu = ref(false)
+const showNotifications = ref(false)
+const chatCollapsed = ref(false)
+const chatInput = ref('')
+const loading = ref(true)
 
-// Stats
-const energy = ref(20)
-const maxEnergy = ref(100)
-const health = ref(25)
-const maxHealth = ref(25)
-const stamina = ref(193)
-const maxStamina = ref(200)
-const nerve = ref(200)
-const maxNerve = ref(200)
+// Computed from stores
+const username = computed(() => playerStore.username)
 
-// Timers
-const energyTimer = ref('08:01')
-const healthTimer = ref('04:19')
-const staminaTimer = ref('02:34')
-const nerveTimer = ref('03:01')
+// Stats from player store
+const energy = computed(() => playerStore.energy)
+const maxEnergy = computed(() => playerStore.maxEnergy)
+const energyPercent = computed(() => playerStore.energyPercent)
+const energyTimer = computed(() => playerStore.energyTimer)
 
-// Currency
-const cash = ref(4025)
-const points = ref(0)
-const diamonds = ref(14)
+const health = computed(() => playerStore.health)
+const maxHealth = computed(() => playerStore.maxHealth)
+const healthPercent = computed(() => playerStore.healthPercent)
+const healthTimer = computed(() => playerStore.healthTimer)
+
+const stamina = computed(() => playerStore.stamina)
+const maxStamina = computed(() => playerStore.maxStamina)
+const staminaPercent = computed(() => playerStore.staminaPercent)
+const staminaTimer = computed(() => playerStore.staminaTimer)
+
+const nerve = computed(() => playerStore.nerve)
+const maxNerve = computed(() => playerStore.maxNerve)
+const nervePercent = computed(() => playerStore.nervePercent)
+const nerveTimer = computed(() => playerStore.nerveTimer)
+
+// Currency from player store
+const cash = computed(() => playerStore.cash)
+const points = computed(() => playerStore.points)
+const diamonds = computed(() => playerStore.diamonds)
+
+// Notifications
+const unreadNotifications = computed(() => notificationsStore.unreadCount)
 
 // Chat
-const chatCollapsed = ref(false)
-const chatCount = ref(13)
-const chatInput = ref('')
-const chatMessages = ref([
-  { id: 1, user: 'TartacusPrime', time: '15:24', text: 'Carrot cake? Lol 😂' },
-  { id: 2, user: 'ButcherPete', time: '15:27', text: 'lol' },
-  { id: 3, user: 'ButcherPete', time: '15:25', text: 'the furniture skill requirements are crazy. 75 scavenging for one will take years' }
-])
-
-// Computed
-const energyPercent = computed(() => (energy.value / maxEnergy.value) * 100)
-const healthPercent = computed(() => (health.value / maxHealth.value) * 100)
-const staminaPercent = computed(() => (stamina.value / maxStamina.value) * 100)
-const nervePercent = computed(() => (nerve.value / maxNerve.value) * 100)
+const chatMessages = computed(() => chatStore.recentMessages.map(msg => ({
+  id: msg.id,
+  user: msg.username,
+  time: formatTime(msg.created_at),
+  text: msg.content
+})))
+const chatCount = computed(() => chatStore.totalUnread)
 
 // Methods
 const formatNumber = (num) => {
   return num.toLocaleString()
 }
 
+const formatTime = (dateString) => {
+  const date = new Date(dateString)
+  return date.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' })
+}
+
 const toggleUserMenu = () => {
   showUserMenu.value = !showUserMenu.value
+  showNotifications.value = false
+}
+
+const toggleNotifications = () => {
+  showNotifications.value = !showNotifications.value
+  showUserMenu.value = false
+  if (showNotifications.value) {
+    notificationsStore.fetchNotifications()
+  }
 }
 
 const toggleChat = () => {
@@ -235,24 +290,81 @@ const toggleChat = () => {
 }
 
 const toggleSidebar = () => {
-  // Mobile sidebar toggle
+  // Mobile sidebar toggle - TODO: implement
 }
 
-const sendMessage = () => {
+const sendMessage = async () => {
   if (chatInput.value.trim()) {
-    chatMessages.value.push({
-      id: Date.now(),
-      user: username.value,
-      time: new Date().toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit' }),
-      text: chatInput.value
-    })
-    chatInput.value = ''
+    const success = await chatStore.sendMessage(chatInput.value)
+    if (success) {
+      chatInput.value = ''
+    }
   }
 }
 
-const logout = () => {
+const logout = async () => {
+  // Stop all polling
+  playerStore.stopTimers()
+  notificationsStore.stopPolling()
+  chatStore.stopPolling()
+
+  // Clear stores
+  playerStore.clearPlayer()
+  notificationsStore.clearAll()
+  chatStore.clearAll()
+
+  // Logout via auth store
+  await authStore.logout()
+
   router.push('/login')
 }
+
+const markNotificationRead = (id) => {
+  notificationsStore.markAsRead(id)
+}
+
+const markAllNotificationsRead = () => {
+  notificationsStore.markAllAsRead()
+}
+
+// Click outside handlers
+const closeMenus = (e) => {
+  const target = e.target
+  if (!target.closest('.user-menu')) {
+    showUserMenu.value = false
+  }
+  if (!target.closest('.notifications-menu')) {
+    showNotifications.value = false
+  }
+}
+
+// Initialize data on mount
+onMounted(async () => {
+  document.addEventListener('click', closeMenus)
+
+  try {
+    // Fetch player data
+    await playerStore.fetchPlayer()
+
+    // Start background polling
+    notificationsStore.startPolling(60000) // Poll notifications every minute
+
+    // Fetch chat channels and start polling
+    await chatStore.fetchChannels()
+    chatStore.startPolling(5000) // Poll chat every 5 seconds
+  } catch (err) {
+    console.error('Failed to initialize layout:', err)
+  } finally {
+    loading.value = false
+  }
+})
+
+onUnmounted(() => {
+  document.removeEventListener('click', closeMenus)
+  playerStore.stopTimers()
+  notificationsStore.stopPolling()
+  chatStore.stopPolling()
+})
 </script>
 
 <style scoped>
@@ -414,10 +526,130 @@ const logout = () => {
   cursor: pointer;
   padding: 0.5rem;
   transition: color 0.2s;
+  position: relative;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
 .icon-btn:hover {
   color: #00bcd4;
+}
+
+.badge {
+  position: absolute;
+  top: 0;
+  right: 0;
+  background: #ef4444;
+  color: white;
+  font-size: 0.625rem;
+  font-weight: 700;
+  padding: 0.125rem 0.375rem;
+  border-radius: 9999px;
+  min-width: 1rem;
+  text-align: center;
+}
+
+.notifications-menu {
+  position: relative;
+}
+
+.notifications-dropdown {
+  position: absolute;
+  top: calc(100% + 0.5rem);
+  right: 0;
+  width: 320px;
+  max-height: 400px;
+  background: #1e293b;
+  border: 1px solid rgba(148, 163, 184, 0.15);
+  border-radius: 0.5rem;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
+  overflow: hidden;
+  z-index: 1000;
+}
+
+.notifications-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.1);
+  font-weight: 600;
+  font-size: 0.875rem;
+}
+
+.mark-read-btn {
+  background: none;
+  border: none;
+  color: #00bcd4;
+  font-size: 0.75rem;
+  cursor: pointer;
+}
+
+.mark-read-btn:hover {
+  text-decoration: underline;
+}
+
+.notifications-list {
+  max-height: 300px;
+  overflow-y: auto;
+}
+
+.notification-item {
+  padding: 0.75rem 1rem;
+  border-bottom: 1px solid rgba(148, 163, 184, 0.05);
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.notification-item:hover {
+  background: rgba(0, 188, 212, 0.05);
+}
+
+.notification-item.unread {
+  background: rgba(0, 188, 212, 0.1);
+  border-left: 3px solid #00bcd4;
+}
+
+.notification-title {
+  font-weight: 600;
+  font-size: 0.8125rem;
+  color: #e2e8f0;
+  margin-bottom: 0.25rem;
+}
+
+.notification-message {
+  font-size: 0.75rem;
+  color: #94a3b8;
+  line-height: 1.4;
+}
+
+.notification-time {
+  font-size: 0.6875rem;
+  color: #64748b;
+  margin-top: 0.375rem;
+}
+
+.no-notifications {
+  padding: 2rem;
+  text-align: center;
+  color: #64748b;
+  font-size: 0.875rem;
+}
+
+.notifications-footer {
+  display: block;
+  padding: 0.75rem;
+  text-align: center;
+  color: #00bcd4;
+  text-decoration: none;
+  font-size: 0.8125rem;
+  font-weight: 600;
+  border-top: 1px solid rgba(148, 163, 184, 0.1);
+}
+
+.notifications-footer:hover {
+  background: rgba(0, 188, 212, 0.05);
 }
 
 .user-menu {

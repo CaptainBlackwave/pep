@@ -53,7 +53,7 @@ const loadJailData = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await api.get('/modules/jail');
+    const response = await api.get('/jail');
     
     jailedPlayers.value = response.data.jailedPlayers || [];
     player.value = response.data.player || null;
@@ -108,7 +108,7 @@ const bustOut = async (playerId) => {
   selectedPlayer.value = playerId;
   
   try {
-    const response = await api.post(`/modules/jail/bustout/${playerId}`);
+    const response = await api.post(`/jail/${playerId}/bustout`);
     showFlash(response.data.message, 'success');
     await loadJailData();
   } catch (err) {
@@ -127,7 +127,7 @@ const bailOutAction = async () => {
   processing.value = true;
   
   try {
-    const response = await api.post('/modules/jail/bailout');
+    const response = await api.post('/jail/bailout');
     showFlash(response.data.message, 'success');
     await loadJailData();
   } catch (err) {

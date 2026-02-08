@@ -109,7 +109,7 @@ const currentTabLabel = computed(() => tabs.find(t => t.key === activeTab.value)
 const fetchLeaderboards = async () => {
   loading.value = true;
   error.value = null;
-
+  
   try {
     const response = await api.get('/leaderboards');
     leaderboards.value = response.data.leaderboards || response.data;

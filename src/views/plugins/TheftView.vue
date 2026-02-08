@@ -1,24 +1,7 @@
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
-
-interface TheftType {
-  id: number;
-  name: string;
-  description: string;
-  success_rate: number;
-  min_car_value: number;
-  max_car_value: number;
-  cooldown: number;
-}
-
-interface Player {
-  id: number;
-  username: string;
-  cash: number;
-  bank: number;
-}
 
 const router = useRouter();
 
@@ -27,14 +10,14 @@ const error = ref('');
 const successMessage = ref('');
 const processing = ref(false);
 
-const player = ref<Player | null>(null);
-const theftTypes = ref<TheftType[]>([]);
+const player = ref(null);
+const theftTypes = ref([]);
 const canAttempt = ref(true);
 const cooldownRemaining = ref(0);
 
-let cooldownInterval: number | null = null;
+let cooldownInterval = null;
 
-const formatMoney = (amount: number): string => {
+const formatMoney = (amount) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -42,7 +25,7 @@ const formatMoney = (amount: number): string => {
   }).format(amount);
 };
 
-const formatTime = (seconds: number): string => {
+const formatTime = (seconds) => {
   const roundedSeconds = Math.floor(seconds);
   if (roundedSeconds <= 0) return '0s';
   const mins = Math.floor(roundedSeconds / 60);
@@ -50,14 +33,14 @@ const formatTime = (seconds: number): string => {
   return mins > 0 ? `${mins}m ${secs}s` : `${secs}s`;
 };
 
-const getDifficultyColor = (successRate: number): string => {
+const getDifficultyColor = (successRate) => {
   if (successRate >= 70) return 'success';
   if (successRate >= 50) return 'warning';
   if (successRate >= 30) return 'danger';
   return 'critical';
 };
 
-const getDifficultyBadge = (successRate: number) => {
+const getDifficultyBadge = (successRate) => {
   if (successRate >= 70) return { text: 'Easy', class: 'badge-success' };
   if (successRate >= 50) return { text: 'Medium', class: 'badge-warning' };
   if (successRate >= 30) return { text: 'Hard', class: 'badge-danger' };
@@ -79,7 +62,7 @@ const loadData = async () => {
     if (cooldownRemaining.value > 0) {
       startCooldownTimer();
     }
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load theft data';
   } finally {
     loading.value = false;
@@ -104,7 +87,7 @@ const startCooldownTimer = () => {
   }, 1000);
 };
 
-const attemptTheft = async (typeId: number) => {
+const attemptTheft = async (typeId) => {
   if (processing.value || !canAttempt.value) return;
 
   try {
@@ -125,7 +108,7 @@ const attemptTheft = async (typeId: number) => {
       canAttempt.value = false;
       startCooldownTimer();
     }
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to attempt theft';
   } finally {
     processing.value = false;

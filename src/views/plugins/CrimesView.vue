@@ -88,12 +88,12 @@
   </div>
 </template>
 
-<script setup lang="ts">
+<script setup>
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
 
-const selectLocation = (id: number) => {
+const selectLocation = (id) => {
   router.push(`/crimes/${id}`)
 }
 </script>

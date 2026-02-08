@@ -199,7 +199,7 @@ const isLeader = computed(() => {
 const fetchCrimes = async () => {
   loading.value = true;
   error.value = null;
-
+  
   try {
     const response = await api.get('/organized-crime');
     player.value = response.data.player || null;
@@ -220,7 +220,7 @@ const selectCrime = (crime) => {
     setTimeout(() => errorMessage.value = null, 3000);
     return;
   }
-
+  
   selectedCrime.value = crime;
   selectedMembers.value = [];
 };
@@ -249,14 +249,14 @@ const attemptCrime = async () => {
     });
 
     successMessage.value = response.data.message || 'Crime attempted successfully!';
-
+    
     // Reset selection
     selectedCrime.value = null;
     selectedMembers.value = [];
-
+    
     // Refresh data
     await fetchCrimes();
-
+    
     setTimeout(() => successMessage.value = null, 5000);
   } catch (err) {
     console.error('Error attempting crime:', err);

@@ -1,13 +1,8 @@
-<script setup lang="ts">
+<script setup>
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 
-interface PlayerData {
-  bullets: number;
-  cash: number;
-}
-
-const player = ref<PlayerData | null>(null);
+const player = ref(null);
 const costPerBullet = ref(50);
 const quantity = ref(100);
 const loading = ref(true);
@@ -15,7 +10,7 @@ const processing = ref(false);
 const error = ref('');
 const successMessage = ref('');
 
-const formatMoney = (amount: number) => {
+const formatMoney = (amount) => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -23,7 +18,7 @@ const formatMoney = (amount: number) => {
   }).format(amount);
 };
 
-const formatNumber = (num: number) => {
+const formatNumber = (num) => {
   return new Intl.NumberFormat('en-US').format(num);
 };
 
@@ -46,9 +41,8 @@ const fetchData = async () => {
     const response = await api.get('/bullets');
     player.value = response.data.player;
     costPerBullet.value = response.data.costPerBullet || 50;
-  } catch (err: unknown) {
-    const axiosError = err as { response?: { data?: { message?: string } } };
-    error.value = axiosError.response?.data?.message || 'Failed to load bullet shop data';
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to load bullet shop data';
   } finally {
     loading.value = false;
   }
@@ -68,15 +62,14 @@ const buyBullets = async () => {
 
     successMessage.value = response.data.message || `Successfully purchased ${formatNumber(quantity.value)} bullets!`;
     await fetchData();
-  } catch (err: unknown) {
-    const axiosError = err as { response?: { data?: { message?: string } } };
-    error.value = axiosError.response?.data?.message || 'Failed to purchase bullets';
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Failed to purchase bullets';
   } finally {
     processing.value = false;
   }
 };
 
-const setQuickQuantity = (amount: number) => {
+const setQuickQuantity = (amount) => {
   quantity.value = amount;
 };
 

@@ -1,58 +1,7 @@
-<script setup lang="ts">
+<script setup>
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
-
-interface Vehicle {
-  id: number;
-  item: {
-    name: string;
-    stats: {
-      speed: number;
-    };
-  };
-}
-
-interface Player {
-  id: number;
-  username: string;
-  cash: number;
-  speed?: number;
-}
-
-interface RaceParticipant {
-  id: number;
-  player_id: number;
-  player: Player;
-  vehicle?: Vehicle;
-}
-
-interface Race {
-  id: number;
-  name: string;
-  status: 'waiting' | 'racing' | 'finished';
-  entry_fee: number;
-  prize_pool: number;
-  min_participants: number;
-  max_participants: number;
-  participants: RaceParticipant[];
-  location: {
-    name: string;
-  };
-}
-
-interface RaceHistory {
-  id: number;
-  position: number;
-  finish_time: number;
-  winnings: number;
-  race: {
-    location: {
-      name: string;
-    };
-  };
-  created_at: string;
-}
 
 const router = useRouter();
 
@@ -60,10 +9,10 @@ const loading = ref(true);
 const error = ref('');
 const successMessage = ref('');
 
-const player = ref<Player | null>(null);
-const availableRaces = ref<Race[]>([]);
-const raceHistory = ref<RaceHistory[]>([]);
-const vehicles = ref<Vehicle[]>([]);
+const player = ref(null);
+const availableRaces = ref([]);
+const raceHistory = ref([]);
+const vehicles = ref([]);
 
 const showCreateRace = ref(false);
 const creating = ref(false);
@@ -78,11 +27,11 @@ const createRaceForm = ref({
 
 // Join Race Form
 const joinRaceForm = ref({
-  vehicle_id: null as number | null,
+  vehicle_id: null,
   bet_amount: 0,
 });
 
-const formatNumber = (num: number): string => {
+const formatNumber = (num) => {
   return new Intl.NumberFormat('en-US').format(num);
 };
 
@@ -97,7 +46,7 @@ const loadData = async () => {
     availableRaces.value = response.data.availableRaces || [];
     raceHistory.value = response.data.raceHistory || [];
     vehicles.value = response.data.vehicles || [];
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load racing data';
   } finally {
     loading.value = false;
@@ -124,14 +73,14 @@ const createRace = async () => {
     showCreateRace.value = false;
 
     await loadData();
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to create race';
   } finally {
     creating.value = false;
   }
 };
 
-const joinRace = async (raceId: number) => {
+const joinRace = async (raceId) => {
   try {
     error.value = '';
     successMessage.value = '';
@@ -147,12 +96,12 @@ const joinRace = async (raceId: number) => {
     };
 
     await loadData();
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to join race';
   }
 };
 
-const leaveRace = async (raceId: number) => {
+const leaveRace = async (raceId) => {
   if (!confirm('Leave race? You will receive a 10% penalty on your entry fee.')) {
     return;
   }
@@ -166,12 +115,12 @@ const leaveRace = async (raceId: number) => {
     successMessage.value = response.data.message || 'Left race successfully!';
 
     await loadData();
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to leave race';
   }
 };
 
-const startRace = async (raceId: number) => {
+const startRace = async (raceId) => {
   if (!confirm('Start this race? All participants must be ready.')) {
     return;
   }
@@ -185,17 +134,17 @@ const startRace = async (raceId: number) => {
     successMessage.value = response.data.message || 'Race started!';
 
     await loadData();
-  } catch (err: any) {
+  } catch (err) {
     error.value = err.response?.data?.message || 'Failed to start race';
   }
 };
 
-const isInRace = (race: Race): boolean => {
+const isInRace = (race) => {
   return race.participants.some(p => p.player_id === player.value?.id);
 };
 
-const getStatusColor = (status: string): string => {
-  const colors: Record<string, string> = {
+const getStatusColor = (status) => {
+  const colors = {
     'waiting': 'status-waiting',
     'racing': 'status-racing',
     'finished': 'status-finished'
@@ -203,8 +152,8 @@ const getStatusColor = (status: string): string => {
   return colors[status] || 'status-finished';
 };
 
-const getPositionMedal = (position: number): string | number => {
-  const medals: Record<number, string> = {
+const getPositionMedal = (position) => {
+  const medals = {
     1: '🥇',
     2: '🥈',
     3: '🥉'

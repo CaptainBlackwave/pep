@@ -39,6 +39,14 @@ import EmploymentView from '../views/plugins/EmploymentView.vue'
 import EducationView from '../views/plugins/EducationView.vue'
 import StocksView from '../views/plugins/StocksView.vue'
 import CasinoView from '../views/plugins/CasinoView.vue'
+import ExploreView from '../views/plugins/ExploreView.vue'
+import HuntingView from '../views/plugins/HuntingView.vue'
+import QuestsView from '../views/plugins/QuestsView.vue'
+import AlliancesView from '../views/plugins/AlliancesView.vue'
+import EventsView from '../views/plugins/EventsView.vue'
+import MarketView from '../views/plugins/MarketView.vue'
+import MessagingView from '../views/plugins/MessagingView.vue'
+import TournamentView from '../views/plugins/TournamentView.vue'
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -260,6 +268,46 @@ const router = createRouter({
           path: 'casino',
           name: 'casino',
           component: CasinoView
+        },
+        {
+          path: 'explore',
+          name: 'explore',
+          component: ExploreView
+        },
+        {
+          path: 'hunting',
+          name: 'hunting',
+          component: HuntingView
+        },
+        {
+          path: 'quests',
+          name: 'quests',
+          component: QuestsView
+        },
+        {
+          path: 'alliances',
+          name: 'alliances',
+          component: AlliancesView
+        },
+        {
+          path: 'events',
+          name: 'events',
+          component: EventsView
+        },
+        {
+          path: 'market',
+          name: 'market',
+          component: MarketView
+        },
+        {
+          path: 'messaging',
+          name: 'messaging',
+          component: MessagingView
+        },
+        {
+          path: 'tournament',
+          name: 'tournament',
+          component: TournamentView
         },
         {
           path: 'settings',

@@ -50,7 +50,7 @@ const loadInventory = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await api.get('/modules/inventory');
+    const response = await api.get('/inventory');
     
     inventory.value = response.data.inventory || [];
     player.value = response.data.player || null;
@@ -82,7 +82,7 @@ const equip = async (inventoryId) => {
   processing.value = true;
   
   try {
-    const response = await api.post(`/modules/inventory/equip/${inventoryId}`);
+    const response = await api.post(`/inventory/equip/${inventoryId}`);
     showFlash(response.data.message || 'Item equipped successfully', 'success');
     await loadInventory();
   } catch (err) {
@@ -100,7 +100,7 @@ const unequip = async (inventoryId) => {
   processing.value = true;
   
   try {
-    const response = await api.post(`/modules/inventory/unequip/${inventoryId}`);
+    const response = await api.post(`/inventory/unequip/${inventoryId}`);
     showFlash(response.data.message || 'Item unequipped successfully', 'success');
     await loadInventory();
   } catch (err) {
@@ -122,7 +122,7 @@ const useItem = async (inventoryId) => {
   processing.value = true;
   
   try {
-    const response = await api.post(`/modules/inventory/use/${inventoryId}`);
+    const response = await api.post(`/inventory/use/${inventoryId}`);
     showFlash(response.data.message || 'Item used successfully', 'success');
     await loadInventory();
   } catch (err) {
@@ -134,10 +134,10 @@ const useItem = async (inventoryId) => {
 };
 
 // Sell item
-const sell = async (inventoryId, maxQuantity) => {
+const sell = async (inventoryId, _maxQuantity) => {
   if (processing.value) return;
   
-  const quantity = 1; // Default to 1 for now
+  const quantity = 1; // TODO: add quantity selector using _maxQuantity
   
   if (!confirm(`Are you sure you want to sell ${quantity} of this item?`)) {
     return;
@@ -146,7 +146,7 @@ const sell = async (inventoryId, maxQuantity) => {
   processing.value = true;
   
   try {
-    const response = await api.post(`/modules/inventory/sell/${inventoryId}`, { quantity });
+    const response = await api.post(`/inventory/sell/${inventoryId}`, { quantity });
     showFlash(response.data.message || 'Item sold successfully', 'success');
     await loadInventory();
   } catch (err) {

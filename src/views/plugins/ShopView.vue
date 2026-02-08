@@ -76,7 +76,7 @@ const loadShop = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await api.get('/modules/inventory/shop');
+    const response = await api.get('/inventory/shop');
     
     items.value = response.data.items || [];
     player.value = response.data.player || null;
@@ -118,7 +118,7 @@ const buyItem = async (item) => {
   processing.value = true;
   
   try {
-    const response = await api.post(`/modules/inventory/buy/${item.id}`);
+    const response = await api.post(`/inventory/buy/${item.id}`);
     showFlash(response.data.message || 'Item purchased successfully!', 'success');
     
     // Update player data from response

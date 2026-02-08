@@ -240,7 +240,7 @@ async function viewTicket(id) {
 
 async function replyToTicket() {
   if (!replyMessage.value.trim()) return
-  
+
   try {
     submitting.value = true
     await api.post(`/tickets/${selectedTicket.value.id}/reply`, {
@@ -258,7 +258,7 @@ async function replyToTicket() {
 
 async function closeTicket() {
   if (!confirm('Are you sure you want to close this ticket?')) return
-  
+
   try {
     await api.post(`/tickets/${selectedTicket.value.id}/close`)
     selectedTicket.value = null
