@@ -1,130 +1,178 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
-import api from '@/services/api'
+import api from '@/services/api.ts'
+import type { User, LoginCredentials, RegisterData } from '@/types/user'
+import type { ApiResponse } from '@/types/api'
 
-interface User {
-  id: number
-  username: string
-  name: string
-  email: string
-  avatar?: string
-}
+// Re-export types for backward compatibility
+export type { User, LoginCredentials, RegisterData } from '@/types/user'
 
-interface LoginCredentials {
-  email: string
-  password: string
-}
-
-interface RegisterData {
-  username: string
-  email: string
-  password: string
-  password_confirmation: string
-}
-
+/**
+ * Auth store - manages authentication state and actions
+ */
 export const useAuthStore = defineStore('auth', () => {
+  // State
   const user = ref<User | null>(null)
-  const token = ref<string | null>(localStorage.getItem('auth_token'))
   const loading = ref(false)
   const error = ref<string | null>(null)
 
-  const isAuthenticated = computed(() => !!token.value && !!user.value)
+  // Computed
+  const isAuthenticated = computed(() => !!user.value)
 
+  /**
+   * Login user with credentials
+   * Uses form-encoded POST to match backend API format
+   */
   async function login(credentials: LoginCredentials): Promise<boolean> {
     loading.value = true
     error.value = null
+
     try {
-      const response = await api.post('/login', credentials)
-      token.value = response.data.token
-      user.value = response.data.user
+      // Backend uses form-encoded POST to /api/?module=auth&action=login
+      const params = new URLSearchParams()
+      params.append('email', credentials.login || credentials.email || '')
+      params.append('password', credentials.password)
 
-      if (token.value) {
-        localStorage.setItem('auth_token', token.value)
+      const response = await api.post<ApiResponse<{ user: User }>>(
+        '/api/?module=auth&action=login',
+        params
+      )
+
+      const data = response.data
+
+      if (data.success && data.data?.user) {
+        user.value = data.data.user
+        localStorage.setItem('user', JSON.stringify(user.value))
+        return true
+      } else {
+        error.value = data.message || data.alerts?.[0]?.text || 'Login failed'
+        return false
       }
-      localStorage.setItem('user', JSON.stringify(user.value))
-
-      return true
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } }
-      error.value = axiosError.response?.data?.message || 'Login failed'
+    } catch (err) {
+      const axiosError = err as { response?: { data?: ApiResponse } }
+      error.value = axiosError.response?.data?.message
+        || axiosError.response?.data?.alerts?.[0]?.text
+        || 'Login failed'
       return false
     } finally {
       loading.value = false
     }
   }
 
+  /**
+   * Register a new user
+   * Uses form-encoded POST to match backend API format
+   */
   async function register(userData: RegisterData): Promise<boolean> {
     loading.value = true
     error.value = null
+
     try {
-      const response = await api.post('/register', userData)
-      token.value = response.data.token
-      user.value = response.data.user
+      // Backend uses form-encoded POST to /api/?module=register&action=register
+      const params = new URLSearchParams()
+      params.append('username', userData.username)
+      params.append('email', userData.email)
+      params.append('password', userData.password)
+      params.append('cpassword', userData.password_confirmation)
 
-      if (token.value) {
-        localStorage.setItem('auth_token', token.value)
+      const response = await api.post<ApiResponse>(
+        '/api/?module=register&action=register',
+        params
+      )
+
+      const data = response.data
+
+      if (data.success) {
+        // After registration, fetch the current user from session
+        await fetchUser()
+        return true
+      } else {
+        error.value = data.message || data.alerts?.[0]?.text || 'Registration failed'
+        return false
       }
-      localStorage.setItem('user', JSON.stringify(user.value))
-
-      return true
-    } catch (err: unknown) {
-      const axiosError = err as { response?: { data?: { message?: string } } }
-      error.value = axiosError.response?.data?.message || 'Registration failed'
+    } catch (err) {
+      const axiosError = err as { response?: { data?: ApiResponse } }
+      error.value = axiosError.response?.data?.message
+        || axiosError.response?.data?.alerts?.[0]?.text
+        || 'Registration failed'
       return false
     } finally {
       loading.value = false
     }
   }
 
+  /**
+   * Logout the current user
+   */
   async function logout(): Promise<void> {
     try {
-      await api.post('/logout')
-    } catch (err) {
-      console.error('Logout error:', err)
+      await api.post('/api/?module=auth&action=logout')
+    } catch {
+      // Proceed with local logout regardless of API response
     } finally {
-      token.value = null
       user.value = null
-      localStorage.removeItem('auth_token')
       localStorage.removeItem('user')
     }
   }
 
+  /**
+   * Fetch the current authenticated user
+   */
   async function fetchUser(): Promise<void> {
-    if (!token.value) return
-
     try {
-      const response = await api.get('/user')
-      user.value = response.data.user
-      localStorage.setItem('user', JSON.stringify(user.value))
-    } catch (err) {
-      console.error('Failed to fetch user:', err)
-      logout()
+      const response = await api.get<ApiResponse<{ user: User }>>('/api/?module=auth&action=me')
+      const data = response.data
+
+      if (data.success && data.data?.user) {
+        user.value = data.data.user
+        localStorage.setItem('user', JSON.stringify(user.value))
+      } else {
+        user.value = null
+        localStorage.removeItem('user')
+      }
+    } catch {
+      user.value = null
+      localStorage.removeItem('user')
     }
   }
 
-  // Initialize from localStorage
-  function init(): void {
+  /**
+   * Initialize auth state from localStorage and verify session
+   */
+  async function init(): Promise<void> {
     const storedUser = localStorage.getItem('user')
-    if (storedUser && token.value) {
+    if (storedUser) {
       try {
-        user.value = JSON.parse(storedUser)
-      } catch (err) {
-        console.error('Failed to parse stored user:', err)
-        logout()
+        user.value = JSON.parse(storedUser) as User
+        // Verify the session is still active
+        await fetchUser()
+      } catch {
+        user.value = null
+        localStorage.removeItem('user')
       }
     }
   }
 
+  /**
+   * Clear any error message
+   */
+  function clearError(): void {
+    error.value = null
+  }
+
   return {
+    // State
     user,
-    token,
     loading,
     error,
+    // Computed
     isAuthenticated,
+    // Actions
     login,
     register,
     logout,
     fetchUser,
-    init
+    init,
+    clearError
   }
 })

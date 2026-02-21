@@ -1,301 +1,409 @@
-import { createRouter, createWebHistory } from 'vue-router'
-import GameLayout from '../layouts/GameLayout.vue'
-import LoginView from '../views/LoginView.vue'
-import RegisterView from '../views/RegisterView.vue'
-import ForgotPasswordView from '../views/ForgotPasswordView.vue'
-import ResetPasswordView from '../views/ResetPasswordView.vue'
-import HomeView from '../views/HomeView.vue'
-import SettingsView from '../views/SettingsView.vue'
-import NotificationsView from '../views/NotificationsView.vue'
-import CrimesView from '../views/plugins/CrimesView.vue'
-import CrimeActionView from '../views/plugins/CrimeActionView.vue'
-import GymView from '../views/plugins/GymView.vue'
-import HospitalView from '../views/plugins/HospitalView.vue'
-import BankView from '../views/plugins/BankView.vue'
-import TravelView from '../views/plugins/TravelView.vue'
-import DrugsView from '../views/plugins/DrugsView.vue'
-import TheftView from '../views/plugins/TheftView.vue'
-import RacingView from '../views/plugins/RacingView.vue'
-import JailView from '../views/plugins/JailView.vue'
-import InventoryView from '../views/plugins/InventoryView.vue'
-import PropertiesView from '../views/plugins/PropertiesView.vue'
-import CombatView from '../views/plugins/CombatView.vue'
-import BountyView from '../views/plugins/BountyView.vue'
-import DetectiveView from '../views/plugins/DetectiveView.vue'
-import BulletsView from '../views/plugins/BulletsView.vue'
-import GangView from '../views/plugins/GangView.vue'
-import MissionsView from '../views/plugins/MissionsView.vue'
-import AchievementsView from '../views/plugins/AchievementsView.vue'
-import LeaderboardsView from '../views/plugins/LeaderboardsView.vue'
-import ForumView from '../views/plugins/ForumView.vue'
-import OrganizedCrimeView from '../views/plugins/OrganizedCrimeView.vue'
-import ShopView from '../views/plugins/ShopView.vue'
-import TicketsView from '../views/TicketsView.vue'
-import ChatView from '../views/plugins/ChatView.vue'
-import ProfileView from '../views/plugins/ProfileView.vue'
-import ActivityView from '../views/plugins/ActivityView.vue'
-import WikiView from '../views/plugins/WikiView.vue'
-import EmploymentView from '../views/plugins/EmploymentView.vue'
-import EducationView from '../views/plugins/EducationView.vue'
-import StocksView from '../views/plugins/StocksView.vue'
-import CasinoView from '../views/plugins/CasinoView.vue'
+import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import type { RouteMeta } from '@/types/router'
+import '@/types/router' // Import for route meta type augmentation
 
+// Re-export RouteMeta for convenience
+export type { RouteMeta } from '@/types/router'
+
+/**
+ * Route definitions with lazy loading for optimal bundle size
+ */
+const routes: RouteRecordRaw[] = [
+  // Root redirect
+  {
+    path: '/',
+    redirect: '/dashboard'
+  },
+
+  // Guest-only routes (authentication)
+  {
+    path: '/login',
+    name: 'login',
+    component: () => import('@/views/LoginView.vue'),
+    meta: { requiresGuest: true, title: 'Login' } satisfies RouteMeta
+  },
+  {
+    path: '/register',
+    name: 'register',
+    component: () => import('@/views/RegisterView.vue'),
+    meta: { requiresGuest: true, title: 'Register' } satisfies RouteMeta
+  },
+  {
+    path: '/forgot-password',
+    name: 'forgot-password',
+    component: () => import('@/views/ForgotPasswordView.vue'),
+    meta: { requiresGuest: true, title: 'Forgot Password' } satisfies RouteMeta
+  },
+  {
+    path: '/reset-password',
+    name: 'reset-password',
+    component: () => import('@/views/ResetPasswordView.vue'),
+    meta: { requiresGuest: true, title: 'Reset Password' } satisfies RouteMeta
+  },
+
+  // Authenticated routes with GameLayout
+  {
+    path: '/',
+    component: () => import('@/layouts/GameLayout.vue'),
+    meta: { requiresAuth: true } satisfies RouteMeta,
+    children: [
+      // Dashboard & Home
+      {
+        path: 'dashboard',
+        name: 'dashboard',
+        component: () => import('@/views/HomeView.vue'),
+        meta: { title: 'Dashboard' } satisfies RouteMeta
+      },
+      {
+        path: 'home',
+        name: 'home',
+        component: () => import('@/views/HomeView.vue'),
+        meta: { title: 'Home' } satisfies RouteMeta
+      },
+
+      // Core Game Routes
+      {
+        path: 'city',
+        name: 'city',
+        component: () => import('@/views/plugins/CityView.vue'),
+        meta: { title: 'City' } satisfies RouteMeta
+      },
+      {
+        path: 'inventory',
+        name: 'inventory',
+        component: () => import('@/views/plugins/InventoryView.vue'),
+        meta: { title: 'Inventory' } satisfies RouteMeta
+      },
+      {
+        path: 'missions',
+        name: 'missions',
+        component: () => import('@/views/plugins/MissionsView.vue'),
+        meta: { title: 'Missions' } satisfies RouteMeta
+      },
+      {
+        path: 'combat',
+        name: 'combat',
+        component: () => import('@/views/plugins/CombatView.vue'),
+        meta: { title: 'Combat' } satisfies RouteMeta
+      },
+      {
+        path: 'scavenge',
+        name: 'scavenge',
+        component: () => import('@/views/plugins/ScavengeView.vue'),
+        meta: { title: 'Scavenge' } satisfies RouteMeta
+      },
+      {
+        path: 'travel',
+        name: 'travel',
+        component: () => import('@/views/plugins/TravelView.vue'),
+        meta: { title: 'Travel' } satisfies RouteMeta
+      },
+      {
+        path: 'skills',
+        name: 'skills',
+        component: () => import('@/views/plugins/SkillsView.vue'),
+        meta: { title: 'Skills' } satisfies RouteMeta
+      },
+      {
+        path: 'forums',
+        name: 'forums',
+        component: () => import('@/views/plugins/ForumView.vue'),
+        meta: { title: 'Forums' } satisfies RouteMeta
+      },
+      {
+        path: 'profile',
+        name: 'profile',
+        component: () => import('@/views/plugins/ProfileView.vue'),
+        meta: { title: 'Profile' } satisfies RouteMeta
+      },
+
+      // Crime & Action Routes
+      {
+        path: 'crimes',
+        name: 'crimes',
+        component: () => import('@/views/plugins/CrimesView.vue'),
+        meta: { title: 'Crimes' } satisfies RouteMeta
+      },
+      {
+        path: 'crimes/:id',
+        name: 'crime-action',
+        component: () => import('@/views/plugins/CrimeActionView.vue'),
+        meta: { title: 'Crime Action' } satisfies RouteMeta
+      },
+      {
+        path: 'gym',
+        name: 'gym',
+        component: () => import('@/views/plugins/GymView.vue'),
+        meta: { title: 'Gym' } satisfies RouteMeta
+      },
+      {
+        path: 'hospital',
+        name: 'hospital',
+        component: () => import('@/views/plugins/HospitalView.vue'),
+        meta: { title: 'Hospital' } satisfies RouteMeta
+      },
+      {
+        path: 'bank',
+        name: 'bank',
+        component: () => import('@/views/plugins/BankView.vue'),
+        meta: { title: 'Bank' } satisfies RouteMeta
+      },
+      {
+        path: 'drugs',
+        name: 'drugs',
+        component: () => import('@/views/plugins/DrugsView.vue'),
+        meta: { title: 'Drugs' } satisfies RouteMeta
+      },
+      {
+        path: 'theft',
+        name: 'theft',
+        component: () => import('@/views/plugins/TheftView.vue'),
+        meta: { title: 'Theft' } satisfies RouteMeta
+      },
+      {
+        path: 'racing',
+        name: 'racing',
+        component: () => import('@/views/plugins/RacingView.vue'),
+        meta: { title: 'Racing' } satisfies RouteMeta
+      },
+      {
+        path: 'jail',
+        name: 'jail',
+        component: () => import('@/views/plugins/JailView.vue'),
+        meta: { title: 'Jail' } satisfies RouteMeta
+      },
+      {
+        path: 'properties',
+        name: 'properties',
+        component: () => import('@/views/plugins/PropertiesView.vue'),
+        meta: { title: 'Properties' } satisfies RouteMeta
+      },
+      {
+        path: 'bounty',
+        name: 'bounty',
+        component: () => import('@/views/plugins/BountyView.vue'),
+        meta: { title: 'Bounty' } satisfies RouteMeta
+      },
+      {
+        path: 'detective',
+        name: 'detective',
+        component: () => import('@/views/plugins/DetectiveView.vue'),
+        meta: { title: 'Detective' } satisfies RouteMeta
+      },
+      {
+        path: 'bullets',
+        name: 'bullets',
+        component: () => import('@/views/plugins/BulletsView.vue'),
+        meta: { title: 'Bullets' } satisfies RouteMeta
+      },
+      {
+        path: 'gang',
+        name: 'gang',
+        component: () => import('@/views/plugins/GangView.vue'),
+        meta: { title: 'Gang' } satisfies RouteMeta
+      },
+      {
+        path: 'organized-crime',
+        name: 'organized-crime',
+        component: () => import('@/views/plugins/OrganizedCrimeView.vue'),
+        meta: { title: 'Organized Crime' } satisfies RouteMeta
+      },
+
+      // Social & Communication
+      {
+        path: 'chat',
+        name: 'chat',
+        component: () => import('@/views/plugins/ChatView.vue'),
+        meta: { title: 'Chat' } satisfies RouteMeta
+      },
+      {
+        path: 'messaging',
+        name: 'messaging',
+        component: () => import('@/views/plugins/MessagingView.vue'),
+        meta: { title: 'Messages' } satisfies RouteMeta
+      },
+
+      // Progression & Stats
+      {
+        path: 'achievements',
+        name: 'achievements',
+        component: () => import('@/views/plugins/AchievementsView.vue'),
+        meta: { title: 'Achievements' } satisfies RouteMeta
+      },
+      {
+        path: 'leaderboards',
+        name: 'leaderboards',
+        component: () => import('@/views/plugins/LeaderboardsView.vue'),
+        meta: { title: 'Leaderboards' } satisfies RouteMeta
+      },
+      {
+        path: 'activity',
+        name: 'activity',
+        component: () => import('@/views/plugins/ActivityView.vue'),
+        meta: { title: 'Activity' } satisfies RouteMeta
+      },
+      {
+        path: 'employment',
+        name: 'employment',
+        component: () => import('@/views/plugins/EmploymentView.vue'),
+        meta: { title: 'Employment' } satisfies RouteMeta
+      },
+      {
+        path: 'education',
+        name: 'education',
+        component: () => import('@/views/plugins/EducationView.vue'),
+        meta: { title: 'Education' } satisfies RouteMeta
+      },
+      {
+        path: 'quests',
+        name: 'quests',
+        component: () => import('@/views/plugins/QuestsView.vue'),
+        meta: { title: 'Quests' } satisfies RouteMeta
+      },
+      {
+        path: 'alliances',
+        name: 'alliances',
+        component: () => import('@/views/plugins/AlliancesView.vue'),
+        meta: { title: 'Alliances' } satisfies RouteMeta
+      },
+
+      // Economy & Trading
+      {
+        path: 'shop',
+        name: 'shop',
+        component: () => import('@/views/plugins/ShopView.vue'),
+        meta: { title: 'Shop' } satisfies RouteMeta
+      },
+      {
+        path: 'market',
+        name: 'market',
+        component: () => import('@/views/plugins/MarketView.vue'),
+        meta: { title: 'Market' } satisfies RouteMeta
+      },
+      {
+        path: 'stocks',
+        name: 'stocks',
+        component: () => import('@/views/plugins/StocksView.vue'),
+        meta: { title: 'Stocks' } satisfies RouteMeta
+      },
+      {
+        path: 'casino',
+        name: 'casino',
+        component: () => import('@/views/plugins/CasinoView.vue'),
+        meta: { title: 'Casino' } satisfies RouteMeta
+      },
+
+      // Exploration & Events
+      {
+        path: 'explore',
+        name: 'explore',
+        component: () => import('@/views/plugins/ExploreView.vue'),
+        meta: { title: 'Explore' } satisfies RouteMeta
+      },
+      {
+        path: 'hunting',
+        name: 'hunting',
+        component: () => import('@/views/plugins/HuntingView.vue'),
+        meta: { title: 'Hunting' } satisfies RouteMeta
+      },
+      {
+        path: 'events',
+        name: 'events',
+        component: () => import('@/views/plugins/EventsView.vue'),
+        meta: { title: 'Events' } satisfies RouteMeta
+      },
+      {
+        path: 'tournament',
+        name: 'tournament',
+        component: () => import('@/views/plugins/TournamentView.vue'),
+        meta: { title: 'Tournament' } satisfies RouteMeta
+      },
+
+      // Information
+      {
+        path: 'wiki',
+        name: 'wiki',
+        component: () => import('@/views/plugins/WikiView.vue'),
+        meta: { title: 'Wiki' } satisfies RouteMeta
+      },
+      {
+        path: 'tickets',
+        name: 'tickets',
+        component: () => import('@/views/TicketsView.vue'),
+        meta: { title: 'Support Tickets' } satisfies RouteMeta
+      },
+
+      // User Settings
+      {
+        path: 'settings',
+        name: 'settings',
+        component: () => import('@/views/SettingsView.vue'),
+        meta: { title: 'Settings' } satisfies RouteMeta
+      },
+      {
+        path: 'notifications',
+        name: 'notifications',
+        component: () => import('@/views/NotificationsView.vue'),
+        meta: { title: 'Notifications' } satisfies RouteMeta
+      },
+      {
+        path: 'announcements',
+        name: 'announcements',
+        component: () => import('@/views/AnnouncementsView.vue'),
+        meta: { title: 'Announcements' } satisfies RouteMeta
+      },
+      {
+        path: 'daily-rewards',
+        name: 'daily-rewards',
+        component: () => import('@/views/DailyRewardsView.vue'),
+        meta: { title: 'Daily Rewards' } satisfies RouteMeta
+      }
+    ]
+  },
+
+  // 404 Catch-all route
+  {
+    path: '/:pathMatch(.*)*',
+    name: 'not-found',
+    component: () => import('@/views/NotFoundView.vue'),
+    meta: { title: 'Page Not Found' } satisfies RouteMeta
+  }
+]
+
+/**
+ * Create router instance
+ */
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
-  routes: [
-    {
-      path: '/',
-      redirect: '/dashboard'
-    },
-    {
-      path: '/login',
-      name: 'login',
-      component: LoginView,
-      meta: { requiresGuest: true }
-    },
-    {
-      path: '/register',
-      name: 'register',
-      component: RegisterView,
-      meta: { requiresGuest: true }
-    },
-    {
-      path: '/forgot-password',
-      name: 'forgot-password',
-      component: ForgotPasswordView,
-      meta: { requiresGuest: true }
-    },
-    {
-      path: '/reset-password',
-      name: 'reset-password',
-      component: ResetPasswordView,
-      meta: { requiresGuest: true }
-    },
-    {
-      path: '/',
-      component: GameLayout,
-      meta: { requiresAuth: true },
-      children: [
-        {
-          path: 'dashboard',
-          name: 'dashboard',
-          component: HomeView
-        },
-        {
-          path: 'home',
-          name: 'home',
-          component: HomeView
-        },
-        {
-          path: 'city',
-          name: 'city',
-          component: () => import('../views/plugins/CityView.vue')
-        },
-        {
-          path: 'inventory',
-          name: 'inventory',
-          component: InventoryView
-        },
-        {
-          path: 'missions',
-          name: 'missions',
-          component: MissionsView
-        },
-        {
-          path: 'combat',
-          name: 'combat',
-          component: CombatView
-        },
-        {
-          path: 'scavenge',
-          name: 'scavenge',
-          component: () => import('../views/plugins/ScavengeView.vue')
-        },
-        {
-          path: 'travel',
-          name: 'travel',
-          component: TravelView
-        },
-        {
-          path: 'skills',
-          name: 'skills',
-          component: () => import('../views/plugins/SkillsView.vue')
-        },
-        {
-          path: 'forums',
-          name: 'forums',
-          component: ForumView
-        },
-        {
-          path: 'profile',
-          name: 'profile',
-          component: ProfileView
-        },
-        {
-          path: 'gym',
-          name: 'gym',
-          component: GymView
-        },
-        {
-          path: 'hospital',
-          name: 'hospital',
-          component: HospitalView
-        },
-        {
-          path: 'bank',
-          name: 'bank',
-          component: BankView
-        },
-        {
-          path: 'crimes',
-          name: 'crimes',
-          component: CrimesView
-        },
-        {
-          path: 'crimes/:id',
-          name: 'crime-action',
-          component: CrimeActionView
-        },
-        {
-          path: 'drugs',
-          name: 'drugs',
-          component: DrugsView
-        },
-        {
-          path: 'theft',
-          name: 'theft',
-          component: TheftView
-        },
-        {
-          path: 'racing',
-          name: 'racing',
-          component: RacingView
-        },
-        {
-          path: 'jail',
-          name: 'jail',
-          component: JailView
-        },
-        {
-          path: 'properties',
-          name: 'properties',
-          component: PropertiesView
-        },
-        {
-          path: 'bounty',
-          name: 'bounty',
-          component: BountyView
-        },
-        {
-          path: 'detective',
-          name: 'detective',
-          component: DetectiveView
-        },
-        {
-          path: 'bullets',
-          name: 'bullets',
-          component: BulletsView
-        },
-        {
-          path: 'gang',
-          name: 'gang',
-          component: GangView
-        },
-        {
-          path: 'achievements',
-          name: 'achievements',
-          component: AchievementsView
-        },
-        {
-          path: 'leaderboards',
-          name: 'leaderboards',
-          component: LeaderboardsView
-        },
-        {
-          path: 'tickets',
-          name: 'tickets',
-          component: TicketsView
-        },
-        {
-          path: 'organized-crime',
-          name: 'organized-crime',
-          component: OrganizedCrimeView
-        },
-        {
-          path: 'shop',
-          name: 'shop',
-          component: ShopView
-        },
-        {
-          path: 'chat',
-          name: 'chat',
-          component: ChatView
-        },
-        {
-          path: 'activity',
-          name: 'activity',
-          component: ActivityView
-        },
-        {
-          path: 'wiki',
-          name: 'wiki',
-          component: WikiView
-        },
-        {
-          path: 'employment',
-          name: 'employment',
-          component: EmploymentView
-        },
-        {
-          path: 'education',
-          name: 'education',
-          component: EducationView
-        },
-        {
-          path: 'stocks',
-          name: 'stocks',
-          component: StocksView
-        },
-        {
-          path: 'casino',
-          name: 'casino',
-          component: CasinoView
-        },
-        {
-          path: 'settings',
-          name: 'settings',
-          component: SettingsView
-        },
-        {
-          path: 'notifications',
-          name: 'notifications',
-          component: NotificationsView
-        },
-        {
-          path: 'announcements',
-          name: 'announcements',
-          component: () => import('../views/AnnouncementsView.vue')
-        },
-        {
-          path: 'daily-rewards',
-          name: 'daily-rewards',
-          component: () => import('../views/DailyRewardsView.vue')
-        }
-      ]
+  routes,
+  scrollBehavior(_to, _from, savedPosition) {
+    if (savedPosition) {
+      return savedPosition
     }
-  ],
+    return { top: 0 }
+  }
 })
 
-// Navigation guards
-router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('auth_token')
+/**
+ * Navigation guard for authentication
+ */
+router.beforeEach((to, _from, next) => {
+  const user = localStorage.getItem('user')
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
 
-  if (requiresAuth && !token) {
-    next('/login')
-  } else if (requiresGuest && token) {
-    next('/dashboard')
+  // Update document title if route has a title
+  const title = to.meta?.title as string | undefined
+  if (title) {
+    document.title = `${title} | OpenPBBG`
+  }
+
+  if (requiresAuth && !user) {
+    // Redirect to login if auth required but not authenticated
+    next({ name: 'login', query: { redirect: to.fullPath } })
+  } else if (requiresGuest && user) {
+    // Redirect to dashboard if guest route but already authenticated
+    next({ name: 'dashboard' })
   } else {
     next()
   }

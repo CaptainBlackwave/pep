@@ -10,3 +10,67 @@ services:
     environment:
       - NODE_ENV=development
     command: npm run dev -- --host 0.0.0.0
+
+  php-apache:
+    build:
+      context: C:\Users\Workstation\Documents\OpenPBBG
+      dockerfile: Dockerfile
+    container_name: openpbbg2_app
+    ports:
+      - "8001:80"
+    volumes:
+      - C:\Users\Workstation\Documents\OpenPBBG:/var/www/html
+    depends_on:
+      mysql:
+        condition: service_healthy
+    environment:
+      - APACHE_DOCUMENT_ROOT=/var/www/html
+      - APP_DEBUG=1
+    networks:
+      - openpbbg2_net
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    container_name: openpbbg2_db
+    ports:
+      - "3307:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: openpbbg
+      MYSQL_USER: openpbbg
+      MYSQL_PASSWORD: openpbbg
+    volumes:
+      - mysql2_data:/var/lib/mysql
+      - C:\Users\Workstation\Documents\OpenPBBG\.docker\mysql\init.sql:/docker-entrypoint-initdb.d/init.sql:ro
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost", "-u", "root", "-proot"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    networks:
+      - openpbbg2_net
+    restart: unless-stopped
+
+  phpmyadmin:
+    image: phpmyadmin:latest
+    container_name: openpbbg2_pma
+    ports:
+      - "8082:80"
+    environment:
+      PMA_HOST: mysql
+      PMA_USER: root
+      PMA_PASSWORD: root
+    depends_on:
+      mysql:
+        condition: service_healthy
+    networks:
+      - openpbbg2_net
+    restart: unless-stopped
+
+volumes:
+  mysql2_data:
+
+networks:
+  openpbbg2_net:
+    driver: bridge
