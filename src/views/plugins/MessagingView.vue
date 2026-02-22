@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted, nextTick } from 'vue';
 import api from '@/services/api';
 
@@ -50,7 +50,7 @@ const fetchConversations = async () => {
   try {
     loading.value = true;
     error.value = '';
-    const response = await api.get('/messages');
+    const response = await api.get('/api/v1/messages');
     conversations.value = response.data.conversations || [];
     player.value = response.data.player || null;
   } catch (err) {
@@ -64,7 +64,7 @@ const fetchMessages = async (conversationId) => {
   try {
     loadingMessages.value = true;
     error.value = '';
-    const response = await api.get(`/messages/${conversationId}`);
+    const response = await api.get(`/api/v1/messages/${conversationId}`);
     messages.value = response.data.messages || [];
 
     // Mark as read
@@ -95,7 +95,7 @@ const searchForUsers = async () => {
   }
 
   try {
-    const response = await api.get('/players/search', { params: { q: searchUsers.value } });
+    const response = await api.get('/api/v1/players/search', { params: { q: searchUsers.value } });
     searchResults.value = response.data.players || [];
   } catch (err) {
     console.error('Search failed:', err);
@@ -116,7 +116,7 @@ const sendNewMessage = async () => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post('/messages/send', {
+    const response = await api.post('/api/v1/messages/send', {
       recipient_id: selectedRecipient.value.id,
       message: newMessageText.value
     });
@@ -151,7 +151,7 @@ const sendReply = async () => {
     processing.value = true;
     error.value = '';
 
-    const response = await api.post(`/messages/${selectedConversation.value.id}/reply`, {
+    const response = await api.post(`/api/v1/messages/${selectedConversation.value.id}/reply`, {
       message: replyText.value
     });
 
@@ -176,7 +176,7 @@ const deleteConversation = async (conversationId) => {
     processing.value = true;
     error.value = '';
 
-    await api.delete(`/messages/${conversationId}`);
+    await api.delete(`/api/v1/messages/${conversationId}`);
 
     conversations.value = conversations.value.filter(c => c.id !== conversationId);
 
@@ -202,7 +202,7 @@ const startPolling = () => {
   pollingInterval = setInterval(async () => {
     await fetchConversations();
     if (selectedConversation.value) {
-      const response = await api.get(`/messages/${selectedConversation.value.id}`);
+      const response = await api.get(`/api/v1/messages/${selectedConversation.value.id}`);
       if (response.data.messages.length > messages.value.length) {
         messages.value = response.data.messages;
         await nextTick();

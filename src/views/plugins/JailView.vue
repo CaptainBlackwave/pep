@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
@@ -53,7 +53,7 @@ const loadJailData = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await api.get('/jail');
+    const response = await api.get('/api/v1/jail');
 
     jailedPlayers.value = response.data.jailedPlayers || [];
     player.value = response.data.player || null;
@@ -108,7 +108,7 @@ const bustOut = async (playerId) => {
   selectedPlayer.value = playerId;
 
   try {
-    const response = await api.post(`/jail/${playerId}/bustout`);
+    const response = await api.post(`/api/v1/jail/${playerId}/bustout`);
     showFlash(response.data.message, 'success');
     await loadJailData();
   } catch (err) {
@@ -127,7 +127,7 @@ const bailOutAction = async () => {
   processing.value = true;
 
   try {
-    const response = await api.post('/jail/bailout');
+    const response = await api.post('/api/v1/jail/bailout');
     showFlash(response.data.message, 'success');
     await loadJailData();
   } catch (err) {

@@ -1,9 +1,9 @@
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import api from '@/services/api';
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import { useRouter } from 'vue-router'
+import api from '@/services/api'
 
-const router = useRouter();
+const router = useRouter()
 
 const loading = ref(true);
 const error = ref(null);
@@ -50,7 +50,7 @@ const loadInventory = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await api.get('/inventory');
+    const response = await api.get('/api/v1/inventory');
 
     inventory.value = response.data.inventory || [];
     player.value = response.data.player || null;
@@ -82,7 +82,7 @@ const equip = async (inventoryId) => {
   processing.value = true;
 
   try {
-    const response = await api.post(`/inventory/equip/${inventoryId}`);
+    const response = await api.post(`/api/v1/inventory/equip/${inventoryId}`);
     showFlash(response.data.message || 'Item equipped successfully', 'success');
     await loadInventory();
   } catch (err) {
@@ -100,7 +100,7 @@ const unequip = async (inventoryId) => {
   processing.value = true;
 
   try {
-    const response = await api.post(`/inventory/unequip/${inventoryId}`);
+    const response = await api.post(`/api/v1/inventory/unequip/${inventoryId}`);
     showFlash(response.data.message || 'Item unequipped successfully', 'success');
     await loadInventory();
   } catch (err) {
@@ -122,7 +122,7 @@ const useItem = async (inventoryId) => {
   processing.value = true;
 
   try {
-    const response = await api.post(`/inventory/use/${inventoryId}`);
+    const response = await api.post(`/api/v1/inventory/use/${inventoryId}`);
     showFlash(response.data.message || 'Item used successfully', 'success');
     await loadInventory();
   } catch (err) {
@@ -134,10 +134,10 @@ const useItem = async (inventoryId) => {
 };
 
 // Sell item
-const sell = async (inventoryId, _maxQuantity) => {
+const sell = async (inventoryId) => {
   if (processing.value) return;
 
-  const quantity = 1; // TODO: add quantity selector using _maxQuantity
+  const quantity = 1; // TODO: add quantity selector
 
   if (!confirm(`Are you sure you want to sell ${quantity} of this item?`)) {
     return;
@@ -146,7 +146,7 @@ const sell = async (inventoryId, _maxQuantity) => {
   processing.value = true;
 
   try {
-    const response = await api.post(`/inventory/sell/${inventoryId}`, { quantity });
+    const response = await api.post(`/api/v1/inventory/sell/${inventoryId}`, { quantity });
     showFlash(response.data.message || 'Item sold successfully', 'success');
     await loadInventory();
   } catch (err) {
@@ -331,7 +331,7 @@ const goToShop = () => {
               </button>
               <button
                 v-if="item.item.tradeable && !item.equipped"
-                @click="sell(item.id, item.quantity)"
+                @click="sell(item.id)"
                 :disabled="processing"
                 class="action-button sell-button"
               >

@@ -5,15 +5,15 @@
         <h3>Messages</h3>
         <button @click="showChannelModal = true" class="btn-new">+</button>
       </div>
-      
+
       <div class="tab-selector">
-        <button 
+        <button
           :class="['tab-btn', {active: activeTab === 'channels'}]"
           @click="activeTab = 'channels'"
         >
           Channels
         </button>
-        <button 
+        <button
           :class="['tab-btn', {active: activeTab === 'direct'}]"
           @click="activeTab = 'direct'"
         >
@@ -76,7 +76,7 @@
                 <span class="message-time">{{ formatTime(message.created_at) }}</span>
                 <span v-if="message.is_edited" class="edited-badge">(edited)</span>
               </div>
-              
+
               <!-- Edit Mode -->
               <div v-if="editingMessageId === message.id" class="message-edit">
                 <input
@@ -91,18 +91,18 @@
                   <button @click="cancelEdit" class="btn-cancel-edit">Cancel</button>
                 </div>
               </div>
-              
+
               <!-- Normal Message Display -->
               <div v-else>
                 <div class="message-text">{{ message.message }}</div>
-                
+
                 <!-- Message Actions (only show for own messages) -->
                 <div v-if="message.user.id === currentUserId" class="message-actions">
                   <button @click="startEdit(message)" class="action-btn" title="Edit">✏️</button>
                   <button @click="deleteMessage(message.id)" class="action-btn" title="Delete">🗑️</button>
                 </div>
               </div>
-              
+
               <!-- Reactions -->
               <div v-if="message.reactions && message.reactions.length > 0" class="reactions">
                 <button
@@ -114,7 +114,7 @@
                   {{ reaction.emoji }} {{ reaction.count }}
                 </button>
               </div>
-              
+
               <!-- Add Reaction Button -->
               <div class="reaction-add">
                 <button @click="showEmojiPicker(message.id)" class="btn-add-reaction">
@@ -179,24 +179,63 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, watch, computed, nextTick } from 'vue'
+<script setup lang="ts">
+import { ref, onMounted, computed, nextTick } from 'vue'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
+
+// Type definitions
+interface ChatUser {
+  id: number
+  username: string
+}
+
+interface Channel {
+  id: number
+  name: string
+  description?: string
+  is_private?: boolean
+}
+
+interface DirectMessage {
+  user: ChatUser
+  last_message?: { message: string }
+  unread_count: number
+}
+
+interface Reaction {
+  emoji: string
+  user_id: number
+}
+
+interface Message {
+  id: number
+  message: string
+  created_at: string
+  is_edited?: boolean
+  user: ChatUser
+  reactions?: Reaction[]
+}
+
+interface GroupedReaction {
+  emoji: string
+  count: number
+  userReacted: boolean
+}
 
 const authStore = useAuthStore()
 const currentUserId = computed(() => authStore.user?.id)
 
 const activeTab = ref('channels')
-const channels = ref([])
-const directMessages = ref([])
-const selectedChannel = ref(null)
-const selectedDM = ref(null)
-const messages = ref([])
+const channels = ref<Channel[]>([])
+const directMessages = ref<DirectMessage[]>([])
+const selectedChannel = ref<Channel | null>(null)
+const selectedDM = ref<ChatUser | null>(null)
+const messages = ref<Message[]>([])
 const newMessage = ref('')
 const unreadCount = ref(0)
-const messagesContainer = ref(null)
-const messageInput = ref(null)
+const messagesContainer = ref<HTMLElement | null>(null)
+const messageInput = ref<HTMLInputElement | null>(null)
 
 const showChannelModal = ref(false)
 const newChannelName = ref('')
@@ -204,11 +243,11 @@ const newChannelDescription = ref('')
 const newChannelPrivate = ref(false)
 
 // Emoji and editing features
-const emojiPickerMessageId = ref(null)
+const emojiPickerMessageId = ref<number | null>(null)
 const showMessageEmojiPicker = ref(false)
-const editingMessageId = ref(null)
+const editingMessageId = ref<number | null>(null)
 const editMessageText = ref('')
-const editInput = ref(null)
+const editInput = ref<HTMLInputElement[]>([])
 
 const quickEmojis = ['👍', '❤️', '😂', '😮', '😢', '😡', '🎉', '🔥', '✅', '❌']
 
@@ -248,20 +287,20 @@ async function loadUnreadCount() {
   }
 }
 
-async function selectChannel(channel) {
+async function selectChannel(channel: Channel) {
   selectedChannel.value = channel
   selectedDM.value = null
   await loadChannelMessages(channel.id)
 }
 
-async function selectDM(user) {
+async function selectDM(user: ChatUser) {
   selectedDM.value = user
   selectedChannel.value = null
   await loadDMMessages(user.id)
   await markAsRead(user.id)
 }
 
-async function loadChannelMessages(channelId) {
+async function loadChannelMessages(channelId: number) {
   try {
     const response = await api.get(`/channels/${channelId}/messages`)
     messages.value = response.data.data || response.data
@@ -272,7 +311,7 @@ async function loadChannelMessages(channelId) {
   }
 }
 
-async function loadDMMessages(userId) {
+async function loadDMMessages(userId: number) {
   try {
     const response = await api.get(`/direct-messages/${userId}`)
     messages.value = response.data.data || response.data
@@ -324,7 +363,7 @@ async function createChannel() {
   }
 }
 
-async function markAsRead(userId) {
+async function markAsRead(userId: number) {
   try {
     await api.patch(`/direct-messages/${userId}/read`)
     await loadUnreadCount()
@@ -342,17 +381,17 @@ function scrollToBottom() {
 }
 
 // Emoji functions
-function showEmojiPicker(messageId) {
+function showEmojiPicker(messageId: number) {
   emojiPickerMessageId.value = emojiPickerMessageId.value === messageId ? null : messageId
 }
 
-function insertEmoji(emoji) {
+function insertEmoji(emoji: string) {
   newMessage.value += emoji
   showMessageEmojiPicker.value = false
   messageInput.value?.focus()
 }
 
-async function addReaction(messageId, emoji) {
+async function addReaction(messageId: number, emoji: string) {
   try {
     await api.post(`/messages/${messageId}/reactions`, { emoji })
     emojiPickerMessageId.value = null
@@ -367,7 +406,7 @@ async function addReaction(messageId, emoji) {
   }
 }
 
-async function toggleReaction(messageId, emoji) {
+async function toggleReaction(messageId: number, emoji: string) {
   try {
     await api.post(`/messages/${messageId}/reactions`, { emoji })
     // Reload messages to get updated reactions
@@ -381,10 +420,10 @@ async function toggleReaction(messageId, emoji) {
   }
 }
 
-function groupedReactions(reactions) {
+function groupedReactions(reactions: Reaction[]): GroupedReaction[] {
   if (!reactions) return []
-  
-  const grouped = {}
+
+  const grouped: Record<string, GroupedReaction> = {}
   reactions.forEach(reaction => {
     if (!grouped[reaction.emoji]) {
       grouped[reaction.emoji] = {
@@ -393,17 +432,17 @@ function groupedReactions(reactions) {
         userReacted: false
       }
     }
-    grouped[reaction.emoji].count++
+    grouped[reaction.emoji]!.count++
     if (reaction.user_id === currentUserId.value) {
-      grouped[reaction.emoji].userReacted = true
+      grouped[reaction.emoji]!.userReacted = true
     }
   })
-  
+
   return Object.values(grouped)
 }
 
 // Edit message functions
-function startEdit(message) {
+function startEdit(message: Message) {
   editingMessageId.value = message.id
   editMessageText.value = message.message
   nextTick(() => {
@@ -416,9 +455,9 @@ function cancelEdit() {
   editMessageText.value = ''
 }
 
-async function saveEdit(messageId) {
+async function saveEdit(messageId: number) {
   if (!editMessageText.value.trim()) return
-  
+
   try {
     await api.patch(`/messages/${messageId}`, {
       message: editMessageText.value
@@ -431,15 +470,16 @@ async function saveEdit(messageId) {
     } else if (selectedDM.value) {
       await loadDMMessages(selectedDM.value.id)
     }
-  } catch (error) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } }; message?: string }
     console.error('Failed to update message:', error)
     alert('Failed to update message: ' + (error.response?.data?.message || error.message))
   }
 }
 
-async function deleteMessage(messageId) {
+async function deleteMessage(messageId: number) {
   if (!confirm('Are you sure you want to delete this message?')) return
-  
+
   try {
     await api.delete(`/messages/${messageId}`)
     // Reload messages
@@ -448,17 +488,18 @@ async function deleteMessage(messageId) {
     } else if (selectedDM.value) {
       await loadDMMessages(selectedDM.value.id)
     }
-  } catch (error) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } }; message?: string }
     console.error('Failed to delete message:', error)
     alert('Failed to delete message: ' + (error.response?.data?.message || error.message))
   }
 }
 
-function formatTime(timestamp) {
+function formatTime(timestamp: string): string {
   const date = new Date(timestamp)
   const now = new Date()
-  const diff = now - date
-  
+  const diff = now.getTime() - date.getTime()
+
   if (diff < 60000) return 'just now'
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`

@@ -148,16 +148,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+
+interface Message {
+  type: 'success' | 'error'
+  text: string
+}
 
 const toast = useToast()
 const loading = ref(true)
 const saving = ref(false)
 const changingPassword = ref(false)
-const message = ref(null)
+const message = ref<Message | null>(null)
 
 const settings = ref({
   name: '',
@@ -178,7 +183,7 @@ const passwordForm = ref({
 
 const loadSettings = async () => {
   try {
-    const response = await api.get('/user')
+    const response = await api.get('/api/v1/user')
     const user = response.data.user || response.data
 
     settings.value = {
@@ -204,10 +209,11 @@ const saveSettings = async () => {
   message.value = null
 
   try {
-    await api.patch('/user', settings.value)
+    await api.patch('/api/v1/user', settings.value)
     toast.success('Settings saved successfully!')
-  } catch (err) {
-    toast.error(err.response?.data?.message || 'Failed to save settings')
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } } }
+    toast.error(error.response?.data?.message || 'Failed to save settings')
   } finally {
     saving.value = false
   }
@@ -227,7 +233,7 @@ const changePassword = async () => {
   changingPassword.value = true
 
   try {
-    await api.post('/user/change-password', {
+    await api.post('/api/v1/user/change-password', {
       current_password: passwordForm.value.current,
       new_password: passwordForm.value.new_password,
       new_password_confirmation: passwordForm.value.confirm,
@@ -235,8 +241,9 @@ const changePassword = async () => {
 
     toast.success('Password changed successfully!')
     passwordForm.value = { current: '', new_password: '', confirm: '' }
-  } catch (err) {
-    toast.error(err.response?.data?.message || 'Failed to change password')
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } } }
+    toast.error(error.response?.data?.message || 'Failed to change password')
   } finally {
     changingPassword.value = false
   }

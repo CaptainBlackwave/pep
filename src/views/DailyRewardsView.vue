@@ -81,7 +81,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
@@ -121,7 +121,7 @@ const formatDate = (dateString) => {
 
 const fetchRewardsStatus = async () => {
   try {
-    const response = await api.get('/daily-rewards')
+    const response = await api.get('/api/v1/daily-rewards')
     const data = response.data
 
     canClaim.value = data.can_claim ?? true
@@ -149,7 +149,7 @@ const claimReward = async () => {
   claiming.value = true
 
   try {
-    const response = await api.post('/daily-rewards/claim')
+    const response = await api.post('/api/v1/daily-rewards/claim')
 
     toast.success(response.data.message || 'Reward claimed successfully!')
 

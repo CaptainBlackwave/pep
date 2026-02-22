@@ -11,6 +11,7 @@ import type {
   PlayerStats,
   PlayerTimers
 } from '@/types/user'
+import type { PlayerStatsResponse, UserApiResponse } from '@/types/api'
 
 // Re-export types for backward compatibility
 export type {
@@ -169,9 +170,9 @@ export const usePlayerStore = defineStore('player', () => {
     error.value = null
 
     try {
-      const response = await api.get('/user')
-      const userData = response.data.user || response.data
-      player.value = transformUserData(userData)
+      const response = await api.get('/api/v1/user')
+      const userData = (response.data as { user?: UserApiResponse }).user || response.data
+      player.value = transformUserData(userData as Record<string, unknown>)
       lastFetched.value = new Date()
       return true
     } catch {
@@ -191,8 +192,8 @@ export const usePlayerStore = defineStore('player', () => {
     if (!player.value) return
 
     try {
-      const response = await api.get('/stats')
-      const statsData = response.data
+      const response = await api.get('/api/v1/stats')
+      const statsData = response.data as PlayerStatsResponse | undefined
 
       if (player.value && statsData) {
         player.value.stats = {

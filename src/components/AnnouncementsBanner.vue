@@ -1,7 +1,7 @@
 <template>
   <div v-if="announcements.length > 0" class="announcements-container">
-    <div 
-      v-for="announcement in announcements" 
+    <div
+      v-for="announcement in announcements"
       :key="announcement.id"
       :class="['announcement-banner', `announcement-${announcement.type}`]"
     >
@@ -19,8 +19,8 @@
             </span>
           </div>
         </div>
-        <button 
-          @click="dismissAnnouncement(announcement.id)" 
+        <button
+          @click="dismissAnnouncement(announcement.id)"
           class="dismiss-btn"
           title="Dismiss"
         >
@@ -31,12 +31,21 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 
-const announcements = ref([])
-const dismissedIds = ref(new Set())
+interface Announcement {
+  id: number
+  title: string
+  message: string
+  type: string
+  is_sticky?: boolean
+  published_at?: string
+}
+
+const announcements = ref<Announcement[]>([])
+const dismissedIds = ref(new Set<number>())
 
 // Load dismissed announcements from localStorage
 const loadDismissed = () => {
@@ -59,17 +68,17 @@ const fetchAnnouncements = async () => {
   try {
     const response = await api.get('/announcements')
     // Filter out dismissed announcements
-    announcements.value = response.data.filter(a => !dismissedIds.value.has(a.id))
+    announcements.value = response.data.filter((a: Announcement) => !dismissedIds.value.has(a.id))
   } catch (error) {
     console.error('Error fetching announcements:', error)
   }
 }
 
-const dismissAnnouncement = async (id) => {
+const dismissAnnouncement = async (id: number) => {
   dismissedIds.value.add(id)
   saveDismissed()
   announcements.value = announcements.value.filter(a => a.id !== id)
-  
+
   // Optionally track view on server
   try {
     await api.post(`/announcements/${id}/view`)
@@ -78,8 +87,8 @@ const dismissAnnouncement = async (id) => {
   }
 }
 
-const getIcon = (type) => {
-  const icons = {
+const getIcon = (type: string) => {
+  const icons: Record<string, string> = {
     news: '📢',
     event: '🎉',
     maintenance: '🔧',
@@ -89,12 +98,12 @@ const getIcon = (type) => {
   return icons[type] || '📢'
 }
 
-const formatDate = (dateString) => {
+const formatDate = (dateString: string) => {
   if (!dateString) return ''
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    month: 'short', 
-    day: 'numeric', 
+  return date.toLocaleDateString('en-US', {
+    month: 'short',
+    day: 'numeric',
     year: 'numeric',
     hour: '2-digit',
     minute: '2-digit'

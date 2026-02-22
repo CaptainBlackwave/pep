@@ -51,7 +51,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -71,7 +71,7 @@ const formatDate = (dateString) => {
 
 const fetchAnnouncements = async () => {
   try {
-    const response = await api.get('/announcements')
+    const response = await api.get('/api/v1/announcements')
     announcements.value = response.data.announcements || response.data || []
 
     // Sort: pinned first, then by date
@@ -89,7 +89,7 @@ const fetchAnnouncements = async () => {
 
 const markAsRead = async (id) => {
   try {
-    await api.post(`/announcements/${id}/view`)
+    await api.post(`/api/v1/announcements/${id}/view`)
     const announcement = announcements.value.find(a => a.id === id)
     if (announcement) {
       announcement.is_read = true

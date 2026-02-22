@@ -45,7 +45,7 @@
         <!-- Healing Options -->
         <div class="healing-options-panel">
           <h3 class="section-title">Healing Options</h3>
-          
+
           <!-- Custom Amount -->
           <div class="custom-healing">
             <label class="control-label">Custom Healing Amount</label>
@@ -93,7 +93,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -135,7 +135,7 @@ const setQuickAmount = (percent) => {
 
 const loadData = async () => {
   try {
-    const response = await api.get('/hospital')
+    const response = await api.get('/api/v1/hospital')
     costPerHp.value = response.data.costPerHp || 100
     fullHealCost.value = response.data.fullHealCost || 0
     player.value = response.data.player
@@ -150,9 +150,9 @@ const healCustom = async () => {
   if (processing.value || !canAffordCustom.value) return
   processing.value = true
   result.value = null
-  
+
   try {
-    const response = await api.post('/hospital/heal', { amount: customAmount.value })
+    const response = await api.post('/api/v1/hospital/heal', { amount: customAmount.value })
     result.value = { success: true, message: response.data.message }
     player.value = response.data.player
   } catch (err) {
@@ -166,9 +166,9 @@ const healFull = async () => {
   if (processing.value || !canAffordFull.value) return
   processing.value = true
   result.value = null
-  
+
   try {
-    const response = await api.post('/hospital/heal-full')
+    const response = await api.post('/api/v1/hospital/heal-full')
     result.value = { success: true, message: response.data.message }
     player.value = response.data.player
   } catch (err) {

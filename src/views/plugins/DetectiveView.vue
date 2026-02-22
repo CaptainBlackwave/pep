@@ -1,9 +1,6 @@
-<script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
-import { useRouter } from 'vue-router';
-import api from '@/services/api';
-
-const router = useRouter();
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted, computed } from 'vue'
+import api from '@/services/api'
 
 const player = ref(null);
 const reports = ref([]);
@@ -17,10 +14,10 @@ const successMessage = ref('');
 const currentTime = ref(Date.now());
 
 const formatMoney = (val) => {
-  return new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency: 'USD', 
-    minimumFractionDigits: 0 
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0
   }).format(val);
 };
 
@@ -60,16 +57,16 @@ const fetchData = async () => {
 
 const hireDetective = async () => {
   if (processing.value || !targetId.value) return;
-  
+
   try {
     processing.value = true;
     error.value = '';
     successMessage.value = '';
-    
-    const response = await api.post('/detective/hire', { 
-      target_id: targetId.value 
+
+    const response = await api.post('/detective/hire', {
+      target_id: targetId.value
     });
-    
+
     successMessage.value = response.data.message || 'Detective hired successfully!';
     targetId.value = '';
     await fetchData();
@@ -125,14 +122,14 @@ onUnmounted(() => {
             </div>
           </div>
           <div class="hire-form">
-            <input 
-              v-model="targetId" 
-              type="number" 
+            <input
+              v-model="targetId"
+              type="number"
               placeholder="Enter Player ID"
               @keyup.enter="hireDetective"
             >
-            <button 
-              @click="hireDetective" 
+            <button
+              @click="hireDetective"
               :disabled="processing || !targetId"
               class="hire-btn"
             >
@@ -144,7 +141,7 @@ onUnmounted(() => {
         <!-- Active Investigations -->
         <div v-if="activeReports.length > 0" class="reports-section active-section">
           <h3>🔍 Active Investigations ({{ activeReports.length }})</h3>
-          
+
           <div class="reports-grid">
             <div v-for="report in activeReports" :key="report.id" class="report-card active">
               <div class="report-header">
@@ -167,7 +164,7 @@ onUnmounted(() => {
         <!-- Completed Reports -->
         <div class="reports-section">
           <h3>📋 My Detective Reports ({{ completedReports.length }})</h3>
-          
+
           <div v-if="completedReports.length === 0" class="empty-state">
             <p class="empty-title">No completed reports yet</p>
             <p class="empty-subtitle">Hire a detective to track down other players</p>

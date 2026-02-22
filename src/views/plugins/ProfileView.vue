@@ -2,7 +2,7 @@
   <div class="profile-container">
     <div v-if="loading" class="loading">Loading profile...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    
+
     <div v-else class="profile-content">
       <!-- Player Card -->
       <div class="player-card">
@@ -192,7 +192,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -224,28 +224,28 @@ async function loadProfile() {
   error.value = null
   try {
     // Load user data first
-    const playerRes = await api.get('/user')
+    const playerRes = await api.get('/api/v1/user')
     player.value = playerRes.data
-    
+
     // Try to load stats, but don't fail if endpoint doesn't exist
     try {
-      const statsRes = await api.get('/stats')
+      const statsRes = await api.get('/api/v1/stats')
       stats.value = statsRes.data
     } catch (statsErr) {
       console.warn('Stats endpoint not available:', statsErr)
       // Use default/empty stats
       stats.value = {}
     }
-    
+
     // Try to load achievements
     try {
-      const achievementsRes = await api.get('/achievements')
+      const achievementsRes = await api.get('/api/v1/achievements')
       recentAchievements.value = (achievementsRes.data.data || achievementsRes.data).filter(a => a.unlocked_at).slice(0, 5)
     } catch (achErr) {
       console.warn('Achievements endpoint error:', achErr)
       recentAchievements.value = []
     }
-    
+
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to load profile'
     console.error('Profile error:', err)
@@ -261,10 +261,10 @@ function formatNumber(num) {
 function formatDate(dateString) {
   if (!dateString) return 'N/A'
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   })
 }
 
@@ -512,12 +512,12 @@ function formatPlayTime(minutes) {
   .stats-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .player-card {
     flex-direction: column;
     text-align: center;
   }
-  
+
   .player-info h2 {
     font-size: 24px;
   }

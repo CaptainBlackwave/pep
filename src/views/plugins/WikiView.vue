@@ -4,7 +4,7 @@
       <div class="sidebar-header">
         <h3>Wiki</h3>
       </div>
-      
+
       <div class="category-list">
         <div
           v-for="category in categories"
@@ -23,7 +23,7 @@
       <div v-if="!selectedPage" class="wiki-landing">
         <h1>Welcome to OpenPBBG Wiki</h1>
         <p>Select a category from the sidebar to browse articles, or search for specific topics.</p>
-        
+
         <div class="search-box">
           <input
             v-model="searchQuery"
@@ -85,7 +85,7 @@
         <p v-if="selectedCategory.description" class="category-description">
           {{ selectedCategory.description }}
         </p>
-        
+
         <div v-if="categoryPages.length === 0" class="empty-state">
           <p>No pages in this category yet.</p>
         </div>
@@ -124,18 +124,37 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 
-const categories = ref([])
-const popularPages = ref([])
-const selectedCategory = ref(null)
-const selectedPage = ref(null)
-const categoryPages = ref([])
-const relatedPages = ref([])
+// Type definitions
+interface WikiCategory {
+  id: number
+  name: string
+  description?: string
+  pages_count?: number
+}
+
+interface WikiPage {
+  id: number
+  title: string
+  excerpt?: string
+  content?: string
+  views?: number
+  updated_at?: string
+  category_id?: number
+  category?: WikiCategory
+}
+
+const categories = ref<WikiCategory[]>([])
+const popularPages = ref<WikiPage[]>([])
+const selectedCategory = ref<WikiCategory | null>(null)
+const selectedPage = ref<WikiPage | null>(null)
+const categoryPages = ref<WikiPage[]>([])
+const relatedPages = ref<WikiPage[]>([])
 const searchQuery = ref('')
-const searchResults = ref([])
+const searchResults = ref<WikiPage[]>([])
 
 onMounted(() => {
   loadCategories()
@@ -144,7 +163,7 @@ onMounted(() => {
 
 async function loadCategories() {
   try {
-    const response = await api.get('/wiki/categories')
+    const response = await api.get('/api/v1/wiki/categories')
     categories.value = response.data.data || response.data
   } catch (error) {
     console.error('Failed to load categories:', error)
@@ -154,7 +173,7 @@ async function loadCategories() {
 
 async function loadPopularPages() {
   try {
-    const response = await api.get('/wiki/popular')
+    const response = await api.get('/api/v1/wiki/popular')
     popularPages.value = response.data.data || response.data
   } catch (error) {
     console.error('Failed to load popular pages:', error)
@@ -162,29 +181,29 @@ async function loadPopularPages() {
   }
 }
 
-async function selectCategory(category) {
+async function selectCategory(category: WikiCategory) {
   selectedCategory.value = category
   selectedPage.value = null
   searchResults.value = []
-  
+
   try {
-    const response = await api.get(`/wiki/categories/${category.id}/pages`)
+    const response = await api.get(`/api/v1/wiki/categories/${category.id}/pages`)
     categoryPages.value = response.data
   } catch (error) {
     console.error('Failed to load category pages:', error)
   }
 }
 
-async function loadPage(page) {
+async function loadPage(page: WikiPage) {
   try {
-    const response = await api.get(`/wiki/pages/${page.id}`)
+    const response = await api.get(`/api/v1/wiki/pages/${page.id}`)
     selectedPage.value = response.data
     searchResults.value = []
-    
+
     // Load related pages
     if (response.data.category_id) {
-      const relatedRes = await api.get(`/wiki/categories/${response.data.category_id}/pages`)
-      relatedPages.value = relatedRes.data.filter(p => p.id !== page.id).slice(0, 5)
+      const relatedRes = await api.get(`/api/v1/wiki/categories/${response.data.category_id}/pages`)
+      relatedPages.value = relatedRes.data.filter((p: WikiPage) => p.id !== page.id).slice(0, 5)
     }
   } catch (error) {
     console.error('Failed to load page:', error)
@@ -193,12 +212,12 @@ async function loadPage(page) {
 
 async function searchWiki() {
   if (!searchQuery.value.trim()) return
-  
+
   selectedCategory.value = null
   selectedPage.value = null
-  
+
   try {
-    const response = await api.get('/wiki/search', {
+    const response = await api.get('/api/v1/wiki/search', {
       params: { q: searchQuery.value }
     })
     searchResults.value = response.data
@@ -207,13 +226,13 @@ async function searchWiki() {
   }
 }
 
-function formatDate(dateString) {
+function formatDate(dateString: string | undefined): string {
   if (!dateString) return 'N/A'
   const date = new Date(dateString)
-  return date.toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'long', 
-    day: 'numeric' 
+  return date.toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric'
   })
 }
 </script>
@@ -601,13 +620,13 @@ function formatDate(dateString) {
   .wiki-container {
     flex-direction: column;
   }
-  
+
   .wiki-sidebar {
     width: 100%;
     height: auto;
     max-height: 200px;
   }
-  
+
   .popular-grid,
   .page-grid {
     grid-template-columns: 1fr;

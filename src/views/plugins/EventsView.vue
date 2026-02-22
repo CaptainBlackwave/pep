@@ -1,24 +1,16 @@
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import api from '@/services/api';
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import api from '@/services/api'
 
-const events = ref([]);
-const activeEvent = ref(null);
-const myParticipation = ref(null);
-const eventHistory = ref([]);
-const loading = ref(true);
-const processing = ref(false);
-const error = ref('');
-const successMessage = ref('');
-const activeTab = ref('current');
-
-const formatMoney = (amount) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0
-  }).format(amount);
-};
+const events = ref([])
+const activeEvent = ref(null)
+const myParticipation = ref(null)
+const eventHistory = ref([])
+const loading = ref(true)
+const processing = ref(false)
+const error = ref('')
+const successMessage = ref('')
+const activeTab = ref('current')
 
 const formatNumber = (num) => {
   return new Intl.NumberFormat('en-US').format(num);

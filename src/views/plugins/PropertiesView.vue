@@ -21,15 +21,15 @@
         <!-- Tabs -->
         <div class="tabs-container">
           <div class="tabs-header">
-            <button 
-              @click="activeTab = 'available'" 
+            <button
+              @click="activeTab = 'available'"
               :class="{ active: activeTab === 'available' }"
               class="tab-button"
             >
               Available Properties
             </button>
-            <button 
-              @click="activeTab = 'mine'" 
+            <button
+              @click="activeTab = 'mine'"
               :class="{ active: activeTab === 'mine' }"
               class="tab-button"
             >
@@ -42,9 +42,9 @@
             <div v-for="type in ['house', 'business', 'warehouse']" :key="type" class="property-section">
               <h3 class="section-title">{{ type }}s</h3>
               <div class="properties-grid">
-                <div 
-                  v-for="property in groupedAvailable(type)" 
-                  :key="property.id" 
+                <div
+                  v-for="property in groupedAvailable(type)"
+                  :key="property.id"
                   class="property-card"
                 >
                   <div class="property-header">
@@ -61,8 +61,8 @@
                     <div class="income-info">
                       <span class="income-amount">{{ formatMoney(property.income_per_day) }}/day</span>
                     </div>
-                    <button 
-                      @click="buyProperty(property.id)" 
+                    <button
+                      @click="buyProperty(property.id)"
                       :disabled="processing || !canAffordProperty(property)"
                       class="btn btn-buy"
                     >
@@ -87,8 +87,8 @@
                   <p class="income-label">Total Daily Income</p>
                   <p class="income-total">{{ formatMoney(totalIncome) }}</p>
                 </div>
-                <button 
-                  @click="collectIncome" 
+                <button
+                  @click="collectIncome"
                   :disabled="processing"
                   class="btn btn-collect"
                 >
@@ -98,9 +98,9 @@
 
               <!-- Owned Properties List -->
               <div class="owned-properties">
-                <div 
-                  v-for="property in myProperties" 
-                  :key="property.id" 
+                <div
+                  v-for="property in myProperties"
+                  :key="property.id"
                   class="owned-property-card"
                 >
                   <div class="owned-property-content">
@@ -111,8 +111,8 @@
                     </div>
                     <div class="owned-property-actions">
                       <p class="purchase-price">Purchased: {{ formatMoney(property.price) }}</p>
-                      <button 
-                        @click="sellProperty(property.id)" 
+                      <button
+                        @click="sellProperty(property.id)"
                         :disabled="processing"
                         class="btn btn-sell"
                       >
@@ -130,12 +130,9 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import api from '@/services/api';
-import { useRouter } from 'vue-router';
-
-const router = useRouter();
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import api from '@/services/api'
 
 const player = ref(null);
 const available = ref([]);
@@ -147,10 +144,10 @@ const successMessage = ref('');
 const errorMessage = ref('');
 
 const formatMoney = (val) => {
-  return new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency: 'USD', 
-    minimumFractionDigits: 0 
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0
   }).format(val);
 };
 
@@ -173,7 +170,7 @@ const canAffordProperty = (property) => {
 const loadProperties = async () => {
   try {
     loading.value = true;
-    const response = await api.get('/properties');
+    const response = await api.get('/api/v1/properties');
     player.value = response.data.player;
     available.value = response.data.available || [];
     myProperties.value = response.data.myProperties || [];
@@ -187,10 +184,10 @@ const loadProperties = async () => {
 
 const buyProperty = async (propertyId) => {
   if (processing.value) return;
-  
+
   try {
     processing.value = true;
-    const response = await api.post(`/properties/${propertyId}/buy`);
+    const response = await api.post(`/api/v1/properties/${propertyId}/buy`);
     successMessage.value = response.data.message || 'Property purchased successfully!';
     errorMessage.value = '';
     await loadProperties();
@@ -209,10 +206,10 @@ const buyProperty = async (propertyId) => {
 
 const sellProperty = async (propertyId) => {
   if (processing.value || !confirm('Sell this property for 70% of purchase price?')) return;
-  
+
   try {
     processing.value = true;
-    const response = await api.post(`/properties/${propertyId}/sell`);
+    const response = await api.post(`/api/v1/properties/${propertyId}/sell`);
     successMessage.value = response.data.message || 'Property sold successfully!';
     errorMessage.value = '';
     await loadProperties();
@@ -231,10 +228,10 @@ const sellProperty = async (propertyId) => {
 
 const collectIncome = async () => {
   if (processing.value) return;
-  
+
   try {
     processing.value = true;
-    const response = await api.post('/properties/collect');
+    const response = await api.post('/api/v1/properties/collect');
     successMessage.value = response.data.message || 'Income collected successfully!';
     errorMessage.value = '';
     await loadProperties();

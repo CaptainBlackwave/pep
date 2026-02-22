@@ -182,12 +182,9 @@
   </div>
 </template>
 
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import api from '@/services/api';
-
-const router = useRouter();
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import api from '@/services/api'
 const loading = ref(true);
 const error = ref(null);
 const categories = ref([]);
@@ -207,7 +204,7 @@ const fetchCategories = async () => {
   error.value = null;
 
   try {
-    const response = await api.get('/forum');
+    const response = await api.get('/api/v1/forum');
     categories.value = response.data.categories || response.data || [];
   } catch (err) {
     console.error('Error fetching forum categories:', err);
@@ -220,7 +217,7 @@ const fetchCategories = async () => {
 const viewCategory = async (categoryId, page = 1) => {
   loading.value = true;
   try {
-    const resp = await api.get(`/forum/category/${categoryId}`, {
+    const resp = await api.get(`/api/v1/forum/category/${categoryId}`, {
       params: { search: searchQuery.value || undefined, per_page: 20, page }
     });
 
@@ -254,7 +251,7 @@ const changePage = async (page) => {
 const viewTopic = async (topicId) => {
   loading.value = true;
   try {
-    const response = await api.get(`/forum/topic/${topicId}`);
+    const response = await api.get(`/api/v1/forum/topic/${topicId}`);
 
     const topicData = response.data.topic || response.data;
     // posts may be paginated (resp.data.posts.data)
@@ -295,7 +292,7 @@ const createTopic = async () => {
   if (!newTopicTitle.value.trim() || !newTopicContent.value.trim()) return;
 
   try {
-    await api.post(`/forum/category/${selectedCategory.value.id}/topic`, {
+    await api.post(`/api/v1/forum/category/${selectedCategory.value.id}/topic`, {
       title: newTopicTitle.value,
       content: newTopicContent.value
     });
@@ -313,7 +310,7 @@ const postReply = async () => {
   if (!newReply.value.trim()) return;
 
   try {
-    await api.post(`/forum/topic/${selectedTopic.value.id}/reply`, {
+    await api.post(`/api/v1/forum/topic/${selectedTopic.value.id}/reply`, {
       content: newReply.value
     });
     newReply.value = '';
@@ -327,7 +324,7 @@ const postReply = async () => {
 // Admin moderation actions
 const toggleLockTopic = async (topic) => {
   try {
-    await api.patch(`/admin/forum/topics/${topic.id}/toggle-lock`);
+    await api.patch(`/api/v1/admin/forum/topics/${topic.id}/toggle-lock`);
     // refresh
     if (selectedCategory.value) await viewCategory(selectedCategory.value.id, topicsMeta?.value?.current_page || 1);
   } catch (err) {
@@ -338,7 +335,7 @@ const toggleLockTopic = async (topic) => {
 
 const toggleStickyTopic = async (topic) => {
   try {
-    await api.patch(`/admin/forum/topics/${topic.id}/toggle-sticky`);
+    await api.patch(`/api/v1/admin/forum/topics/${topic.id}/toggle-sticky`);
     if (selectedCategory.value) await viewCategory(selectedCategory.value.id, topicsMeta?.value?.current_page || 1);
   } catch (err) {
     console.error('Failed to toggle sticky:', err);
@@ -349,7 +346,7 @@ const toggleStickyTopic = async (topic) => {
 const deleteTopic = async (topic) => {
   if (!confirm('Delete this topic? This action cannot be undone.')) return;
   try {
-    await api.delete(`/admin/forum/topics/${topic.id}`);
+    await api.delete(`/api/v1/admin/forum/topics/${topic.id}`);
     if (selectedCategory.value) await viewCategory(selectedCategory.value.id, topicsMeta?.value?.current_page || 1);
   } catch (err) {
     console.error('Failed to delete topic:', err);

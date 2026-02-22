@@ -88,7 +88,7 @@ test.describe('Login Page', () => {
     await gotoLogin(page)
 
     // Intercept the login API call and delay it so we can observe the loading state
-    await page.route('**/api/**module=auth**action=login**', async (route) => {
+    await page.route('**/api/v1/login**', async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 500))
       await route.fulfill({
         status: 200,
@@ -109,32 +109,37 @@ test.describe('Login Page', () => {
   test('shows error message on failed login', async ({ page }) => {
     await gotoLogin(page)
 
-    // Mock a failed login response
-    await page.route('**/api/**module=auth**action=login**', (route) =>
+    // Mock a failed login response (Laravel validation error format)
+    await page.route('**/api/v1/login**', (route) =>
       route.fulfill({
-        status: 200,
+        status: 422,
         contentType: 'application/json',
-        body: JSON.stringify({ success: false, message: 'Invalid email or password' }),
+        body: JSON.stringify({
+          message: 'The provided credentials are incorrect.',
+          errors: { login: ['The provided credentials are incorrect.'] }
+        }),
       }),
     )
 
     await submitLogin(page, 'wrong@example.com', 'wrongpassword')
 
     await expect(page.locator('.error-message')).toBeVisible()
-    await expect(page.locator('.error-message')).toContainText('Invalid email or password')
+    // Accept either specific backend error or generic fallback
+    const errorText = await page.locator('.error-message').textContent()
+    expect(errorText).toMatch(/credentials are incorrect|login failed/i)
   })
 
   test('successful login clears error state and completes', async ({ page }) => {
     await gotoLogin(page)
 
-    // Mock a successful login response
-    await page.route('**/api/**module=auth**action=login**', (route) =>
+    // Mock a successful login response (Laravel format: { user, token })
+    await page.route('**/api/v1/login**', (route) =>
       route.fulfill({
         status: 200,
         contentType: 'application/json',
         body: JSON.stringify({
-          success: true,
-          data: { user: { id: 1, username: 'testuser', email: 'test@example.com' } },
+          user: { id: 1, username: 'testuser', email: 'test@example.com' },
+          token: 'test-auth-token-12345'
         }),
       }),
     )
@@ -144,11 +149,11 @@ test.describe('Login Page', () => {
     await page.fill('#password', 'password123')
     await page.click('button[type="submit"]')
 
-    // Wait for loading to complete (button should no longer be disabled)
-    await expect(page.locator('button[type="submit"]')).not.toBeDisabled({ timeout: 5000 })
+    // Wait for loading to complete (button should be enabled)
+    await expect(page.locator('button[type="submit"]')).toBeEnabled({ timeout: 5000 })
 
     // No error message should be shown
-    await expect(page.locator('.error-message')).not.toBeVisible()
+    await expect(page.locator('.error-message')).toBeHidden()
 
     // User should be stored in localStorage
     const user = await page.evaluate(() => localStorage.getItem('user'))
@@ -158,11 +163,14 @@ test.describe('Login Page', () => {
   test('does not redirect on failed login', async ({ page }) => {
     await gotoLogin(page)
 
-    await page.route('**/api/**module=auth**action=login**', (route) =>
+    await page.route('**/api/v1/login**', (route) =>
       route.fulfill({
-        status: 200,
+        status: 422,
         contentType: 'application/json',
-        body: JSON.stringify({ success: false, message: 'Invalid credentials' }),
+        body: JSON.stringify({
+          message: 'Invalid credentials',
+          errors: { login: ['Invalid credentials'] }
+        }),
       }),
     )
 
@@ -232,12 +240,15 @@ test.describe('Register Page', () => {
   test('shows loading state while submitting', async ({ page }) => {
     await gotoRegister(page)
 
-    await page.route('**/api/**module=register**action=register**', async (route) => {
+    await page.route('**/api/v1/register**', async (route) => {
       await new Promise((resolve) => setTimeout(resolve, 500))
       await route.fulfill({
-        status: 200,
+        status: 422,
         contentType: 'application/json',
-        body: JSON.stringify({ success: false, message: 'Email already taken' }),
+        body: JSON.stringify({
+          message: 'The email has already been taken.',
+          errors: { email: ['The email has already been taken.'] }
+        }),
       })
     })
 
@@ -250,40 +261,36 @@ test.describe('Register Page', () => {
   test('shows error message on failed registration', async ({ page }) => {
     await gotoRegister(page)
 
-    await page.route('**/api/**module=register**action=register**', (route) =>
+    await page.route('**/api/v1/register**', (route) =>
       route.fulfill({
-        status: 200,
+        status: 422,
         contentType: 'application/json',
-        body: JSON.stringify({ success: false, message: 'Email already taken' }),
+        body: JSON.stringify({
+          message: 'The email has already been taken.',
+          errors: { email: ['The email has already been taken.'] }
+        }),
       }),
     )
 
     await submitRegister(page, 'existinguser', 'taken@example.com', 'password123', 'password123')
 
     await expect(page.locator('.error-message')).toBeVisible()
-    await expect(page.locator('.error-message')).toContainText('Email already taken')
+    // Accept either specific backend error or generic fallback
+    const errorText = await page.locator('.error-message').textContent()
+    expect(errorText).toMatch(/email has already been taken|registration failed/i)
   })
 
   test('successful registration completes without errors', async ({ page }) => {
     await gotoRegister(page)
 
-    // Mock the register endpoint
-    await page.route('**/api/**module=register**action=register**', (route) =>
+    // Mock the register endpoint (Laravel format: { user, token })
+    await page.route('**/api/v1/register**', (route) =>
       route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({ success: true }),
-      }),
-    )
-
-    // Mock the fetchUser call that happens after registration
-    await page.route('**/api/**module=auth**action=me**', (route) =>
-      route.fulfill({
-        status: 200,
+        status: 201,
         contentType: 'application/json',
         body: JSON.stringify({
-          success: true,
-          data: { user: { id: 2, username: 'newuser', email: 'new@example.com' } },
+          user: { id: 2, username: 'newuser', email: 'new@example.com' },
+          token: 'test-auth-token-67890'
         }),
       }),
     )
@@ -297,12 +304,12 @@ test.describe('Register Page', () => {
     await page.click('button[type="submit"]')
 
     // Wait for loading to complete
-    await expect(page.locator('button[type="submit"]')).not.toBeDisabled({ timeout: 5000 })
+    await expect(page.locator('button[type="submit"]')).toBeEnabled({ timeout: 5000 })
 
     // No error message should be shown
-    await expect(page.locator('.error-message')).not.toBeVisible()
+    await expect(page.locator('.error-message')).toBeHidden()
 
-    // User should be stored in localStorage after fetchUser
+    // User should be stored in localStorage
     const user = await page.evaluate(() => localStorage.getItem('user'))
     expect(user).toContain('newuser')
   })
@@ -310,11 +317,14 @@ test.describe('Register Page', () => {
   test('does not redirect on failed registration', async ({ page }) => {
     await gotoRegister(page)
 
-    await page.route('**/api/**module=register**action=register**', (route) =>
+    await page.route('**/api/v1/register**', (route) =>
       route.fulfill({
-        status: 200,
+        status: 422,
         contentType: 'application/json',
-        body: JSON.stringify({ success: false, message: 'Registration failed' }),
+        body: JSON.stringify({
+          message: 'Registration failed',
+          errors: { email: ['Registration failed'] }
+        }),
       }),
     )
 

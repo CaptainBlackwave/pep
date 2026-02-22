@@ -27,7 +27,7 @@
 
       <div v-else class="training-panel">
         <h3 class="section-title">Select Training</h3>
-        
+
         <div class="attributes-grid">
           <div v-for="attr in attributes" :key="attr.key"
                @click="selectedAttribute = attr.key"
@@ -47,7 +47,7 @@
         <div class="training-controls">
           <label class="control-label">How many times?</label>
           <div class="times-input-group">
-            <input v-model.number="times" type="number" min="1" :max="maxPerSession" 
+            <input v-model.number="times" type="number" min="1" :max="maxPerSession"
                    class="times-input">
             <div class="quick-buttons">
               <button @click="times = 1" class="quick-button">1</button>
@@ -79,7 +79,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -105,7 +105,7 @@ const formatMoney = (val) => new Intl.NumberFormat('en-US', { style: 'currency',
 
 const loadData = async () => {
   try {
-    const response = await api.get('/gym')
+    const response = await api.get('/api/v1/gym')
     costs.value = response.data.trainingInfo?.costs || response.data.costs || {}
     maxPerSession.value = response.data.trainingInfo?.max_per_session || response.data.maxPerSession || 50
     player.value = response.data.player
@@ -120,9 +120,9 @@ const train = async () => {
   if (processing.value) return
   processing.value = true
   result.value = null
-  
+
   try {
-    const response = await api.post('/gym/train', {
+    const response = await api.post('/api/v1/gym/train', {
       attribute: selectedAttribute.value,
       times: times.value
     })

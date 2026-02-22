@@ -8,6 +8,20 @@ import type { ChatChannel, ChatMessage } from '@/types/chat'
 // Re-export types for backward compatibility
 export type { ChatChannel, ChatMessage } from '@/types/chat'
 
+// API response interfaces
+interface ChannelsResponse {
+  channels: ChatChannel[]
+}
+
+interface MessagesResponse {
+  messages: ChatMessage[]
+}
+
+interface UnreadCountResponse {
+  count?: number
+  total?: number
+}
+
 /**
  * Chat store - manages chat channels and messages with WebSocket
  */
@@ -37,8 +51,9 @@ export const useChatStore = defineStore('chat', () => {
    */
   async function fetchChannels(): Promise<void> {
     try {
-      const response = await api.get('/channels')
-      channels.value = response.data.channels || response.data || []
+      const response = await api.get('/api/v1/channels')
+      const data = response.data as ChannelsResponse | ChatChannel[]
+      channels.value = ('channels' in data ? data.channels : data) || []
       totalUnread.value = channels.value.reduce((sum, c) => sum + (c.unread_count || 0), 0)
     } catch {
       // Silently fail - channels will be fetched on next connect
@@ -56,8 +71,9 @@ export const useChatStore = defineStore('chat', () => {
     error.value = null
 
     try {
-      const response = await api.get(`/channels/${channel}/messages`)
-      messages.value = response.data.messages || response.data || []
+      const response = await api.get(`/api/v1/channels/${channel}/messages`)
+      const data = response.data as MessagesResponse | ChatMessage[]
+      messages.value = ('messages' in data ? data.messages : data) || []
     } catch {
       error.value = 'Failed to fetch messages'
     } finally {
@@ -75,12 +91,12 @@ export const useChatStore = defineStore('chat', () => {
     sending.value = true
 
     try {
-      const response = await api.post(`/channels/${channel}/messages`, {
+      const response = await api.post(`/api/v1/channels/${channel}/messages`, {
         content: content.trim()
       })
 
       // Message will be received via WebSocket, but add optimistically
-      const newMessage = response.data.message || response.data
+      const newMessage = (response.data as { message?: ChatMessage }).message || response.data as ChatMessage
       if (newMessage) {
         addMessage(newMessage)
       }
@@ -99,8 +115,9 @@ export const useChatStore = defineStore('chat', () => {
    */
   async function fetchUnreadCount(): Promise<void> {
     try {
-      const response = await api.get('/channels/unread-count')
-      totalUnread.value = response.data.count || response.data.total || 0
+      const response = await api.get('/api/v1/channels/unread-count')
+      const data = response.data as UnreadCountResponse
+      totalUnread.value = data.count || data.total || 0
     } catch {
       // Silently fail - unread count will be updated on next fetch
     }

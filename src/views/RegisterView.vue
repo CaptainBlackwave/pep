@@ -5,7 +5,7 @@
         <h2 class="register-title">Create Account</h2>
         <p class="register-subtitle">Join OpenPBBG today</p>
       </div>
-      
+
       <form class="register-form" @submit.prevent="handleRegister">
         <div v-if="authStore.error" class="error-message">
           {{ authStore.error }}
@@ -72,7 +72,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'

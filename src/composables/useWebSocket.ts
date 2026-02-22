@@ -155,11 +155,11 @@ export function useWebSocketChannel<T = unknown>(
   channelName: string,
   events: WebSocketEvent[] = []
 ): {
-  data: ReturnType<typeof ref<T | null>>
+  data: { value: T | null | undefined }
   connectionState: Readonly<ReturnType<typeof ref<ConnectionState>>>
   isConnected: Readonly<ReturnType<typeof ref<boolean>>>
 } {
-  const data = ref<T | null>(null)
+  const data = ref<T | null | undefined>(undefined)
   const { connectionState, isConnected, subscribe, on } = useWebSocket({
     autoConnect: true,
     channels: [channelName]
@@ -176,7 +176,7 @@ export function useWebSocketChannel<T = unknown>(
   })
 
   return {
-    data,
+    data: { value: data.value },
     connectionState,
     isConnected
   }

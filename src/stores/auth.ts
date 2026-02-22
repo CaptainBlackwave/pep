@@ -2,7 +2,6 @@ import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api.ts'
 import type { User, LoginCredentials, RegisterData } from '@/types/user'
-import type { ApiResponse } from '@/types/api'
 
 // Re-export types for backward compatibility
 export type { User, LoginCredentials, RegisterData } from '@/types/user'
@@ -21,38 +20,56 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Login user with credentials
-   * Uses form-encoded POST to match backend API format
+   * Uses JSON POST to Laravel API v1 endpoint
    */
   async function login(credentials: LoginCredentials): Promise<boolean> {
     loading.value = true
     error.value = null
 
     try {
-      // Backend uses form-encoded POST to /api/?module=auth&action=login
-      const params = new URLSearchParams()
-      params.append('email', credentials.login || credentials.email || '')
-      params.append('password', credentials.password)
-
-      const response = await api.post<ApiResponse<{ user: User }>>(
-        '/api/?module=auth&action=login',
-        params
+      // Laravel API uses POST /api/v1/login with JSON body
+      // Response: { user: UserResource, token: string } or { two_factor_required: true, challenge_token: string }
+      const response = await api.post<{ user: User; token?: string; two_factor_required?: boolean; challenge_token?: string }>(
+        '/api/v1/login',
+        {
+          login: credentials.login || credentials.email,
+          password: credentials.password
+        }
       )
 
       const data = response.data
 
-      if (data.success && data.data?.user) {
-        user.value = data.data.user
+      // Handle 2FA requirement
+      if (data.two_factor_required) {
+        // Store challenge token for 2FA verification
+        sessionStorage.setItem('2fa_challenge', data.challenge_token || '')
+        error.value = 'Two-factor authentication required'
+        // Note: The calling code should handle redirect to 2FA page
+        return false
+      }
+
+      if (data.user) {
+        user.value = data.user
         localStorage.setItem('user', JSON.stringify(user.value))
+        // Store token if provided (for Sanctum token auth)
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token)
+        }
         return true
       } else {
-        error.value = data.message || data.alerts?.[0]?.text || 'Login failed'
+        error.value = 'Login failed'
         return false
       }
     } catch (err) {
-      const axiosError = err as { response?: { data?: ApiResponse } }
-      error.value = axiosError.response?.data?.message
-        || axiosError.response?.data?.alerts?.[0]?.text
-        || 'Login failed'
+      const axiosError = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+      // Handle Laravel validation errors
+      const validationErrors = axiosError.response?.data?.errors
+      if (validationErrors) {
+        const firstError = Object.values(validationErrors)[0]
+        error.value = Array.isArray(firstError) ? firstError[0] ?? 'Login failed' : 'Login failed'
+      } else {
+        error.value = axiosError.response?.data?.message ?? 'Login failed'
+      }
       return false
     } finally {
       loading.value = false
@@ -61,40 +78,49 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Register a new user
-   * Uses form-encoded POST to match backend API format
+   * Uses JSON POST to Laravel API v1 endpoint
    */
   async function register(userData: RegisterData): Promise<boolean> {
     loading.value = true
     error.value = null
 
     try {
-      // Backend uses form-encoded POST to /api/?module=register&action=register
-      const params = new URLSearchParams()
-      params.append('username', userData.username)
-      params.append('email', userData.email)
-      params.append('password', userData.password)
-      params.append('cpassword', userData.password_confirmation)
-
-      const response = await api.post<ApiResponse>(
-        '/api/?module=register&action=register',
-        params
+      // Laravel API uses POST /api/v1/register with JSON body
+      // Response: { user: UserResource, token: string }
+      const response = await api.post<{ user: User; token: string }>(
+        '/api/v1/register',
+        {
+          username: userData.username,
+          email: userData.email,
+          password: userData.password,
+          password_confirmation: userData.password_confirmation
+        }
       )
 
       const data = response.data
 
-      if (data.success) {
-        // After registration, fetch the current user from session
-        await fetchUser()
+      if (data.user) {
+        user.value = data.user
+        localStorage.setItem('user', JSON.stringify(user.value))
+        // Store token if provided (for Sanctum token auth)
+        if (data.token) {
+          localStorage.setItem('auth_token', data.token)
+        }
         return true
       } else {
-        error.value = data.message || data.alerts?.[0]?.text || 'Registration failed'
+        error.value = 'Registration failed'
         return false
       }
     } catch (err) {
-      const axiosError = err as { response?: { data?: ApiResponse } }
-      error.value = axiosError.response?.data?.message
-        || axiosError.response?.data?.alerts?.[0]?.text
-        || 'Registration failed'
+      const axiosError = err as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+      // Handle Laravel validation errors
+      const validationErrors = axiosError.response?.data?.errors
+      if (validationErrors) {
+        const firstError = Object.values(validationErrors)[0]
+        error.value = Array.isArray(firstError) ? firstError[0] ?? 'Registration failed' : 'Registration failed'
+      } else {
+        error.value = axiosError.response?.data?.message ?? 'Registration failed'
+      }
       return false
     } finally {
       loading.value = false
@@ -106,7 +132,7 @@ export const useAuthStore = defineStore('auth', () => {
    */
   async function logout(): Promise<void> {
     try {
-      await api.post('/api/?module=auth&action=logout')
+      await api.post('/api/v1/logout')
     } catch {
       // Proceed with local logout regardless of API response
     } finally {
@@ -117,22 +143,34 @@ export const useAuthStore = defineStore('auth', () => {
 
   /**
    * Fetch the current authenticated user
+   * Silently handles errors when not authenticated
    */
   async function fetchUser(): Promise<void> {
-    try {
-      const response = await api.get<ApiResponse<{ user: User }>>('/api/?module=auth&action=me')
-      const data = response.data
+    // Skip API call if no auth token stored
+    const token = localStorage.getItem('auth_token')
+    if (!token) {
+      user.value = null
+      return
+    }
 
-      if (data.success && data.data?.user) {
-        user.value = data.data.user
+    try {
+      // Backend returns UserResource directly
+      const response = await api.get<User>('/api/v1/user')
+      const userData = response.data
+
+      if (userData && userData.id) {
+        user.value = userData
         localStorage.setItem('user', JSON.stringify(user.value))
       } else {
         user.value = null
         localStorage.removeItem('user')
+        localStorage.removeItem('auth_token')
       }
     } catch {
+      // Silently handle errors (expected when not authenticated)
       user.value = null
       localStorage.removeItem('user')
+      localStorage.removeItem('auth_token')
     }
   }
 

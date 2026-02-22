@@ -174,7 +174,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 
@@ -201,7 +201,7 @@ const fetchCrimes = async () => {
   error.value = null;
 
   try {
-    const response = await api.get('/organized-crime');
+    const response = await api.get('/api/v1/organized-crime');
     player.value = response.data.player || null;
     crimes.value = response.data.crimes || [];
     gang.value = response.data.gang || null;
@@ -244,7 +244,7 @@ const attemptCrime = async () => {
   errorMessage.value = null;
 
   try {
-    const response = await api.post(`/organized-crime/${selectedCrime.value.id}/attempt`, {
+    const response = await api.post(`/api/v1/organized-crime/${selectedCrime.value.id}/attempt`, {
       participants: selectedMembers.value
     });
 

@@ -57,9 +57,9 @@
     <div class="games-section">
       <h2>🎮 Select a Game</h2>
       <div class="games-grid">
-        <div 
-          v-for="game in games" 
-          :key="game.id" 
+        <div
+          v-for="game in games"
+          :key="game.id"
           @click="selectGame(game)"
           :class="['game-card', { active: selectedGame?.id === game.id }]"
         >
@@ -87,10 +87,10 @@
         </div>
         <div class="bet-controls">
           <label>Bet Amount:</label>
-          <input 
-            v-model.number="betAmount" 
-            type="number" 
-            :min="selectedGame.min_bet" 
+          <input
+            v-model.number="betAmount"
+            type="number"
+            :min="selectedGame.min_bet"
             :max="selectedGame.max_bet"
             class="bet-input"
           />
@@ -108,8 +108,8 @@
         <div class="roulette-bets">
           <h3>Place Your Bet</h3>
           <div class="bet-type-selection">
-            <button 
-              v-for="betType in rouletteBetTypes" 
+            <button
+              v-for="betType in rouletteBetTypes"
               :key="betType.value"
               @click="rouletteBetType = betType.value"
               :class="['bet-type-btn', { active: rouletteBetType === betType.value }]"
@@ -118,8 +118,8 @@
             </button>
           </div>
           <div v-if="rouletteBetType === 'number'" class="number-grid">
-            <button 
-              v-for="num in 37" 
+            <button
+              v-for="num in 37"
               :key="num-1"
               @click="rouletteBetValue = num - 1"
               :class="['number-btn', { active: rouletteBetValue === num - 1 }]"
@@ -128,13 +128,13 @@
             </button>
           </div>
           <div v-else class="color-selection">
-            <button 
+            <button
               @click="rouletteBetValue = 'red'"
               :class="['color-btn red', { active: rouletteBetValue === 'red' }]"
             >
               Red
             </button>
-            <button 
+            <button
               @click="rouletteBetValue = 'black'"
               :class="['color-btn black', { active: rouletteBetValue === 'black' }]"
             >
@@ -143,10 +143,10 @@
           </div>
           <div class="bet-controls">
             <label>Bet Amount:</label>
-            <input 
-              v-model.number="betAmount" 
-              type="number" 
-              :min="selectedGame.min_bet" 
+            <input
+              v-model.number="betAmount"
+              type="number"
+              :min="selectedGame.min_bet"
               :max="selectedGame.max_bet"
               class="bet-input"
             />
@@ -165,13 +165,13 @@
         <div class="dice-bets">
           <h3>Predict High or Low</h3>
           <div class="dice-options">
-            <button 
+            <button
               @click="dicePrediction = 'high'"
               :class="['dice-btn', { active: dicePrediction === 'high' }]"
             >
               High (4-6)
             </button>
-            <button 
+            <button
               @click="dicePrediction = 'low'"
               :class="['dice-btn', { active: dicePrediction === 'low' }]"
             >
@@ -180,10 +180,10 @@
           </div>
           <div class="bet-controls">
             <label>Bet Amount:</label>
-            <input 
-              v-model.number="betAmount" 
-              type="number" 
-              :min="selectedGame.min_bet" 
+            <input
+              v-model.number="betAmount"
+              type="number"
+              :min="selectedGame.min_bet"
               :max="selectedGame.max_bet"
               class="bet-input"
             />
@@ -229,7 +229,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -281,7 +281,7 @@ const formatTime = (dateString) => {
 
 const loadGames = async () => {
   try {
-    const response = await api.get('/casino/games')
+    const response = await api.get('/api/v1/casino/games')
     games.value = response.data.games
   } catch (error) {
     console.error('Failed to load games:', error)
@@ -290,7 +290,7 @@ const loadGames = async () => {
 
 const loadStats = async () => {
   try {
-    const response = await api.get('/casino/stats')
+    const response = await api.get('/api/v1/casino/stats')
     stats.value = response.data.stats || {}
   } catch (error) {
     console.error('Failed to load stats:', error)
@@ -299,7 +299,7 @@ const loadStats = async () => {
 
 const loadHistory = async () => {
   try {
-    const response = await api.get('/casino/history')
+    const response = await api.get('/api/v1/casino/history')
     history.value = response.data.history || []
   } catch (error) {
     console.error('Failed to load history:', error)
@@ -315,13 +315,13 @@ const selectGame = (game) => {
 const playSlots = async () => {
   playing.value = true
   lastResult.value = null
-  
+
   // Animation
   const symbols = ['🍒', '🍋', '🍊', '🍉', '💎', '⭐', '7️⃣']
   const animationDuration = 1000
   const intervalTime = 100
   const iterations = animationDuration / intervalTime
-  
+
   let count = 0
   const animation = setInterval(() => {
     slotsResult.value = [
@@ -332,13 +332,13 @@ const playSlots = async () => {
     count++
     if (count >= iterations) clearInterval(animation)
   }, intervalTime)
-  
+
   try {
-    const response = await api.post('/casino/play/slots', {
+    const response = await api.post('/api/v1/casino/play/slots', {
       game_id: selectedGame.value.id,
       bet_amount: betAmount.value
     })
-    
+
     setTimeout(() => {
       slotsResult.value = response.data.result.split(',')
       lastResult.value = {
@@ -363,15 +363,15 @@ const playRoulette = async () => {
   playing.value = true
   lastResult.value = null
   rouletteResult.value = '?'
-  
+
   try {
-    const response = await api.post('/casino/play/roulette', {
+    const response = await api.post('/api/v1/casino/play/roulette', {
       game_id: selectedGame.value.id,
       bet_amount: betAmount.value,
       bet_type: rouletteBetType.value,
       bet_value: rouletteBetValue.value
     })
-    
+
     setTimeout(() => {
       rouletteResult.value = response.data.result
       lastResult.value = {
@@ -393,14 +393,14 @@ const playDice = async () => {
   playing.value = true
   lastResult.value = null
   diceResult.value = '?'
-  
+
   try {
-    const response = await api.post('/casino/play/dice', {
+    const response = await api.post('/api/v1/casino/play/dice', {
       game_id: selectedGame.value.id,
       bet_amount: betAmount.value,
       prediction: dicePrediction.value
     })
-    
+
     setTimeout(() => {
       diceResult.value = response.data.result
       lastResult.value = {

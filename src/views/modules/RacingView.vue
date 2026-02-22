@@ -1,6 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
+import type { AxiosError } from 'axios';
 import api from '@/services/api';
 
 interface Vehicle {
@@ -91,14 +92,15 @@ const loadData = async () => {
     loading.value = true;
     error.value = '';
 
-    const response = await api.get('/racing');
+    const response = await api.get('/api/v1/racing');
 
     player.value = response.data.player;
     availableRaces.value = response.data.availableRaces || [];
     raceHistory.value = response.data.raceHistory || [];
     vehicles.value = response.data.vehicles || [];
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to load racing data';
+  } catch (err) {
+    const axiosError = err as AxiosError<{ message?: string }>;
+    error.value = axiosError.response?.data?.message || 'Failed to load racing data';
   } finally {
     loading.value = false;
   }
@@ -110,7 +112,7 @@ const createRace = async () => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post('/racing/create', createRaceForm.value);
+    const response = await api.post('/api/v1/racing/create', createRaceForm.value);
 
     successMessage.value = response.data.message || 'Race created successfully!';
 
@@ -124,8 +126,9 @@ const createRace = async () => {
     showCreateRace.value = false;
 
     await loadData();
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to create race';
+  } catch (err) {
+    const axiosError = err as AxiosError<{ message?: string }>;
+    error.value = axiosError.response?.data?.message || 'Failed to create race';
   } finally {
     creating.value = false;
   }
@@ -136,7 +139,7 @@ const joinRace = async (raceId: number) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/racing/join/${raceId}`, joinRaceForm.value);
+    const response = await api.post(`/api/v1/racing/join/${raceId}`, joinRaceForm.value);
 
     successMessage.value = response.data.message || 'Joined race successfully!';
 
@@ -147,8 +150,9 @@ const joinRace = async (raceId: number) => {
     };
 
     await loadData();
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to join race';
+  } catch (err) {
+    const axiosError = err as AxiosError<{ message?: string }>;
+    error.value = axiosError.response?.data?.message || 'Failed to join race';
   }
 };
 
@@ -161,13 +165,14 @@ const leaveRace = async (raceId: number) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/racing/leave/${raceId}`);
+    const response = await api.post(`/api/v1/racing/leave/${raceId}`);
 
     successMessage.value = response.data.message || 'Left race successfully!';
 
     await loadData();
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to leave race';
+  } catch (err) {
+    const axiosError = err as AxiosError<{ message?: string }>;
+    error.value = axiosError.response?.data?.message || 'Failed to leave race';
   }
 };
 
@@ -180,13 +185,14 @@ const startRace = async (raceId: number) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/racing/start/${raceId}`);
+    const response = await api.post(`/api/v1/racing/start/${raceId}`);
 
     successMessage.value = response.data.message || 'Race started!';
 
     await loadData();
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to start race';
+  } catch (err) {
+    const axiosError = err as AxiosError<{ message?: string }>;
+    error.value = axiosError.response?.data?.message || 'Failed to start race';
   }
 };
 

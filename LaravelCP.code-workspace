@@ -1,11 +1,19 @@
 {
 	"folders": [
 		{
-			"path": "../LaravelCP"
+			"name": "Frontend (Vue 3)",
+			"path": "."
 		},
 		{
-			"path": "."
+			"name": "Backend (Laravel)",
+			"path": "../LaravelCP-Backend"
 		}
 	],
-	"settings": {}
+	"settings": {
+		"files.associations": {
+			"*.vue": "vue",
+			"*.blade.php": "blade"
+		},
+		"editor.formatOnSave": true
+	}
 }

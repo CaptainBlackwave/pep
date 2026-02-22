@@ -62,11 +62,11 @@
     <!-- Stock Listings -->
     <div class="stocks-section">
       <h2>📊 Available Stocks</h2>
-      
+
       <!-- Sector Filter -->
       <div class="filter-bar">
-        <button 
-          v-for="sector in sectors" 
+        <button
+          v-for="sector in sectors"
           :key="sector"
           @click="selectedSector = sector"
           :class="['filter-btn', { active: selectedSector === sector }]"
@@ -89,7 +89,7 @@
           <div class="stock-price">
             <span class="price">${{ stock.current_price.toFixed(2) }}</span>
             <span :class="['change', stock.price_change >= 0 ? 'positive' : 'negative']">
-              {{ stock.price_change >= 0 ? '▲' : '▼' }} 
+              {{ stock.price_change >= 0 ? '▲' : '▼' }}
               {{ Math.abs(stock.price_change).toFixed(2) }}%
             </span>
           </div>
@@ -122,7 +122,7 @@
       <div class="modal-content" @click.stop>
         <h3>Buy {{ selectedStock.name }}</h3>
         <p class="modal-subtitle">{{ selectedStock.ticker }} - ${{ selectedStock.current_price.toFixed(2) }} per share</p>
-        
+
         <div class="input-group">
           <label>Number of Shares</label>
           <input v-model.number="buyShares" type="number" min="1" class="input-field" />
@@ -151,15 +151,15 @@
         <p class="modal-subtitle">
           You own {{ selectedHolding.shares }} shares @ ${{ selectedHolding.stock.current_price.toFixed(2) }}
         </p>
-        
+
         <div class="input-group">
           <label>Number of Shares to Sell</label>
-          <input 
-            v-model.number="sellShares" 
-            type="number" 
-            min="1" 
+          <input
+            v-model.number="sellShares"
+            type="number"
+            min="1"
             :max="selectedHolding.shares"
-            class="input-field" 
+            class="input-field"
           />
         </div>
 
@@ -187,7 +187,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -247,7 +247,7 @@ const getSectorIcon = (sector) => {
 
 const loadStocks = async () => {
   try {
-    const response = await api.get('/stocks')
+    const response = await api.get('/api/v1/stocks')
     stocks.value = response.data.stocks
   } catch (error) {
     console.error('Failed to load stocks:', error)
@@ -256,7 +256,7 @@ const loadStocks = async () => {
 
 const loadPortfolio = async () => {
   try {
-    const response = await api.get('/stocks/portfolio/my')
+    const response = await api.get('/api/v1/stocks/portfolio/my')
     portfolio.value = response.data.portfolio || []
   } catch (error) {
     console.error('Failed to load portfolio:', error)
@@ -288,7 +288,7 @@ const closeSellModal = () => {
 const executeBuy = async () => {
   buying.value = true
   try {
-    const response = await api.post('/stocks/buy', {
+    const response = await api.post('/api/v1/stocks/buy', {
       stock_id: selectedStock.value.id,
       shares: buyShares.value
     })
@@ -306,7 +306,7 @@ const executeBuy = async () => {
 const executeSell = async () => {
   selling.value = true
   try {
-    const response = await api.post('/stocks/sell', {
+    const response = await api.post('/api/v1/stocks/sell', {
       stock_id: selectedHolding.value.stock_id,
       shares: sellShares.value
     })
@@ -328,7 +328,7 @@ const viewStockDetails = (stock) => {
 onMounted(() => {
   loadStocks()
   loadPortfolio()
-  
+
   // Auto-refresh every 30 seconds
   setInterval(() => {
     loadStocks()

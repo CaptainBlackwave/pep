@@ -2,6 +2,7 @@
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
+import type { AxiosError } from 'axios';
 
 interface TheftType {
   id: number;
@@ -69,7 +70,7 @@ const loadData = async () => {
     loading.value = true;
     error.value = '';
 
-    const response = await api.get('/theft');
+    const response = await api.get('/api/v1/theft');
 
     player.value = response.data.player;
     theftTypes.value = response.data.theftTypes || [];
@@ -79,8 +80,9 @@ const loadData = async () => {
     if (cooldownRemaining.value > 0) {
       startCooldownTimer();
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to load theft data';
+  } catch (err) {
+    const axiosError = err as AxiosError<{ message?: string }>;
+    error.value = axiosError.response?.data?.message || 'Failed to load theft data';
   } finally {
     loading.value = false;
   }
@@ -112,7 +114,7 @@ const attemptTheft = async (typeId: number) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/theft/attempt/${typeId}`);
+    const response = await api.post(`/api/v1/theft/attempt/${typeId}`);
 
     successMessage.value = response.data.message || 'Theft attempted successfully!';
 
@@ -125,8 +127,9 @@ const attemptTheft = async (typeId: number) => {
       canAttempt.value = false;
       startCooldownTimer();
     }
-  } catch (err: any) {
-    error.value = err.response?.data?.message || 'Failed to attempt theft';
+  } catch (err) {
+    const axiosError = err as AxiosError<{ message?: string }>;
+    error.value = axiosError.response?.data?.message || 'Failed to attempt theft';
   } finally {
     processing.value = false;
   }

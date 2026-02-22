@@ -190,8 +190,8 @@
   </div>
 </template>
 
-<script setup>
-import { ref, onMounted, onUnmounted, computed } from 'vue';
+<script setup lang="ts">
+import { ref, onMounted, onUnmounted } from 'vue'
 import api from '@/services/api';
 
 const loading = ref(true);

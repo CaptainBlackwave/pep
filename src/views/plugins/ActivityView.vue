@@ -3,8 +3,8 @@
     <div class="activity-header">
       <h2>Activity Feed</h2>
       <div class="filter-tabs">
-        <button 
-          v-for="filter in filters" 
+        <button
+          v-for="filter in filters"
           :key="filter"
           :class="['filter-tab', {active: selectedFilter === filter}]"
           @click="selectedFilter = filter"
@@ -16,15 +16,15 @@
 
     <div v-if="loading" class="loading">Loading activities...</div>
     <div v-else-if="error" class="error">{{ error }}</div>
-    
+
     <div v-else class="activity-feed">
       <div v-if="filteredActivities.length === 0" class="empty-state">
         <p>No activities found</p>
       </div>
 
       <div v-else class="activity-list">
-        <div 
-          v-for="activity in filteredActivities" 
+        <div
+          v-for="activity in filteredActivities"
           :key="activity.id"
           :class="['activity-item', `type-${activity.type}`]"
         >
@@ -64,7 +64,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -110,10 +110,10 @@ async function loadActivities() {
 
 async function loadMore() {
   if (loadingMore.value || !hasMore.value) return
-  
+
   loadingMore.value = true
   page.value++
-  
+
   try {
     const response = await api.get('/activity/my-activity', {
       params: { page: page.value, per_page: 20 }
@@ -158,12 +158,12 @@ function formatTime(timestamp) {
   const date = new Date(timestamp)
   const now = new Date()
   const diff = now - date
-  
+
   if (diff < 60000) return 'just now'
   if (diff < 3600000) return `${Math.floor(diff / 60000)}m ago`
   if (diff < 86400000) return `${Math.floor(diff / 3600000)}h ago`
   if (diff < 604800000) return `${Math.floor(diff / 86400000)}d ago`
-  
+
   return date.toLocaleDateString()
 }
 </script>
@@ -385,16 +385,16 @@ function formatTime(timestamp) {
   .filter-tabs {
     gap: 5px;
   }
-  
+
   .filter-tab {
     padding: 8px 12px;
     font-size: 13px;
   }
-  
+
   .activity-item {
     padding: 15px;
   }
-  
+
   .activity-icon {
     font-size: 24px;
   }

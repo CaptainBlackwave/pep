@@ -29,7 +29,7 @@
           <p class="course-type">{{ currentProgress.course.type }} Course</p>
         </div>
       </div>
-      
+
       <div class="progress-section">
         <div class="progress-bar-container">
           <div class="progress-bar" :style="{ width: progressPercentage + '%' }"></div>
@@ -84,29 +84,29 @@
     <!-- Available Courses -->
     <div class="courses-section">
       <h2>{{ currentProgress ? 'Other Courses' : 'Available Courses' }}</h2>
-      
+
       <!-- Filter Buttons -->
       <div class="filter-bar">
-        <button 
-          @click="selectedType = 'All'" 
+        <button
+          @click="selectedType = 'All'"
           :class="['filter-btn', { active: selectedType === 'All' }]"
         >
           All Courses
         </button>
-        <button 
-          @click="selectedType = 'Intelligence'" 
+        <button
+          @click="selectedType = 'Intelligence'"
           :class="['filter-btn', { active: selectedType === 'Intelligence' }]"
         >
           🧠 Intelligence
         </button>
-        <button 
-          @click="selectedType = 'Endurance'" 
+        <button
+          @click="selectedType = 'Endurance'"
           :class="['filter-btn', { active: selectedType === 'Endurance' }]"
         >
           💪 Endurance
         </button>
-        <button 
-          @click="selectedType = 'Mixed'" 
+        <button
+          @click="selectedType = 'Mixed'"
           :class="['filter-btn', { active: selectedType === 'Mixed' }]"
         >
           🎯 Mixed
@@ -118,7 +118,7 @@
           <div class="course-badge">{{ getCourseIcon(course.type) }}</div>
           <h3>{{ course.title }}</h3>
           <p class="course-description">{{ course.description }}</p>
-          
+
           <div class="course-details">
             <div class="detail">
               <span class="detail-label">⏱️ Duration</span>
@@ -142,8 +142,8 @@
             </div>
           </div>
 
-          <button 
-            @click="enrollInCourse(course.id)" 
+          <button
+            @click="enrollInCourse(course.id)"
             :disabled="currentProgress || enrolling === course.id"
             class="btn-enroll"
           >
@@ -155,7 +155,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -202,16 +202,16 @@ const formatTime = (ms) => {
 }
 
 const formatDate = (dateString) => {
-  return new Date(dateString).toLocaleDateString('en-US', { 
-    year: 'numeric', 
-    month: 'short', 
-    day: 'numeric' 
+  return new Date(dateString).toLocaleDateString('en-US', {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric'
   })
 }
 
 const loadCourses = async () => {
   try {
-    const response = await api.get('/education/courses')
+    const response = await api.get('/api/v1/education/courses')
     courses.value = response.data.courses
   } catch (error) {
     console.error('Failed to load courses:', error)
@@ -220,7 +220,7 @@ const loadCourses = async () => {
 
 const loadProgress = async () => {
   try {
-    const response = await api.get('/education/progress')
+    const response = await api.get('/api/v1/education/progress')
     currentProgress.value = response.data.progress
   } catch (error) {
     console.error('Failed to load progress:', error)
@@ -229,7 +229,7 @@ const loadProgress = async () => {
 
 const loadHistory = async () => {
   try {
-    const response = await api.get('/education/history')
+    const response = await api.get('/api/v1/education/history')
     history.value = response.data.history
   } catch (error) {
     console.error('Failed to load history:', error)
@@ -238,7 +238,7 @@ const loadHistory = async () => {
 
 const loadStats = async () => {
   try {
-    const response = await api.get('/user')
+    const response = await api.get('/api/v1/user')
     userStats.value = {
       intelligence: response.data.intelligence || 0,
       endurance: response.data.endurance || 0
@@ -251,7 +251,7 @@ const loadStats = async () => {
 const enrollInCourse = async (courseId) => {
   enrolling.value = courseId
   try {
-    const response = await api.post('/education/enroll', { course_id: courseId })
+    const response = await api.post('/api/v1/education/enroll', { course_id: courseId })
     alert(response.data.message)
     await loadProgress()
     await loadCourses()
@@ -267,7 +267,7 @@ onMounted(() => {
   loadProgress()
   loadHistory()
   loadStats()
-  
+
   // Refresh progress every minute
   setInterval(() => {
     if (currentProgress.value) {

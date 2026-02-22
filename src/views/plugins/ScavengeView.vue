@@ -1,7 +1,7 @@
 <template>
   <div class="scavenge-view">
     <h2 class="view-title">SELECT A LOCATION TO CONTINUE</h2>
-    
+
     <div class="locations-grid">
       <div class="location-card" @click="selectLocation('Abandoned Cabin')">
         <div class="location-bg abandoned-cabin"></div>
@@ -92,7 +92,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 const selectLocation = (name) => {
   console.log('Selected location:', name)
 }

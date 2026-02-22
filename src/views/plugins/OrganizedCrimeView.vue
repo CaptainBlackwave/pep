@@ -174,7 +174,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 
@@ -199,9 +199,9 @@ const isLeader = computed(() => {
 const fetchCrimes = async () => {
   loading.value = true;
   error.value = null;
-  
+
   try {
-    const response = await api.get('/organized-crime');
+    const response = await api.get('/api/v1/organized-crime');
     player.value = response.data.player || null;
     crimes.value = response.data.crimes || [];
     gang.value = response.data.gang || null;
@@ -220,7 +220,7 @@ const selectCrime = (crime) => {
     setTimeout(() => errorMessage.value = null, 3000);
     return;
   }
-  
+
   selectedCrime.value = crime;
   selectedMembers.value = [];
 };
@@ -244,19 +244,19 @@ const attemptCrime = async () => {
   errorMessage.value = null;
 
   try {
-    const response = await api.post(`/organized-crime/${selectedCrime.value.id}/attempt`, {
+    const response = await api.post(`/api/v1/organized-crime/${selectedCrime.value.id}/attempt`, {
       participants: selectedMembers.value
     });
 
     successMessage.value = response.data.message || 'Crime attempted successfully!';
-    
+
     // Reset selection
     selectedCrime.value = null;
     selectedMembers.value = [];
-    
+
     // Refresh data
     await fetchCrimes();
-    
+
     setTimeout(() => successMessage.value = null, 5000);
   } catch (err) {
     console.error('Error attempting crime:', err);

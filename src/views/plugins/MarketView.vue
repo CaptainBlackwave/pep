@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 
@@ -88,7 +88,7 @@ const fetchData = async () => {
   try {
     loading.value = true;
     error.value = '';
-    const response = await api.get('/market');
+    const response = await api.get('/api/v1/market');
     listings.value = response.data.listings || [];
     myListings.value = response.data.myListings || [];
     categories.value = response.data.categories || [];
@@ -109,7 +109,7 @@ const buyItem = async (listingId, quantity = 1) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/market/${listingId}/buy`, { quantity });
+    const response = await api.post(`/api/v1/market/${listingId}/buy`, { quantity });
 
     successMessage.value = response.data.message || 'Purchase successful!';
     await fetchData();
@@ -128,7 +128,7 @@ const createListing = async () => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post('/market/create', {
+    const response = await api.post('/api/v1/market/create', {
       item_id: newListing.value.item_id,
       quantity: newListing.value.quantity,
       price_per_unit: newListing.value.price_per_unit
@@ -153,7 +153,7 @@ const cancelListing = async (listingId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/market/${listingId}/cancel`);
+    const response = await api.post(`/api/v1/market/${listingId}/cancel`);
 
     successMessage.value = response.data.message || 'Listing cancelled';
     await fetchData();

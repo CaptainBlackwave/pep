@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 
@@ -36,7 +36,7 @@ const fetchData = async () => {
   try {
     loading.value = true;
     error.value = '';
-    const response = await api.get('/alliances');
+    const response = await api.get('/api/v1/alliances');
     alliances.value = response.data.alliances || [];
     myAlliance.value = response.data.myAlliance || null;
     pendingInvites.value = response.data.pendingInvites || [];
@@ -56,7 +56,7 @@ const createAlliance = async () => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post('/alliances/create', {
+    const response = await api.post('/api/v1/alliances/create', {
       name: allianceName.value,
       tag: allianceTag.value,
       description: allianceDescription.value
@@ -83,7 +83,7 @@ const joinAlliance = async (allianceId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/alliances/${allianceId}/join`);
+    const response = await api.post(`/api/v1/alliances/${allianceId}/join`);
 
     successMessage.value = response.data.message || 'Request sent!';
     await fetchData();
@@ -102,7 +102,7 @@ const leaveAlliance = async () => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post('/alliances/leave');
+    const response = await api.post('/api/v1/alliances/leave');
 
     successMessage.value = response.data.message || 'Left alliance successfully';
     await fetchData();
@@ -121,7 +121,7 @@ const acceptInvite = async (inviteId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/alliances/invites/${inviteId}/accept`);
+    const response = await api.post(`/api/v1/alliances/invites/${inviteId}/accept`);
 
     successMessage.value = response.data.message || 'Joined alliance!';
     await fetchData();
@@ -139,7 +139,7 @@ const declineInvite = async (inviteId) => {
     processing.value = true;
     error.value = '';
 
-    await api.post(`/alliances/invites/${inviteId}/decline`);
+    await api.post(`/api/v1/alliances/invites/${inviteId}/decline`);
     await fetchData();
   } catch (err) {
     error.value = err.response?.data?.message || 'Failed to decline invite';

@@ -159,11 +159,12 @@ test.describe('Crime Module', () => {
 
     await page.goto('/crimes')
 
-    // Click commit button if available
+    // Verify crime page loaded and commit button exists
     const commitButton = page.locator('button').filter({ hasText: /commit|do/i }).first()
-    if (await commitButton.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await commitButton.click()
-    }
+    await expect(commitButton).toBeVisible({ timeout: 2000 })
+    await commitButton.click()
+    // Verify the page is still functional after clicking
+    await expect(page.locator('body')).toBeVisible()
   })
 })
 
@@ -217,11 +218,14 @@ test.describe('Bank Module', () => {
 
     await page.goto('/bank')
 
-    // Look for deposit form
+    // Verify bank page loaded
+    await expect(page.locator('body')).toBeVisible()
+    // Look for deposit form and interact with it
     const depositInput = page.locator('input[type="number"]').first()
-    if (await depositInput.isVisible({ timeout: 1000 }).catch(() => false)) {
-      await depositInput.fill('1000')
-    }
+    await expect(depositInput).toBeVisible({ timeout: 2000 })
+    await depositInput.fill('1000')
+    // Verify input was filled
+    await expect(depositInput).toHaveValue('1000')
   })
 })
 

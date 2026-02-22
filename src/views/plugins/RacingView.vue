@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
@@ -40,7 +40,7 @@ const loadData = async () => {
     loading.value = true;
     error.value = '';
 
-    const response = await api.get('/racing');
+    const response = await api.get('/api/v1/racing');
 
     player.value = response.data.player;
     availableRaces.value = response.data.availableRaces || [];
@@ -59,7 +59,7 @@ const createRace = async () => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post('/racing/create', createRaceForm.value);
+    const response = await api.post('/api/v1/racing/create', createRaceForm.value);
 
     successMessage.value = response.data.message || 'Race created successfully!';
 
@@ -85,7 +85,7 @@ const joinRace = async (raceId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/racing/join/${raceId}`, joinRaceForm.value);
+    const response = await api.post(`/api/v1/racing/join/${raceId}`, joinRaceForm.value);
 
     successMessage.value = response.data.message || 'Joined race successfully!';
 
@@ -110,7 +110,7 @@ const leaveRace = async (raceId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/racing/leave/${raceId}`);
+    const response = await api.post(`/api/v1/racing/leave/${raceId}`);
 
     successMessage.value = response.data.message || 'Left race successfully!';
 
@@ -129,7 +129,7 @@ const startRace = async (raceId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/racing/start/${raceId}`);
+    const response = await api.post(`/api/v1/racing/start/${raceId}`);
 
     successMessage.value = response.data.message || 'Race started!';
 

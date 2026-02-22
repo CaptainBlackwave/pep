@@ -142,7 +142,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import api from '@/services/api'
@@ -169,9 +169,10 @@ onMounted(async () => {
   }
 
   try {
-    await api.post('/validate-reset-token', { email, token })
+    await api.post('/api/v1/validate-reset-token', { email, token })
     isValidating.value = false
-  } catch (error) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } } }
     if (error.response?.data?.message) {
       tokenError.value = error.response.data.message
     } else {
@@ -196,7 +197,7 @@ const submitForm = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await api.post('/reset-password', {
+    const response = await api.post('/api/v1/reset-password', {
       email,
       token,
       password: password.value,
@@ -209,7 +210,8 @@ const submitForm = async () => {
     setTimeout(() => {
       router.push('/login')
     }, 2000)
-  } catch (error) {
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { errors?: Record<string, string[]>; message?: string } } }
     if (error.response?.data?.errors) {
       const errors = error.response.data.errors
       errorMessage.value = Object.values(errors).flat().join(' ')

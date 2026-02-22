@@ -41,11 +41,11 @@
     <!-- Job Listings -->
     <div class="jobs-section">
       <h2>{{ currentJob ? 'Other Opportunities' : 'Available Positions' }}</h2>
-      
+
       <!-- Sector Filter -->
       <div class="filter-bar">
-        <button 
-          v-for="sector in sectors" 
+        <button
+          v-for="sector in sectors"
           :key="sector"
           @click="selectedSector = sector"
           :class="['filter-btn', { active: selectedSector === sector }]"
@@ -61,14 +61,14 @@
             <h3>{{ position.title }}</h3>
             <p class="company">{{ position.company?.name }}</p>
             <p class="description">{{ position.description }}</p>
-            
+
             <div class="requirements">
               <div class="req">
                 <span class="req-label">Required Stats:</span>
                 <span class="req-value">Level {{ position.required_level || 1 }}</span>
               </div>
             </div>
-            
+
             <div class="job-details">
               <div class="detail">
                 <span class="label">💰 Salary</span>
@@ -79,9 +79,9 @@
                 <span class="value">{{ position.required_level || 1 }}</span>
               </div>
             </div>
-            
-            <button 
-              @click="applyForJob(position.id)" 
+
+            <button
+              @click="applyForJob(position.id)"
               :disabled="currentJob || applying === position.id"
               class="btn-apply"
             >
@@ -94,7 +94,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -183,7 +183,7 @@ const work = async () => {
 
 const quitJob = async () => {
   if (!confirm('Are you sure you want to quit your job?')) return
-  
+
   try {
     const response = await api.post('/employment/quit')
     alert(response.data.message)

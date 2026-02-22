@@ -512,15 +512,15 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import type { EmailSettings, EmailTemplate } from '@/types/api'
 
 const toast = useToast()
 
 const activeTab = ref('settings')
-const loading = ref(false)
 const saving = ref(false)
 const sendingTest = ref(false)
 const seedingDefaults = ref(false)
@@ -534,10 +534,16 @@ const showSendTestTemplateModal = ref(false)
 
 const testEmail = ref('')
 const templateTestEmail = ref('')
-const previewData = ref(null)
-const previewingTemplate = ref(null)
 
-const settings = ref({
+interface PreviewData {
+  subject: string
+  body_html: string
+}
+
+const previewData = ref<PreviewData | null>(null)
+const previewingTemplate = ref<EmailTemplate | null>(null)
+
+const settings = ref<EmailSettings>({
   mailer: 'mailgun',
   host: '',
   port: 587,
@@ -554,9 +560,21 @@ const settings = ref({
   has_mailgun_secret: false,
 })
 
-const templates = ref([])
+const templates = ref<EmailTemplate[]>([])
 
-const editingTemplate = ref({
+interface EditingTemplate {
+  id: number | null
+  slug: string
+  name: string
+  subject: string
+  body_html: string
+  body_text: string
+  description: string
+  is_active: boolean
+  available_variables: string[]
+}
+
+const editingTemplate = ref<EditingTemplate>({
   id: null,
   slug: '',
   name: '',
@@ -585,9 +603,9 @@ onMounted(() => {
 
 async function loadSettings() {
   try {
-    const response = await api.get('/admin/email/settings')
-    if (response.data.success) {
-      Object.assign(settings.value, response.data.data)
+    const response = await api.get('/api/v1/admin/email/settings')
+    if ((response.data as { success: boolean }).success) {
+      Object.assign(settings.value, (response.data as { data: EmailSettings }).data)
     }
   } catch (error) {
     console.error('Failed to load email settings:', error)
@@ -596,9 +614,9 @@ async function loadSettings() {
 
 async function loadTemplates() {
   try {
-    const response = await api.get('/admin/email/templates')
-    if (response.data.success) {
-      templates.value = response.data.data
+    const response = await api.get('/api/v1/admin/email/templates')
+    if ((response.data as { success: boolean }).success) {
+      templates.value = (response.data as { data: EmailTemplate[] }).data
     }
   } catch (error) {
     console.error('Failed to load templates:', error)
@@ -608,13 +626,14 @@ async function loadTemplates() {
 async function saveSettings() {
   saving.value = true
   try {
-    const response = await api.post('/admin/email/settings', settings.value)
-    if (response.data.success) {
+    const response = await api.post('/api/v1/admin/email/settings', settings.value)
+    if ((response.data as { success: boolean }).success) {
       toast.success('Email settings saved successfully')
       await loadSettings()
     }
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to save settings')
+    const err = error as { response?: { data?: { message?: string } } }
+    toast.error(err.response?.data?.message || 'Failed to save settings')
   } finally {
     saving.value = false
   }
@@ -625,17 +644,18 @@ async function sendTestEmail() {
 
   sendingTest.value = true
   try {
-    const response = await api.post('/admin/email/settings/test', {
+    const response = await api.post('/api/v1/admin/email/settings/test', {
       test_email: testEmail.value
     })
-    if (response.data.success) {
-      toast.success(response.data.message)
+    if ((response.data as { success: boolean }).success) {
+      toast.success((response.data as { message: string }).message)
       showTestModal.value = false
       testEmail.value = ''
       await loadSettings()
     }
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to send test email')
+    const err = error as { response?: { data?: { message?: string } } }
+    toast.error(err.response?.data?.message || 'Failed to send test email')
   } finally {
     sendingTest.value = false
   }
@@ -644,21 +664,32 @@ async function sendTestEmail() {
 async function seedDefaults() {
   seedingDefaults.value = true
   try {
-    const response = await api.post('/admin/email/templates/seed-defaults')
-    if (response.data.success) {
-      toast.success(response.data.message)
+    const response = await api.post('/api/v1/admin/email/templates/seed-defaults')
+    if ((response.data as { success: boolean }).success) {
+      toast.success((response.data as { message: string }).message)
       await loadTemplates()
     }
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to create default templates')
+    const err = error as { response?: { data?: { message?: string } } }
+    toast.error(err.response?.data?.message || 'Failed to create default templates')
   } finally {
     seedingDefaults.value = false
   }
 }
 
-function openTemplateModal(template = null) {
+function openTemplateModal(template: EmailTemplate | null = null) {
   if (template) {
-    editingTemplate.value = { ...template }
+    editingTemplate.value = {
+      id: template.id,
+      slug: template.slug,
+      name: template.name,
+      subject: template.subject,
+      body_html: template.body,
+      body_text: '',
+      description: '',
+      is_active: template.is_active,
+      available_variables: [],
+    }
   } else {
     editingTemplate.value = {
       id: null,
@@ -679,36 +710,33 @@ async function saveTemplate() {
   savingTemplate.value = true
   try {
     const data = { ...editingTemplate.value }
-    let response
 
     if (data.id) {
-      response = await api.patch(`/admin/email/templates/${data.id}`, data)
+      await api.patch(`/api/v1/admin/email/templates/${data.id}`, data)
     } else {
-      response = await api.post('/admin/email/templates', data)
+      await api.post('/api/v1/admin/email/templates', data)
     }
 
-    if (response.data.success) {
-      toast.success(response.data.message)
-      showTemplateModal.value = false
-      await loadTemplates()
-    }
+    toast.success('Template saved successfully')
+    showTemplateModal.value = false
+    await loadTemplates()
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to save template')
+    const err = error as { response?: { data?: { message?: string } } }
+    toast.error(err.response?.data?.message || 'Failed to save template')
   } finally {
     savingTemplate.value = false
   }
 }
 
-async function previewTemplate(template) {
+async function previewTemplate(template: EmailTemplate) {
   previewingTemplate.value = template
   try {
-    const response = await api.post(`/admin/email/templates/${template.id}/preview`)
-    if (response.data.success) {
-      previewData.value = response.data.data
-      showPreviewModal.value = true
-    }
+    const response = await api.post(`/api/v1/admin/email/templates/${template.id}/preview`)
+    previewData.value = (response.data as { data: PreviewData }).data
+    showPreviewModal.value = true
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to preview template')
+    const err = error as { response?: { data?: { message?: string } } }
+    toast.error(err.response?.data?.message || 'Failed to preview template')
   }
 }
 
@@ -717,36 +745,34 @@ async function sendTemplateTest() {
 
   sendingTemplateTest.value = true
   try {
-    const response = await api.post(`/admin/email/templates/${previewingTemplate.value.id}/test`, {
+    await api.post(`/api/v1/admin/email/templates/${previewingTemplate.value.id}/test`, {
       test_email: templateTestEmail.value
     })
-    if (response.data.success) {
-      toast.success(response.data.message)
-      showSendTestTemplateModal.value = false
-      templateTestEmail.value = ''
-    }
+    toast.success('Test email sent successfully')
+    showSendTestTemplateModal.value = false
+    templateTestEmail.value = ''
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to send test email')
+    const err = error as { response?: { data?: { message?: string } } }
+    toast.error(err.response?.data?.message || 'Failed to send test email')
   } finally {
     sendingTemplateTest.value = false
   }
 }
 
-function confirmDeleteTemplate(template) {
+function confirmDeleteTemplate(template: EmailTemplate) {
   if (confirm(`Are you sure you want to delete "${template.name}"?`)) {
     deleteTemplate(template.id)
   }
 }
 
-async function deleteTemplate(id) {
+async function deleteTemplate(id: number) {
   try {
-    const response = await api.delete(`/admin/email/templates/${id}`)
-    if (response.data.success) {
-      toast.success(response.data.message)
-      await loadTemplates()
-    }
+    await api.delete(`/api/v1/admin/email/templates/${id}`)
+    toast.success('Template deleted successfully')
+    await loadTemplates()
   } catch (error) {
-    toast.error(error.response?.data?.message || 'Failed to delete template')
+    const err = error as { response?: { data?: { message?: string } } }
+    toast.error(err.response?.data?.message || 'Failed to delete template')
   }
 }
 </script>

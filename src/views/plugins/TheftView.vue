@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
@@ -52,7 +52,7 @@ const loadData = async () => {
     loading.value = true;
     error.value = '';
 
-    const response = await api.get('/theft');
+    const response = await api.get('/api/v1/theft');
 
     player.value = response.data.player;
     theftTypes.value = response.data.theftTypes || [];
@@ -95,7 +95,7 @@ const attemptTheft = async (typeId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/theft/attempt/${typeId}`);
+    const response = await api.post(`/api/v1/theft/attempt/${typeId}`);
 
     successMessage.value = response.data.message || 'Theft attempted successfully!';
 

@@ -28,7 +28,7 @@
       <div v-else>
         <!-- Tabs -->
         <div class="tabs">
-          <button @click="activeTab = 'deposit'" 
+          <button @click="activeTab = 'deposit'"
                   class="tab-button"
                   :class="activeTab === 'deposit' ? 'active' : ''">
             Deposit
@@ -49,7 +49,7 @@
         <div v-if="activeTab === 'deposit'" class="tab-panel">
           <h3 class="section-title">💰 Deposit Money</h3>
           <p class="fee-notice">Deposit fee: {{ taxRate }}%</p>
-          
+
           <div class="input-group">
             <label class="input-label">Amount</label>
             <input v-model="depositAmount" type="number" min="1" :max="player?.cash"
@@ -79,7 +79,7 @@
         <!-- Withdraw Tab -->
         <div v-if="activeTab === 'withdraw'" class="tab-panel">
           <h3 class="section-title">💸 Withdraw Money</h3>
-          
+
           <div class="input-group">
             <label class="input-label">Amount</label>
             <input v-model="withdrawAmount" type="number" min="1" :max="player?.bank"
@@ -101,7 +101,7 @@
         <!-- Transfer Tab -->
         <div v-if="activeTab === 'transfer'" class="tab-panel">
           <h3 class="section-title">💳 Transfer Money</h3>
-          
+
           <div class="input-group">
             <label class="input-label">Recipient Username</label>
             <input v-model="transferRecipient" type="text"
@@ -131,7 +131,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import api from '@/services/api'
 
@@ -170,7 +170,7 @@ const setWithdrawAmount = (type) => {
 
 const loadData = async () => {
   try {
-    const response = await api.get('/bank')
+    const response = await api.get('/api/v1/bank')
     taxRate.value = response.data.taxRate || response.data.settings?.transfer_fee || 15
     player.value = response.data.player
   } catch (err) {
@@ -184,9 +184,9 @@ const deposit = async () => {
   if (processing.value) return
   processing.value = true
   result.value = null
-  
+
   try {
-    const response = await api.post('/bank/deposit', { amount: parseInt(depositAmount.value) })
+    const response = await api.post('/api/v1/bank/deposit', { amount: parseInt(depositAmount.value) })
     result.value = { success: true, message: response.data.message }
     player.value = response.data.player
     depositAmount.value = ''
@@ -201,9 +201,9 @@ const withdraw = async () => {
   if (processing.value) return
   processing.value = true
   result.value = null
-  
+
   try {
-    const response = await api.post('/bank/withdraw', { amount: parseInt(withdrawAmount.value) })
+    const response = await api.post('/api/v1/bank/withdraw', { amount: parseInt(withdrawAmount.value) })
     result.value = { success: true, message: response.data.message }
     player.value = response.data.player
     withdrawAmount.value = ''
@@ -218,9 +218,9 @@ const transfer = async () => {
   if (processing.value) return
   processing.value = true
   result.value = null
-  
+
   try {
-    const response = await api.post('/bank/transfer', { 
+    const response = await api.post('/api/v1/bank/transfer', {
       recipient: transferRecipient.value,
       amount: parseInt(transferAmount.value)
     })

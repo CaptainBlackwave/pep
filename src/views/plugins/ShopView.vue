@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
@@ -76,7 +76,7 @@ const loadShop = async () => {
   try {
     loading.value = true;
     error.value = null;
-    const response = await api.get('/inventory/shop');
+    const response = await api.get('/api/v1/inventory/shop');
 
     items.value = response.data.items || [];
     player.value = response.data.player || null;
@@ -118,7 +118,7 @@ const buyItem = async (item) => {
   processing.value = true;
 
   try {
-    const response = await api.post(`/inventory/buy/${item.id}`);
+    const response = await api.post(`/api/v1/inventory/buy/${item.id}`);
     showFlash(response.data.message || 'Item purchased successfully!', 'success');
 
     // Update player data from response

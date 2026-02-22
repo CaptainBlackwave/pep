@@ -154,7 +154,6 @@
                 {{ submitting ? 'Sending...' : 'Send Reply' }}
               </button>
               <button
-                v-if="selectedTicket.status !== 'closed'"
                 type="button"
                 @click="closeTicket"
                 class="btn-danger"
@@ -172,16 +171,43 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 
+// Type definitions
+interface TicketCategory {
+  id: number
+  name: string
+}
+
+interface TicketMessage {
+  id: number
+  user?: { username: string }
+  message: string
+  created_at: string
+  is_staff?: boolean
+  is_staff_reply?: boolean
+}
+
+interface Ticket {
+  id: number
+  subject: string
+  description: string
+  priority: 'low' | 'medium' | 'high' | 'urgent'
+  status: 'open' | 'in_progress' | 'resolved' | 'closed'
+  category?: TicketCategory
+  messages?: TicketMessage[]
+  messages_count?: number
+  created_at: string
+}
+
 const loading = ref(true)
-const error = ref(null)
-const tickets = ref([])
-const categories = ref([])
+const error = ref<string | null>(null)
+const tickets = ref<Ticket[]>([])
+const categories = ref<TicketCategory[]>([])
 const showCreateModal = ref(false)
-const selectedTicket = ref(null)
+const selectedTicket = ref<Ticket | null>(null)
 const submitting = ref(false)
 const replyMessage = ref('')
 
@@ -194,8 +220,8 @@ const newTicket = ref({
 async function loadTickets() {
   try {
     loading.value = true
-    const response = await api.get('/tickets')
-    tickets.value = response.data
+    const response = await api.get('/api/v1/tickets')
+    tickets.value = response.data as Ticket[]
   } catch (err) {
     error.value = 'Failed to load tickets'
     console.error(err)
@@ -206,8 +232,8 @@ async function loadTickets() {
 
 async function loadCategories() {
   try {
-    const response = await api.get('/tickets/categories')
-    categories.value = response.data
+    const response = await api.get('/api/v1/tickets/categories')
+    categories.value = response.data as TicketCategory[]
   } catch (err) {
     console.error('Failed to load categories:', err)
   }
@@ -216,7 +242,7 @@ async function loadCategories() {
 async function createTicket() {
   try {
     submitting.value = true
-    await api.post('/tickets', newTicket.value)
+    await api.post('/api/v1/tickets', newTicket.value)
     showCreateModal.value = false
     newTicket.value = { ticket_category_id: '', subject: '', description: '' }
     await loadTickets()
@@ -228,10 +254,10 @@ async function createTicket() {
   }
 }
 
-async function viewTicket(id) {
+async function viewTicket(id: number) {
   try {
-    const response = await api.get(`/tickets/${id}`)
-    selectedTicket.value = response.data
+    const response = await api.get(`/api/v1/tickets/${id}`)
+    selectedTicket.value = response.data as Ticket
   } catch (err) {
     error.value = 'Failed to load ticket details'
     console.error(err)
@@ -239,11 +265,11 @@ async function viewTicket(id) {
 }
 
 async function replyToTicket() {
-  if (!replyMessage.value.trim()) return
+  if (!replyMessage.value.trim() || !selectedTicket.value) return
 
   try {
     submitting.value = true
-    await api.post(`/tickets/${selectedTicket.value.id}/reply`, {
+    await api.post(`/api/v1/tickets/${selectedTicket.value.id}/reply`, {
       message: replyMessage.value
     })
     replyMessage.value = ''
@@ -257,10 +283,10 @@ async function replyToTicket() {
 }
 
 async function closeTicket() {
-  if (!confirm('Are you sure you want to close this ticket?')) return
+  if (!confirm('Are you sure you want to close this ticket?') || !selectedTicket.value) return
 
   try {
-    await api.post(`/tickets/${selectedTicket.value.id}/close`)
+    await api.post(`/api/v1/tickets/${selectedTicket.value.id}/close`)
     selectedTicket.value = null
     await loadTickets()
   } catch (err) {
@@ -269,12 +295,13 @@ async function closeTicket() {
   }
 }
 
-function truncateText(text, length) {
+function truncateText(text: string | undefined, length: number): string {
   if (!text) return ''
   return text.length > length ? text.substring(0, length) + '...' : text
 }
 
-function formatDate(date) {
+function formatDate(date: string | undefined): string {
+  if (!date) return ''
   return new Date(date).toLocaleDateString('en-US', {
     month: 'short',
     day: 'numeric',

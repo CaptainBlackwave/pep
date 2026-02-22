@@ -1,19 +1,59 @@
-<script setup>
-import { ref, computed, onMounted, onUnmounted } from 'vue';
-import api from '@/services/api';
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import api from '@/services/api'
 
-const tournaments = ref([]);
-const activeTournament = ref(null);
-const myRegistration = ref(null);
-const brackets = ref([]);
-const pastTournaments = ref([]);
+// Type definitions
+interface Tournament {
+  id: number
+  name: string
+  description?: string
+  type: string
+  type_label?: string
+  status: 'registration' | 'in_progress' | 'completed' | 'cancelled' | 'scheduled'
+  entry_fee: number
+  prize_pool: number
+  prizes?: number[]
+  participant_count: number
+  max_participants?: number
+  starts_at: string
+  registration_opens?: string
+  ended_at?: string
+  is_registered?: boolean
+  first_place?: string
+  second_place?: string
+  third_place?: string
+  my_rank?: number
+}
+
+interface Match {
+  id: number
+  player1_id?: number
+  player1_name?: string
+  player1_score?: number
+  player2_id?: number
+  player2_name?: string
+  player2_score?: number
+  winner_id?: number
+}
+
+interface Registration {
+  id: number
+  tournament_id: number
+  user_id: number
+}
+
+const tournaments = ref<Tournament[]>([]);
+const activeTournament = ref<Tournament | null>(null);
+const myRegistration = ref<Registration | null>(null);
+const brackets = ref<Match[][]>([]);
+const pastTournaments = ref<Tournament[]>([]);
 const loading = ref(true);
 const processing = ref(false);
 const error = ref('');
 const successMessage = ref('');
 const activeTab = ref('current');
 
-const formatMoney = (amount) => {
+const formatMoney = (amount: number): string => {
   return new Intl.NumberFormat('en-US', {
     style: 'currency',
     currency: 'USD',
@@ -21,11 +61,12 @@ const formatMoney = (amount) => {
   }).format(amount);
 };
 
-const formatNumber = (num) => {
-  return new Intl.NumberFormat('en-US').format(num);
+const formatNumber = (num: number | string): string => {
+  return new Intl.NumberFormat('en-US').format(Number(num));
 };
 
-const formatDate = (dateString) => {
+const formatDate = (dateString: string | undefined): string => {
+  if (!dateString) return 'TBD';
   return new Date(dateString).toLocaleDateString('en-US', {
     year: 'numeric',
     month: 'short',
@@ -35,12 +76,12 @@ const formatDate = (dateString) => {
   });
 };
 
-const timeUntil = computed(() => {
-  if (!activeTournament.value?.starts_at) return null;
+const timeUntil = computed((): string => {
+  if (!activeTournament.value?.starts_at) return '';
 
   const now = new Date();
   const start = new Date(activeTournament.value.starts_at);
-  const diff = start - now;
+  const diff = start.getTime() - now.getTime();
 
   if (diff <= 0) return 'Started';
 
@@ -57,20 +98,21 @@ const fetchData = async () => {
   try {
     loading.value = true;
     error.value = '';
-    const response = await api.get('/tournaments');
+    const response = await api.get('/api/v1/tournaments');
     tournaments.value = response.data.tournaments || [];
     activeTournament.value = response.data.activeTournament || null;
     myRegistration.value = response.data.myRegistration || null;
     brackets.value = response.data.brackets || [];
     pastTournaments.value = response.data.pastTournaments || [];
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load tournaments';
+  } catch (err: unknown) {
+    const apiError = err as { response?: { data?: { message?: string } } };
+    error.value = apiError.response?.data?.message || 'Failed to load tournaments';
   } finally {
     loading.value = false;
   }
 };
 
-const registerForTournament = async (tournamentId) => {
+const registerForTournament = async (tournamentId: number) => {
   if (processing.value) return;
 
   try {
@@ -78,18 +120,19 @@ const registerForTournament = async (tournamentId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/tournaments/${tournamentId}/register`);
+    const response = await api.post(`/api/v1/tournaments/${tournamentId}/register`);
 
     successMessage.value = response.data.message || 'Registered successfully!';
     await fetchData();
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to register';
+  } catch (err: unknown) {
+    const apiError = err as { response?: { data?: { message?: string } } };
+    error.value = apiError.response?.data?.message || 'Failed to register';
   } finally {
     processing.value = false;
   }
 };
 
-const withdrawFromTournament = async (tournamentId) => {
+const withdrawFromTournament = async (tournamentId: number) => {
   if (processing.value || !confirm('Withdraw from this tournament?')) return;
 
   try {
@@ -97,19 +140,20 @@ const withdrawFromTournament = async (tournamentId) => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post(`/tournaments/${tournamentId}/withdraw`);
+    const response = await api.post(`/api/v1/tournaments/${tournamentId}/withdraw`);
 
     successMessage.value = response.data.message || 'Withdrawn successfully';
     await fetchData();
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to withdraw';
+  } catch (err: unknown) {
+    const apiError = err as { response?: { data?: { message?: string } } };
+    error.value = apiError.response?.data?.message || 'Failed to withdraw';
   } finally {
     processing.value = false;
   }
 };
 
-const getTournamentTypeIcon = (type) => {
-  const icons = {
+const getTournamentTypeIcon = (type: string): string => {
+  const icons: Record<string, string> = {
     'pvp': '⚔️',
     'racing': '🏎️',
     'crime': '🔫',
@@ -120,8 +164,8 @@ const getTournamentTypeIcon = (type) => {
   return icons[type] || icons.default;
 };
 
-const getStatusColor = (status) => {
-  const colors = {
+const getStatusColor = (status: string): string => {
+  const colors: Record<string, string> = {
     'registration': '#3b82f6',
     'in_progress': '#22c55e',
     'completed': '#6b7280',

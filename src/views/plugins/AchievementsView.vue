@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
@@ -99,13 +99,13 @@ onMounted(() => {
                 {{ achievementTypes[type]?.name || type }}
               </h3>
             </div>
-            
+
             <div class="achievements-grid">
-              <div 
-                v-for="achievement in categoryAchievements" 
+              <div
+                v-for="achievement in categoryAchievements"
                 :key="achievement.id"
                 :class="['achievement-card', `achievement-${achievementTypes[type]?.color || 'gray'}`, { earned: achievement.is_earned }]">
-                
+
                 <div class="achievement-content">
                   <div class="achievement-header">
                     <span class="achievement-icon">{{ achievement.icon }}</span>
@@ -114,7 +114,7 @@ onMounted(() => {
                       <p class="achievement-description">{{ achievement.description }}</p>
                     </div>
                   </div>
-                  
+
                   <!-- Progress Bar -->
                   <div v-if="!achievement.is_earned" class="progress-container">
                     <div class="progress-header">
@@ -124,19 +124,19 @@ onMounted(() => {
                       </span>
                     </div>
                     <div class="progress-bar">
-                      <div 
+                      <div
                         class="progress-fill"
                         :style="{ width: achievement.percentage + '%' }">
                       </div>
                     </div>
                     <div class="progress-percentage">{{ achievement.percentage }}%</div>
                   </div>
-                  
+
                   <!-- Earned Badge -->
                   <div v-else class="earned-badge">
                     ✓ UNLOCKED
                   </div>
-                  
+
                   <!-- Rewards -->
                   <div class="rewards">
                     <div v-if="achievement.reward_cash > 0" class="reward">
@@ -547,25 +547,25 @@ onMounted(() => {
   .title {
     font-size: 24px;
   }
-  
+
   .stats-content {
     flex-direction: column;
   }
-  
+
   .stats-badge {
     width: 100%;
   }
-  
+
   .achievements-grid {
     grid-template-columns: 1fr;
     padding: 16px;
   }
-  
+
   .header {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .back-button {
     width: 100%;
   }

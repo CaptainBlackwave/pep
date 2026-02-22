@@ -1,6 +1,6 @@
-<script setup>
-import { ref, onMounted, computed } from 'vue';
-import api from '@/services/api';
+<script setup lang="ts">
+import { ref, onMounted } from 'vue'
+import api from '@/services/api'
 
 // Data
 const loading = ref(true);

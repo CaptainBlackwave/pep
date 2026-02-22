@@ -34,60 +34,60 @@
 
         <!-- Place Bounty Section -->
         <div class="place-bounty-section">
-          <button 
-            v-if="!showPlaceForm" 
+          <button
+            v-if="!showPlaceForm"
             @click="showPlaceForm = true"
             class="btn btn-place-bounty"
           >
             Place a Bounty
           </button>
-          
+
           <div v-else class="place-bounty-form">
             <h3>Place Bounty on Player</h3>
             <div class="form-group">
               <label>Target Player ID</label>
-              <input 
-                v-model="targetId" 
+              <input
+                v-model="targetId"
                 type="number"
                 placeholder="Enter player ID"
                 class="form-input"
               />
             </div>
-            
+
             <div class="form-group">
               <label>Bounty Amount (Min: {{ formatMoney(minAmount) }})</label>
-              <input 
-                v-model.number="amount" 
+              <input
+                v-model.number="amount"
                 type="number"
                 :min="minAmount"
                 class="form-input"
               />
               <p class="form-help">
-                Fee: {{ formatMoney(calculatedFee) }} ({{ feePercentage }}%) | 
+                Fee: {{ formatMoney(calculatedFee) }} ({{ feePercentage }}%) |
                 Total Cost: {{ formatMoney(totalCost) }}
               </p>
             </div>
-            
+
             <div class="form-group">
               <label>Reason (Optional)</label>
-              <input 
-                v-model="reason" 
+              <input
+                v-model="reason"
                 type="text"
                 maxlength="255"
                 placeholder="They disrespected me..."
                 class="form-input"
               />
             </div>
-            
+
             <div class="form-actions">
-              <button 
+              <button
                 @click="placeBounty"
                 :disabled="processing || !targetId || amount < minAmount"
                 class="btn btn-submit"
               >
                 Place Bounty
               </button>
-              <button 
+              <button
                 @click="cancelForm"
                 class="btn btn-cancel"
               >
@@ -100,14 +100,14 @@
         <!-- Active Bounties -->
         <div class="active-bounties-section">
           <h3>Active Bounties ({{ bounties.length }})</h3>
-          
+
           <div v-if="bounties.length === 0" class="empty-state">
             <p>No active bounties</p>
           </div>
-          
+
           <div v-else class="bounties-list">
-            <div 
-              v-for="bounty in bounties" 
+            <div
+              v-for="bounty in bounties"
               :key="bounty.id"
               class="bounty-card"
             >
@@ -133,8 +133,8 @@
         <div v-if="myBounties.placed && myBounties.placed.length > 0" class="my-bounties-section">
           <h3>My Placed Bounties</h3>
           <div class="my-bounties-list">
-            <div 
-              v-for="(bounty, index) in myBounties.placed" 
+            <div
+              v-for="(bounty, index) in myBounties.placed"
               :key="index"
               class="my-bounty-card"
             >
@@ -145,7 +145,7 @@
                 </div>
                 <div class="my-bounty-details">
                   <p class="my-bounty-amount">{{ formatMoney(bounty.amount) }}</p>
-                  <p 
+                  <p
                     class="my-bounty-status"
                     :class="getStatusClass(bounty.status)"
                   >
@@ -174,7 +174,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 
@@ -195,10 +195,10 @@ const successMessage = ref('');
 const errorMessage = ref('');
 
 const formatMoney = (val) => {
-  return new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency: 'USD', 
-    minimumFractionDigits: 0 
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0
   }).format(val);
 };
 
@@ -236,7 +236,7 @@ const loadBounties = async () => {
 
 const placeBounty = async () => {
   if (processing.value) return;
-  
+
   try {
     processing.value = true;
     const response = await api.post('/bounties/place', {
@@ -244,16 +244,16 @@ const placeBounty = async () => {
       amount: amount.value,
       reason: reason.value
     });
-    
+
     successMessage.value = response.data.message || 'Bounty placed successfully!';
     errorMessage.value = '';
     showPlaceForm.value = false;
-    
+
     // Reset form
     targetId.value = '';
     amount.value = minAmount.value;
     reason.value = '';
-    
+
     await loadBounties();
   } catch (error) {
     console.error('Failed to place bounty:', error);

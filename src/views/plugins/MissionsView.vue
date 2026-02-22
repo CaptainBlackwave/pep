@@ -1,4 +1,4 @@
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRouter } from 'vue-router';
 import api from '@/services/api';
@@ -64,7 +64,7 @@ const fetchMissions = async () => {
   loading.value = true;
   error.value = null;
   try {
-    const response = await api.get('/missions');
+    const response = await api.get('/api/v1/missions');
     missions.value = response.data.missions || [];
     stats.value = response.data.stats || stats.value;
   } catch (err) {
@@ -80,12 +80,12 @@ const startMission = async (mission) => {
 
   startingMission.value = true;
   error.value = null;
-  
+
   try {
-    await api.post('/missions/start', {
+    await api.post('/api/v1/missions/start', {
       mission_id: mission.id
     });
-    
+
     // Refresh missions after starting
     await fetchMissions();
   } catch (err) {
@@ -155,25 +155,25 @@ onMounted(() => {
 
         <!-- Filter Tabs -->
         <div class="filter-tabs">
-          <button 
+          <button
             @click="selectedType = 'all'"
             :class="{ active: selectedType === 'all' }"
             class="tab-button">
             All ({{ missions.length }})
           </button>
-          <button 
+          <button
             @click="selectedType = 'one_time'"
             :class="{ active: selectedType === 'one_time' }"
             class="tab-button">
             One Time ({{ missionsByType.one_time.length }})
           </button>
-          <button 
+          <button
             @click="selectedType = 'daily'"
             :class="{ active: selectedType === 'daily' }"
             class="tab-button">
             Daily ({{ missionsByType.daily.length }})
           </button>
-          <button 
+          <button
             @click="selectedType = 'repeatable'"
             :class="{ active: selectedType === 'repeatable' }"
             class="tab-button">
@@ -223,7 +223,7 @@ onMounted(() => {
                 </span>
               </div>
               <div class="progress-bar">
-                <div 
+                <div
                   class="progress-fill"
                   :style="`width: ${getProgressPercentage(mission.progress, mission.objective_count)}%`">
                 </div>
@@ -234,7 +234,7 @@ onMounted(() => {
             <div class="objective-box">
               <p class="objective-label">Objective:</p>
               <p class="objective-text">
-                {{ mission.objective_type.replace('_', ' ').toUpperCase() }} 
+                {{ mission.objective_type.replace('_', ' ').toUpperCase() }}
                 × {{ formatNumber(mission.objective_count) }}
               </p>
             </div>
@@ -268,7 +268,7 @@ onMounted(() => {
             </div>
 
             <!-- Action Button -->
-            <button 
+            <button
               v-if="mission.status === 'available' && mission.can_start"
               @click="startMission(mission)"
               :disabled="startingMission"
@@ -766,20 +766,20 @@ onMounted(() => {
   .title {
     font-size: 24px;
   }
-  
+
   .stats-grid {
     grid-template-columns: repeat(2, 1fr);
   }
-  
+
   .missions-grid {
     grid-template-columns: 1fr;
   }
-  
+
   .header {
     flex-direction: column;
     gap: 16px;
   }
-  
+
   .back-button {
     width: 100%;
   }

@@ -17,12 +17,13 @@
   </Teleport>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { useToast } from '@/composables/useToast'
+import type { Toast } from '@/composables/useToast'
 
 const { toasts, remove } = useToast()
 
-const getIcon = (type) => {
+const getIcon = (type: Toast['type']): string => {
   switch (type) {
     case 'success': return '✓'
     case 'error': return '✕'

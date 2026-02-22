@@ -98,7 +98,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref } from 'vue'
 import api from '@/services/api'
 
@@ -113,7 +113,7 @@ const submitForm = async () => {
   successMessage.value = ''
 
   try {
-    const response = await api.post('/forgot-password', {
+    const response = await api.post('/api/v1/forgot-password', {
       email: email.value
     })
 

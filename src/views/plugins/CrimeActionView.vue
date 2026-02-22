@@ -62,13 +62,12 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed } from 'vue'
-import { useRouter, useRoute } from 'vue-router'
+import { useRouter } from 'vue-router'
 import { useToast } from '@/composables/useToast'
 
 const router = useRouter()
-const route = useRoute()
 const toast = useToast()
 
 const isCommitting = ref(false)

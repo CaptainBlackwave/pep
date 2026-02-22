@@ -89,22 +89,35 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, onMounted, computed } from 'vue'
-import { useRouter } from 'vue-router'
 import api from '@/services/api'
 
-const router = useRouter()
+// Type definitions
+interface Location {
+  id: number
+  name: string
+  difficulty: 'easy' | 'medium' | 'hard'
+  features?: string[]
+  travel_cost: number
+  travel_time: string
+}
+
+interface CurrentLocation {
+  id: number
+  name: string
+}
+
 const loading = ref(true)
 const processing = ref(false)
-const error = ref(null)
-const successMessage = ref(null)
-const errorMessage = ref(null)
+const error = ref<string | null>(null)
+const successMessage = ref<string | null>(null)
+const errorMessage = ref<string | null>(null)
 const selectedDifficulty = ref('')
 
-const locations = ref([])
-const currentLocation = ref(null)
-const playersHere = ref([])
+const locations = ref<Location[]>([])
+const currentLocation = ref<CurrentLocation | null>(null)
+const playersHere = ref<Array<{ id: number; username: string }>>([])
 const playerExperience = ref(0)
 const playerCash = ref(0)
 
@@ -120,21 +133,22 @@ onMounted(async () => {
 async function fetchTravelData() {
   try {
     loading.value = true
-    const response = await api.get('/travel')
+    const response = await api.get('/api/v1/travel')
     locations.value = response.data.locations || []
     currentLocation.value = response.data.currentLocation
     playersHere.value = response.data.playersHere || []
     playerExperience.value = response.data.player?.experience || 0
     playerCash.value = response.data.player?.cash || 0
     error.value = null
-  } catch (err) {
-    error.value = err.response?.data?.message || 'Failed to load travel data'
+  } catch (err: unknown) {
+    const apiError = err as { response?: { data?: { message?: string } } }
+    error.value = apiError.response?.data?.message || 'Failed to load travel data'
   } finally {
     loading.value = false
   }
 }
 
-async function travelTo(locationId) {
+async function travelTo(locationId: number) {
   if (processing.value) return
 
   processing.value = true
@@ -142,18 +156,19 @@ async function travelTo(locationId) {
   errorMessage.value = null
 
   try {
-    const response = await api.post(`/travel/${locationId}`)
+    const response = await api.post(`/api/v1/travel/${locationId}`)
     successMessage.value = response.data.message || 'Traveled successfully!'
     await fetchTravelData()
-  } catch (err) {
-    errorMessage.value = err.response?.data?.message || 'Failed to travel'
+  } catch (err: unknown) {
+    const error = err as { response?: { data?: { message?: string } } }
+    errorMessage.value = error.response?.data?.message || 'Failed to travel'
   } finally {
     processing.value = false
   }
 }
 
-function getDifficultyClass(difficulty, skullNumber) {
-  const difficultyLevels = {
+function getDifficultyClass(difficulty: string, skullNumber: number): string {
+  const difficultyLevels: Record<string, number> = {
     easy: 1,
     medium: 3,
     hard: 5
@@ -168,7 +183,7 @@ function getDifficultyClass(difficulty, skullNumber) {
   return 'skull-grey'
 }
 
-function formatNumber(num) {
+function formatNumber(num: number): string {
   return new Intl.NumberFormat('en-US', { maximumFractionDigits: 0 }).format(num)
 }
 </script>

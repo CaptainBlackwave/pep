@@ -1,9 +1,6 @@
-<script setup>
-import { ref, computed, onMounted } from 'vue';
-import { useRouter } from 'vue-router';
-import api from '@/services/api';
-
-const router = useRouter();
+<script setup lang="ts">
+import { ref, computed, onMounted } from 'vue'
+import api from '@/services/api'
 
 const player = ref(null);
 const myGang = ref(null);
@@ -21,10 +18,10 @@ const depositAmount = ref(0);
 const withdrawAmount = ref(0);
 
 const formatMoney = (amount) => {
-  return new Intl.NumberFormat('en-US', { 
-    style: 'currency', 
-    currency: 'USD', 
-    minimumFractionDigits: 0 
+  return new Intl.NumberFormat('en-US', {
+    style: 'currency',
+    currency: 'USD',
+    minimumFractionDigits: 0
   }).format(amount);
 };
 
@@ -44,7 +41,7 @@ const fetchData = async () => {
   try {
     loading.value = true;
     error.value = '';
-    const response = await api.get('/gangs');
+    const response = await api.get('/api/v1/gangs');
     player.value = response.data.player;
     myGang.value = response.data.myGang || null;
     gangs.value = response.data.gangs || [];
@@ -58,17 +55,17 @@ const fetchData = async () => {
 
 const createGang = async () => {
   if (processing.value || !gangName.value || !gangTag.value) return;
-  
+
   try {
     processing.value = true;
     error.value = '';
     successMessage.value = '';
-    
-    const response = await api.post('/gangs/create', { 
-      name: gangName.value, 
-      tag: gangTag.value 
+
+    const response = await api.post('/api/v1/gangs/create', {
+      name: gangName.value,
+      tag: gangTag.value
     });
-    
+
     successMessage.value = response.data.message || 'Gang created successfully!';
     showCreateForm.value = false;
     gangName.value = '';
@@ -83,14 +80,14 @@ const createGang = async () => {
 
 const leaveGang = async () => {
   if (processing.value || !confirm('Are you sure you want to leave your gang?')) return;
-  
+
   try {
     processing.value = true;
     error.value = '';
     successMessage.value = '';
-    
-    const response = await api.post('/gangs/leave');
-    
+
+    const response = await api.post('/api/v1/gangs/leave');
+
     successMessage.value = response.data.message || 'Left gang successfully';
     await fetchData();
   } catch (err) {
@@ -102,14 +99,14 @@ const leaveGang = async () => {
 
 const kickMember = async (playerId) => {
   if (processing.value || !confirm('Kick this member from the gang?')) return;
-  
+
   try {
     processing.value = true;
     error.value = '';
     successMessage.value = '';
-    
-    const response = await api.post(`/gangs/kick/${playerId}`);
-    
+
+    const response = await api.post(`/api/v1/gangs/kick/${playerId}`);
+
     successMessage.value = response.data.message || 'Member kicked successfully';
     await fetchData();
   } catch (err) {
@@ -121,16 +118,16 @@ const kickMember = async (playerId) => {
 
 const deposit = async () => {
   if (processing.value || depositAmount.value <= 0) return;
-  
+
   try {
     processing.value = true;
     error.value = '';
     successMessage.value = '';
-    
-    const response = await api.post('/gangs/deposit', { 
-      amount: depositAmount.value 
+
+    const response = await api.post('/api/v1/gangs/deposit', {
+      amount: depositAmount.value
     });
-    
+
     successMessage.value = response.data.message || 'Deposit successful!';
     depositAmount.value = 0;
     await fetchData();
@@ -143,16 +140,16 @@ const deposit = async () => {
 
 const withdraw = async () => {
   if (processing.value || withdrawAmount.value <= 0) return;
-  
+
   try {
     processing.value = true;
     error.value = '';
     successMessage.value = '';
-    
-    const response = await api.post('/gangs/withdraw', { 
-      amount: withdrawAmount.value 
+
+    const response = await api.post('/api/v1/gangs/withdraw', {
+      amount: withdrawAmount.value
     });
-    
+
     successMessage.value = response.data.message || 'Withdrawal successful!';
     withdrawAmount.value = 0;
     await fetchData();
@@ -196,8 +193,8 @@ onMounted(() => {
               <h2>{{ myGang.name }} <span class="gang-tag">[{{ myGang.tag }}]</span></h2>
               <p class="gang-description">{{ myGang.description || 'No description' }}</p>
             </div>
-            <button 
-              @click="leaveGang" 
+            <button
+              @click="leaveGang"
               :disabled="processing"
               class="leave-btn"
             >
@@ -225,15 +222,15 @@ onMounted(() => {
             <div class="action-card">
               <label class="action-label">Deposit to Gang</label>
               <div class="action-form">
-                <input 
-                  v-model.number="depositAmount" 
-                  type="number" 
-                  min="1" 
+                <input
+                  v-model.number="depositAmount"
+                  type="number"
+                  min="1"
                   placeholder="Amount"
                   class="amount-input"
                 >
-                <button 
-                  @click="deposit" 
+                <button
+                  @click="deposit"
                   :disabled="processing || depositAmount <= 0"
                   class="action-btn deposit-btn"
                 >
@@ -245,15 +242,15 @@ onMounted(() => {
             <div v-if="isLeader" class="action-card leader-only">
               <label class="action-label">Withdraw (Leader Only)</label>
               <div class="action-form">
-                <input 
-                  v-model.number="withdrawAmount" 
-                  type="number" 
-                  min="1" 
+                <input
+                  v-model.number="withdrawAmount"
+                  type="number"
+                  min="1"
                   placeholder="Amount"
                   class="amount-input"
                 >
-                <button 
-                  @click="withdraw" 
+                <button
+                  @click="withdraw"
                   :disabled="processing || withdrawAmount <= 0"
                   class="action-btn withdraw-btn"
                 >
@@ -267,16 +264,16 @@ onMounted(() => {
           <div v-if="myGang.members && myGang.members.length > 0" class="members-section">
             <h3>Gang Members</h3>
             <div class="members-list">
-              <div 
-                v-for="member in myGang.members" 
-                :key="member.id" 
+              <div
+                v-for="member in myGang.members"
+                :key="member.id"
                 class="member-card"
               >
                 <div class="member-info">
                   <h4>{{ member.name }}</h4>
                   <p class="member-role">{{ member.role || 'Member' }}</p>
                 </div>
-                <button 
+                <button
                   v-if="isLeader && member.id !== player.id"
                   @click="kickMember(member.id)"
                   :disabled="processing"
@@ -291,8 +288,8 @@ onMounted(() => {
 
         <!-- Create Gang -->
         <div v-else class="create-section">
-          <button 
-            v-if="!showCreateForm" 
+          <button
+            v-if="!showCreateForm"
             @click="showCreateForm = true"
             :disabled="!canCreateGang"
             class="create-gang-btn"
@@ -308,32 +305,32 @@ onMounted(() => {
             <div class="form-fields">
               <div class="form-field">
                 <label>Gang Name</label>
-                <input 
-                  v-model="gangName" 
-                  type="text" 
-                  maxlength="50" 
+                <input
+                  v-model="gangName"
+                  type="text"
+                  maxlength="50"
                   placeholder="The Syndicate"
                 >
               </div>
               <div class="form-field">
                 <label>Gang Tag (Max 5 chars)</label>
-                <input 
-                  v-model="gangTag" 
-                  type="text" 
-                  maxlength="5" 
+                <input
+                  v-model="gangTag"
+                  type="text"
+                  maxlength="5"
                   placeholder="SYN"
                   class="uppercase"
                 >
               </div>
               <div class="form-buttons">
-                <button 
-                  @click="createGang" 
+                <button
+                  @click="createGang"
                   :disabled="processing || !gangName || !gangTag"
                   class="submit-btn"
                 >
                   {{ processing ? 'Creating...' : 'Create' }}
                 </button>
-                <button 
+                <button
                   @click="showCreateForm = false"
                   class="cancel-btn"
                 >
@@ -347,15 +344,15 @@ onMounted(() => {
         <!-- All Gangs -->
         <div class="all-gangs-section">
           <h3>All Gangs ({{ gangs.length }})</h3>
-          
+
           <div v-if="gangs.length === 0" class="empty-state">
             <p>No gangs have been created yet</p>
           </div>
 
           <div v-else class="gangs-list">
-            <div 
-              v-for="gang in gangs" 
-              :key="gang.id" 
+            <div
+              v-for="gang in gangs"
+              :key="gang.id"
               class="gang-card"
               :class="{ 'my-gang-highlight': myGang && gang.id === myGang.id }"
             >
@@ -363,8 +360,8 @@ onMounted(() => {
                 <div class="gang-card-info">
                   <h4>{{ gang.name }} <span class="gang-tag">[{{ gang.tag }}]</span></h4>
                   <p class="gang-details">
-                    Leader: {{ gang.leader }} | 
-                    Members: {{ formatNumber(gang.members) }}/{{ formatNumber(gang.max_members) }} | 
+                    Leader: {{ gang.leader }} |
+                    Members: {{ formatNumber(gang.members) }}/{{ formatNumber(gang.max_members) }} |
                     Respect: {{ formatNumber(gang.respect) }}
                   </p>
                 </div>

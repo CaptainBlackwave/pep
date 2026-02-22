@@ -95,8 +95,8 @@ test.describe('WebSocket Connection', () => {
     await login(page)
     await page.goto('/dashboard')
 
-    // Wait a bit for any WebSocket connection attempts
-    await page.waitForTimeout(1000)
+    // Wait for dashboard to be visible
+    await expect(page.locator('body')).toBeVisible()
 
     // Should not have any WebSocket-related errors
     const wsErrors = errors.filter((e) =>
@@ -210,16 +210,15 @@ test.describe('Connection Resilience', () => {
 
   test('application handles network interruptions gracefully', async ({ page }) => {
     await page.goto('/dashboard')
+    await expect(page.locator('body')).toBeVisible()
 
     // Simulate going offline
     await page.context().setOffline(true)
-    await page.waitForTimeout(500)
 
     // Simulate coming back online
     await page.context().setOffline(false)
-    await page.waitForTimeout(500)
 
-    // Page should still be functional
+    // Page should still be functional after network recovery
     await expect(page.locator('body')).toBeVisible()
   })
 
@@ -267,10 +266,7 @@ test.describe('Performance', () => {
 
     await page.goto('/dashboard')
 
-    // Wait for potential reconnection attempts
-    await page.waitForTimeout(3000)
-
-    // Page should still be responsive
+    // Page should be responsive even with blocked WebSocket
     await expect(page.locator('body')).toBeVisible()
   })
 })

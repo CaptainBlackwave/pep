@@ -4,6 +4,7 @@ import api from '@/services/api'
 import { websocketService } from '@/services/websocket'
 import type { NotificationEvent } from '@/types/websocket'
 import type { Notification } from '@/types/notification'
+import type { NotificationsListResponse, UnreadCountResponse } from '@/types/api'
 
 // Re-export types for backward compatibility
 export type { Notification } from '@/types/notification'
@@ -39,8 +40,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
     error.value = null
 
     try {
-      const response = await api.get('/notifications')
-      notifications.value = response.data.notifications || response.data || []
+      const response = await api.get('/api/v1/notifications')
+      const data = response.data as NotificationsListResponse | Notification[]
+      const notifData = 'notifications' in data ? data.notifications : data
+      notifications.value = (notifData as Notification[]) || []
       unreadCount.value = notifications.value.filter(n => !n.read_at).length
     } catch {
       error.value = 'Failed to fetch notifications'
@@ -54,8 +57,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
    */
   async function fetchUnreadCount(): Promise<void> {
     try {
-      const response = await api.get('/notifications/unread-count')
-      unreadCount.value = response.data.count || response.data.unread_count || 0
+      const response = await api.get('/api/v1/notifications/unread-count')
+      const data = response.data as UnreadCountResponse
+      unreadCount.value = data.count || data.unread_count || 0
     } catch {
       // Silently fail - unread count will be updated on next fetch
     }
@@ -66,8 +70,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
    */
   async function fetchRecent(): Promise<void> {
     try {
-      const response = await api.get('/notifications/recent')
-      notifications.value = response.data.notifications || response.data || []
+      const response = await api.get('/api/v1/notifications/recent')
+      const data = response.data as NotificationsListResponse | Notification[]
+      const notifData = 'notifications' in data ? data.notifications : data
+      notifications.value = (notifData as Notification[]) || []
       unreadCount.value = notifications.value.filter(n => !n.read_at).length
     } catch {
       // Silently fail - recent notifications will be fetched on next load
@@ -79,7 +85,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
    */
   async function markAsRead(id: number): Promise<void> {
     try {
-      await api.post(`/notifications/${id}/read`)
+      await api.post(`/api/v1/notifications/${id}/read`)
 
       const notification = notifications.value.find(n => n.id === id)
       if (notification && !notification.read_at) {
@@ -96,7 +102,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
    */
   async function markAllAsRead(): Promise<void> {
     try {
-      await api.post('/notifications/mark-all-read')
+      await api.post('/api/v1/notifications/mark-all-read')
 
       notifications.value.forEach(n => {
         if (!n.read_at) {
@@ -114,7 +120,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
    */
   async function deleteNotification(id: number): Promise<void> {
     try {
-      await api.delete(`/notifications/${id}`)
+      await api.delete(`/api/v1/notifications/${id}`)
 
       const index = notifications.value.findIndex(n => n.id === id)
       if (index !== -1) {
@@ -134,7 +140,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
    */
   async function clearRead(): Promise<void> {
     try {
-      await api.delete('/notifications/read/clear')
+      await api.delete('/api/v1/notifications/read/clear')
       notifications.value = notifications.value.filter(n => !n.read_at)
     } catch {
       // Silently fail - read notifications will be cleared on server

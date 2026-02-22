@@ -82,7 +82,7 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import api from '@/services/api';
 
@@ -111,7 +111,7 @@ const fetchLeaderboards = async () => {
   error.value = null;
 
   try {
-    const response = await api.get('/leaderboards');
+    const response = await api.get('/api/v1/leaderboards');
     leaderboards.value = response.data.leaderboards || response.data;
   } catch (err) {
     console.error('Error fetching leaderboards:', err);

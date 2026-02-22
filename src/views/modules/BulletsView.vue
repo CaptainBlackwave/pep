@@ -43,7 +43,7 @@ const fetchData = async () => {
   try {
     loading.value = true;
     error.value = '';
-    const response = await api.get('/bullets');
+    const response = await api.get('/api/v1/bullets');
     player.value = response.data.player;
     costPerBullet.value = response.data.costPerBullet || 50;
   } catch (err: unknown) {
@@ -62,7 +62,7 @@ const buyBullets = async () => {
     error.value = '';
     successMessage.value = '';
 
-    const response = await api.post('/bullets/buy', {
+    const response = await api.post('/api/v1/bullets/buy', {
       quantity: quantity.value
     });
 
