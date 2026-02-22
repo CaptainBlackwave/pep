@@ -1,72 +1,197 @@
-# OpenPBBG - Live Server Deployment Guide
+# LaravelCP - Production Deployment Guide
 
-This guide covers deploying the OpenPBBG Vue 3 frontend application to a live production server.
+This guide covers deploying the LaravelCP monorepo (Vue 3 frontend + Laravel backend) to a production server.
+
+---
+
+## Table of Contents
+
+1. [Prerequisites](#prerequisites)
+2. [Server Requirements](#server-requirements)
+3. [Deployment Methods](#deployment-methods)
+4. [Web Server Configuration](#web-server-configuration)
+5. [SSL Configuration](#ssl-configuration)
+6. [Environment Configuration](#environment-configuration)
+7. [CI/CD Pipeline](#cicd-pipeline)
+8. [Docker Deployment](#docker-deployment)
+9. [Post-Deployment Checklist](#post-deployment-checklist)
+10. [Troubleshooting](#troubleshooting)
+
+---
 
 ## Prerequisites
 
-- Node.js 18+ installed on the server
-- Nginx or Apache web server
-- SSL certificate (recommended for production)
+- Linux server (Ubuntu 22.04+ recommended)
+- Root or sudo access
 - Domain name configured
-- SSH access to your server
+- SSL certificate (Let's Encrypt recommended)
+- 2GB+ RAM, 20GB+ storage
+
+---
+
+## Server Requirements
+
+### Frontend
+- Node.js 18+ (for building)
+- Nginx or Apache (for serving)
+
+### Backend
+- PHP 8.3+
+- Composer 2.x
+- MySQL 8.0+
+- Nginx or Apache with PHP-FPM
+- Redis (recommended for caching/queues)
+
+---
 
 ## Deployment Methods
 
-### Method 1: Build Locally and Upload (Recommended for Small Projects)
+### Method 1: Docker Compose (Recommended)
 
-#### Step 1: Build the Application Locally
+#### Step 1: Install Docker
 
 ```bash
-# Navigate to project directory
-cd /path/to/OpenPBBG
+# Install Docker
+curl -fsSL https://get.docker.com | sh
 
-# Install dependencies
-npm install
+# Install Docker Compose
+sudo apt install docker-compose-plugin
 
-# Build for production
-npm run build
+# Add user to docker group
+sudo usermod -aG docker $USER
 ```
 
-This creates an optimized production build in the `dist/` directory.
-
-#### Step 2: Upload to Server
+#### Step 2: Clone and Configure
 
 ```bash
-# Using SCP
-scp -r dist/* user@your-server.com:/var/www/openpbbg/
+# Clone repository
+git clone https://github.com/Lindon11/LaravelCP.git
+cd LaravelCP
 
-# Or using rsync
-rsync -avz --delete dist/ user@your-server.com:/var/www/openpbbg/
+# Create environment files
+cp backend/.env.example backend/.env
+```
+
+#### Step 3: Configure Environment
+
+Edit `backend/.env`:
+```env
+APP_NAME=LaravelCP
+APP_ENV=production
+APP_DEBUG=false
+APP_URL=https://api.yourdomain.com
+
+DB_CONNECTION=mysql
+DB_HOST=mysql
+DB_PORT=3306
+DB_DATABASE=laravelcp
+DB_USERNAME=laravelcp
+DB_PASSWORD=your_secure_password
+
+SANCTUM_STATEFUL_DOMAINS=yourdomain.com,www.yourdomain.com
+CORS_ALLOWED_ORIGINS=https://yourdomain.com,https://www.yourdomain.com
+```
+
+Create `frontend/.env.production`:
+```env
+VITE_API_URL=https://api.yourdomain.com
+VITE_WS_URL=wss://ws.yourdomain.com
+```
+
+#### Step 4: Deploy
+
+```bash
+# Build and start containers
+docker compose up -d --build
+
+# Install dependencies
+docker compose exec backend composer install --no-dev --optimize-autoloader
+docker compose exec frontend npm install
+docker compose exec frontend npm run build
+
+# Setup Laravel
+docker compose exec backend php artisan key:generate
+docker compose exec backend php artisan migrate --force
+docker compose exec backend php artisan config:cache
+docker compose exec backend php artisan route:cache
 ```
 
 ---
 
-### Method 2: Build on Server (Recommended for Larger Projects)
+### Method 2: Manual Deployment
 
-#### Step 1: Clone Repository on Server
+#### Frontend Deployment
+
+##### Step 1: Build Locally
 
 ```bash
-# SSH into your server
-ssh user@your-server.com
-
-# Navigate to web directory
-cd /var/www
-
-# Clone the repository
-git clone https://github.com/Lindon11/OpenPBBG.git openpbbg
-cd openpbbg
+cd frontend
 
 # Install dependencies
-npm install
+npm ci
+
+# Create production environment
+echo "VITE_API_URL=https://api.yourdomain.com" > .env.production
+echo "VITE_WS_URL=wss://ws.yourdomain.com" >> .env.production
+
+# Build
+npm run build
 ```
 
-#### Step 2: Build on Server
+##### Step 2: Upload to Server
 
 ```bash
-# Build for production
-npm run build
+# Using rsync
+rsync -avz --delete dist/ user@server:/var/www/frontend/
+```
 
-# The built files are now in the dist/ directory
+#### Backend Deployment
+
+##### Step 1: Prepare Server
+
+```bash
+# Install PHP 8.3
+sudo add-apt-repository ppa:ondrej/php
+sudo apt update
+sudo apt install php8.3-fpm php8.3-mysql php8.3-mbstring php8.3-xml php8.3-curl php8.3-zip php8.3-gd php8.3-bcmath
+
+# Install Composer
+curl -sS https://getcomposer.org/installer | sudo php -- --install-dir=/usr/local/bin --filename=composer
+
+# Install Node.js (for admin panel)
+curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
+sudo apt install -y nodejs
+```
+
+##### Step 2: Deploy Code
+
+```bash
+# Clone or upload
+git clone https://github.com/Lindon11/LaravelCP.git /var/www/laravelcp
+cd /var/www/laravelcp/backend
+
+# Install dependencies
+composer install --no-dev --optimize-autoloader
+
+# Setup environment
+cp .env.example .env
+php artisan key:generate
+
+# Configure .env for production
+# Edit database, app URL, etc.
+
+# Run migrations
+php artisan migrate --force
+
+# Cache configuration
+php artisan config:cache
+php artisan route:cache
+php artisan view:cache
+
+# Set permissions
+sudo chown -R www-data:www-data /var/www/laravelcp/backend
+sudo chmod -R 775 /var/www/laravelcp/backend/storage
+sudo chmod -R 775 /var/www/laravelcp/backend/bootstrap/cache
 ```
 
 ---
@@ -75,27 +200,22 @@ npm run build
 
 ### Nginx Configuration
 
-Create a new Nginx configuration file:
+#### Frontend (SPA)
 
-```bash
-sudo nano /etc/nginx/sites-available/openpbbg
-```
-
-Add the following configuration:
+Create `/etc/nginx/sites-available/frontend`:
 
 ```nginx
 server {
     listen 80;
     server_name yourdomain.com www.yourdomain.com;
-    
-    root /var/www/openpbbg/dist;
+    root /var/www/frontend;
     index index.html;
 
-    # Enable gzip compression
+    # Gzip compression
     gzip on;
     gzip_vary on;
     gzip_min_length 1024;
-    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml+rss application/rss+xml font/truetype font/opentype application/vnd.ms-fontobject image/svg+xml;
+    gzip_types text/plain text/css text/xml text/javascript application/javascript application/json application/xml+rss image/svg+xml;
 
     location / {
         try_files $uri $uri/ /index.html;
@@ -114,102 +234,68 @@ server {
 }
 ```
 
-Enable the site:
+#### Backend (API)
+
+Create `/etc/nginx/sites-available/backend`:
+
+```nginx
+server {
+    listen 80;
+    server_name api.yourdomain.com;
+    root /var/www/laravelcp/backend/public;
+
+    add_header X-Frame-Options "SAMEORIGIN";
+    add_header X-Content-Type-Options "nosniff";
+
+    index index.php;
+
+    charset utf-8;
+
+    location / {
+        try_files $uri $uri/ /index.php?$query_string;
+    }
+
+    location = /favicon.ico { access_log off; log_not_found off; }
+    location = /robots.txt  { access_log off; log_not_found off; }
+
+    error_page 404 /index.php;
+
+    location ~ \.php$ {
+        fastcgi_pass unix:/var/run/php/php8.3-fpm.sock;
+        fastcgi_param SCRIPT_FILENAME $realpath_root$fastcgi_script_name;
+        include fastcgi_params;
+    }
+
+    location ~ /\.(?!well-known).* {
+        deny all;
+    }
+}
+```
+
+Enable sites:
 
 ```bash
-sudo ln -s /etc/nginx/sites-available/openpbbg /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/frontend /etc/nginx/sites-enabled/
+sudo ln -s /etc/nginx/sites-available/backend /etc/nginx/sites-enabled/
 sudo nginx -t
 sudo systemctl reload nginx
 ```
 
-### Apache Configuration
-
-Create a `.htaccess` file in the `dist/` directory:
-
-```apache
-<IfModule mod_rewrite.c>
-  RewriteEngine On
-  RewriteBase /
-  RewriteRule ^index\.html$ - [L]
-  RewriteCond %{REQUEST_FILENAME} !-f
-  RewriteCond %{REQUEST_FILENAME} !-d
-  RewriteRule . /index.html [L]
-</IfModule>
-
-# Enable compression
-<IfModule mod_deflate.c>
-  AddOutputFilterByType DEFLATE text/html text/plain text/xml text/css text/javascript application/javascript application/json
-</IfModule>
-
-# Cache static assets
-<IfModule mod_expires.c>
-  ExpiresActive On
-  ExpiresByType image/jpg "access plus 1 year"
-  ExpiresByType image/jpeg "access plus 1 year"
-  ExpiresByType image/gif "access plus 1 year"
-  ExpiresByType image/png "access plus 1 year"
-  ExpiresByType image/svg+xml "access plus 1 year"
-  ExpiresByType text/css "access plus 1 year"
-  ExpiresByType application/javascript "access plus 1 year"
-  ExpiresByType application/font-woff "access plus 1 year"
-  ExpiresByType application/font-woff2 "access plus 1 year"
-</IfModule>
-```
-
-Create VirtualHost configuration:
-
-```bash
-sudo nano /etc/apache2/sites-available/openpbbg.conf
-```
-
-```apache
-<VirtualHost *:80>
-    ServerName yourdomain.com
-    ServerAlias www.yourdomain.com
-    DocumentRoot /var/www/openpbbg/dist
-
-    <Directory /var/www/openpbbg/dist>
-        Options -Indexes +FollowSymLinks
-        AllowOverride All
-        Require all granted
-    </Directory>
-
-    ErrorLog ${APACHE_LOG_DIR}/openpbbg_error.log
-    CustomLog ${APACHE_LOG_DIR}/openpbbg_access.log combined
-</VirtualHost>
-```
-
-Enable the site:
-
-```bash
-sudo a2enmod rewrite
-sudo a2ensite openpbbg
-sudo systemctl reload apache2
-```
-
 ---
 
-## SSL Configuration (HTTPS)
+## SSL Configuration
 
-### Using Let's Encrypt (Certbot)
-
-#### For Nginx:
+### Using Let's Encrypt
 
 ```bash
+# Install Certbot
 sudo apt install certbot python3-certbot-nginx
+
+# Obtain certificates
 sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
-```
+sudo certbot --nginx -d api.yourdomain.com
 
-#### For Apache:
-
-```bash
-sudo apt install certbot python3-certbot-apache
-sudo certbot --apache -d yourdomain.com -d www.yourdomain.com
-```
-
-Auto-renewal is configured automatically. Test it with:
-
-```bash
+# Auto-renewal test
 sudo certbot renew --dry-run
 ```
 
@@ -217,33 +303,48 @@ sudo certbot renew --dry-run
 
 ## Environment Configuration
 
-### API Backend URL
+### Backend `.env` (Production)
 
-Update the API base URL in the production build:
+```env
+APP_NAME=LaravelCP
+APP_ENV=production
+APP_KEY=base64:...
+APP_DEBUG=false
+APP_URL=https://api.yourdomain.com
 
-1. Edit `src/services/api.js`:
+LOG_CHANNEL=stack
+LOG_LEVEL=error
 
-```javascript
-const baseURL = import.meta.env.VITE_API_URL || 'https://api.yourdomain.com'
+DB_CONNECTION=mysql
+DB_HOST=127.0.0.1
+DB_PORT=3306
+DB_DATABASE=laravelcp
+DB_USERNAME=laravelcp
+DB_PASSWORD=secure_password
+
+BROADCAST_DRIVER=redis
+CACHE_DRIVER=redis
+FILESYSTEM_DISK=local
+QUEUE_CONNECTION=redis
+SESSION_DRIVER=redis
+SESSION_DOMAIN=yourdomain.com
+
+SANCTUM_STATEFUL_DOMAINS=yourdomain.com,www.yourdomain.com
+CORS_ALLOWED_ORIGINS=https://yourdomain.com
 ```
 
-2. Create `.env.production` file:
+### Frontend `.env.production`
 
 ```env
 VITE_API_URL=https://api.yourdomain.com
-```
-
-3. Rebuild the application:
-
-```bash
-npm run build
+VITE_WS_URL=wss://ws.yourdomain.com
 ```
 
 ---
 
-## Continuous Deployment (CI/CD)
+## CI/CD Pipeline
 
-### Using GitHub Actions
+### GitHub Actions
 
 Create `.github/workflows/deploy.yml`:
 
@@ -252,276 +353,173 @@ name: Deploy to Production
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
 
 jobs:
-  build-and-deploy:
+  deploy:
     runs-on: ubuntu-latest
     
     steps:
-    - uses: actions/checkout@v3
+    - uses: actions/checkout@v4
     
     - name: Setup Node.js
-      uses: actions/setup-node@v3
+      uses: actions/setup-node@v4
       with:
-        node-version: '18'
-        
-    - name: Install dependencies
-      run: npm ci
-      
-    - name: Build
-      run: npm run build
+        node-version: '20'
+        cache: 'npm'
+        cache-dependency-path: frontend/package-lock.json
+    
+    - name: Build Frontend
+      run: |
+        cd frontend
+        npm ci
+        npm run build
       env:
         VITE_API_URL: https://api.yourdomain.com
-        
+        VITE_WS_URL: wss://ws.yourdomain.com
+    
     - name: Deploy to Server
       uses: easingthemes/ssh-deploy@main
       env:
         SSH_PRIVATE_KEY: ${{ secrets.SSH_PRIVATE_KEY }}
         REMOTE_HOST: ${{ secrets.REMOTE_HOST }}
         REMOTE_USER: ${{ secrets.REMOTE_USER }}
-        TARGET: /var/www/openpbbg/dist
-        SOURCE: "dist/"
+        TARGET: /var/www/laravelcp
+        SCRIPT_AFTER: |
+          cd /var/www/laravelcp/backend
+          composer install --no-dev --optimize-autoloader
+          php artisan config:cache
+          php artisan route:cache
+          php artisan migrate --force
+          sudo systemctl reload php8.3-fpm
 ```
 
-Add secrets in GitHub repository settings:
-- `SSH_PRIVATE_KEY`: Your SSH private key
-- `REMOTE_HOST`: Your server IP or domain
-- `REMOTE_USER`: SSH user (e.g., `root` or `deploy`)
+Add GitHub Secrets:
+- `SSH_PRIVATE_KEY` - Your SSH private key
+- `REMOTE_HOST` - Server IP or domain
+- `REMOTE_USER` - SSH user
 
 ---
 
-## Manual Deployment Script
+## Docker Deployment
 
-Create `deploy.sh` in the project root:
+### Production Docker Compose
 
-```bash
-#!/bin/bash
-
-echo "🚀 Starting OpenPBBG deployment..."
-
-# Build the application
-echo "📦 Building application..."
-npm run build
-
-# Deploy to server
-echo "📤 Uploading to server..."
-rsync -avz --delete \
-  --exclude='.git' \
-  --exclude='node_modules' \
-  dist/ user@your-server.com:/var/www/openpbbg/
-
-echo "✅ Deployment complete!"
-```
-
-Make it executable:
-
-```bash
-chmod +x deploy.sh
-```
-
-Run deployment:
-
-```bash
-./deploy.sh
-```
-
----
-
-## Docker Deployment (Optional)
-
-### Create Dockerfile
-
-```dockerfile
-FROM node:18-alpine as build
-
-WORKDIR /app
-COPY package*.json ./
-RUN npm ci
-COPY . .
-RUN npm run build
-
-FROM nginx:alpine
-COPY --from=build /app/dist /usr/share/nginx/html
-COPY nginx.conf /etc/nginx/conf.d/default.conf
-EXPOSE 80
-CMD ["nginx", "-g", "daemon off;"]
-```
-
-### Create nginx.conf
-
-```nginx
-server {
-    listen 80;
-    root /usr/share/nginx/html;
-    index index.html;
-
-    location / {
-        try_files $uri $uri/ /index.html;
-    }
-
-    location ~* \.(js|css|png|jpg|jpeg|gif|ico|svg)$ {
-        expires 1y;
-        add_header Cache-Control "public, immutable";
-    }
-}
-```
-
-### Build and Run
-
-```bash
-# Build image
-docker build -t openpbbg:latest .
-
-# Run container
-docker run -d -p 80:80 --name openpbbg openpbbg:latest
-```
-
-### Docker Compose
-
-Create `docker-compose.yml`:
+Create `docker-compose.prod.yml`:
 
 ```yaml
-version: '3.8'
-
 services:
   frontend:
-    build: .
+    build:
+      context: ./frontend
+      dockerfile: Dockerfile
+      target: production
     ports:
       - "80:80"
+    depends_on:
+      - backend
     restart: unless-stopped
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile
+    ports:
+      - "8000:80"
     environment:
-      - NODE_ENV=production
+      - APP_ENV=production
+    volumes:
+      - backend_storage:/var/www/html/storage
+    depends_on:
+      mysql:
+        condition: service_healthy
+    restart: unless-stopped
+
+  mysql:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: laravelcp
+      MYSQL_ROOT_PASSWORD: ${DB_PASSWORD}
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  redis:
+    image: redis:alpine
+    restart: unless-stopped
+
+volumes:
+  mysql_data:
+  backend_storage:
 ```
 
-Run:
-
+Deploy:
 ```bash
-docker-compose up -d
+docker compose -f docker-compose.prod.yml up -d --build
 ```
 
 ---
 
 ## Post-Deployment Checklist
 
-- [ ] Verify the site is accessible at your domain
-- [ ] Test all routes and navigation
-- [ ] Check API connectivity
-- [ ] Verify HTTPS is working
-- [ ] Test on mobile devices
-- [ ] Check browser console for errors
-- [ ] Verify static assets are loading
-- [ ] Test user authentication flow
-- [ ] Check performance with Google PageSpeed Insights
-- [ ] Set up monitoring (e.g., UptimeRobot, Pingdom)
-- [ ] Configure error tracking (e.g., Sentry)
-
----
-
-## Performance Optimization
-
-### Enable HTTP/2
-
-For Nginx, add to server block:
-
-```nginx
-listen 443 ssl http2;
-```
-
-### Enable Brotli Compression (Nginx)
-
-```bash
-sudo apt install nginx-module-brotli
-```
-
-Add to nginx config:
-
-```nginx
-load_module modules/ngx_http_brotli_filter_module.so;
-load_module modules/ngx_http_brotli_static_module.so;
-
-http {
-    brotli on;
-    brotli_comp_level 6;
-    brotli_types text/plain text/css application/json application/javascript text/xml application/xml application/xml+rss text/javascript;
-}
-```
-
-### CDN Integration
-
-Consider using a CDN like Cloudflare, AWS CloudFront, or Fastly for:
-- Global content delivery
-- DDoS protection
-- Automatic asset optimization
+- [ ] Frontend accessible at your domain
+- [ ] API responding at backend URL
+- [ ] HTTPS working with valid certificate
+- [ ] Database connections working
+- [ ] User registration/login working
+- [ ] WebSocket connections working
+- [ ] All routes accessible (no 404s on refresh)
+- [ ] Static assets loading correctly
+- [ ] CORS configured properly
+- [ ] Error logging configured (Sentry, etc.)
+- [ ] Monitoring configured (UptimeRobot, etc.)
+- [ ] Backups configured
+- [ ] Queue workers running
 
 ---
 
 ## Troubleshooting
 
-### 404 Errors on Refresh
+### Common Issues
 
-Ensure your web server is configured to redirect all requests to `index.html` (Vue Router history mode).
+#### 404 on Page Refresh (Frontend)
+Ensure Nginx is configured with `try_files $uri $uri/ /index.html;`
 
-### API CORS Issues
+#### CORS Errors
+Check `CORS_ALLOWED_ORIGINS` and `SANCTUM_STATEFUL_DOMAINS` in backend `.env`
 
-Make sure your Laravel backend has CORS properly configured in `config/cors.php`:
-
-```php
-'allowed_origins' => ['https://yourdomain.com'],
-```
-
-### Assets Not Loading
-
-Check the `base` property in `vite.config.ts`:
-
-```javascript
-export default defineConfig({
-  base: '/',
-  // ...
-})
-```
-
-### Blank Page After Deployment
-
-1. Check browser console for errors
-2. Verify API URL is correct
-3. Check file permissions: `chmod -R 755 /var/www/openpbbg/dist`
-4. Check Nginx/Apache error logs
-
----
-
-## Monitoring and Maintenance
-
-### Log Monitoring
-
+#### API 500 Errors
 ```bash
-# Nginx logs
-tail -f /var/log/nginx/access.log
-tail -f /var/log/nginx/error.log
+# Check Laravel logs
+tail -f backend/storage/logs/laravel.log
 
-# Apache logs
-tail -f /var/log/apache2/access.log
-tail -f /var/log/apache2/error.log
+# Check PHP-FPM logs
+tail -f /var/log/php8.3-fpm.log
 ```
 
-### Automated Backups
+#### WebSocket Connection Failed
+- Verify WebSocket server is running
+- Check SSL certificate for WSS connections
+- Verify `VITE_WS_URL` is correct
 
-Create backup script:
-
+#### Permission Issues
 ```bash
-#!/bin/bash
-tar -czf /backups/openpbbg-$(date +%Y%m%d).tar.gz /var/www/openpbbg/dist
-find /backups -name "openpbbg-*.tar.gz" -mtime +30 -delete
+sudo chown -R www-data:www-data backend/storage backend/bootstrap/cache
+sudo chmod -R 775 backend/storage backend/bootstrap/cache
 ```
 
 ---
 
 ## Support
 
-For issues and questions:
-- GitHub: https://github.com/Lindon11/OpenPBBG
-- Documentation: See README.md
+- 📖 [Main README](./README.md)
+- 🐛 [Issue Tracker](https://github.com/Lindon11/LaravelCP/issues)
 
 ---
 
-**Last Updated:** February 2, 2026
+**Last Updated:** February 2026

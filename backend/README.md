@@ -1,6 +1,8 @@
-# LaravelCP
+# LaravelCP Backend
 
-A comprehensive **Persistent Browser-Based Game (PBBG)** backend built with Laravel 11, featuring a modular plugin architecture and Vue.js admin panel.
+A comprehensive **Persistent Browser-Based Game (PBBG)** backend built with Laravel 11, featuring a modular plugin architecture.
+
+> **Note:** This is the backend portion of the [LaravelCP monorepo](../README.md). See the main README for full project setup and documentation.
 
 [![Laravel](https://img.shields.io/badge/Laravel-11.x-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3+-blue.svg)](https://php.net)
@@ -101,36 +103,33 @@ All game interactions are handled via REST API endpoints that return JSON.
 
 ## Quick Start
 
-### Using Docker (Recommended)
+> For full Docker setup including frontend, see the [main README](../README.md).
+
+### Using Docker (from monorepo root)
 
 ```bash
-# Clone repository
-git clone https://github.com/YourUsername/LaravelCP.git
-cd LaravelCP
-
-# Start containers
+# From the repository root
 docker compose up -d
 
 # Install dependencies
-docker compose exec app composer install
+docker compose exec backend composer install
 
 # Setup environment
 cp .env.example .env
-docker compose exec app php artisan key:generate
+docker compose exec backend php artisan key:generate
 
 # Run migrations and seed
-docker compose exec app php artisan migrate
-docker compose exec app php artisan db:seed
+docker compose exec backend php artisan migrate
+docker compose exec backend php artisan db:seed
 
-# Access at http://localhost:8001
+# Access API at http://localhost:8001
 ```
 
 ### Manual Installation
 
 ```bash
-# Clone and install
-git clone https://github.com/YourUsername/LaravelCP.git
-cd LaravelCP
+# From the backend directory
+cd backend
 composer install
 
 # Configure
@@ -143,7 +142,7 @@ php artisan migrate
 php artisan db:seed
 
 # Start server
-php artisan serve
+php artisan serve --port=8001
 ```
 
 ## API Documentation

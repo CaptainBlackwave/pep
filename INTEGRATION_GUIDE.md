@@ -4,19 +4,46 @@
 
 This document describes how the Vue.js frontend integrates with the Laravel backend API.
 
+---
+
 ## Architecture
 
 ### Frontend (Vue 3 + TypeScript + Vite)
-- **Location**: `Code/` directory
+- **Location**: `frontend/` directory
 - **Dev Server Port**: 5175
 - **Tech Stack**: Vue 3, Pinia (state), Vue Router, Axios, TypeScript
 - **Testing**: Vitest (unit), Playwright (E2E)
 
-### Backend (Laravel 11 + PHP 8.2)
-- **Location**: `LaravelCP-Backend/` directory
+### Backend (Laravel 11 + PHP 8.3)
+- **Location**: `backend/` directory
 - **API Port**: 8001
 - **Tech Stack**: Laravel 11, Laravel Sanctum (auth), Laravel Reverb (WebSocket)
 - **Testing**: PHPUnit
+
+---
+
+## Project Structure
+
+```
+LaravelCP/
+├── frontend/                    # Vue 3 Frontend
+│   ├── src/
+│   │   ├── services/           # API & WebSocket services
+│   │   ├── stores/             # Pinia state management
+│   │   └── router/             # Vue Router
+│   └── package.json
+│
+├── backend/                     # Laravel Backend
+│   ├── app/
+│   │   ├── Core/               # Core system
+│   │   └── Plugins/            # Game plugins
+│   ├── routes/api.php          # API routes
+│   └── composer.json
+│
+└── docker-compose.yml          # Full-stack Docker
+```
+
+---
 
 ## API Endpoints
 
@@ -64,14 +91,16 @@ When 2FA is enabled for a user, the login response will be:
 }
 ```
 
+---
+
 ## Frontend Configuration
 
-### API Service (`src/services/api.ts`)
+### API Service (`frontend/src/services/api.ts`)
 - Base URL is empty (relies on Vite proxy in development)
 - Uses `withCredentials: true` for Sanctum cookie auth
 - Includes request cancellation, deduplication, and caching
 
-### Vite Proxy Configuration (`vite.config.ts`)
+### Vite Proxy Configuration (`frontend/vite.config.ts`)
 ```typescript
 server: {
   proxy: {
@@ -84,6 +113,7 @@ server: {
 ```
 
 ### Environment Variables
+
 Create a `.env` file in the frontend directory:
 ```env
 VITE_API_URL=
@@ -91,6 +121,8 @@ VITE_WS_URL=ws://localhost:6001
 VITE_WS_KEY=app-key
 VITE_WS_CLUSTER=mt1
 ```
+
+---
 
 ## Auth Store Usage
 
@@ -139,60 +171,89 @@ if (authStore.isAuthenticated) {
 await authStore.init()
 ```
 
+---
+
 ## Running the Application
 
 ### Using Docker (Recommended)
 
-1. Start the backend:
+1. Start all services from the project root:
 ```bash
-cd LaravelCP-Backend
-docker-compose up -d
+docker compose up -d
 ```
 
-2. Start the frontend:
+2. Install dependencies:
 ```bash
-cd Code
+# Frontend
+docker compose exec frontend npm install
+
+# Backend
+docker compose exec backend composer install
+```
+
+3. Setup the backend:
+```bash
+docker compose exec backend php artisan key:generate
+docker compose exec backend php artisan migrate
+```
+
+4. Access the application:
+- Frontend: http://localhost:5175
+- Backend API: http://localhost:8001
+
+### Manual Development
+
+#### Frontend Only
+```bash
+cd frontend
 npm install
 npm run dev
 ```
 
-3. Access the application at `http://localhost:5175`
-
-### Backend Only (Development)
-
+#### Backend Only
 ```bash
-cd LaravelCP-Backend
+cd backend
+composer install
+cp .env.example .env
+php artisan key:generate
+php artisan migrate
 php artisan serve --port=8001
 ```
+
+---
 
 ## Testing
 
 ### Frontend Unit Tests
 ```bash
-cd Code
+cd frontend
 npm run test:unit
 ```
 
 ### Frontend E2E Tests
 ```bash
-cd Code
+cd frontend
 npm run test:e2e
 ```
 
 ### Backend Tests
 ```bash
-cd LaravelCP-Backend
+cd backend
 php artisan test
 ```
 
+---
+
 ## CORS Configuration
 
-The backend CORS settings in `.env`:
+The backend CORS settings in `backend/.env`:
 ```env
 CORS_ALLOWED_ORIGINS=http://localhost:5173,http://localhost:5175,http://localhost:8000,http://localhost:8001
 CORS_SUPPORTS_CREDENTIALS=true
 SANCTUM_STATEFUL_DOMAINS=localhost,localhost:5173,localhost:5175,localhost:8000,localhost:8001
 ```
+
+---
 
 ## Game Modules
 
@@ -208,6 +269,8 @@ The backend includes numerous game modules accessible via API:
 | Combat | `/api/v1/combat` | Fight NPCs/players |
 | Gang | `/api/v1/gangs` | Gang management |
 | Chat | WebSocket | Real-time chat |
+
+---
 
 ## WebSocket Integration
 
@@ -231,6 +294,8 @@ websocketService.on('notification', (data) => {
 websocketService.disconnect()
 ```
 
+---
+
 ## Troubleshooting
 
 ### CORS Errors
@@ -244,3 +309,16 @@ websocketService.disconnect()
 ### API 404 Errors
 - Ensure the backend is running
 - Check the API route prefix (`/api/v1/`)
+
+### Connection Refused
+- Verify Docker containers are running: `docker compose ps`
+- Check if ports 5175 and 8001 are available
+
+---
+
+## Additional Resources
+
+- [Main README](./README.md) - Project overview
+- [Deployment Guide](./DEPLOYMENT.md) - Production deployment
+- [Backend README](./backend/README.md) - Backend documentation
+- [API Documentation](http://localhost:8001/docs) - Auto-generated API docs
