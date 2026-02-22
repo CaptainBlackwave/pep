@@ -1,0 +1,40 @@
+{
+    "name": "Crimes",
+    "slug": "crimes",
+    "version": "3.0.0",
+    "description": "Commit various crimes to earn cash and experience",
+    "author": "OpenPBBG",
+    "enabled": true,
+    "requires": {
+        "laravel": "^11.0",
+        "plugins": {}
+    },
+    "settings": {
+        "icon": "🔫",
+        "color": "red",
+        "route": "crimes.index",
+        "menu": {
+            "enabled": true,
+            "order": 1,
+            "section": "actions",
+            "parent": null
+        },
+        "permissions": {
+            "view": "level:1",
+            "use": "level:1"
+        }
+    },
+    "permissions": [
+        "economy.write"
+    ],
+    "hooks": {
+        "OnCrimeCommit": true,
+        "alterModuleData": true,
+        "moduleLoad": true
+    },
+    "routes": {
+        "web": true,
+        "api": true,
+        "admin": false
+    }
+}

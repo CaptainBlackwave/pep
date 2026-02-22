@@ -1,3 +1,7 @@
+# ====================
+# Frontend (Vue/Node)
+# ====================
+
 # Logs
 logs
 *.log
@@ -7,18 +11,14 @@ yarn-error.log*
 pnpm-debug.log*
 lerna-debug.log*
 
-node_modules
-.DS_Store
+# Dependencies
+node_modules/
+
+# Build outputs
 dist
 dist-ssr
 coverage
 *.local
-
-# Environment files
-.env
-.env.local
-.env.production
-.env.*.local
 
 # Editor directories and files
 .vscode/*
@@ -46,4 +46,65 @@ __screenshots__/
 
 test-results/
 playwright-report/
+
+# ====================
+# Backend (Laravel/PHP)
+# ====================
+
+/.phpunit.cache
+/public/build
+/public/hot
+/public/storage
+/storage/*.key
+/storage/installed
+/storage/pail
+/storage/logs/*.log
+/storage/debugbar
+/storage/framework/cache/*
+/storage/framework/sessions/*
+/storage/framework/views/*
+/vendor
+
+.phpunit.result.cache
+Homestead.json
+Homestead.yaml
+/auth.json
+/.fleet
+/.nova
+/.zed
+license_private.pem
+license_public.pem
+storage/license_key
+
+# IDE Helper files (generated, not needed in repo)
+_ide_helper.php
+_ide_helper_models.php
+.phpstorm.meta.php
+
+# ====================
+# Environment files (root level)
+# ====================
+
+.env
+.env.local
+.env.production
+.env.*.local
+.env.backup
+
+# ====================
+# OS generated files
+# ====================
+
+.DS_Store
+.DS_Store?
+._*
+.Spotlight-V100
+.Trashes
+ehthumbs.db
+Thumbs.db
+
+# ====================
+# Development
+# ====================
+
 DEVELOPMENT.md

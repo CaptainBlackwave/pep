@@ -1,0 +1,24 @@
+{
+  "name": "Advanced Crimes",
+  "slug": "advanced-crimes",
+  "version": "1.0.0",
+  "description": "Extends the Crimes plugin with additional crime types and mechanics",
+  "author": "OpenPBBG",
+  "enabled": true,
+  "requires": {
+    "laravel": "^11.0",
+    "plugins": {
+      "crimes": "^1.0.0"
+    }
+  },
+  "settings": {
+    "icon": "🔪",
+    "color": "red"
+  },
+  "hooks": {},
+  "routes": {
+    "web": false,
+    "api": false,
+    "admin": false
+  }
+}

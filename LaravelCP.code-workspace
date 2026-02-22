@@ -2,11 +2,11 @@
 	"folders": [
 		{
 			"name": "Frontend (Vue 3)",
-			"path": "."
+			"path": "frontend"
 		},
 		{
 			"name": "Backend (Laravel)",
-			"path": "../LaravelCP-Backend"
+			"path": "backend"
 		}
 	],
 	"settings": {
