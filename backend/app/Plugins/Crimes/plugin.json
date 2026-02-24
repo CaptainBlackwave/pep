@@ -1,10 +1,11 @@
 {
     "name": "Crimes",
     "slug": "crimes",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Commit various crimes to earn cash and experience",
     "author": "OpenPBBG",
     "enabled": true,
+    "license_required": false,
     "requires": {
         "laravel": "^11.0",
         "plugins": {}
@@ -20,21 +21,31 @@
             "parent": null
         },
         "permissions": {
-            "view": "level:1",
-            "use": "level:1"
+            "crimes.view": "View crimes",
+            "crimes.commit": "Commit crimes",
+            "crimes.admin": "Administer crimes"
         }
     },
-    "permissions": [
-        "economy.write"
-    ],
+    "permissions": {
+        "crimes.view": "View crimes",
+        "crimes.commit": "Commit crimes",
+        "crimes.admin": "Administer crimes"
+    },
     "hooks": {
-        "OnCrimeCommit": true,
-        "alterModuleData": true,
-        "moduleLoad": true
+        "user.created": true,
+        "customMenus": true,
+        "stats.display": true,
+        "admin.dashboard.widgets": true
     },
     "routes": {
         "web": true,
         "api": true,
-        "admin": false
+        "admin": true
+    },
+    "frontend": {
+        "slots": {
+            "dashboard-widget": ["CrimesWidget.vue"],
+            "sidebar-widget": ["QuickCrimesWidget.vue"]
+        }
     }
 }

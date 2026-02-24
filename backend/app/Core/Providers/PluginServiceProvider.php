@@ -7,6 +7,7 @@ use Illuminate\Support\Facades\File;
 use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
+use Illuminate\Support\Str;
 
 class PluginServiceProvider extends ServiceProvider
 {
@@ -15,6 +16,12 @@ class PluginServiceProvider extends ServiceProvider
      * @var array
      */
     protected array $plugins = [];
+
+    /**
+     * Sorted plugins based on dependencies (load order)
+     * @var array
+     */
+    protected array $sortedPlugins = [];
 
     /**
      * Register services.
@@ -28,7 +35,9 @@ class PluginServiceProvider extends ServiceProvider
         }
 
         $this->discoverPlugins();
+        $this->resolveDependencies();
         $this->registerPluginConfig();
+        $this->registerPluginsWithContainer();
     }
 
     /**
@@ -51,7 +60,7 @@ class PluginServiceProvider extends ServiceProvider
         $this->registerPluginsToRegistry();
 
         // Only share safe plugin metadata with views (not internal paths/namespaces)
-        $safePlugins = collect($this->plugins)->map(fn($p) => [
+        $safePlugins = collect($this->sortedPlugins)->map(fn($p) => [
             'id' => $p['id'] ?? null,
             'name' => $p['name'] ?? $p['id'] ?? null,
             'enabled' => $p['enabled'] ?? true,
@@ -59,11 +68,149 @@ class PluginServiceProvider extends ServiceProvider
         ])->all();
 
         View::share('plugins', $safePlugins);
-        app()->instance('plugins', $this->plugins);
+        app()->instance('plugins', $this->sortedPlugins);
 
         // Backwards compatibility
         View::share('modules', $safePlugins);
-        app()->instance('modules', $this->plugins);
+        app()->instance('modules', $this->sortedPlugins);
+    }
+
+    /**
+     * Resolve plugin dependencies and sort plugins in load order.
+     * Plugins are sorted so dependencies are loaded first.
+     */
+    protected function resolveDependencies(): void
+    {
+        $plugins = $this->plugins;
+        $sorted = [];
+        $visited = [];
+        $visitedWithOrder = [];
+
+        /**
+         * Topological sort using DFS
+         * @param string $pluginId
+         * @param array $stack Stack to track recursion for cycle detection
+         * @param int $depth Current depth for logging
+         */
+        $visit = function (string $pluginId, array &$stack = [], int $depth = 0) use (&$plugins, &$sorted, &$visited, &$visitedWithOrder, &$visit) {
+            // Indent for debug logging
+            $indent = str_repeat('  ', $depth);
+
+            // Check for circular dependency
+            if (in_array($pluginId, $stack)) {
+                Log::warning("Plugin '{$pluginId}' has a circular dependency - skipping.");
+                return;
+            }
+
+            // Skip if already processed
+            if (isset($visitedWithOrder[$pluginId])) {
+                return;
+            }
+
+            $stack[] = $pluginId;
+
+            // Check if plugin exists
+            if (!isset($plugins[$pluginId])) {
+                Log::debug("{$indent}Plugin '{$pluginId}' not found - skipping.");
+                array_pop($stack);
+                return;
+            }
+
+            $plugin = $plugins[$pluginId];
+            $dependencies = $plugin['requires']['plugins'] ?? $plugin['dependencies'] ?? [];
+
+            Log::debug("{$indent}Processing plugin: {$pluginId} (dependencies: " . implode(', ', array_keys($dependencies)) . ")");
+
+            // Visit all dependencies first
+            foreach ($dependencies as $depId => $versionConstraint) {
+                // Skip if dependency is explicitly disabled
+                if (isset($plugins[$depId]) && !($plugins[$depId]['enabled'] ?? true)) {
+                    Log::debug("{$indent}  Skipping disabled dependency: {$depId}");
+                    continue;
+                }
+
+                $visit($depId, $stack, $depth + 1);
+            }
+
+            // Mark as visited
+            $visited[$pluginId] = true;
+            $visitedWithOrder[$pluginId] = true;
+
+            // Add to sorted list
+            $sorted[] = $plugin;
+
+            // Get order from plugin (default 100)
+            $order = $plugin['order'] ?? 100;
+
+            Log::debug("{$indent}Added {$pluginId} to sorted list (order: {$order})");
+
+            array_pop($stack);
+        };
+
+        // Process all plugins
+        foreach (array_keys($plugins) as $pluginId) {
+            if (!isset($visited[$pluginId])) {
+                $visit($pluginId);
+            }
+        }
+
+        // Secondary sort by 'order' field for plugins at same dependency level
+        usort($sorted, function ($a, $b) {
+            $orderA = $a['order'] ?? $a['settings']['menu']['order'] ?? 100;
+            $orderB = $b['order'] ?? $b['settings']['menu']['order'] ?? 100;
+            return $orderA - $orderB;
+        });
+
+        $this->sortedPlugins = $sorted;
+
+        // Log resolved order
+        $orderList = array_map(fn($p) => $p['id'], $sorted);
+        Log::info("Plugin load order resolved: " . implode(' -> ', $orderList));
+    }
+
+    /**
+     * Register each plugin class with the container for dependency injection.
+     */
+    protected function registerPluginsWithContainer(): void
+    {
+        foreach ($this->sortedPlugins as $plugin) {
+            $pluginClass = $plugin['class'] ?? null;
+
+            if (!$pluginClass) {
+                // Try to find the plugin class automatically
+                $namespace = $plugin['namespace'] ?? "App\\Plugins\\{$plugin['id']}";
+                $className = $namespace . '\\' . Str::studly($plugin['id']) . 'Plugin';
+
+                if (class_exists($className)) {
+                    $pluginClass = $className;
+                }
+            }
+
+            if ($pluginClass && class_exists($pluginClass)) {
+                // Register as singleton with the container
+                $this->app->singleton($pluginClass);
+
+                Log::debug("Registered plugin class: {$pluginClass}");
+            }
+        }
+    }
+
+    /**
+     * Get a specific plugin class instance from the container.
+     *
+     * @param string $pluginId
+     * @return object|null
+     */
+    public static function getPluginInstance(string $pluginId): ?object
+    {
+        $namespace = "App\\Plugins\\" . Str::studly($pluginId);
+        $className = $namespace . '\\' . Str::studly($pluginId) . 'Plugin';
+
+        if (class_exists($className) && app()->bound($className)) {
+            return app($className);
+        }
+
+        return null;
     }
 
     /**
@@ -186,12 +333,12 @@ class PluginServiceProvider extends ServiceProvider
                     ->group($apiRoutesPath);
             }
 
-            // Admin routes
+            // Admin routes - loaded under api/v1/admin for API access
             $adminRoutesPath = $plugin['path'] . '/routes/admin.php';
             if (File::exists($adminRoutesPath)) {
-                Route::prefix('admin')
-                    ->middleware(['web', 'auth', 'admin'])
-                    ->namespace($plugin['namespace'] . '\\Controllers')
+                Route::prefix('api/v1/admin')
+                    ->middleware(['api', 'auth:sanctum', 'role:admin|moderator', 'verify.license'])
+                    ->namespace($plugin['namespace'] . '\\Controllers\\Admin')
                     ->name('admin.')
                     ->group($adminRoutesPath);
             }

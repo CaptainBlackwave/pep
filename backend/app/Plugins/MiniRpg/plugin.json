@@ -1,0 +1,65 @@
+{
+    "name": "Core RPG",
+    "slug": "mini-rpg",
+    "version": "1.0.0",
+    "description": "A complete mini RPG system demonstrating the plugin architecture with gold, levels, and combat",
+    "author": "OpenPBBG",
+    "enabled": true,
+    "license_required": false,
+    "requires": {
+        "laravel": "^11.0",
+        "plugins": {}
+    },
+    "settings": {
+        "icon": "⚔️",
+        "color": "purple",
+        "route": "mini-rpg.dashboard",
+        "menu": {
+            "enabled": true,
+            "order": 5,
+            "section": "actions",
+            "parent": null
+        },
+        "permissions": {
+            "rpg.view": "View RPG content",
+            "rpg.play": "Play RPG game",
+            "rpg.admin": "Administer RPG settings"
+        }
+    },
+    "permissions": {
+        "rpg.view": "View RPG content",
+        "rpg.play": "Play RPG game",
+        "rpg.admin": "Administer RPG settings"
+    },
+    "hooks": {
+        "user.created": true,
+        "stats.display": true,
+        "navigation.menu": true
+    },
+    "routes": {
+        "web": true,
+        "api": true,
+        "admin": true
+    },
+    "frontend": {
+        "slots": {
+            "dashboard-widget": ["GoldWidget.vue", "StatsWidget.vue"],
+            "header-link": ["RpgNav.vue"],
+            "sidebar-widget": ["QuickStatsWidget.vue"]
+        },
+        "routes": [
+            {
+                "path": "/rpg",
+                "name": "mini-rpg-dashboard",
+                "component": "Dashboard.vue",
+                "meta": { "title": "RPG Dashboard" }
+            },
+            {
+                "path": "/rpg/combat",
+                "name": "mini-rpg-combat",
+                "component": "Combat.vue",
+                "meta": { "title": "Combat Arena" }
+            }
+        ]
+    }
+}

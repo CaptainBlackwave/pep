@@ -1,41 +1,14 @@
 {
     "name": "Chat",
     "slug": "chat",
-    "version": "1.0.0",
-    "description": "Real-time chat system with channels, private messages, reactions and replies",
-    "author": "LaravelCP",
+    "version": "4.0.0",
+    "description": "Real-time chat system with channels",
+    "author": "OpenPBBG",
     "enabled": true,
-    "requires": {
-        "laravel": "^11.0",
-        "plugins": {}
-    },
-    "settings": {
-        "icon": "💬",
-        "color": "blue",
-        "route": "chat.index",
-        "menu": {
-            "enabled": true,
-            "order": 5,
-            "section": "social",
-            "parent": null
-        },
-        "permissions": {
-            "view": "level:1",
-            "send": "level:1",
-            "create_channel": "level:10"
-        }
-    },
-    "hooks": {
-        "OnMessageSent": true,
-        "OnMessageDeleted": true,
-        "OnChannelCreated": true,
-        "OnReaction": true,
-        "filterMessageContent": true,
-        "moduleLoad": true
-    },
-    "routes": {
-        "web": false,
-        "api": true,
-        "admin": true
-    }
+    "license_required": false,
+    "requires": { "laravel": "^11.0", "plugins": {} },
+    "settings": { "icon": "💬", "color": "blue", "route": "chat.index", "menu": { "enabled": true, "order": 50, "section": "social" } },
+    "hooks": { "chat.message": true, "chat.channel": true },
+    "routes": { "web": true, "api": true },
+    "frontend": { "slots": { "sidebar-widget": ["ChatWidget.vue"] } }
 }

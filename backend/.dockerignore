@@ -10,6 +10,7 @@ storage/framework/cache/*
 storage/framework/sessions/*
 storage/framework/views/*
 storage/debugbar
+public/storage
 .phpunit.cache
 .phpunit.result.cache
 _ide_helper.php

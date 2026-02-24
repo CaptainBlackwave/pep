@@ -1,10 +1,11 @@
 {
     "name": "Jail",
     "slug": "jail",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "View jailed players and attempt bust outs or pay bail",
     "author": "OpenPBBG",
     "enabled": true,
+    "license_required": false,
     "requires": {
         "laravel": "^11.0",
         "plugins": {}
@@ -18,22 +19,21 @@
             "order": 6,
             "section": "actions",
             "parent": null
-        },
-        "permissions": {
-            "view": "level:1",
-            "use": "level:1"
         }
     },
     "hooks": {
-        "OnBustOut": true,
-        "OnBailOut": true,
-        "OnJailed": true,
-        "alterModuleData": true,
-        "moduleLoad": true
+        "user.jailed": true,
+        "user.released": true,
+        "customMenus": true
     },
     "routes": {
         "web": true,
-        "api": false,
-        "admin": false
+        "api": true,
+        "admin": true
+    },
+    "frontend": {
+        "slots": {
+            "sidebar-widget": ["JailWidget.vue"]
+        }
     }
 }

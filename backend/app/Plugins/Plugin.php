@@ -2,261 +2,514 @@
 
 namespace App\Plugins;
 
-use Illuminate\Support\Facades\Auth;
+use App\Core\Contracts\PluginInterface;
+use App\Core\Contracts\PluginLifecycleInterface;
+use Illuminate\Support\Facades\File;
+use Illuminate\Support\Facades\Route;
 use Illuminate\Support\Facades\View;
-use App\Facades\Hook;
+use Illuminate\Support\Facades\Log;
+use Illuminate\Support\Str;
+use RuntimeException;
 
 /**
  * Base Plugin Class
- * All game plugins extend this class
+ *
+ * All game plugins must extend this class.
+ * Implements PluginInterface and provides default implementations.
+ * Supports manifest.json parsing, route registration, view loading,
+ * and hook integration.
  */
-abstract class Plugin
+abstract class Plugin implements PluginInterface, PluginLifecycleInterface
 {
     /**
-     * Module name
+     * Plugin manifest data (parsed from plugin.json).
      */
-    protected string $name;
+    protected array $manifest = [];
 
     /**
-     * Module configuration
+     * Plugin filesystem path.
      */
-    protected array $config;
+    protected string $path;
 
     /**
-     * Allowed HTTP methods for actions
-     * Example: ['actionName' => ['method' => 'POST', 'rules' => [...]]]
+     * Plugin identifier (slug).
      */
-    protected array $allowedMethods = [];
+    protected string $id;
 
     /**
-     * Page title
+     * Cached route definitions.
      */
-    protected string $pageName = '';
+    protected ?array $routes = null;
 
     /**
-     * Module HTML output
+     * Cached middleware stack.
      */
-    protected string $html = '';
+    protected ?array $middleware = null;
 
     /**
-     * Alert messages
+     * Constructor.
+     *
+     * @param string $path The filesystem path to the plugin directory.
+     * @throws RuntimeException If plugin.json is missing or invalid.
      */
-    protected array $alerts = [];
-
-    /**
-     * Constructor
-     */
-    public function __construct(string $name = '', array $config = [])
+    public function __construct(string $path)
     {
-        $this->name = $name ?: $this->name ?? '';
-        $this->config = array_merge($this->config ?? [], $config);
-
-        // Call the module's construct method to initialize
-        $this->construct();
+        $this->path = $path;
+        $this->loadManifest();
     }
 
     /**
-     * Get module name
+     * Load and validate the plugin.json manifest.
+     *
+     * @throws RuntimeException If manifest is missing or invalid.
+     */
+    protected function loadManifest(): void
+    {
+        $manifestPath = $this->path . '/plugin.json';
+
+        if (!File::exists($manifestPath)) {
+            throw new RuntimeException(
+                "Plugin manifest not found: {$manifestPath}"
+            );
+        }
+
+        $content = File::get($manifestPath);
+        $this->manifest = json_decode($content, true);
+
+        if (json_last_error() !== JSON_ERROR_NONE) {
+            throw new RuntimeException(
+                "Invalid JSON in plugin manifest: {$manifestPath} - " . json_last_error_msg()
+            );
+        }
+
+        // Validate required fields
+        $required = ['name', 'slug', 'version'];
+        foreach ($required as $field) {
+            if (empty($this->manifest[$field])) {
+                throw new RuntimeException(
+                    "Missing required field '{$field}' in plugin manifest: {$manifestPath}"
+                );
+            }
+        }
+
+        $this->id = $this->manifest['slug'];
+    }
+
+    // ==========================================
+    // PluginInterface Implementation
+    // ==========================================
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getId(): string
+    {
+        return $this->id;
+    }
+
+    /**
+     * {@inheritdoc}
      */
     public function getName(): string
     {
-        return $this->name;
+        return $this->manifest['name'] ?? $this->id;
     }
 
     /**
-     * Get page title
+     * {@inheritdoc}
      */
-    public function getPageName(): string
+    public function getVersion(): string
     {
-        return $this->pageName ?: $this->name;
+        return $this->manifest['version'] ?? '1.0.0';
     }
 
     /**
-     * Get module HTML output
+     * {@inheritdoc}
      */
-    public function getHtml(): string
+    public function getManifest(): array
     {
-        return $this->html;
+        return $this->manifest;
     }
 
     /**
-     * Get alerts
+     * {@inheritdoc}
      */
-    public function getAlerts(): array
+    public function getPath(): string
     {
-        return $this->alerts;
+        return $this->path;
     }
 
     /**
-     * Add HTML to output
+     * {@inheritdoc}
      */
-    protected function addHtml(string $html): void
+    public function getNamespace(): string
     {
-        $this->html .= $html;
+        // Convert slug to PascalCase namespace
+        $pascal = Str::studly(str_replace('-', '_', $this->id));
+        return "App\\Plugins\\{$pascal}";
     }
 
     /**
-     * Build element from view
+     * {@inheritdoc}
      */
-    protected function buildElement(string $view, array $data = []): string
+    public function register(): void
     {
-        // Try module view first, fall back to shared views
-        $viewName = "{$this->name}::{$view}";
+        // Default implementation - override in child classes
+        // This is called during Laravel's "register" phase
+        // Register services, config, etc. here
+    }
 
-        if (!View::exists($viewName)) {
-            $viewName = "modules.{$view}";
+    /**
+     * {@inheritdoc}
+     */
+    public function boot(): void
+    {
+        // Default implementation - override in child classes
+        // This is called during Laravel's "boot" phase
+        // Register hooks, event listeners, etc. here
+        $this->registerHooks();
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getRoutes(): array
+    {
+        if ($this->routes !== null) {
+            return $this->routes;
         }
 
-        if (!View::exists($viewName)) {
-            return "<!-- View {$view} not found -->";
-        }
+        $this->routes = [];
+        $routeConfig = $this->manifest['routes'] ?? [];
 
-        return View::make($viewName, $data)->render();
-    }
-
-    /**
-     * Add success alert
-     */
-    protected function success(string $message): void
-    {
-        $this->alerts[] = [
-            'type' => 'success',
-            'message' => $message,
+        $routeTypes = [
+            'web' => ['middleware' => ['web', 'auth']],
+            'api' => ['middleware' => ['api', 'auth:sanctum'], 'prefix' => 'api'],
+            'admin' => ['middleware' => ['web', 'auth', 'admin'], 'prefix' => 'admin'],
         ];
-    }
 
-    /**
-     * Add error alert
-     */
-    protected function error(string $message): void
-    {
-        $this->alerts[] = [
-            'type' => 'error',
-            'message' => $message,
-        ];
-    }
-
-    /**
-     * Add info alert
-     */
-    protected function info(string $message): void
-    {
-        $this->alerts[] = [
-            'type' => 'info',
-            'message' => $message,
-        ];
-    }
-
-    /**
-     * Add warning alert
-     */
-    protected function warning(string $message): void
-    {
-        $this->alerts[] = [
-            'type' => 'warning',
-            'message' => $message,
-        ];
-    }
-
-    /**
-     * Format money
-     */
-    protected function money(float $amount): string
-    {
-        return Hook::filter('currencyFormat', $amount);
-    }
-
-    /**
-     * Format date
-     */
-    protected function date($timestamp, string $format = 'Y-m-d H:i:s'): string
-    {
-        if (is_numeric($timestamp)) {
-            return date($format, $timestamp);
+        foreach ($routeTypes as $type => $defaults) {
+            if (!empty($routeConfig[$type])) {
+                $routePath = $this->path . '/routes/' . $type . '.php';
+                if (File::exists($routePath)) {
+                    $this->routes[$type] = array_merge($defaults, [
+                        'path' => $routePath,
+                        'file' => $type . '.php',
+                    ]);
+                }
+            }
         }
 
-        if ($timestamp instanceof \DateTime) {
-            return $timestamp->format($format);
-        }
-
-        return $timestamp;
+        return $this->routes;
     }
 
     /**
-     * Check if user can access this module
+     * {@inheritdoc}
      */
-    public function canAccess($user): bool
+    public function getMiddleware(): array
     {
-        // Override in module if needed
-        return true;
+        if ($this->middleware !== null) {
+            return $this->middleware;
+        }
+
+        $this->middleware = $this->manifest['middleware'] ?? [];
+        return $this->middleware;
     }
 
     /**
-     * Validate method data
+     * {@inheritdoc}
      */
-    protected function validateMethod(string $action, array $data): array
+    public function getDependencies(): array
     {
-        if (!isset($this->allowedMethods[$action])) {
-            return ['error' => 'Invalid action'];
+        return (array) ($this->manifest['requires']['plugins'] ?? []);
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getViewNamespace(): string
+    {
+        return $this->id;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getMigrationsPath(): string
+    {
+        return $this->path . '/database/migrations';
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getFrontendSlots(): array
+    {
+        return $this->manifest['frontend']['slots'] ?? [];
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function requiresLicense(): bool
+    {
+        return $this->manifest['license_required'] ?? false;
+    }
+
+    /**
+     * {@inheritdoc}
+     */
+    public function getPermissions(): array
+    {
+        return $this->manifest['permissions'] ?? [];
+    }
+
+    // ==========================================
+    // PluginLifecycleInterface Implementation
+    // ==========================================
+
+    /**
+     * {@inheritdoc}
+     * Called once when a plugin is first installed.
+     */
+    public function install(): void
+    {
+        // Default: no action. Override in child classes.
+        Log::info("Plugin '{$this->id}' installed.", ['version' => $this->getVersion()]);
+    }
+
+    /**
+     * {@inheritdoc}
+     * Called when a plugin is enabled.
+     */
+    public function enable(): void
+    {
+        // Default: no action. Override in child classes.
+        Log::info("Plugin '{$this->id}' enabled.", ['version' => $this->getVersion()]);
+    }
+
+    /**
+     * {@inheritdoc}
+     * Called when a plugin is disabled.
+     */
+    public function disable(): void
+    {
+        // Default: no action. Override in child classes.
+        Log::info("Plugin '{$this->id}' disabled.");
+    }
+
+    /**
+     * {@inheritdoc}
+     * Called when a plugin is fully removed.
+     */
+    public function uninstall(): void
+    {
+        // Default: no action. Override in child classes.
+        Log::info("Plugin '{$this->id}' uninstalled.");
+    }
+
+    /**
+     * {@inheritdoc}
+     * Called when upgrading versions.
+     */
+    public function upgrade(string $fromVersion, string $toVersion): void
+    {
+        // Default: no action. Override in child classes.
+        Log::info("Plugin '{$this->id}' upgraded.", [
+            'from' => $fromVersion,
+            'to' => $toVersion,
+        ]);
+    }
+
+    // ==========================================
+    // Helper Methods
+    // ==========================================
+
+    /**
+     * Register hooks from the plugin's hooks.php file.
+     */
+    protected function registerHooks(): void
+    {
+        $hooksFile = $this->path . '/hooks.php';
+
+        if (File::exists($hooksFile)) {
+            // The hooks file should use the Hook facade to register callbacks
+            require $hooksFile;
+        }
+    }
+
+    /**
+     * Get a configuration value from the plugin's manifest.
+     *
+     * @param string $key Dot-notation key (e.g., 'settings.icon')
+     * @param mixed $default Default value if not found.
+     * @return mixed
+     */
+    public function config(string $key, mixed $default = null): mixed
+    {
+        $keys = explode('.', $key);
+        $value = $this->manifest;
+
+        foreach ($keys as $k) {
+            if (!is_array($value) || !array_key_exists($k, $value)) {
+                return $default;
+            }
+            $value = $value[$k];
         }
 
-        $methodConfig = $this->allowedMethods[$action];
-        $rules = $methodConfig['rules'] ?? [];
+        return $value;
+    }
 
-        if (empty($rules)) {
+    /**
+     * Get the plugin's assets URL.
+     *
+     * @param string $asset Relative path to asset.
+     * @return string Public URL to the asset.
+     */
+    public function assetUrl(string $asset = ''): string
+    {
+        $base = asset('plugins/' . $this->id);
+        return $asset ? "{$base}/{$asset}" : $base;
+    }
+
+    /**
+     * Check if this plugin has database migrations.
+     */
+    public function hasMigrations(): bool
+    {
+        $path = $this->getMigrationsPath();
+        return File::isDirectory($path) && count(File::files($path)) > 0;
+    }
+
+    /**
+     * Check if this plugin has views.
+     */
+    public function hasViews(): bool
+    {
+        return File::isDirectory($this->path . '/views');
+    }
+
+    /**
+     * Check if this plugin has translations.
+     */
+    public function hasTranslations(): bool
+    {
+        return File::isDirectory($this->path . '/lang');
+    }
+
+    /**
+     * Get menu items defined by this plugin.
+     */
+    public function getMenuItems(): array
+    {
+        $menuConfig = $this->manifest['settings']['menu'] ?? [];
+
+        if (empty($menuConfig['enabled'] ?? false)) {
             return [];
         }
 
-        $validator = validator($data, $rules);
+        return [
+            'section' => $menuConfig['section'] ?? 'main',
+            'order' => $menuConfig['order'] ?? 100,
+            'parent' => $menuConfig['parent'] ?? null,
+            'icon' => $this->manifest['settings']['icon'] ?? null,
+            'color' => $this->manifest['settings']['color'] ?? null,
+            'route' => $this->manifest['settings']['route'] ?? null,
+            'title' => $this->getName(),
+        ];
+    }
 
-        if ($validator->fails()) {
-            return ['errors' => $validator->errors()->toArray()];
+    /**
+     * Resolve a class within this plugin's namespace.
+     *
+     * @param string $className Class name without namespace.
+     * @return string|null Fully qualified class name if it exists.
+     */
+    public function resolveClass(string $className): ?string
+    {
+        $fqcn = $this->getNamespace() . '\\' . $className;
+        return class_exists($fqcn) ? $fqcn : null;
+    }
+
+    /**
+     * Get a model instance from this plugin.
+     *
+     * @param string $modelName Model name without namespace.
+     * @return string|null Model class name if it exists.
+     */
+    public function getModelClass(string $modelName): ?string
+    {
+        return $this->resolveClass('Models\\' . $modelName);
+    }
+
+    /**
+     * Get a controller instance from this plugin.
+     *
+     * @param string $controllerName Controller name without namespace.
+     * @return string|null Controller class name if it exists.
+     */
+    public function getControllerClass(string $controllerName): ?string
+    {
+        return $this->resolveClass('Controllers\\' . $controllerName);
+    }
+
+    /**
+     * Broadcast an event to this plugin's WebSocket channel.
+     *
+     * @param string $event Event name.
+     * @param array $data Event payload.
+     */
+    public function broadcast(string $event, array $data = []): void
+    {
+        if (function_exists('broadcastToPlugin')) {
+            broadcastToPlugin($this->id, $event, $data);
+        }
+    }
+
+    /**
+     * Log a plugin-specific message.
+     *
+     * @param string $level Log level (debug, info, warning, error).
+     * @param string $message Log message.
+     * @param array $context Additional context.
+     */
+    public function log(string $level, string $message, array $context = []): void
+    {
+        Log::{$level}("[Plugin:{$this->id}] {$message}", $context);
+    }
+
+    /**
+     * Get a setting value for this plugin.
+     *
+     * @param string $key Setting key.
+     * @param mixed $default Default value.
+     * @return mixed
+     */
+    public function getSetting(string $key, mixed $default = null): mixed
+    {
+        if (!class_exists(\App\Core\Services\SettingService::class)) {
+            return $default;
         }
 
-        return $validator->validated();
+        return app(\App\Core\Services\SettingService::class)->get(
+            "plugins.{$this->id}.{$key}",
+            $default
+        );
     }
 
     /**
-     * Apply module data hooks
+     * Set a setting value for this plugin.
+     *
+     * @param string $key Setting key.
+     * @param mixed $value Setting value.
      */
-    protected function applyModuleHook(string $hookName, array $data): array
+    public function setSetting(string $key, mixed $value): void
     {
-        return Hook::filter($hookName, [
-            'module' => $this->name,
-            'user' => Auth::user(),
-            'data' => $data,
-        ])['data'] ?? $data;
-    }
-
-    /**
-     * Track user action
-     */
-    protected function trackAction(string $actionType, array $data): void
-    {
-        Hook::action('afterUserAction', array_merge([
-            'user' => Auth::id(),
-            'module' => $this->name,
-            'action' => $actionType,
-            'timestamp' => now(),
-        ], $data));
-    }
-
-    /**
-     * Main construction method - override in child classes
-     */
-    abstract public function construct(): void;
-
-    /**
-     * Handle module action - override in child classes
-     */
-    public function handleAction(string $action, array $data): mixed
-    {
-        $methodName = 'action' . ucfirst($action);
-
-        if (method_exists($this, $methodName)) {
-            return $this->$methodName($data);
+        if (class_exists(\App\Core\Services\SettingService::class)) {
+            app(\App\Core\Services\SettingService::class)->set(
+                "plugins.{$this->id}.{$key}",
+                $value
+            );
         }
-
-        return ['error' => 'Action not found'];
     }
 }

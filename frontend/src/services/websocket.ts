@@ -385,6 +385,100 @@ class WebSocketService {
       }
     }
   }
+
+  // ==========================================
+  // Plugin Namespacing Methods
+  // ==========================================
+
+  /**
+   * Subscribe to a plugin-specific channel.
+   * Creates a namespaced subscription: pluginId:channel
+   *
+   * @param pluginName The plugin identifier (e.g., 'rpg', 'crimes')
+   * @param channel The channel name within the plugin
+   * @param callback Callback for messages
+   * @returns Unsubscribe function
+   */
+  subscribeToPlugin(
+    pluginName: string,
+    channel: string,
+    callback: EventCallback
+  ): () => void {
+    const namespacedChannel = `${pluginName}:${channel}`
+
+    // Subscribe to the namespaced channel
+    this.subscribe(namespacedChannel)
+
+    // Listen for events on this channel with plugin prefix filtering
+    const unsubscribe = this.on(namespacedChannel as WebSocketEvent, (data, message) => {
+      // Route based on app_prefix if present
+      const pluginPrefix = (data as { app_prefix?: string }).app_prefix
+      if (!pluginPrefix || pluginPrefix === pluginName) {
+        callback(data, message)
+      }
+    })
+
+    // Return combined unsubscribe
+    return () => {
+      unsubscribe()
+      this.unsubscribe(namespacedChannel)
+    }
+  }
+
+  /**
+   * Broadcast to a plugin-specific channel.
+   *
+   * @param pluginName The plugin identifier
+   * @param event The event name
+   * @param data The data to send
+   */
+  broadcastToPlugin(pluginName: string, event: string, data: unknown): void {
+    this.send({
+      event: `${pluginName}:${event}`,
+      channel: `plugin-${pluginName}`,
+      data: {
+        ...(data as object),
+        app_prefix: pluginName,
+      },
+    })
+  }
+
+  /**
+   * Listen for all plugin events (for debugging/admin).
+   *
+   * @param callback Callback for any plugin event
+   * @returns Unsubscribe function
+   */
+  onAnyPluginEvent(callback: EventCallback): () => void {
+    return this.on('*' as WebSocketEvent, (data, message) => {
+      const evt = message.event as string
+      if (evt && evt.includes(':')) {
+        callback(data, message)
+      }
+    })
+  }
+
+  /**
+   * Get plugin name from a namespaced event.
+   *
+   * @param eventName The event name (e.g., 'rpg:gold_updated')
+   * @returns The plugin name or null
+   */
+  static parsePluginFromEvent(eventName: string): string | null {
+    const parts = eventName.split(':')
+    return parts.length > 1 ? parts[0] ?? null : null
+  }
+
+  /**
+   * Get event name without plugin prefix.
+   *
+   * @param eventName The event name (e.g., 'rpg:gold_updated')
+   * @returns The event name without plugin prefix
+   */
+  static parseEventName(eventName: string): string {
+    const parts = eventName.split(':')
+    return parts.length > 1 ? parts.slice(1).join(':') : eventName
+  }
 }
 
 // Export singleton instance

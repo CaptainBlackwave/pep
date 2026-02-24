@@ -1,40 +1,13 @@
 {
     "name": "Casino",
     "slug": "casino",
-    "version": "1.0.0",
-    "description": "Casino games including slots, roulette, dice, and lottery",
-    "author": "LaravelCP",
+    "version": "4.0.0",
+    "description": "Gambling games including slots, blackjack, and more",
+    "author": "OpenPBBG",
     "enabled": true,
-    "requires": {
-        "laravel": "^11.0",
-        "plugins": {}
-    },
-    "settings": {
-        "icon": "🎰",
-        "color": "purple",
-        "route": "casino.index",
-        "menu": {
-            "enabled": true,
-            "order": 20,
-            "section": "entertainment",
-            "parent": null
-        },
-        "permissions": {
-            "view": "level:1",
-            "use": "level:3"
-        }
-    },
-    "hooks": {
-        "OnBetPlaced": true,
-        "OnBetWon": true,
-        "OnBetLost": true,
-        "OnLotteryTicketPurchased": true,
-        "alterWinnings": true,
-        "moduleLoad": true
-    },
-    "routes": {
-        "web": false,
-        "api": true,
-        "admin": true
-    }
+    "license_required": false,
+    "requires": { "laravel": "^11.0", "plugins": {} },
+    "settings": { "icon": "🎰", "color": "purple", "route": "casino.index", "menu": { "enabled": true, "order": 20, "section": "economy" } },
+    "hooks": { "casino.bet": true, "casino.win": true },
+    "routes": { "web": true, "api": true }
 }

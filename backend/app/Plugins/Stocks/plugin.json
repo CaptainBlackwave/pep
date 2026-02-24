@@ -1,39 +1,13 @@
 {
     "name": "Stocks",
     "slug": "stocks",
-    "version": "1.0.0",
-    "description": "Stock market trading system with buying, selling, portfolios and price fluctuations",
-    "author": "LaravelCP",
+    "version": "4.0.0",
+    "description": "Invest in stocks and watch your portfolio grow",
+    "author": "OpenPBBG",
     "enabled": true,
-    "requires": {
-        "laravel": "^11.0",
-        "plugins": {}
-    },
-    "settings": {
-        "icon": "📈",
-        "color": "green",
-        "route": "stocks.index",
-        "menu": {
-            "enabled": true,
-            "order": 25,
-            "section": "economy",
-            "parent": null
-        },
-        "permissions": {
-            "view": "level:1",
-            "trade": "level:5"
-        }
-    },
-    "hooks": {
-        "OnStockBuy": true,
-        "OnStockSell": true,
-        "OnPriceUpdate": true,
-        "alterTransactionFees": true,
-        "moduleLoad": true
-    },
-    "routes": {
-        "web": false,
-        "api": true,
-        "admin": true
-    }
+    "license_required": false,
+    "requires": { "laravel": "^11.0", "plugins": {} },
+    "settings": { "icon": "📈", "color": "green", "route": "stocks.index", "menu": { "enabled": true, "order": 22, "section": "economy" } },
+    "hooks": { "stock.buy": true, "stock.sell": true },
+    "routes": { "web": true, "api": true }
 }

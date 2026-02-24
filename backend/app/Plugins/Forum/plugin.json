@@ -1,38 +1,13 @@
 {
     "name": "Forum",
     "slug": "forum",
-    "version": "3.0.0",
-    "description": "Community forum system for player discussions and announcements",
+    "version": "4.0.0",
+    "description": "Community forums for discussions",
     "author": "OpenPBBG",
     "enabled": true,
-    "requires": {
-        "laravel": "^11.0",
-        "plugins": {}
-    },
-    "settings": {
-        "icon": "💬",
-        "color": "blue",
-        "route": "forum.index",
-        "menu": {
-            "enabled": true,
-            "order": 100,
-            "section": "social",
-            "parent": null
-        },
-        "permissions": {
-            "view": "level:1",
-            "use": "level:1"
-        }
-    },
-    "hooks": {
-        "OnTopicCreated": true,
-        "OnReplyPosted": true,
-        "alterModuleData": true,
-        "moduleLoad": true
-    },
-    "routes": {
-        "web": true,
-        "api": false,
-        "admin": false
-    }
+    "license_required": false,
+    "requires": { "laravel": "^11.0", "plugins": {} },
+    "settings": { "icon": "📋", "color": "indigo", "route": "forum.index", "menu": { "enabled": true, "order": 51, "section": "social" } },
+    "hooks": { "forum.post": true, "forum.thread": true },
+    "routes": { "web": true, "api": true }
 }

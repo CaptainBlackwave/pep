@@ -107,6 +107,8 @@ Thumbs.db
 # Development
 # ====================
 
+
+backend-bug-tracking.md
 DEVELOPMENT.md
-LOCAL-DEPLOYMENT-PROBLEMS.md
 LOCAL-DEPLOYMENT-DETAILS.md
+LOCAL-DEPLOYMENT-PROBLEMS.md

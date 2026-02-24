@@ -1,10 +1,11 @@
 {
     "name": "Gym",
     "slug": "gym",
-    "version": "3.0.0",
+    "version": "4.0.0",
     "description": "Train your character attributes at the gym",
     "author": "OpenPBBG",
     "enabled": true,
+    "license_required": false,
     "requires": {
         "laravel": "^11.0",
         "plugins": {}
@@ -20,18 +21,29 @@
             "parent": null
         },
         "permissions": {
-            "view": "level:1",
-            "use": "level:1"
+            "gym.view": "View gym",
+            "gym.train": "Train at gym",
+            "gym.admin": "Administer gym"
         }
     },
+    "permissions": {
+        "gym.view": "View gym",
+        "gym.train": "Train at gym",
+        "gym.admin": "Administer gym"
+    },
     "hooks": {
-        "OnTrain": true,
-        "alterModuleData": true,
-        "moduleLoad": true
+        "user.created": true,
+        "customMenus": true,
+        "stats.display": true
     },
     "routes": {
         "web": true,
-        "api": false,
-        "admin": false
+        "api": true,
+        "admin": true
+    },
+    "frontend": {
+        "slots": {
+            "dashboard-widget": ["GymStatsWidget.vue"]
+        }
     }
 }
