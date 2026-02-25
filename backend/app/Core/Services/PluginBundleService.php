@@ -189,8 +189,10 @@ class PluginBundleService
 
         $zip->close();
 
-        // Load and update manifest
+        // Load manifest
         $manifest = $this->loadManifest($backendTarget);
+
+        // Update manifest enabled state if needed
         if ($enable) {
             $manifest['enabled'] = true;
             File::put(
@@ -199,12 +201,41 @@ class PluginBundleService
             );
         }
 
+        // Create or update InstalledPlugin record
+        $installedPlugin = \App\Core\Models\InstalledPlugin::updateOrCreate(
+            ['slug' => $pluginSlug],
+            [
+                'name' => $manifest['name'] ?? $pluginSlug,
+                'version' => $manifest['version'] ?? '1.0.0',
+                'type' => 'plugin',
+                'description' => $manifest['description'] ?? '',
+                'author' => $manifest['author'] ?? 'Unknown',
+                'license_required' => $manifest['license_required'] ?? false,
+                'dependencies' => $manifest['requires']['plugins'] ?? [],
+                'config' => $manifest['settings'] ?? [],
+                'enabled' => $enable ?: ($manifest['enabled'] ?? true),
+                'installed_at' => now(),
+                'icon' => $manifest['settings']['icon'] ?? null,
+                'color' => $manifest['settings']['color'] ?? null,
+                'route_name' => $manifest['settings']['route'] ?? null,
+                'order' => $manifest['settings']['menu']['order'] ?? 100,
+                'permissions' => $manifest['permissions'] ?? [],
+                'hooks' => $manifest['hooks'] ?? [],
+                'frontend_slots' => $manifest['frontend']['slots'] ?? [],
+                'frontend_routes' => $manifest['frontend']['routes'] ?? [],
+                'has_web_routes' => $manifest['routes']['web'] ?? false,
+                'has_api_routes' => $manifest['routes']['api'] ?? false,
+                'has_admin_routes' => $manifest['routes']['admin'] ?? false,
+            ]
+        );
+
         Log::info("Plugin bundle imported", [
             'plugin' => $pluginSlug,
             'bundle_path' => $bundlePath,
             'backend_path' => $backendTarget,
             'frontend_path' => $frontendTarget,
-            'enabled' => $enable,
+            'enabled' => $installedPlugin->enabled,
+            'db_record' => $installedPlugin->id,
         ]);
 
         return [
@@ -214,7 +245,7 @@ class PluginBundleService
             'plugin_version' => $manifest['version'] ?? '1.0.0',
             'backend_path' => $backendTarget,
             'frontend_path' => $frontendTarget,
-            'enabled' => $enable,
+            'enabled' => $installedPlugin->enabled,
         ];
     }
 

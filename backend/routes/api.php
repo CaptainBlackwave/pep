@@ -21,6 +21,9 @@ Route::middleware('throttle:10,1')->group(function () {
 
 Route::prefix('v1')->group(function () {
 
+    // Public plugin info (for frontend navigation)
+    Route::get('/plugins/enabled', [PluginController::class, 'enabled']);
+
     // Public authentication routes (rate limited to prevent brute force)
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);

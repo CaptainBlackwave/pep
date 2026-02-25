@@ -2,41 +2,47 @@
 
 namespace App\Core\Services;
 
-use App\Core\Models\Plugin;
+use App\Core\Models\InstalledPlugin;
 use App\Core\Models\User;
 use Illuminate\Support\Collection;
 
 class PluginService
 {
+    /**
+     * Get all enabled plugins.
+     */
     public function getEnabledPlugins(): Collection
     {
-        return Plugin::where('enabled', true)
-            ->orderBy('order')
-            ->get();
-    }
-
-    public function getPluginsForPlayer(User $player): Collection
-    {
-        return Plugin::where('enabled', true)
-            ->where('required_level', '<=', $player->level ?? 1)
+        return InstalledPlugin::plugins()
+            ->where('enabled', true)
             ->orderBy('order')
             ->get();
     }
 
     /**
-     * Get navigation items for dashboard
+     * Get plugins for a player (all enabled plugins for now).
+     */
+    public function getPluginsForPlayer(User $player): Collection
+    {
+        return InstalledPlugin::plugins()
+            ->where('enabled', true)
+            ->orderBy('order')
+            ->get();
+    }
+
+    /**
+     * Get navigation items for dashboard.
      */
     public function getNavigationItems(User $player): Collection
     {
         return $this->getPluginsForPlayer($player)
-            ->filter(fn($plugin) => $this->hasNavigationConfig($plugin))
+            ->filter(fn($plugin) => $plugin->hasNavigation())
             ->map(function ($plugin) {
-                // Get navigation config - first check navigation_config, then fall back to settings.menu
-                $config = $this->getNavigationConfig($plugin);
+                $config = $plugin->getNavigationConfig();
 
                 return [
                     'name' => $plugin->name,
-                    'display_name' => $plugin->display_name,
+                    'display_name' => $plugin->name,
                     'description' => $plugin->description,
                     'icon' => $plugin->icon,
                     'route_name' => $plugin->route_name,
@@ -44,88 +50,55 @@ class PluginService
                     'color' => $config['color'] ?? 'bg-gray-600',
                     'order' => $config['order'] ?? $plugin->order ?? 100,
                     'section' => $config['section'] ?? 'main',
-                    'icon_svg' => $config['icon_svg'] ?? null,
+                    'icon_svg' => null,
                 ];
             })
             ->groupBy('section');
     }
 
     /**
-     * Check if a plugin has navigation configuration
+     * Check if a plugin is enabled by name or slug.
      */
-    protected function hasNavigationConfig($plugin): bool
+    public function isPluginEnabled(string $pluginName): bool
     {
-        // Check direct navigation_config field
-        if (!empty($plugin->navigation_config)) {
-            return true;
-        }
+        $plugin = InstalledPlugin::plugins()
+            ->where('enabled', true)
+            ->where(function ($query) use ($pluginName) {
+                $query->where('name', $pluginName)
+                    ->orWhere('slug', $pluginName);
+            })
+            ->first();
 
-        // Check if plugin has settings with menu configuration
-        $settings = $plugin->settings ?? [];
-        if (is_string($settings)) {
-            $settings = json_decode($settings, true);
-        }
-
-        if (!empty($settings['menu']['enabled'])) {
-            return true;
-        }
-
-        return false;
+        return $plugin !== null;
     }
 
     /**
-     * Get navigation configuration from plugin
+     * Check if player can access a plugin.
      */
-    protected function getNavigationConfig($plugin): array
-    {
-        // First check direct navigation_config field
-        if (!empty($plugin->navigation_config)) {
-            return is_array($plugin->navigation_config)
-                ? $plugin->navigation_config
-                : json_decode($plugin->navigation_config, true);
-        }
-
-        // Fall back to settings.menu
-        $settings = $plugin->settings ?? [];
-        if (is_string($settings)) {
-            $settings = json_decode($settings, true);
-        }
-
-        $menuSettings = $settings['menu'] ?? [];
-
-        if ($menuSettings) {
-            return [
-                'section' => $menuSettings['section'] ?? 'main',
-                'order' => $menuSettings['order'] ?? $plugin->order ?? 100,
-                'color' => $settings['color'] ?? 'bg-gray-600',
-                'icon' => $settings['icon'] ?? null,
-                'enabled' => $menuSettings['enabled'] ?? true,
-            ];
-        }
-
-        return [];
-    }
-
-    public function isPluginEnabled(string $pluginName): bool
-    {
-        $plugin = Plugin::where('name', $pluginName)->first();
-        return $plugin ? $plugin->enabled : false;
-    }
-
     public function canPlayerAccessPlugin(User $player, string $pluginName): bool
     {
-        $plugin = Plugin::where('name', $pluginName)->first();
+        $plugin = InstalledPlugin::plugins()
+            ->where('enabled', true)
+            ->where(function ($query) use ($pluginName) {
+                $query->where('name', $pluginName)
+                    ->orWhere('slug', $pluginName);
+            })
+            ->first();
 
-        if (!$plugin || !$plugin->enabled) {
-            return false;
-        }
-
-        return $player->level >= $plugin->required_level;
+        return $plugin !== null;
     }
 
+    /**
+     * Toggle plugin enabled state.
+     */
     public function togglePlugin(string $pluginName): bool
     {
-        $plugin = Plugin::where('name', $pluginName)->first();
+        $plugin = InstalledPlugin::plugins()
+            ->where(function ($query) use ($pluginName) {
+                $query->where('name', $pluginName)
+                    ->orWhere('slug', $pluginName);
+            })
+            ->first();
 
         if ($plugin) {
             $plugin->enabled = !$plugin->enabled;
@@ -136,12 +109,20 @@ class PluginService
         return false;
     }
 
+    /**
+     * Update plugin settings.
+     */
     public function updatePluginSettings(string $pluginName, array $settings): bool
     {
-        $plugin = Plugin::where('name', $pluginName)->first();
+        $plugin = InstalledPlugin::plugins()
+            ->where(function ($query) use ($pluginName) {
+                $query->where('name', $pluginName)
+                    ->orWhere('slug', $pluginName);
+            })
+            ->first();
 
         if ($plugin) {
-            $plugin->settings = array_merge($plugin->settings ?? [], $settings);
+            $plugin->config = array_merge($plugin->config ?? [], $settings);
             $plugin->save();
             return true;
         }
@@ -149,11 +130,30 @@ class PluginService
         return false;
     }
 
+    /**
+     * Reorder plugins.
+     */
     public function reorderPlugins(array $order): void
     {
-        foreach ($order as $pluginName => $position) {
-            Plugin::where('name', $pluginName)->update(['order' => $position]);
+        foreach ($order as $pluginSlug => $position) {
+            InstalledPlugin::where('slug', $pluginSlug)->update(['order' => $position]);
         }
+    }
+
+    /**
+     * Get plugin by slug.
+     */
+    public function getPlugin(string $slug): ?InstalledPlugin
+    {
+        return InstalledPlugin::where('slug', $slug)->first();
+    }
+
+    /**
+     * Get all plugins.
+     */
+    public function getAllPlugins(): Collection
+    {
+        return InstalledPlugin::plugins()->orderBy('order')->get();
     }
 
     // Backwards compatibility aliases

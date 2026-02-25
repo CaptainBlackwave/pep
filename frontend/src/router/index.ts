@@ -1,9 +1,60 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
 import type { RouteMeta } from '@/types/router'
 import '@/types/router' // Import for route meta type augmentation
+import { usePluginsStore } from '@/stores/plugins'
+import { registerPluginRoutes } from '@/composables/usePluginRoutes'
 
 // Re-export RouteMeta for convenience
 export type { RouteMeta } from '@/types/router'
+
+// Plugin slug to route mapping - used for static route definitions
+// Dynamic routes are loaded from backend via PluginManifestService
+const pluginRoutes: Record<string, string[]> = {
+  achievements: ['achievements'],
+  advancedcrimes: ['advanced-crimes'],
+  alliances: ['alliances'],
+  announcements: ['announcements'],
+  bounty: ['bounty'],
+  bullets: ['bullets'],
+  casino: ['casino', 'tournament'],
+  chat: ['chat'],
+  combat: ['combat'],
+  dailyrewards: ['daily-rewards'],
+  detective: ['detective'],
+  drugs: ['drugs'],
+  education: ['education'],
+  employment: ['employment'],
+  events: ['events'],
+  forum: ['forums'],
+  gang: ['gang'],
+  hospital: ['hospital'],
+  inventory: ['inventory'],
+  jail: ['jail'],
+  leaderboards: ['leaderboards'],
+  market: ['market'],
+  messaging: ['messaging'],
+  minirpg: ['mini-rpg'],
+  missions: ['missions'],
+  organizedcrime: ['organized-crime'],
+  progression: ['progression'],
+  properties: ['properties'],
+  quests: ['quests'],
+  racing: ['racing'],
+  stocks: ['stocks'],
+  theft: ['theft'],
+  tickets: ['tickets'],
+  tournament: ['tournament'],
+  travel: ['travel'],
+  wiki: ['wiki'],
+}
+
+// Reverse mapping: route name -> plugin slug
+const routeToPlugin: Record<string, string> = {}
+Object.entries(pluginRoutes).forEach(([plugin, routes]) => {
+  routes.forEach(route => {
+    routeToPlugin[route] = plugin
+  })
+})
 
 /**
  * Route definitions with lazy loading for optimal bundle size
@@ -385,9 +436,27 @@ const router = createRouter({
 })
 
 /**
- * Navigation guard for authentication
+ * Initialize dynamic plugin routes
+ * Called after plugins are loaded from the backend
  */
-router.beforeEach((to, _from, next) => {
+export async function initializePluginRoutes(): Promise<void> {
+  const pluginsStore = usePluginsStore()
+
+  // Fetch enabled plugins if not already loaded
+  if (!pluginsStore.loaded) {
+    await pluginsStore.fetchPlugins()
+  }
+
+  // Register dynamic routes from plugins
+  if (pluginsStore.routes.length > 0) {
+    registerPluginRoutes(router, pluginsStore.routes)
+  }
+}
+
+/**
+ * Navigation guard for authentication and plugin routes
+ */
+router.beforeEach(async (to, _from, next) => {
   const user = localStorage.getItem('user')
   const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
   const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
@@ -398,15 +467,33 @@ router.beforeEach((to, _from, next) => {
     document.title = `${title} | OpenPBBG`
   }
 
+  // Initialize plugin routes on first authenticated navigation
+  const pluginsStore = usePluginsStore()
+  if (user && !pluginsStore.loaded) {
+    await initializePluginRoutes()
+  }
+
   if (requiresAuth && !user) {
     // Redirect to login if auth required but not authenticated
     next({ name: 'login', query: { redirect: to.fullPath } })
-  } else if (requiresGuest && user) {
+    return
+  }
+
+  if (requiresGuest && user) {
     // Redirect to dashboard if guest route but already authenticated
     next({ name: 'dashboard' })
-  } else {
-    next()
+    return
   }
+
+  // Check if route requires an enabled plugin
+  const pluginSlug = to.meta?.plugin as string | undefined
+  if (pluginSlug && !pluginsStore.isEnabled(pluginSlug)) {
+    // Plugin not enabled, redirect to dashboard
+    next({ name: 'dashboard' })
+    return
+  }
+
+  next()
 })
 
 export default router

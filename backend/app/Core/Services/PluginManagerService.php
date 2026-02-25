@@ -28,6 +28,8 @@ class PluginManagerService
 
     /**
      * Get all available modules (installed + uninstalled).
+     *
+     * Auto-registers plugins found in filesystem that don't exist in database.
      */
     public function getAllPlugins(): array
     {
@@ -46,6 +48,23 @@ class PluginManagerService
 
                 if ($pluginJson) {
                     \Log::debug("getAllPlugins: Loaded plugin.json for $slug", $pluginJson);
+
+                    // Auto-register plugin if not in database (only if slug doesn't exist)
+                    if (!$installed->has($slug)) {
+                        // Check if record exists in DB (could have been deleted but files remain)
+                        $existingRecord = InstalledPlugin::where('slug', $slug)->first();
+
+                        if ($existingRecord) {
+                            // Record exists but wasn't in our collection - use it
+                            $installed[$slug] = $existingRecord;
+                        } else {
+                            // No record exists - create new one from manifest
+                            \Log::info("getAllPlugins: Auto-registering plugin $slug");
+                            $plugin = InstalledPlugin::createFromManifest($slug, $pluginJson);
+                            $installed[$slug] = $plugin;
+                        }
+                    }
+
                     $available[] = [
                         'slug' => $slug,
                         'name' => $pluginJson['name'] ?? $slug,
@@ -53,8 +72,8 @@ class PluginManagerService
                         'description' => $pluginJson['description'] ?? '',
                         'author' => $pluginJson['author'] ?? '',
                         'dependencies' => $this->extractPluginDeps($pluginJson),
-                        'installed' => $installed->has($slug),
-                        'enabled' => $installed->has($slug) ? $installed[$slug]->enabled : false,
+                        'installed' => true, // Now always true due to auto-registration
+                        'enabled' => $installed[$slug]->enabled,
                         'status' => 'installed',
                         'path' => $dir,
                     ];
@@ -355,6 +374,12 @@ class PluginManagerService
                 File::deleteDirectory($publicPath);
             }
 
+            // Remove plugin directory from app/Plugins
+            $actualDir = $this->findModuleDirectory($this->pluginsPath, $slug);
+            if ($actualDir) {
+                File::deleteDirectory($this->pluginsPath . '/' . $actualDir);
+            }
+
             // Remove from database
             $module->delete();
 
@@ -423,7 +448,8 @@ class PluginManagerService
     }
 
     /**
-     * Disable a module (move to disabled directory).
+     * Disable a module (sets enabled=false in database).
+     * Simplified implementation - no file movement required.
      */
     public function disablePlugin(string $slug): array
     {
@@ -437,44 +463,17 @@ class PluginManagerService
             return ['success' => false, 'message' => 'Module already disabled.'];
         }
 
-        // Find actual directory name (case-insensitive)
-        $actualDir = $this->findModuleDirectory($this->pluginsPath, $slug);
-        if (!$actualDir) {
-            return ['success' => false, 'message' => 'Module directory not found.'];
-        }
+        $module->disable();
 
-        $installedPath = $this->pluginsPath . '/' . $actualDir;
-        $disabledPath = $this->disabledPath . '/' . $actualDir;
+        $this->callLifecycleHook($slug, 'disable');
 
-        try {
-            // Move to disabled directory
-            if (!File::exists($this->disabledPath)) {
-                File::makeDirectory($this->disabledPath, 0755, true);
-            }
+        Artisan::call('config:clear');
+        Artisan::call('route:clear');
 
-            if (File::exists($disabledPath)) {
-                File::deleteDirectory($disabledPath);
-            }
-
-            File::move($installedPath, $disabledPath);
-
-            $module->disable();
-
-            $this->callLifecycleHook($slug, 'disable');
-
-            Artisan::call('config:clear');
-            Artisan::call('route:clear');
-
-            return [
-                'success' => true,
-                'message' => "Module '{$module->name}' disabled successfully."
-            ];
-        } catch (\Exception $e) {
-            return [
-                'success' => false,
-                'message' => 'Failed to disable: ' . $e->getMessage()
-            ];
-        }
+        return [
+            'success' => true,
+            'message' => "Module '{$module->name}' disabled successfully."
+        ];
     }
 
     /**

@@ -3,16 +3,40 @@
 namespace App\Core\Http\Controllers;
 
 use App\Core\Services\PluginManagerService;
+use App\Core\Services\PluginManifestService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Validator;
 
 class PluginController extends Controller
 {
     protected $pluginManager;
+    protected $pluginManifest;
 
-    public function __construct(PluginManagerService $pluginManager)
-    {
+    public function __construct(
+        PluginManagerService $pluginManager,
+        PluginManifestService $pluginManifest
+    ) {
         $this->pluginManager = $pluginManager;
+        $this->pluginManifest = $pluginManifest;
+    }
+
+    /**
+     * Get all enabled plugins for frontend navigation.
+     * Public endpoint - no authentication required.
+     *
+     * Returns complete plugin manifest including routes, components,
+     * navigation configuration, and frontend integration data.
+     */
+    public function enabled()
+    {
+        $plugins = $this->pluginManifest->getEnabledPluginsForFrontend();
+
+        return response()->json([
+            'success' => true,
+            'plugins' => $plugins->values(),
+            'navigation' => $this->pluginManifest->getNavigationItems(),
+            'routes' => $this->pluginManifest->getPluginRoutes(),
+        ]);
     }
 
     /**
