@@ -36,8 +36,9 @@ class DatabaseSeeder extends Seeder
             CasinoGamesSeeder::class,
             CombatLocationsSeeder::class,
 
-            // ⚠️ OPTIONAL: Uncomment to create default admin user
-            // DefaultAdminSeeder::class,
+            // User accounts for development/testing
+            DefaultAdminSeeder::class,
+            TestUserSeeder::class,
         ]);
     }
 }

@@ -7,35 +7,35 @@ use Illuminate\Database\Seeder;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Hash;
 
-class DefaultAdminSeeder extends Seeder
+class TestUserSeeder extends Seeder
 {
     /**
      * Run the database seeds.
      *
-     * This creates a default admin user for quick deployment.
+     * This creates a test user for development/testing purposes.
      *
      * ⚠️ SECURITY WARNING:
-     * Only use this in development or immediately after deployment.
-     * Change the password immediately after first login.
+     * Only use this in development or testing environments.
+     * Remove or change these credentials in production!
      *
      * Default Credentials:
-     * Username: admin
-     * Password: admin123
+     * Username: testuser
+     * Password: testpass123
      */
     public function run(): void
     {
-        // Check if admin user already exists
-        if (User::where('username', 'admin')->exists()) {
-            $this->command->warn('Admin user already exists. Skipping...');
+        // Check if test user already exists
+        if (User::where('username', 'testuser')->exists()) {
+            $this->command->warn('Test user already exists. Skipping...');
             return;
         }
 
-        // Check if admin role exists
-        $adminRole = \Spatie\Permission\Models\Role::where('name', 'admin')
+        // Check if user role exists
+        $userRole = \Spatie\Permission\Models\Role::where('name', 'user')
             ->where('guard_name', 'sanctum')
             ->first();
-        if (!$adminRole) {
-            $this->command->error('Admin role not found. Run RolePermissionSeeder first.');
+        if (!$userRole) {
+            $this->command->error('User role not found. Run RolePermissionSeeder first.');
             return;
         }
 
@@ -48,16 +48,16 @@ class DefaultAdminSeeder extends Seeder
             return;
         }
 
-        $this->command->info('Creating default admin user...');
+        $this->command->info('Creating test user...');
 
         // Create user with identity fields only (game stats go to PlayerProfile)
         $user = User::create([
-            'name'                  => 'Administrator',
-            'username'              => 'admin',
-            'email'                 => 'admin@example.com',
-            'password'              => Hash::make('admin123'),
+            'name'                  => 'Test User',
+            'username'              => 'testuser',
+            'email'                 => 'testuser@example.com',
+            'password'              => Hash::make('testpass123'),
             'email_verified_at'     => now(),
-            'force_password_change' => true,
+            'force_password_change' => false,
         ]);
 
         // User::booted() auto-creates a profile with defaults.
@@ -79,15 +79,14 @@ class DefaultAdminSeeder extends Seeder
             'respect'     => 0,
         ]);
 
-        // Assign admin role
-        $user->assignRole('admin');
+        // Assign default user role
+        $user->assignRole('user');
 
-        $this->command->info('✅ Default admin user created successfully!');
+        $this->command->info('✅ Test user created successfully!');
         $this->command->newLine();
-        $this->command->warn('⚠️  DEFAULT CREDENTIALS:');
-        $this->command->line('   Username: admin');
-        $this->command->line('   Password: admin123');
-        $this->command->newLine();
-        $this->command->error('🔒 CHANGE PASSWORD IMMEDIATELY AFTER FIRST LOGIN!');
+        $this->command->warn('⚠️  TEST USER CREDENTIALS:');
+        $this->command->line('   Username: testuser');
+        $this->command->line('   Email: testuser@example.com');
+        $this->command->line('   Password: testpass123');
     }
 }

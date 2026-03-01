@@ -121,7 +121,7 @@ export const usePluginsStore = defineStore('plugins', () => {
 
     loading.value = true
     try {
-      const response = await api.get('/plugins/enabled')
+      const response = await api.get('/api/v1/plugins/enabled')
       if (response.data.success) {
         plugins.value = response.data.plugins
         routes.value = response.data.routes || []
@@ -139,7 +139,7 @@ export const usePluginsStore = defineStore('plugins', () => {
   async function refreshPlugins() {
     loaded.value = false
     loading.value = false
-    api.clearCache('/plugins/enabled')
+    api.clearCache('/api/v1/plugins/enabled')
     await fetchPlugins()
   }
 

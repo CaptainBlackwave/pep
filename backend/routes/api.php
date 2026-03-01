@@ -24,6 +24,12 @@ Route::prefix('v1')->group(function () {
     // Public plugin info (for frontend navigation)
     Route::get('/plugins/enabled', [PluginController::class, 'enabled']);
 
+    // Public license routes (for installation/setup)
+    Route::prefix('license')->controller(\App\Core\Http\Controllers\Admin\LicenseController::class)->group(function () {
+        Route::get('/status', 'status');
+        Route::post('/activate', 'activate');
+    });
+
     // Public authentication routes (rate limited to prevent brute force)
     Route::middleware('throttle:10,1')->group(function () {
         Route::post('/register', [AuthController::class, 'register']);
