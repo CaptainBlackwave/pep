@@ -1,5 +1,5 @@
 /**
- * API Type Definitions for OpenPBBG
+ * API Type Definitions for PBBG Vault
  * Central location for all API-related types
  */
 

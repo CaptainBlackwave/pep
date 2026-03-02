@@ -190,13 +190,6 @@
                   </div>
                   <div class="py-2">
                     <button
-                      @click="goToGame"
-                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
-                    >
-                      <GlobeAltIcon class="w-5 h-5" />
-                      Back to Game
-                    </button>
-                    <button
                       @click="editProfile"
                       class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
                     >
@@ -281,7 +274,6 @@ import {
   ShoppingCartIcon,
   RocketLaunchIcon,
   StarIcon,
-  GlobeAltIcon,
   UserCircleIcon,
   EnvelopeIcon,
   CircleStackIcon,
@@ -307,7 +299,7 @@ const iconMap = {
   ChatBubbleLeftRightIcon, QuestionMarkCircleIcon, BookOpenIcon, ClockIcon,
   ExclamationTriangleIcon, NoSymbolIcon, PuzzlePieceIcon, FlagIcon, CommandLineIcon,
   BeakerIcon, ShoppingBagIcon, ShoppingCartIcon, RocketLaunchIcon, StarIcon,
-  GlobeAltIcon, UserCircleIcon, EnvelopeIcon, CircleStackIcon, HeartIcon, KeyIcon,
+  UserCircleIcon, EnvelopeIcon, CircleStackIcon, HeartIcon, KeyIcon,
   BriefcaseIcon, LifebuoyIcon, ServerIcon, CubeIcon, IdentificationIcon, TagIcon, BellIcon,
 }
 
@@ -405,7 +397,7 @@ const pageTitle = computed(() => {
     '/users': 'User Management',
     '/user-tools': 'User Tools',
     '/roles': 'Roles & Permissions',
-    '/settings': 'Game Settings',
+    '/settings': 'Settings',
     '/email-settings': 'Email Settings',
     '/plugin-settings': 'Plugins',
     '/ip-bans': 'IP Bans',
@@ -415,21 +407,12 @@ const pageTitle = computed(() => {
     '/ticket-categories': 'Ticket Categories',
     '/api-keys': 'API Keys',
     '/system-health': 'System Health',
-    '/item-market': 'Item Market',
     '/forum-categories': 'Forum Categories',
-    '/combat-locations': 'Combat Locations',
-    '/combat-areas': 'Combat Areas',
-    '/combat-enemies': 'Combat Enemies',
-    '/combat-logs': 'Combat Logs',
     '/error-logs': 'Error Logs',
     '/activity-logs': 'Activity Logs',
     '/security': 'Security Settings',
     '/license': 'License Management',
     '/announcements': 'Announcements',
-    '/job-positions': 'Job Positions',
-    '/casino-games': 'Casino Games',
-    '/organized-crimes': 'Organized Crimes',
-    '/theft-types': 'Theft Types',
   }
 
   // Check overrides first
@@ -466,12 +449,6 @@ const logout = () => {
   localStorage.removeItem('admin_token')
   localStorage.removeItem('admin_user')
   router.push('/login')
-}
-
-const goToGame = () => {
-  // Get the frontend URL from environment or default
-  const gameUrl = import.meta.env.VITE_GAME_URL || 'http://localhost:5173'
-  window.open(gameUrl, '_blank')
 }
 
 const editProfile = () => {

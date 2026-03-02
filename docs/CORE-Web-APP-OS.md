@@ -2,7 +2,7 @@
 
 ## Overview
 
-Core Web APP OS is a clean, modular web application platform that serves as the foundation for any web application. It provides essential functionality for user management, authentication, plugin system, and administrative tools.
+Core Web APP OS is the foundation that powers **PBBG Vault** - a SaaS platform and marketplace for Persistent Browser-Based Game (PBBG) developers. It provides essential functionality for user management, authentication, plugin system, and administrative tools.
 
 ## Architecture
 
@@ -332,4 +332,4 @@ npm run build
 
 ## Support
 
-For support, please open an issue on GitHub or contact support@webappos.dev
+For support, please open an issue on GitHub or contact support@pbbgvault.dev

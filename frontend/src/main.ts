@@ -1,5 +1,5 @@
 /**
- * OpenPBBG Frontend Application Entry Point
+ * PBBG Vault Frontend Application Entry Point
  */
 
 // Global styles

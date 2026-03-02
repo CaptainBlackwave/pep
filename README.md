@@ -1,11 +1,25 @@
-# LaravelCP - Persistent Browser-Based Game (PBBG)
+# 🔐 PBBG Vault - The PBBG Development Platform
 
-A comprehensive Persistent Browser-Based Game platform built with modern technologies, featuring a Vue 3 frontend and Laravel 11 backend with a modular plugin architecture.
+A comprehensive SaaS platform and marketplace for Persistent Browser-Based Game (PBBG) developers. Build, share, and monetize plugins, themes, and games using the Core Web APP OS.
 
 [![Frontend](https://img.shields.io/badge/Frontend-Vue%203-42b883.svg)](https://vuejs.org/)
 [![Backend](https://img.shields.io/badge/Backend-Laravel%2011-red.svg)](https://laravel.com)
 [![PHP](https://img.shields.io/badge/PHP-8.3+-blue.svg)](https://php.net)
 [![License](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+
+---
+
+## What is PBBG Vault?
+
+PBBG Vault is a **developer platform** that provides:
+
+- 🧩 **Plugin System** - Modular architecture to extend functionality
+- 🎨 **Theme Engine** - Customize the look and feel of your games
+- 📦 **Plugin Bundles** - Package and distribute your creations
+- ⚡ **Real-time Updates** - WebSocket-powered live features
+- 🛒 **Marketplace** - Share and monetize your plugins
+
+Built on the **Core Web APP OS**, a robust foundation for creating persistent browser-based games and web applications.
 
 ---
 
@@ -27,7 +41,7 @@ LaravelCP/
 ├── backend/                     # Laravel 11 + PHP 8.3
 │   ├── app/
 │   │   ├── Core/                # Core system components
-│   │   └── Plugins/             # Game feature plugins (28 built-in)
+│   │   └── Plugins/             # Game feature plugins
 │   ├── routes/                  # API routes
 │   ├── database/                # Migrations & seeders
 │   ├── composer.json
@@ -156,79 +170,33 @@ php artisan scribe:generate
 
 ---
 
-## Testing
-
-### Frontend Tests
-
-```bash
-cd frontend
-
-# Unit tests (Vitest)
-npm run test:unit
-
-# E2E tests (Playwright)
-npx playwright install        # First time only
-npm run test:e2e
-
-# Run specific E2E test
-npm run test:e2e -- --project=chromium
-```
-
-### Backend Tests
-
-```bash
-cd backend
-
-# Run all tests
-php artisan test
-
-# Run specific test
-php artisan test --filter=ExampleTest
-
-# Run with coverage
-php artisan test --coverage
-```
-
----
-
-## Game Features
+## Platform Features
 
 ### Core System
 - 🔐 **Authentication** - Sanctum-based API auth with role-based access control
 - 👥 **User Management** - Player profiles, stats, inventory, progression
-- 🎮 **Game Engine** - Timers, cooldowns, experience, leveling, rank system
+- 🔌 **Plugin Architecture** - Modular, hook-based plugin system
+- 🎨 **Theme Engine** - Customizable themes and templates
 - 🔔 **Notifications** - Real-time player and admin notifications
 
-### Built-in Plugins (28)
+### Plugin Marketplace
 
-| Plugin | Description |
-|--------|-------------|
-| Achievements | Track and reward player accomplishments |
-| Bank | Player banking with interest and transfers |
-| Casino | Slots, dice, roulette gambling games |
-| Chat | Real-time chat with channels and DMs |
-| Combat | PvP and PvE combat system |
-| Crimes | Crime activities with cooldowns and rewards |
-| DailyRewards | Daily login bonuses |
-| Detective | Player investigation system |
-| Drugs | Drug trade mechanics |
-| Education | Skill training courses |
-| Employment | Job system with shifts |
-| Forum | Community discussion boards |
-| Gang | Gang/faction system |
-| Hospital | Health recovery system |
-| Inventory | Items, equipment, effects |
-| Jail | Jail system with bailout/bustout |
-| Leaderboards | Player rankings |
-| Missions | Quest/mission system |
-| OrganizedCrime | Group heist mechanics |
-| Properties | Real estate ownership |
-| Racing | Vehicle racing competitions |
-| Stocks | Stock market trading |
-| Theft | Theft from other players |
-| Tickets | Support ticket system |
-| Travel | Location-based travel |
-| And more... | |
+The platform includes a built-in plugin marketplace where developers can:
+
+- Publish and share plugins
+- Create plugin bundles
+- Manage versions and updates
+- Track installations and usage
+
+### Available Plugin Categories
+
+| Category | Examples |
+|----------|----------|
+| **Game Mechanics** | Combat, Crimes, Missions, Achievements |
+| **Social** | Chat, Forum, Gangs, Friends |
+| **Economy** | Bank, Casino, Stocks, Trading |
+| **Content** | Properties, Travel, Racing, Education |
+| **Admin Tools** | Tickets, Leaderboards, Analytics |
 
 ---
 
@@ -288,6 +256,41 @@ docker compose exec frontend sh
 
 ---
 
+## Testing
+
+### Frontend Tests
+
+```bash
+cd frontend
+
+# Unit tests (Vitest)
+npm run test:unit
+
+# E2E tests (Playwright)
+npx playwright install        # First time only
+npm run test:e2e
+
+# Run specific E2E test
+npm run test:e2e -- --project=chromium
+```
+
+### Backend Tests
+
+```bash
+cd backend
+
+# Run all tests
+php artisan test
+
+# Run specific test
+php artisan test --filter=ExampleTest
+
+# Run with coverage
+php artisan test --coverage
+```
+
+---
+
 ## Deployment
 
 See [DEPLOYMENT.md](./DEPLOYMENT.md) for detailed production deployment instructions.
@@ -326,11 +329,13 @@ php artisan view:cache
 - [Integration Guide](./INTEGRATION_GUIDE.md) - Frontend-backend integration details
 - [Backend README](./backend/README.md) - Backend-specific documentation
 - [Plugin Development](./backend/docs/PLUGIN_HOOKS.md) - Creating custom plugins
+- [Core Web APP OS](./docs/CORE-Web-APP-OS.md) - Platform architecture
 
 ---
 
 ## Support
 
+- 📧 Email: support@pbbgvault.dev
 - 🐛 [Issue Tracker](https://github.com/Lindon11/LaravelCP/issues)
 - 💬 [Discussions](https://github.com/Lindon11/LaravelCP/discussions)
 

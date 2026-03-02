@@ -1,5 +1,5 @@
 /**
- * WebSocket Service for OpenPBBG
+ * WebSocket Service for PBBG Vault
  * Manages WebSocket connections for real-time features
  */
 

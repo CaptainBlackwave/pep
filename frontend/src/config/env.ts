@@ -102,7 +102,7 @@ export const config = {
     cluster: getEnvVar('VITE_WS_CLUSTER')
   },
   app: {
-    name: 'OpenPBBG',
+    name: 'PBBG Vault',
     version: '1.0.0'
   }
 }

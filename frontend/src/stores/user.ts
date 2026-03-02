@@ -55,7 +55,8 @@ export const useUserStore = defineStore('user', () => {
 
   // Computed - Basic info
   const userId = computed(() => profile.value?.id ?? null)
-  const username = computed(() => profile.value?.username ?? 'Guest')
+  // Fallback to name if username is null/undefined/empty
+  const username = computed(() => profile.value?.username || profile.value?.name || 'Guest')
   const displayName = computed(() => profile.value?.name || profile.value?.username || 'Guest')
   const email = computed(() => profile.value?.email ?? null)
   const avatar = computed(() => profile.value?.avatar ?? null)
@@ -75,10 +76,19 @@ export const useUserStore = defineStore('user', () => {
    * Transform API response to store format
    */
   function transformUserData(data: Record<string, unknown>): UserProfile {
+    // Get username and name from API response
+    const apiUsername = data.username as string | null | undefined
+    const apiName = data.name as string | null | undefined
+
+    // Username falls back to name if not provided
+    const finalUsername = apiUsername || apiName || 'Guest'
+    // Name falls back to username if not provided
+    const finalName = apiName || apiUsername || 'Guest'
+
     return {
       id: data.id as number,
-      username: (data.username as string) ?? 'Unknown',
-      name: (data.name as string) ?? (data.username as string) ?? 'Unknown',
+      username: finalUsername,
+      name: finalName,
       email: (data.email as string) ?? '',
       avatar: (data.avatar as string) ?? (data.profile_photo_url as string) ?? undefined,
       bio: (data.bio as string) ?? undefined,

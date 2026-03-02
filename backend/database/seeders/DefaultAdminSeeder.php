@@ -40,13 +40,12 @@ class DefaultAdminSeeder extends Seeder
         }
 
         // Look up first rank and location dynamically — never hardcode IDs
-        $firstRank    = DB::table('ranks')->orderBy('required_exp')->first();
-        $firstLocation = DB::table('locations')->orderBy('id')->first();
-
-        if (!$firstRank || !$firstLocation) {
-            $this->command->error('Ranks or locations not seeded. Run RanksTableSeeder and LocationSeeder first.');
-            return;
+        // Ranks are optional (provided by Progression plugin)
+        $firstRank = null;
+        if (DB::getSchemaBuilder()->hasTable('ranks')) {
+            $firstRank = DB::table('ranks')->orderBy('required_exp')->first();
         }
+        $firstLocation = DB::table('locations')->orderBy('id')->first();
 
         $this->command->info('Creating default admin user...');
 
@@ -61,23 +60,33 @@ class DefaultAdminSeeder extends Seeder
         ]);
 
         // User::booted() auto-creates a profile with defaults.
-        // Update the profile with proper game stats.
-        $user->profile()->update([
-            'rank_id'     => $firstRank->id,
-            'rank'        => $firstRank->name,
-            'location_id' => $firstLocation->id,
-            'location'    => $firstLocation->name,
+        // Update the profile with proper game stats if ranks/locations exist.
+        $profileData = [
             'level'       => 1,
             'experience'  => 0,
             'energy'      => 100,
             'max_energy'  => 100,
-            'health'      => $firstRank->max_health ?? 100,
-            'max_health'  => $firstRank->max_health ?? 100,
+            'health'      => 100,
+            'max_health'  => 100,
             'cash'        => 1000,
             'bank'        => 0,
             'bullets'     => 50,
             'respect'     => 0,
-        ]);
+        ];
+
+        if ($firstRank) {
+            $profileData['rank_id'] = $firstRank->id;
+            $profileData['rank'] = $firstRank->name;
+            $profileData['health'] = $firstRank->max_health ?? 100;
+            $profileData['max_health'] = $firstRank->max_health ?? 100;
+        }
+
+        if ($firstLocation) {
+            $profileData['location_id'] = $firstLocation->id;
+            $profileData['location'] = $firstLocation->name;
+        }
+
+        $user->profile()->update($profileData);
 
         // Assign admin role
         $user->assignRole('admin');

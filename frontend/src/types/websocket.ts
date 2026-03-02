@@ -1,5 +1,5 @@
 /**
- * WebSocket Type Definitions for OpenPBBG
+ * WebSocket Type Definitions for PBBG Vault
  */
 
 /**

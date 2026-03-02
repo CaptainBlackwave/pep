@@ -26,7 +26,7 @@ class UserResource extends JsonResource
             // Identity (Core-owned)
             'id'       => $this->id,
             'name'     => $this->name,
-            'username' => array_key_exists('username', $attrs) ? ($attrs['username'] ?? null) : null,
+            'username' => $attrs['username'] ?? $this->name ?? null,
             'email'    => $this->email,
 
             // Game/plugin stats (Progression-owned) — only if profile eager-loaded

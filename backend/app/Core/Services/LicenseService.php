@@ -27,6 +27,34 @@ VQIDAQAB
 -----END PUBLIC KEY-----';
 
     /**
+     * Get the public key for verification.
+     * In local development with a private key, derive the public key from it.
+     */
+    private static function getPublicKey(): string
+    {
+        // Check for local public key file first
+        $publicKeyPath = base_path('license_public.pem');
+        if (file_exists($publicKeyPath)) {
+            return file_get_contents($publicKeyPath);
+        }
+
+        // If we have a private key locally, derive the public key from it
+        $privateKeyPath = env('LCP_LICENSE_PRIVATE_KEY_PATH', base_path('license_private.pem'));
+        if (file_exists($privateKeyPath)) {
+            $privateKey = openssl_pkey_get_private(file_get_contents($privateKeyPath));
+            if ($privateKey) {
+                $details = openssl_pkey_get_details($privateKey);
+                if (isset($details['key'])) {
+                    return $details['key'];
+                }
+            }
+        }
+
+        // Fall back to hardcoded production public key
+        return self::PUBLIC_KEY;
+    }
+
+    /**
      * License key format: LCP-{TIER}-{ENCODED_PAYLOAD}-{SIGNATURE}
      *
      * Payload contains: domain, tier, issued date, expiry, customer info
@@ -137,7 +165,7 @@ VQIDAQAB
         }
 
         // Verify with public key
-        $publicKey = openssl_pkey_get_public(self::PUBLIC_KEY);
+        $publicKey = openssl_pkey_get_public(self::getPublicKey());
         if (!$publicKey) {
             return self::invalid('Public key error.');
         }

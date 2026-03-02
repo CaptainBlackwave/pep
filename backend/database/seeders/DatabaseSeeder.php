@@ -19,7 +19,7 @@ class DatabaseSeeder extends Seeder
             PluginSeeder::class,
             ModuleSeeder::class,
             LocationSeeder::class,
-            TicketCategorySeeder::class,
+            // TicketCategorySeeder::class, // Moved to Tickets plugin
 
             // User accounts for development/testing
             DefaultAdminSeeder::class,

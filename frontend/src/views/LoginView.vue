@@ -6,35 +6,35 @@
         <div class="pattern-bg" style="background-image: url('data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iNjAiIGhlaWdodD0iNjAiIHZpZXdCb3g9IjAgMCA2MCA2MCIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48ZyBmaWxsPSJub25lIiBmaWxsLXJ1bGU9ImV2ZW5vZGQiPjxnIGZpbGw9IiNmZmYiIGZpbGwtb3BhY2l0eT0iMC4xIj48cGF0aCBkPSJNMzYgMzRjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6TTI2IDM0YzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHptMC0xMGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6bTAtMTBjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00ek00NiAzNGMwLTIuMjEtMS43OS00LTQtNHMtNCAxLjc5LTQgNCAxLjc5IDQgNCA0IDQtMS43OSA0LTR6bTAtMTBjMC0yLjIxLTEuNzktNC00LTRzLTQgMS43OS00IDQgMS43OSA0IDQgNCA0LTEuNzkgNC00em0wLTEwYzAtMi4yMS0xLjc5LTQtNC00cy00IDEuNzktNCA0IDEuNzkgNCA0IDQgNC0xLjc5IDQtNHoiLz48L2c+PC9nPjwvc3ZnPg==')"></div>
       </div>
       <div class="branding-content">
-        <h1 class="branding-title">🎲 OpenPBBG</h1>
-        <p class="branding-subtitle">Build Your Criminal Empire</p>
+        <h1 class="branding-title">🔐 PBBG Vault</h1>
+        <p class="branding-subtitle">The PBBG Development Platform</p>
         <div class="features">
           <div class="feature-item">
-            <span class="feature-icon">💰</span>
+            <span class="feature-icon">🔌</span>
             <div>
-              <h3 class="feature-title">Commit Crimes</h3>
-              <p class="feature-desc">Earn cash, gain experience, and climb the ranks</p>
+              <h3 class="feature-title">Plugin System</h3>
+              <p class="feature-desc">Extend functionality with modular plugins</p>
             </div>
           </div>
           <div class="feature-item">
-            <span class="feature-icon">⚔️</span>
+            <span class="feature-icon">🎨</span>
             <div>
-              <h3 class="feature-title">Battle Players</h3>
-              <p class="feature-desc">Attack rivals and defend your turf</p>
+              <h3 class="feature-title">Theme Engine</h3>
+              <p class="feature-desc">Customize the look and feel of your game</p>
             </div>
           </div>
           <div class="feature-item">
-            <span class="feature-icon">👥</span>
+            <span class="feature-icon">📦</span>
             <div>
-              <h3 class="feature-title">Form Gangs</h3>
-              <p class="feature-desc">Team up with others to dominate the streets</p>
+              <h3 class="feature-title">Plugin Bundles</h3>
+              <p class="feature-desc">Package and distribute your creations</p>
             </div>
           </div>
           <div class="feature-item">
-            <span class="feature-icon">🏆</span>
+            <span class="feature-icon">⚡</span>
             <div>
-              <h3 class="feature-title">Rule the City</h3>
-              <p class="feature-desc">Rise from Thug to Godfather</p>
+              <h3 class="feature-title">Real-time Updates</h3>
+              <p class="feature-desc">WebSocket-powered live features</p>
             </div>
           </div>
         </div>
@@ -46,13 +46,13 @@
       <div class="form-container">
         <!-- Mobile Logo -->
         <div class="mobile-logo">
-          <h1 class="mobile-title">🎲 OpenPBBG</h1>
-          <p class="mobile-subtitle">Build Your Criminal Empire</p>
+          <h1 class="mobile-title">🔐 PBBG Vault</h1>
+          <p class="mobile-subtitle">The PBBG Development Platform</p>
         </div>
 
         <div class="welcome-header">
           <h2 class="welcome-title">Welcome Back</h2>
-          <p class="welcome-subtitle">Sign in to continue your criminal empire</p>
+          <p class="welcome-subtitle">Sign in to access your developer dashboard</p>
         </div>
 
         <div v-if="authStore.error" class="error-message">
@@ -167,7 +167,7 @@ async function handleLogin() {
 .branding-side {
   display: none;
   width: 50%;
-  background: linear-gradient(to bottom right, #7f1d1d, #1f2937, #000000);
+  background: linear-gradient(to bottom right, #78350f, #1f2937, #000000);
   position: relative;
   overflow: hidden;
 }

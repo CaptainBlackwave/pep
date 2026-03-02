@@ -1,5 +1,5 @@
 /**
- * Frontend Error Logging Plugin for OpenPBBG
+ * Frontend Error Logging Plugin for PBBG Vault
  * Captures and logs frontend errors to the backend
  */
 import axios, { type AxiosError, type AxiosInstance } from 'axios'

@@ -91,6 +91,7 @@ const router = createRouter({
           name: 'tasks',
           component: () => import('../views/TasksView.vue')
         },
+        // User Management
         {
           path: '/users',
           name: 'users',
@@ -106,6 +107,7 @@ const router = createRouter({
           name: 'roles',
           component: () => import('../views/RolesView.vue')
         },
+        // Configuration
         {
           path: '/settings',
           name: 'settings',
@@ -126,56 +128,7 @@ const router = createRouter({
           name: 'plugin-settings',
           component: () => import('../views/PluginsView.vue')
         },
-        {
-          path: '/locations',
-          name: 'locations',
-          component: () => import('../views/LocationsView.vue')
-        },
-        {
-          path: '/ranks',
-          name: 'ranks',
-          component: () => import('../views/RanksView.vue')
-        },
-        {
-          path: '/crimes',
-          name: 'crimes',
-          component: () => import('../views/CrimesManagementView.vue')
-        },
-        {
-          path: '/organized-crimes',
-          name: 'organized-crimes',
-          component: () => import('../views/OrganizedCrimesView.vue')
-        },
-        {
-          path: '/drugs',
-          name: 'drugs',
-          component: () => import('../views/DrugsManagementView.vue')
-        },
-        {
-          path: '/items',
-          name: 'items',
-          component: () => import('../views/ItemsView.vue')
-        },
-        {
-          path: '/properties',
-          name: 'properties',
-          component: () => import('../views/PropertiesView.vue')
-        },
-        {
-          path: '/cars',
-          name: 'cars',
-          component: () => import('../views/CarsView.vue')
-        },
-        {
-          path: '/bounties',
-          name: 'bounties',
-          component: () => import('../views/BountiesView.vue')
-        },
-        {
-          path: '/gangs',
-          name: 'gangs',
-          component: () => import('../views/GangsView.vue')
-        },
+        // Communication
         {
           path: '/announcements',
           name: 'announcements',
@@ -197,85 +150,16 @@ const router = createRouter({
           component: () => import('../views/ForumCategoriesView.vue')
         },
         {
-          path: '/missions',
-          name: 'missions',
-          component: () => import('../views/MissionsView.vue')
+          path: '/events',
+          name: 'events',
+          component: () => import('../views/EventsView.vue')
         },
         {
-          path: '/achievements',
-          name: 'achievements',
-          component: () => import('../views/AchievementsView.vue')
+          path: '/chat-channels',
+          name: 'chat-channels',
+          component: () => import('../views/ChatChannelsView.vue')
         },
-        {
-          path: '/theft-types',
-          name: 'theft-types',
-          component: () => import('../views/TheftTypesView.vue')
-        },
-        {
-          path: '/memberships',
-          name: 'memberships',
-          component: () => import('../views/MembershipsView.vue')
-        },
-        {
-          path: '/companies',
-          name: 'companies',
-          component: () => import('../views/CompaniesView.vue')
-        },
-        {
-          path: '/job-positions',
-          name: 'job-positions',
-          component: () => import('../views/JobPositionsView.vue')
-        },
-        {
-          path: '/courses',
-          name: 'courses',
-          component: () => import('../views/CoursesView.vue')
-        },
-        {
-          path: '/stocks',
-          name: 'stocks',
-          component: () => import('../views/StocksView.vue')
-        },
-        {
-          path: '/casino-games',
-          name: 'casino-games',
-          component: () => import('../views/CasinoGamesView.vue')
-        },
-        {
-          path: '/lotteries',
-          name: 'lotteries',
-          component: () => import('../views/LotteriesView.vue')
-        },
-        {
-          path: '/ip-bans',
-          name: 'ip-bans',
-          component: () => import('../views/IpBansView.vue')
-        },
-        {
-          path: '/combat-logs',
-          name: 'combat-logs',
-          component: () => import('../views/CombatLogsView.vue')
-        },
-        {
-          path: '/combat-locations',
-          name: 'combat-locations',
-          component: () => import('../views/CombatLocationsView.vue')
-        },
-        {
-          path: '/combat-areas',
-          name: 'combat-areas',
-          component: () => import('../views/CombatAreasView.vue')
-        },
-        {
-          path: '/combat-enemies',
-          name: 'combat-enemies',
-          component: () => import('../views/CombatEnemiesView.vue')
-        },
-        {
-          path: '/races',
-          name: 'races',
-          component: () => import('../views/RacesView.vue')
-        },
+        // Support
         {
           path: '/tickets/:id',
           name: 'ticket-detail',
@@ -291,15 +175,16 @@ const router = createRouter({
           name: 'ticket-categories',
           component: () => import('../views/TicketCategoriesView.vue')
         },
+        // System
+        {
+          path: '/ip-bans',
+          name: 'ip-bans',
+          component: () => import('../views/IpBansView.vue')
+        },
         {
           path: '/error-logs',
           name: 'error-logs',
           component: () => import('../views/ErrorLogsView.vue')
-        },
-        {
-          path: '/item-market',
-          name: 'item-market',
-          component: () => import('../views/ItemMarketView.vue')
         },
         {
           path: '/activity-logs',
@@ -330,31 +215,6 @@ const router = createRouter({
           path: '/api-keys',
           name: 'api-keys',
           component: () => import('../views/ApiKeysView.vue')
-        },
-        {
-          path: '/events',
-          name: 'events',
-          component: () => import('../views/EventsView.vue')
-        },
-        {
-          path: '/chat-channels',
-          name: 'chat-channels',
-          component: () => import('../views/ChatChannelsView.vue')
-        },
-        {
-          path: '/daily-rewards',
-          name: 'daily-rewards',
-          component: () => import('../views/DailyRewardsView.vue')
-        },
-        {
-          path: '/leaderboards',
-          name: 'leaderboards',
-          component: () => import('../views/LeaderboardsView.vue')
-        },
-        {
-          path: '/jail',
-          name: 'jail',
-          component: () => import('../views/JailView.vue')
         }
       ]
     }
