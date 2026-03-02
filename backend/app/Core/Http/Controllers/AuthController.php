@@ -29,8 +29,25 @@ class AuthController extends Controller
 
         // Look up first rank and location dynamically — never hardcode IDs.
         // These models live in plugins (Progression, Travel) but are accessible via Core shims.
-        $firstRank     = \App\Core\Models\Rank::orderBy('required_exp')->first();
-        $firstLocation = \App\Core\Models\Location::orderBy('id')->first();
+        // Gracefully handle core-only installs where these tables may not exist.
+        $firstRank     = null;
+        $firstLocation = null;
+
+        try {
+            if (\Schema::hasTable('ranks')) {
+                $firstRank = \App\Core\Models\Rank::orderBy('required_exp')->first();
+            }
+        } catch (\Exception $e) {
+            // Rank table not available - use defaults
+        }
+
+        try {
+            if (\Schema::hasTable('locations')) {
+                $firstLocation = \App\Core\Models\Location::orderBy('id')->first();
+            }
+        } catch (\Exception $e) {
+            // Location table not available - use defaults
+        }
 
         // Wrap user creation, profile seeding, and role assignment in a transaction.
         // A partial failure (e.g. role table missing) must not leave a user without a profile.

@@ -63,6 +63,10 @@ playwright-report/
 /storage/framework/cache/*
 /storage/framework/sessions/*
 /storage/framework/views/*
+/storage/bundles
+backend/app/Plugins/_archived
+backend/storage/bundles
+backend/database/migrations/archived_gaming
 /vendor
 
 .phpunit.result.cache

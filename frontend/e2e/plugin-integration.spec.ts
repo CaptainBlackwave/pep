@@ -8,14 +8,31 @@ import { test, expect } from '@playwright/test'
 
 test.describe('Plugin Integration Tests', () => {
   test.describe('Plugin Manifest API', () => {
+    test.beforeEach(async ({ page }) => {
+      await page.addInitScript(() => {
+        localStorage.setItem('user', JSON.stringify({
+          id: 1,
+          username: 'Test User',
+          email: 'test@example.com'
+        }))
+      })
+
+      await page.route('**/api/v1/user/profile*', (route) =>
+        route.fulfill({
+          status: 200,
+          contentType: 'application/json',
+          body: JSON.stringify({
+            id: 1,
+            username: 'Test User',
+            email: 'test@example.com',
+          }),
+        }),
+      )
+    })
+
     test('enabled plugins endpoint returns valid structure', async ({ page }) => {
       // Intercept the plugins API call
-      const responsePromise = page.waitForResponse('**/api/v1/plugins/enabled')
-
-      // Navigate to dashboard (requires auth mock)
-      await page.addInitScript(() => {
-        localStorage.setItem('user', JSON.stringify({ id: 1, name: 'Test User' }))
-      })
+      const responsePromise = page.waitForResponse('**/api/v1/plugins/enabled*')
 
       await page.goto('/dashboard')
       const response = await responsePromise

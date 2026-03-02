@@ -15,95 +15,57 @@ declare module 'vue-router' {
 }
 
 /**
- * View components mapping - maps component names to their file paths
+ * Core view components that plugins can reference
+ * Gaming-specific views are provided by plugins via dynamic imports
  */
-const componentMap: Record<string, () => Promise<Component>> = {
-  // Combat & Activities
-  CombatView: () => import('@/views/plugins/CombatView.vue'),
-  OrganizedCrimeView: () => import('@/views/plugins/OrganizedCrimeView.vue'),
-  TheftView: () => import('@/views/plugins/TheftView.vue'),
-  RacingView: () => import('@/views/plugins/RacingView.vue'),
-  BountyView: () => import('@/views/plugins/BountyView.vue'),
-  MissionsView: () => import('@/views/plugins/MissionsView.vue'),
-  CrimesView: () => import('@/views/plugins/CrimesView.vue'),
-  CrimeActionView: () => import('@/views/plugins/CrimeActionView.vue'),
-
-  // Economy & Trading
-  MarketView: () => import('@/views/plugins/MarketView.vue'),
-  DrugsView: () => import('@/views/plugins/DrugsView.vue'),
-  StocksView: () => import('@/views/plugins/StocksView.vue'),
-  PropertiesView: () => import('@/views/plugins/PropertiesView.vue'),
-  CasinoView: () => import('@/views/plugins/CasinoView.vue'),
-  EmploymentView: () => import('@/views/plugins/EmploymentView.vue'),
-  BulletsView: () => import('@/views/plugins/BulletsView.vue'),
-  BankView: () => import('@/views/plugins/BankView.vue'),
-  ShopView: () => import('@/views/plugins/ShopView.vue'),
-
-  // Social & Community
-  GangView: () => import('@/views/plugins/GangView.vue'),
-  ForumView: () => import('@/views/plugins/ForumView.vue'),
-  ChatView: () => import('@/views/plugins/ChatView.vue'),
-  LeaderboardsView: () => import('@/views/plugins/LeaderboardsView.vue'),
-  AchievementsView: () => import('@/views/plugins/AchievementsView.vue'),
-  ProfileView: () => import('@/views/plugins/ProfileView.vue'),
+const coreComponentMap: Record<string, () => Promise<Component>> = {
+  // Core views
+  ProfileView: () => import('@/views/ProfileView.vue'),
+  ActivityView: () => import('@/views/ActivityView.vue'),
   TicketsView: () => import('@/views/TicketsView.vue'),
-  WikiView: () => import('@/views/plugins/WikiView.vue'),
-  MessagingView: () => import('@/views/plugins/MessagingView.vue'),
-
-  // Utilities
-  HospitalView: () => import('@/views/plugins/HospitalView.vue'),
-  TravelView: () => import('@/views/plugins/TravelView.vue'),
-  JailView: () => import('@/views/plugins/JailView.vue'),
-  DetectiveView: () => import('@/views/plugins/DetectiveView.vue'),
-  InventoryView: () => import('@/views/plugins/InventoryView.vue'),
-  EducationView: () => import('@/views/plugins/EducationView.vue'),
-  ActivityView: () => import('@/views/plugins/ActivityView.vue'),
   AnnouncementsView: () => import('@/views/AnnouncementsView.vue'),
-  DailyRewardsView: () => import('@/views/DailyRewardsView.vue'),
+}
 
-  // Game features
-  CityView: () => import('@/views/plugins/CityView.vue'),
-  GymView: () => import('@/views/plugins/GymView.vue'),
-  SkillsView: () => import('@/views/plugins/SkillsView.vue'),
-  ScavengeView: () => import('@/views/plugins/ScavengeView.vue'),
-  ExploreView: () => import('@/views/plugins/ExploreView.vue'),
-  HuntingView: () => import('@/views/plugins/HuntingView.vue'),
-  EventsView: () => import('@/views/plugins/EventsView.vue'),
-  TournamentView: () => import('@/views/plugins/TournamentView.vue'),
-  QuestsView: () => import('@/views/plugins/QuestsView.vue'),
-  AlliancesView: () => import('@/views/plugins/AlliancesView.vue'),
-
-  // Note: Additional plugin views should be added as they are created
+/**
+ * Dynamic component loader for plugin views
+ * Plugins can provide their own Vue components in their bundle
+ */
+function getPluginComponentLoader(pluginSlug: string, componentName: string): (() => Promise<Component>) | null {
+  // First, try to load from the plugin's bundle
+  try {
+    return defineAsyncComponent(() =>
+      import(`@/plugins/${pluginSlug}/views/${componentName}.vue`)
+    )
+  } catch {
+    console.warn(`Plugin component not found: ${pluginSlug}/${componentName}`)
+    return null
+  }
 }
 
 /**
  * Get the component loader for a given component name
  */
-function getComponentLoader(componentName: string | null): (() => Promise<Component>) | null {
+function getComponentLoader(componentName: string | null, pluginSlug?: string): (() => Promise<Component>) | null {
   if (!componentName) return null
 
-  // Check if we have a mapping for this component
-  if (componentMap[componentName]) {
-    return componentMap[componentName]
+  // Check if it's a core component
+  if (coreComponentMap[componentName]) {
+    return coreComponentMap[componentName]
   }
 
-  // Try to dynamically import based on component name
-  // This allows plugins to define their own components
-  try {
-    return defineAsyncComponent(() =>
-      import(`@/views/plugins/${componentName}.vue`)
-    )
-  } catch {
-    console.warn(`Component not found: ${componentName}`)
-    return null
+  // If we have a plugin slug, try to load from the plugin
+  if (pluginSlug) {
+    return getPluginComponentLoader(pluginSlug, componentName)
   }
+
+  return null
 }
 
 /**
  * Convert a plugin route to a Vue Router route
  */
 function pluginRouteToRouterRoute(route: PluginRoute): RouteRecordRaw | null {
-  const componentLoader = getComponentLoader(route.component)
+  const componentLoader = getComponentLoader(route.component, route.plugin)
 
   if (!componentLoader) {
     console.warn(`Cannot create route for ${route.path}: component ${route.component} not found`)
@@ -147,14 +109,14 @@ export function registerPluginRoutes(
     }
   }
 
-  // Find the GameLayout route to add plugin routes as children
-  const gameLayoutRoute = existingRoutes.find(r => r.path === '/' && r.children?.length)
+  // Find the CoreLayout route to add plugin routes as children
+  const coreLayoutRoute = existingRoutes.find(r => r.path === '/' && r.children?.length)
 
-  if (gameLayoutRoute) {
-    // Add routes as children of GameLayout
+  if (coreLayoutRoute) {
+    // Add routes as children of CoreLayout
     for (const route of newRoutes) {
       try {
-        router.addRoute(gameLayoutRoute.name as string, route)
+        router.addRoute(coreLayoutRoute.name as string, route)
       } catch (error) {
         console.warn(`Failed to register route ${route.path}:`, error)
       }

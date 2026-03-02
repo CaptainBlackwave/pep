@@ -65,9 +65,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/user/change-password', [AuthController::class, 'changePassword']);
         Route::post('/user/username', [AuthController::class, 'updateUsername']);
 
-    // Daily Rewards (plugin) - allow players to claim daily rewards
-    Route::post('/daily-rewards/claim', [\App\Plugins\DailyRewards\Controllers\DailyRewardController::class, 'claim']);
-
         // Two-Factor Authentication (authenticated routes)
         Route::prefix('2fa')->controller(\App\Core\Http\Controllers\Auth\TwoFactorAuthController::class)->group(function () {
             Route::get('/status', 'status');
@@ -192,12 +189,13 @@ Route::prefix('v1')->group(function () {
                 Route::post('/templates/{id}/test', 'sendTestTemplate');
             });
 
-            // Game Configuration
+            // Locations (Core - for multi-location support)
             Route::apiResource('locations', \App\Core\Http\Controllers\Admin\LocationController::class);
-            // ranks route is registered by the Progression plugin (app/Plugins/Progression/routes/admin.php)
+
+            // Memberships (Core - for user membership tiers)
             Route::apiResource('memberships', \App\Core\Http\Controllers\Admin\MembershipController::class);
 
-            // Configurable Type Tables
+            // Configurable Type Tables (Core - for plugin extensibility)
             Route::apiResource('item-rarities', \App\Core\Http\Controllers\Admin\ItemRarityController::class);
             Route::apiResource('property-types', \App\Core\Http\Controllers\Admin\PropertyTypeController::class);
             Route::apiResource('announcement-types', \App\Core\Http\Controllers\Admin\AnnouncementTypeController::class);
@@ -214,138 +212,6 @@ Route::prefix('v1')->group(function () {
             Route::apiResource('lottery-statuses', \App\Core\Http\Controllers\Admin\LotteryStatusController::class);
             Route::apiResource('item-effect-types', \App\Core\Http\Controllers\Admin\ItemEffectTypeController::class);
             Route::apiResource('item-modifier-types', \App\Core\Http\Controllers\Admin\ItemModifierTypeController::class);
-
-            // Crime System
-            Route::apiResource('crimes', \App\Plugins\Crimes\Controllers\CrimeManagementController::class);
-            Route::apiResource('organized-crimes', \App\Plugins\OrganizedCrime\Controllers\OrganizedCrimeController::class);
-
-            // Employment System Management
-            Route::prefix('employment')->group(function () {
-                Route::get('/employees', [\App\Plugins\Employment\Controllers\EmploymentController::class, 'allEmployees']);
-                Route::get('/statistics', [\App\Plugins\Employment\Controllers\EmploymentController::class, 'statistics']);
-                Route::apiResource('companies', \App\Plugins\Employment\Controllers\CompanyController::class);
-                Route::apiResource('positions', \App\Plugins\Employment\Controllers\PositionController::class);
-            });
-
-            // Education System Management
-            Route::prefix('education')->group(function () {
-                Route::get('/enrollments', [\App\Plugins\Education\Controllers\EducationController::class, 'allEnrollments']);
-                Route::get('/statistics', [\App\Plugins\Education\Controllers\EducationController::class, 'statistics']);
-                Route::apiResource('courses', \App\Plugins\Education\Controllers\CourseController::class);
-            });
-
-            // Stock Market Management
-            Route::prefix('stocks')->group(function () {
-                Route::get('/transactions', [\App\Plugins\Stocks\Controllers\StockController::class, 'allTransactions']);
-                Route::get('/statistics', [\App\Plugins\Stocks\Controllers\StockController::class, 'statistics']);
-                Route::post('/{id}/update-price', [\App\Plugins\Stocks\Controllers\StockController::class, 'updatePrice']);
-                Route::apiResource('stocks', \App\Plugins\Stocks\Controllers\StockController::class);
-            });
-
-            // Casino Management
-            Route::prefix('casino')->group(function () {
-                Route::get('/bets', [\App\Plugins\Casino\Controllers\CasinoController::class, 'allBets']);
-                Route::get('/statistics', [\App\Plugins\Casino\Controllers\CasinoController::class, 'statistics']);
-                Route::post('/lotteries/{id}/draw', [\App\Plugins\Casino\Controllers\LotteryController::class, 'drawWinner']);
-                Route::apiResource('games', \App\Plugins\Casino\Controllers\CasinoGameController::class);
-                Route::apiResource('lotteries', \App\Plugins\Casino\Controllers\LotteryController::class);
-            });
-            Route::get('crime-attempts', [\App\Plugins\Crimes\Controllers\CrimeAttemptController::class, 'index']);
-
-            // Economy
-            Route::apiResource('drugs', \App\Plugins\Drugs\Controllers\DrugManagementController::class);
-            Route::apiResource('item-types', \App\Plugins\Inventory\Controllers\ItemTypeController::class);
-            Route::apiResource('items', \App\Plugins\Inventory\Controllers\ItemManagementController::class);
-            Route::apiResource('properties', \App\Plugins\Properties\Controllers\PropertyManagementController::class);
-            Route::apiResource('cars', \App\Plugins\Racing\Controllers\CarManagementController::class);
-
-            // Combat & Racing
-            Route::apiResource('theft-types', \App\Plugins\Theft\Controllers\TheftTypeController::class);
-            Route::apiResource('bounties', \App\Plugins\Bounty\Controllers\BountyManagementController::class);
-            Route::get('combat-logs', [\App\Plugins\Combat\Controllers\CombatLogController::class, 'index']);
-            Route::apiResource('races', \App\Plugins\Racing\Controllers\RaceManagementController::class);
-
-            // Combat NPC System Management
-            Route::prefix('combat-locations')->controller(\App\Plugins\Combat\Controllers\CombatManagementController::class)->group(function () {
-                Route::get('/', 'getLocations');
-                Route::post('/', 'createLocation');
-                Route::match(['put', 'patch'], '/{id}', 'updateLocation');
-                Route::delete('/{id}', 'deleteLocation');
-            });
-            Route::prefix('combat-areas')->controller(\App\Plugins\Combat\Controllers\CombatManagementController::class)->group(function () {
-                Route::get('/', 'getAreas');
-                Route::post('/', 'createArea');
-                Route::match(['put', 'patch'], '/{id}', 'updateArea');
-                Route::delete('/{id}', 'deleteArea');
-            });
-            Route::prefix('combat-enemies')->controller(\App\Plugins\Combat\Controllers\CombatManagementController::class)->group(function () {
-                Route::get('/', 'getEnemies');
-                Route::post('/', 'createEnemy');
-                Route::match(['put', 'patch'], '/{id}', 'updateEnemy');
-                Route::delete('/{id}', 'deleteEnemy');
-            });
-
-            // Social Features
-            Route::apiResource('gangs', \App\Plugins\Gang\Controllers\GangManagementController::class);
-            Route::get('gang-logs', [\App\Plugins\Gang\Controllers\GangLogController::class, 'index']);
-            Route::apiResource('chat-channels', \App\Plugins\Chat\Controllers\ChatChannelManagementController::class);
-
-            // Progression
-            Route::apiResource('missions', \App\Plugins\Missions\Controllers\MissionManagementController::class);
-            Route::apiResource('achievements', \App\Plugins\Achievements\Controllers\AchievementManagementController::class);
-            Route::apiResource('daily-rewards', \App\Plugins\DailyRewards\Controllers\DailyRewardController::class);
-
-            // Events Management
-            Route::prefix('events')->controller(\App\Plugins\Events\Controllers\EventManagementController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::post('/', 'store');
-                Route::put('/{id}', 'update');
-                Route::patch('/{id}', 'update');
-                Route::delete('/{id}', 'destroy');
-                Route::post('/{id}/start', 'start');
-                Route::post('/{id}/end', 'end');
-                Route::get('/{id}/participants', 'participants');
-            });
-
-            // Leaderboards (admin view)
-            Route::get('leaderboards', [\App\Plugins\Leaderboards\Controllers\LeaderboardController::class, 'adminIndex']);
-
-            // Jail Management (admin view/control)
-            Route::get('jailed-players', [\App\Plugins\Jail\Controllers\JailAdminController::class, 'index']);
-            Route::post('jailed-players/{id}/release', [\App\Plugins\Jail\Controllers\JailAdminController::class, 'release']);
-
-            // Content Management
-            Route::prefix('content')->group(function () {
-                Route::apiResource('faq-categories', \App\Plugins\Wiki\Controllers\FaqCategoryController::class);
-                Route::apiResource('faqs', \App\Plugins\Wiki\Controllers\FaqController::class);
-                Route::apiResource('announcements', \App\Plugins\Announcements\Controllers\AnnouncementController::class);
-                Route::apiResource('forum-categories', \App\Plugins\Forum\Controllers\ForumCategoryController::class);
-            });
-
-            // Wiki routes
-            Route::apiResource('wiki-pages', \App\Plugins\Wiki\Controllers\WikiPageController::class);
-            Route::apiResource('wiki-categories', \App\Plugins\Wiki\Controllers\WikiCategoryController::class);
-
-            // Forum moderation routes (admin)
-            Route::prefix('forum')->group(function () {
-                Route::delete('topics/{topic}', [\App\Plugins\Forum\Controllers\ForumCategoryController::class, 'destroyTopic']);
-                Route::patch('topics/{topic}/toggle-lock', [\App\Plugins\Forum\Controllers\ForumCategoryController::class, 'toggleLock']);
-                Route::patch('topics/{topic}/toggle-sticky', [\App\Plugins\Forum\Controllers\ForumCategoryController::class, 'toggleSticky']);
-                Route::delete('posts/{post}', [\App\Plugins\Forum\Controllers\ForumCategoryController::class, 'destroyPost']);
-            });
-
-            // Support System
-            Route::prefix('support')->group(function () {
-                Route::apiResource('ticket-categories', \App\Plugins\Tickets\Controllers\TicketCategoryController::class);
-                Route::get('tickets', [\App\Plugins\Tickets\Controllers\TicketManagementController::class, 'index']);
-                Route::get('tickets/staff/users', [\App\Plugins\Tickets\Controllers\TicketManagementController::class, 'getStaffUsers']);
-                Route::get('tickets/{id}', [\App\Plugins\Tickets\Controllers\TicketManagementController::class, 'show']);
-                Route::patch('tickets/{id}', [\App\Plugins\Tickets\Controllers\TicketManagementController::class, 'update']);
-                Route::delete('tickets/{id}', [\App\Plugins\Tickets\Controllers\TicketManagementController::class, 'destroy']);
-                Route::post('tickets/{id}/reply', [\App\Plugins\Tickets\Controllers\TicketManagementController::class, 'reply']);
-                Route::patch('tickets/{id}/status', [\App\Plugins\Tickets\Controllers\TicketManagementController::class, 'updateStatus']);
-                Route::patch('tickets/{id}/assign', [\App\Plugins\Tickets\Controllers\TicketManagementController::class, 'assign']);
-            });
 
             // System Administration
             Route::get('error-logs', [\App\Core\Http\Controllers\Admin\ErrorLogController::class, 'index']);
@@ -417,17 +283,6 @@ Route::prefix('v1')->group(function () {
                 Route::get('/unread', 'unread');
             });
 
-            // Item Market Management
-            Route::prefix('item-market')->controller(\App\Plugins\Inventory\Controllers\ItemMarketController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::get('/listings', 'listings');
-                Route::get('/transactions', 'transactions');
-                Route::get('/price-history/{itemId}', 'priceHistory');
-                Route::post('/listings/{id}/cancel', 'cancelListing');
-                Route::delete('/listings/{id}', 'deleteListing');
-                Route::get('/points-market', 'pointsMarket');
-            });
-
             // Backup Management
             Route::prefix('backups')->controller(\App\Core\Http\Controllers\Admin\BackupController::class)->group(function () {
                 Route::get('/', 'index');
@@ -485,12 +340,11 @@ Route::prefix('v1')->group(function () {
         Route::post('/format/plain', [\App\Core\Http\Controllers\TextFormatterController::class, 'plain']);
         Route::get('/format/emoji/search', [\App\Core\Http\Controllers\TextFormatterController::class, 'searchEmoji']);
 
-        // Game Core Routes
+        // Dashboard
         Route::get('/dashboard', [\App\Core\Http\Controllers\DashboardController::class, 'index']);
-        Route::get('/player/{id}', [\App\Core\Http\Controllers\ProfileController::class, 'show']);
 
-        // Shop (alias for inventory/shop)
-        Route::get('/shop', [\App\Plugins\Inventory\Controllers\InventoryController::class, 'shop']);
+        // Player Profile
+        Route::get('/player/{id}', [\App\Core\Http\Controllers\ProfileController::class, 'show']);
 
         // Player Statistics
         Route::prefix('stats')->controller(\App\Core\Http\Controllers\PlayerStatsController::class)->group(function () {
@@ -501,7 +355,7 @@ Route::prefix('v1')->group(function () {
 
         // Activity Logs (Player's own)
         Route::get('/activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']);
-        Route::get('/activity/my-activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']); // Alias for frontend compatibility
+        Route::get('/activity/my-activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']);
 
         // Notifications
         Route::prefix('notifications')->controller(\App\Core\Http\Controllers\NotificationController::class)->group(function () {
@@ -514,141 +368,10 @@ Route::prefix('v1')->group(function () {
             Route::delete('/read/clear', 'deleteRead');
         });
 
-        // Travel
-        Route::prefix('travel')->controller(\App\Plugins\Travel\Controllers\TravelController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/{location}', 'travel');
-        });
-
-        // Crimes — throttled: crime spam prevention
-        Route::prefix('crimes')->name('api.crimes.')->controller(\App\Plugins\Crimes\Controllers\CrimeController::class)->group(function () {
-            Route::get('/', 'index')->name('list');
-            Route::get('/stats', 'stats')->name('stats');
-            Route::post('/attempt', 'attempt')->name('attempt')->middleware('throttle:combat-actions');
-        });
-
-        // Crime Locations
-        Route::prefix('crime-locations')->name('api.crime-locations.')->controller(\App\Plugins\Crimes\Controllers\CrimeLocationsController::class)->group(function () {
-            Route::get('/', 'index')->name('list');
-            Route::get('/{id}', 'show')->name('show');
-            Route::post('/{id}/attempt', 'attempt')->name('attempt')->middleware('throttle:combat-actions');
-            Route::get('/{id}/stats', 'stats')->name('stats');
-        });
-
-        // Gym
-        Route::prefix('gym')->controller(\App\Plugins\Gym\Controllers\GymController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/train', 'train')->middleware('throttle:game-actions');
-        });
-
-        // Hospital
-        Route::prefix('hospital')->controller(\App\Plugins\Hospital\Controllers\HospitalController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/heal', 'heal')->middleware('throttle:game-actions');
-            Route::post('/heal-full', 'healFull')->middleware('throttle:game-actions');
-        });
-
-        // Bank
-        Route::prefix('bank')->controller(\App\Plugins\Bank\Controllers\BankController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/deposit', 'deposit')->middleware('throttle:game-actions');
-            Route::post('/withdraw', 'withdraw')->middleware('throttle:game-actions');
-            Route::post('/transfer', 'transfer')->middleware('throttle:game-actions');
-        });
-
-        // Drugs
-        Route::prefix('drugs')->controller(\App\Plugins\Drugs\Controllers\DrugController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/buy', 'buy')->middleware('throttle:game-actions');
-            Route::post('/sell', 'sell')->middleware('throttle:game-actions');
-        });
-
-        // Jail
-        Route::prefix('jail')->controller(\App\Plugins\Jail\Controllers\JailController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/{target}/bustout', 'bustOut')->middleware('throttle:combat-actions');
-            Route::post('/bailout', 'bailOut')->middleware('throttle:game-actions');
-        });
-
-        // Inventory
-        Route::prefix('inventory')->controller(\App\Plugins\Inventory\Controllers\InventoryController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::get('/shop', 'shop');
-            Route::post('/buy/{item}', 'buy')->middleware('throttle:game-actions');
-            Route::post('/sell/{inventoryId}', 'sell')->middleware('throttle:game-actions');
-            Route::post('/equip/{inventoryId}', 'equip')->middleware('throttle:game-actions');
-            Route::post('/unequip/{inventoryId}', 'unequip')->middleware('throttle:game-actions');
-            Route::post('/use/{inventoryId}', 'use')->middleware('throttle:game-actions');
-        });
-
-        // Combat
-        Route::prefix('combat')->controller(\App\Plugins\Combat\Controllers\CombatController::class)->group(function () {
-            Route::get('/locations', 'locations');
-            Route::post('/hunt', 'hunt')->middleware('throttle:combat-actions');
-            Route::post('/attack-npc', 'attackNPC')->middleware('throttle:combat-actions');
-            Route::post('/auto-attack-npc', 'autoAttackNPC')->middleware('throttle:combat-actions');
-            Route::get('/', 'index');
-            Route::post('/attack', 'attack')->middleware('throttle:combat-actions');
-        });
-
-        // Theft
-        Route::prefix('theft')->controller(\App\Plugins\Theft\Controllers\TheftController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/attempt/{theftType}', 'attempt')->middleware('throttle:combat-actions');
-            Route::get('/garage', 'garage');
-            Route::post('/garage/{garageId}/sell', 'sell')->middleware('throttle:game-actions');
-        });
-
-        // Racing
-        Route::prefix('racing')->controller(\App\Plugins\Racing\Controllers\RaceController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/create', 'create')->middleware('throttle:game-actions');
-            Route::post('/join/{race}', 'join')->middleware('throttle:game-actions');
-            Route::post('/leave/{race}', 'leave')->middleware('throttle:game-actions');
-            Route::post('/start/{race}', 'start')->middleware('throttle:game-actions');
-        });
-
-        // Properties
-        Route::prefix('properties')->controller(\App\Plugins\Properties\Controllers\PropertyController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/{property}/buy', 'buy')->middleware('throttle:game-actions');
-            Route::post('/{property}/sell', 'sell')->middleware('throttle:game-actions');
-            Route::post('/collect', 'collect')->middleware('throttle:game-actions');
-        });
-
-        // Bounties
-        Route::prefix('bounties')->controller(\App\Plugins\Bounty\Controllers\BountyController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/place', 'place')->middleware('throttle:game-actions');
-        });
-
-        // Missions
-        Route::prefix('missions')->controller(\App\Plugins\Missions\Controllers\MissionController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/start', 'start')->middleware('throttle:game-actions');
-        });
-
-        // Detective
-        Route::prefix('detective')->controller(\App\Plugins\Detective\Controllers\DetectiveController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/hire', 'hire')->middleware('throttle:game-actions');
-        });
-
-        // Gangs
-        Route::prefix('gangs')->controller(\App\Plugins\Gang\Controllers\GangController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/create', 'create')->middleware('throttle:game-actions');
-            Route::post('/leave', 'leave')->middleware('throttle:game-actions');
-            Route::post('/kick/{playerId}', 'kick')->middleware('throttle:game-actions');
-            Route::post('/deposit', 'deposit')->middleware('throttle:game-actions');
-            Route::post('/withdraw', 'withdraw')->middleware('throttle:game-actions');
-        });
-
-        // Organized Crime
-        Route::prefix('organized-crime')->controller(\App\Plugins\OrganizedCrime\Controllers\OrganizedCrimeController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::post('/{crime}/attempt', 'attempt')->middleware('throttle:combat-actions');
-        });
+        // NOTE: Gaming routes (crimes, gym, hospital, bank, drugs, jail, inventory,
+        // combat, theft, racing, properties, bounties, missions, detective, gangs,
+        // organized-crime, travel, shop) are now provided by plugins.
+        // Install the gaming bundle to restore these features.
     });
 
 }); // end prefix('v1')

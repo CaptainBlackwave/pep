@@ -3,87 +3,67 @@ import { test, expect, type Page } from '@playwright/test'
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * Login helper for authenticated tests
+ * Set up authenticated session in localStorage
  */
-async function login(page: Page) {
-  // Mock the login API response
-  await page.route('**/api/**module=auth**action=login**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: {
-          user: {
-            id: 1,
-            username: 'testuser',
-            email: 'test@example.com',
-          },
-        },
-      }),
-    }),
-  )
-
-  // Mock the user/me endpoint
-  await page.route('**/api/**module=auth**action=me**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: {
-          user: {
-            id: 1,
-            username: 'testuser',
-            email: 'test@example.com',
-            energy: 80,
-            max_energy: 100,
-            health: 90,
-            max_health: 100,
-            cash: 5000,
-            bank: 10000,
-            level: 5,
-          },
-        },
-      }),
-    }),
-  )
-
-  await page.goto('/login')
-  await page.evaluate(() => localStorage.clear())
-  await page.fill('#email', 'test@example.com')
-  await page.fill('#password', 'password123')
-  await page.click('button[type="submit"]')
+async function setupAuthSession(page: Page, options: { username?: string } = {}) {
+  await page.evaluate((username) => {
+    localStorage.setItem('user', JSON.stringify({
+      id: 1,
+      username: username || 'testuser',
+      email: 'test@example.com',
+    }))
+  }, options.username || 'testuser')
 }
 
 /**
- * Mock the player stats API
+ * Mock the plugins API
  */
-async function mockPlayerStats(page: Page) {
-  await page.route('**/api/user**', (route) =>
+async function mockPluginsAPI(page: Page) {
+  await page.route('**/api/v1/plugins/enabled*', (route) =>
+    route.fulfill({
+      status: 200,
+      contentType: 'application/json',
+      body: JSON.stringify({
+        success: true,
+        plugins: [],
+        navigation: [],
+        routes: [],
+      }),
+    }),
+  )
+}
+
+/**
+ * Mock the user profile API
+ */
+async function mockUserProfileAPI(page: Page) {
+  await page.route('**/api/v1/user/profile*', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
         id: 1,
         username: 'testuser',
-        energy: 80,
-        max_energy: 100,
-        health: 90,
-        max_health: 100,
-        cash: 5000,
-        bank: 10000,
-        level: 5,
+        email: 'test@example.com',
       }),
     }),
   )
+}
+
+/**
+ * Set up all common mocks for tests
+ */
+async function setupCommonMocks(page: Page) {
+  await setupAuthSession(page)
+  await mockPluginsAPI(page)
+  await mockUserProfileAPI(page)
 }
 
 // ─── WebSocket Connection ────────────────────────────────────────────────────
 
 test.describe('WebSocket Connection', () => {
   test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
+    await setupCommonMocks(page)
   })
 
   test('application loads without WebSocket errors', async ({ page }) => {
@@ -92,7 +72,6 @@ test.describe('WebSocket Connection', () => {
       errors.push(error.message)
     })
 
-    await login(page)
     await page.goto('/dashboard')
 
     // Wait for dashboard to be visible
@@ -109,7 +88,6 @@ test.describe('WebSocket Connection', () => {
     // Block WebSocket connections
     await page.route('ws://**', (route) => route.abort())
 
-    await login(page)
     await page.goto('/dashboard')
 
     // Page should still render
@@ -117,19 +95,18 @@ test.describe('WebSocket Connection', () => {
   })
 })
 
-// ─── Real-time Stats Updates ─────────────────────────────────────────────────
+// ─── Dashboard Functionality ─────────────────────────────────────────────────
 
-test.describe('Real-time Stats Updates', () => {
+test.describe('Dashboard Functionality', () => {
   test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+    await setupCommonMocks(page)
   })
 
-  test('stats display on dashboard', async ({ page }) => {
+  test('dashboard displays content', async ({ page }) => {
     await page.goto('/dashboard')
 
-    // Check that stats are displayed
-    await expect(page.locator('body')).toBeVisible()
+    // Check that content is displayed
+    await expect(page.locator('.welcome-banner')).toBeVisible()
   })
 
   test('polling fallback works when WebSocket unavailable', async ({ page }) => {
@@ -143,41 +120,11 @@ test.describe('Real-time Stats Updates', () => {
   })
 })
 
-// ─── Chat Functionality ──────────────────────────────────────────────────────
-
-test.describe('Chat Functionality', () => {
-  test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
-  })
-
-  test('chat panel loads', async ({ page }) => {
-    await page.goto('/dashboard')
-
-    // Look for chat-related elements
-    const chatElements = page.locator('[class*="chat"], [class*="Chat"]')
-    // Chat might or might not be visible depending on layout
-    const chatCount = await chatElements.count().catch(() => 0)
-    expect(chatCount).toBeGreaterThanOrEqual(0)
-  })
-
-  test('chat works without WebSocket (fallback)', async ({ page }) => {
-    // Block WebSocket
-    await page.route('ws://**', (route) => route.abort())
-
-    await page.goto('/dashboard')
-
-    // Page should still work
-    await expect(page.locator('body')).toBeVisible()
-  })
-})
-
 // ─── Notifications ───────────────────────────────────────────────────────────
 
 test.describe('Notifications', () => {
   test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+    await setupCommonMocks(page)
   })
 
   test('notifications area loads', async ({ page }) => {
@@ -204,8 +151,7 @@ test.describe('Notifications', () => {
 
 test.describe('Connection Resilience', () => {
   test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+    await setupCommonMocks(page)
   })
 
   test('application handles network interruptions gracefully', async ({ page }) => {
@@ -224,7 +170,7 @@ test.describe('Connection Resilience', () => {
 
   test('application handles API errors gracefully', async ({ page }) => {
     // Mock API error
-    await page.route('**/api/**', (route) =>
+    await page.route('**/api/v1/**', (route) =>
       route.fulfill({
         status: 500,
         contentType: 'application/json',
@@ -246,8 +192,7 @@ test.describe('Connection Resilience', () => {
 
 test.describe('Performance', () => {
   test('dashboard loads within acceptable time', async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+    await setupCommonMocks(page)
 
     const startTime = Date.now()
     await page.goto('/dashboard')
@@ -258,8 +203,7 @@ test.describe('Performance', () => {
   })
 
   test('no memory leaks from WebSocket reconnection attempts', async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+    await setupCommonMocks(page)
 
     // Block WebSocket to trigger reconnection attempts
     await page.route('ws://**', (route) => route.abort())

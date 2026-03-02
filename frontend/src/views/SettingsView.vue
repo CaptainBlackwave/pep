@@ -65,7 +65,7 @@
               <div class="toggle-item">
                 <div class="toggle-info">
                   <span class="toggle-label">Sound Effects</span>
-                  <span class="toggle-description">Play sounds for game events</span>
+                  <span class="toggle-description">Play sounds for notifications and alerts</span>
                 </div>
                 <label class="toggle-switch">
                   <input v-model="settings.sound_enabled" type="checkbox">

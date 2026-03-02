@@ -43,6 +43,12 @@ class PluginIntegrationTest extends TestCase
 
         foreach ($directories as $dir) {
             $slug = strtolower(basename($dir));
+
+            // Skip directories that start with underscore (e.g., _archived)
+            if (str_starts_with($slug, '_')) {
+                continue;
+            }
+
             $pluginJsonPath = $dir . '/plugin.json';
 
             if (!File::exists($pluginJsonPath)) {
@@ -205,6 +211,11 @@ class PluginIntegrationTest extends TestCase
 
         foreach ($directories as $dir) {
             $slug = strtolower(basename($dir));
+
+            // Skip directories that start with underscore (e.g., _archived)
+            if (str_starts_with($slug, '_')) {
+                continue;
+            }
 
             // Skip test plugin directory if exists
             if ($slug === 'testplugin') {

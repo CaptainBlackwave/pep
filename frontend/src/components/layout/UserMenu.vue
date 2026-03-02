@@ -23,22 +23,18 @@
 
 <script setup lang="ts">
 import { ref, computed, onMounted, onUnmounted } from 'vue'
-import { usePlayerStore } from '@/stores/player'
+import { useUserStore } from '@/stores/user'
 import { useAuthStore } from '@/stores/auth'
-import { useNotificationsStore } from '@/stores/notifications'
-import { useChatStore } from '@/stores/chat'
 import { useRouter } from 'vue-router'
 
 const router = useRouter()
-const playerStore = usePlayerStore()
+const userStore = useUserStore()
 const authStore = useAuthStore()
-const notificationsStore = useNotificationsStore()
-const chatStore = useChatStore()
 
 const showMenu = ref(false)
 
-const username = computed(() => playerStore.username)
-const isAdmin = computed(() => playerStore.isAdmin)
+const username = computed(() => userStore.username)
+const isAdmin = computed(() => userStore.isAdmin)
 
 const toggleMenu = () => {
   showMenu.value = !showMenu.value
@@ -50,12 +46,7 @@ const closeMenu = () => {
 
 const handleLogout = async () => {
   closeMenu()
-  playerStore.disconnect()
-  notificationsStore.disconnect()
-  chatStore.disconnect()
-  playerStore.clearPlayer()
-  notificationsStore.clearAll()
-  chatStore.clearAll()
+  userStore.clearUser()
   await authStore.logout()
   router.push('/login')
 }

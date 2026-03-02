@@ -3,277 +3,157 @@
     <!-- Welcome Banner -->
     <div class="welcome-banner">
       <div class="welcome-content">
-        <div class="welcome-text">
-          <h1>Welcome back, <span class="username">{{ playerStore.username }}</span>!</h1>
-          <p>{{ currentRank }} | {{ currentLocation }}</p>
-        </div>
-        <div class="welcome-actions">
-          <router-link to="/daily-rewards" class="daily-reward-btn">
-            <span class="btn-icon">🎁</span>
-            <span>Daily Reward</span>
-          </router-link>
-        </div>
+        <h1 class="welcome-title">Welcome, {{ userStore.displayName }}</h1>
+        <p class="welcome-subtitle">Manage your account and access your applications</p>
+      </div>
+      <div class="welcome-actions">
+        <router-link v-if="userStore.isAdmin" to="/admin" class="admin-link">
+          Admin Panel
+        </router-link>
+        <button @click="handleLogout" class="logout-btn">Logout</button>
       </div>
     </div>
 
-    <!-- Quick Stats -->
-    <div class="quick-stats">
-      <div class="stat-card level">
-        <div class="stat-icon">⭐</div>
-        <div class="stat-details">
-          <span class="stat-label">Level</span>
-          <span class="stat-value">{{ playerStore.level }}</span>
+    <!-- Quick Access Cards (Core only) -->
+    <div class="quick-access">
+      <router-link to="/profile" class="quick-card">
+        <span class="card-icon">👤</span>
+        <div class="card-content">
+          <span class="card-label">Profile</span>
+          <span class="card-desc">Edit your profile</span>
         </div>
-        <div class="stat-bar">
-          <div class="bar-fill" :style="{ width: playerStore.experiencePercent + '%' }"></div>
-        </div>
-      </div>
-      <div class="stat-card cash">
-        <div class="stat-icon">💰</div>
-        <div class="stat-details">
-          <span class="stat-label">Cash</span>
-          <span class="stat-value">{{ formatMoney(playerStore.cash) }}</span>
-        </div>
-      </div>
-      <div class="stat-card bank">
-        <div class="stat-icon">🏦</div>
-        <div class="stat-details">
-          <span class="stat-label">Bank</span>
-          <span class="stat-value">{{ formatMoney(playerStore.bank) }}</span>
-        </div>
-      </div>
-      <div class="stat-card combat">
-        <div class="stat-icon">⚔️</div>
-        <div class="stat-details">
-          <span class="stat-label">Power</span>
-          <span class="stat-value">{{ totalPower }}</span>
-        </div>
-      </div>
-    </div>
-
-    <!-- Quick Actions -->
-    <h2 class="section-title">Quick Actions</h2>
-    <div class="quick-actions">
-      <router-link v-if="isPluginEnabled('hospital')" to="/hospital" class="action-card">
-        <div class="action-icon">🏥</div>
-        <span>Heal</span>
       </router-link>
-      <router-link v-if="isPluginEnabled('combat')" to="/combat" class="action-card">
-        <div class="action-icon">⚔️</div>
-        <span>Combat</span>
+      <router-link to="/settings" class="quick-card">
+        <span class="card-icon">⚙️</span>
+        <div class="card-content">
+          <span class="card-label">Settings</span>
+          <span class="card-desc">Account settings</span>
+        </div>
       </router-link>
-      <router-link v-if="isPluginEnabled('travel')" to="/travel" class="action-card">
-        <div class="action-icon">✈️</div>
-        <span>Travel</span>
+      <router-link to="/activity" class="quick-card">
+        <span class="card-icon">📊</span>
+        <div class="card-content">
+          <span class="card-label">Activity</span>
+          <span class="card-desc">Recent activity</span>
+        </div>
+      </router-link>
+      <router-link to="/notifications" class="quick-card">
+        <span class="card-icon">🔔</span>
+        <div class="card-content">
+          <span class="card-label">Notifications</span>
+          <span class="card-desc">View alerts</span>
+        </div>
       </router-link>
     </div>
 
-    <!-- Feature Categories -->
-    <div class="feature-sections">
-      <!-- Combat & Activities -->
-      <section class="feature-section">
-        <h2 class="section-title">⚔️ Combat & Activities</h2>
-        <div class="features-grid">
-          <router-link v-if="isPluginEnabled('combat')" to="/combat" class="feature-card">
-            <div class="feature-icon">⚔️</div>
-            <h3 class="feature-title">Combat</h3>
-            <p class="feature-desc">Battle players and hunt NPCs</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('organizedcrime')" to="/organized-crime" class="feature-card">
-            <div class="feature-icon">🎭</div>
-            <h3 class="feature-title">Organized Crime</h3>
-            <p class="feature-desc">Team up with your gang</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('theft')" to="/theft" class="feature-card">
-            <div class="feature-icon">🚗</div>
-            <h3 class="feature-title">Car Theft</h3>
-            <p class="feature-desc">Steal vehicles for profit</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('racing')" to="/racing" class="feature-card">
-            <div class="feature-icon">🏎️</div>
-            <h3 class="feature-title">Racing</h3>
-            <p class="feature-desc">Race for glory and cash</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('bounty')" to="/bounty" class="feature-card">
-            <div class="feature-icon">🎯</div>
-            <h3 class="feature-title">Bounties</h3>
-            <p class="feature-desc">Hunt or be hunted</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('missions')" to="/missions" class="feature-card">
-            <div class="feature-icon">📜</div>
-            <h3 class="feature-title">Missions</h3>
-            <p class="feature-desc">Complete tasks for rewards</p>
-          </router-link>
-        </div>
-      </section>
+    <!-- Plugin Widgets Section -->
+    <template v-if="dashboardWidgets.length > 0">
+      <h2 class="section-title">Applications</h2>
+      <div class="widgets-grid">
+        <component
+          v-for="widget in dashboardWidgets"
+          :key="widget.id"
+          :is="widget.component"
+          v-bind="widget.props"
+        />
+      </div>
+    </template>
 
-      <!-- Economy & Trading -->
-      <section class="feature-section">
-        <h2 class="section-title">💰 Economy & Trading</h2>
-        <div class="features-grid">
-          <router-link v-if="isPluginEnabled('market')" to="/market" class="feature-card">
-            <div class="feature-icon">🏪</div>
-            <h3 class="feature-title">Market</h3>
-            <p class="feature-desc">Buy and sell items</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('drugs')" to="/drugs" class="feature-card">
-            <div class="feature-icon">💊</div>
-            <h3 class="feature-title">Drugs</h3>
-            <p class="feature-desc">Buy low, sell high</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('stocks')" to="/stocks" class="feature-card">
-            <div class="feature-icon">📈</div>
-            <h3 class="feature-title">Stocks</h3>
-            <p class="feature-desc">Invest in the market</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('properties')" to="/properties" class="feature-card">
-            <div class="feature-icon">🏠</div>
-            <h3 class="feature-title">Properties</h3>
-            <p class="feature-desc">Own real estate</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('casino')" to="/casino" class="feature-card">
-            <div class="feature-icon">🎰</div>
-            <h3 class="feature-title">Casino</h3>
-            <p class="feature-desc">Try your luck</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('employment')" to="/employment" class="feature-card">
-            <div class="feature-icon">💼</div>
-            <h3 class="feature-title">Jobs</h3>
-            <p class="feature-desc">Earn a legitimate income</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('bullets')" to="/bullets" class="feature-card">
-            <div class="feature-icon">🔫</div>
-            <h3 class="feature-title">Ammo</h3>
-            <p class="feature-desc">Stock up on bullets</p>
-          </router-link>
-        </div>
-      </section>
+    <!-- Plugin Feature Cards (fallback for simple plugins) -->
+    <template v-if="pluginFeatureCards.length > 0">
+      <h2 class="section-title">Features</h2>
+      <div class="features-grid">
+        <router-link
+          v-for="card in pluginFeatureCards"
+          :key="card.slug"
+          :to="card.route"
+          class="feature-card"
+        >
+          <div class="feature-icon">{{ card.icon || '📦' }}</div>
+          <h3 class="feature-title">{{ card.name }}</h3>
+          <p class="feature-desc">{{ card.description }}</p>
+        </router-link>
+      </div>
+    </template>
 
-      <!-- Social & Community -->
-      <section class="feature-section">
-        <h2 class="section-title">👥 Social & Community</h2>
-        <div class="features-grid">
-          <router-link v-if="isPluginEnabled('gang')" to="/gang" class="feature-card">
-            <div class="feature-icon">👥</div>
-            <h3 class="feature-title">Gang</h3>
-            <p class="feature-desc">Join or create a gang</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('forum')" to="/forums" class="feature-card">
-            <div class="feature-icon">💬</div>
-            <h3 class="feature-title">Forums</h3>
-            <p class="feature-desc">Discuss with the community</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('chat')" to="/chat" class="feature-card">
-            <div class="feature-icon">🗨️</div>
-            <h3 class="feature-title">Chat</h3>
-            <p class="feature-desc">Real-time chat</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('leaderboards')" to="/leaderboards" class="feature-card">
-            <div class="feature-icon">🏆</div>
-            <h3 class="feature-title">Leaderboards</h3>
-            <p class="feature-desc">See top players</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('achievements')" to="/achievements" class="feature-card">
-            <div class="feature-icon">🎖️</div>
-            <h3 class="feature-title">Achievements</h3>
-            <p class="feature-desc">Track your progress</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('profile')" to="/profile" class="feature-card">
-            <div class="feature-icon">👤</div>
-            <h3 class="feature-title">Profile</h3>
-            <p class="feature-desc">View your profile</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('tickets')" to="/tickets" class="feature-card">
-            <div class="feature-icon">🎫</div>
-            <h3 class="feature-title">Support</h3>
-            <p class="feature-desc">Get help from staff</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('wiki')" to="/wiki" class="feature-card">
-            <div class="feature-icon">📚</div>
-            <h3 class="feature-title">Wiki</h3>
-            <p class="feature-desc">Game guides and info</p>
-          </router-link>
-        </div>
-      </section>
-
-      <!-- Utilities -->
-      <section class="feature-section">
-        <h2 class="section-title">🔧 Utilities</h2>
-        <div class="features-grid">
-          <router-link v-if="isPluginEnabled('hospital')" to="/hospital" class="feature-card">
-            <div class="feature-icon">🏥</div>
-            <h3 class="feature-title">Hospital</h3>
-            <p class="feature-desc">Heal your wounds</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('travel')" to="/travel" class="feature-card">
-            <div class="feature-icon">✈️</div>
-            <h3 class="feature-title">Travel</h3>
-            <p class="feature-desc">Visit other cities</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('jail')" to="/jail" class="feature-card">
-            <div class="feature-icon">⛓️</div>
-            <h3 class="feature-title">Jail</h3>
-            <p class="feature-desc">Break out or bail out</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('detective')" to="/detective" class="feature-card">
-            <div class="feature-icon">🕵️</div>
-            <h3 class="feature-title">Detective</h3>
-            <p class="feature-desc">Hire a private eye</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('inventory')" to="/inventory" class="feature-card">
-            <div class="feature-icon">🎒</div>
-            <h3 class="feature-title">Inventory</h3>
-            <p class="feature-desc">Manage your items</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('education')" to="/education" class="feature-card">
-            <div class="feature-icon">🎓</div>
-            <h3 class="feature-title">Education</h3>
-            <p class="feature-desc">Learn new skills</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('activity')" to="/activity" class="feature-card">
-            <div class="feature-icon">📊</div>
-            <h3 class="feature-title">Activity</h3>
-            <p class="feature-desc">View your history</p>
-          </router-link>
-          <router-link v-if="isPluginEnabled('announcements')" to="/announcements" class="feature-card">
-            <div class="feature-icon">📢</div>
-            <h3 class="feature-title">News</h3>
-            <p class="feature-desc">Latest announcements</p>
-          </router-link>
-        </div>
-      </section>
+    <!-- Empty State (when no plugins) -->
+    <div v-if="dashboardWidgets.length === 0 && pluginFeatureCards.length === 0" class="empty-state">
+      <div class="empty-icon">🧩</div>
+      <h3 class="empty-title">No Plugins Installed</h3>
+      <p class="empty-desc">
+        This is a clean Core Web APP OS installation. Install plugins to add features and functionality.
+      </p>
+      <router-link v-if="userStore.isAdmin" to="/admin/plugins" class="install-link">
+        Manage Plugins
+      </router-link>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue'
-import { usePlayerStore } from '@/stores/player'
+import { computed, onMounted, shallowRef } from 'vue'
+import { useRouter } from 'vue-router'
+import { useUserStore } from '@/stores/user'
+import { useAuthStore } from '@/stores/auth'
 import { usePluginsStore } from '@/stores/plugins'
+import type { Component } from 'vue'
 
-const playerStore = usePlayerStore()
+const router = useRouter()
+const userStore = useUserStore()
+const authStore = useAuthStore()
 const pluginsStore = usePluginsStore()
 
-// Fetch enabled plugins on mount
-onMounted(() => {
-  pluginsStore.fetchPlugins()
-})
-
-const currentRank = computed(() => playerStore.currentRank)
-const currentLocation = computed(() => playerStore.currentLocation)
-const totalPower = computed(() => playerStore.strength + playerStore.defense + playerStore.speed + playerStore.endurance)
-
-const formatMoney = (val) => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    minimumFractionDigits: 0
-  }).format(val)
+// Dashboard widget type
+interface DashboardWidget {
+  id: string
+  component: Component | null
+  props: Record<string, unknown>
+  width: 'full' | 'half' | 'third'
 }
 
-// Helper to check if plugin is enabled
-const isPluginEnabled = (slug: string): boolean => {
-  return pluginsStore.isEnabled(slug)
+// Plugin feature card type
+interface PluginFeatureCard {
+  slug: string
+  name: string
+  description: string
+  icon: string | null
+  route: string
+}
+
+// Widgets loaded from plugins (for advanced plugin integration)
+const dashboardWidgets = shallowRef<DashboardWidget[]>([])
+
+// Simple feature cards from plugins that don't have widgets
+const pluginFeatureCards = computed<PluginFeatureCard[]>(() => {
+  return pluginsStore.plugins
+    .filter(plugin => plugin.navigation?.enabled && plugin.route_name)
+    .map(plugin => ({
+      slug: plugin.slug,
+      name: plugin.name,
+      description: plugin.description,
+      icon: plugin.icon,
+      route: `/${plugin.route_name}`
+    }))
+    .sort((a, b) => a.name.localeCompare(b.name))
+})
+
+// Fetch user profile and plugins on mount
+onMounted(async () => {
+  // Load user profile if not loaded
+  if (!userStore.isLoaded) {
+    await userStore.fetchProfile()
+  }
+
+  // Load plugins if not loaded
+  if (!pluginsStore.loaded) {
+    await pluginsStore.fetchPlugins()
+  }
+})
+
+// Handle logout
+const handleLogout = async () => {
+  await authStore.logout()
+  router.push('/login')
 }
 </script>
 
@@ -285,198 +165,149 @@ const isPluginEnabled = (slug: string): boolean => {
 
 /* Welcome Banner */
 .welcome-banner {
-  background: linear-gradient(135deg, rgba(0, 188, 212, 0.2) 0%, rgba(6, 95, 134, 0.2) 100%);
+  background: linear-gradient(135deg, rgba(30, 41, 59, 0.8) 0%, rgba(15, 20, 25, 0.9) 100%);
   border: 1px solid rgba(0, 188, 212, 0.3);
-  border-radius: 1rem;
+  border-radius: 0.5rem;
   padding: 1.5rem 2rem;
   margin-bottom: 2rem;
-}
-
-.welcome-content {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  flex-wrap: wrap;
-  gap: 1rem;
 }
 
-.welcome-text h1 {
+.welcome-content {
+  flex: 1;
+}
+
+.welcome-title {
   font-size: 1.5rem;
   font-weight: 700;
-  color: #f9fafb;
-  margin: 0 0 0.25rem;
+  color: #ffffff;
+  margin: 0 0 0.25rem 0;
 }
 
-.username {
-  color: #00bcd4;
-}
-
-.welcome-text p {
-  color: #9ca3af;
+.welcome-subtitle {
+  font-size: 0.9375rem;
+  color: #94a3b8;
   margin: 0;
-  font-size: 0.875rem;
 }
 
-.daily-reward-btn {
+.welcome-actions {
   display: flex;
+  gap: 1rem;
   align-items: center;
-  gap: 0.5rem;
-  background: linear-gradient(135deg, #7c3aed 0%, #a855f7 100%);
-  color: white;
+}
+
+.admin-link {
+  color: #00bcd4;
   text-decoration: none;
-  padding: 0.75rem 1.25rem;
-  border-radius: 0.5rem;
   font-weight: 600;
   font-size: 0.875rem;
+  padding: 0.5rem 1rem;
+  border-radius: 0.375rem;
   transition: all 0.2s;
 }
 
-.daily-reward-btn:hover {
+.admin-link:hover {
+  background: rgba(0, 188, 212, 0.1);
+}
+
+.logout-btn {
+  background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%);
+  color: white;
+  border: none;
+  padding: 0.625rem 1.25rem;
+  border-radius: 0.375rem;
+  font-weight: 700;
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.logout-btn:hover {
   transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(168, 85, 247, 0.4);
+  box-shadow: 0 4px 12px rgba(239, 68, 68, 0.3);
 }
 
-.btn-icon {
-  font-size: 1.25rem;
-}
-
-/* Quick Stats */
-.quick-stats {
+/* Quick Access */
+.quick-access {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
   gap: 1rem;
   margin-bottom: 2rem;
 }
 
-.stat-card {
-  background: rgba(31, 41, 55, 0.5);
-  border: 1px solid rgba(75, 85, 99, 0.3);
-  border-radius: 0.75rem;
-  padding: 1rem;
+.quick-card {
+  background: linear-gradient(135deg, rgba(30, 58, 138, 0.4) 0%, rgba(30, 64, 175, 0.4) 100%);
+  border: 1px solid rgba(59, 130, 246, 0.3);
+  border-radius: 0.5rem;
+  padding: 1.25rem;
   display: flex;
   align-items: center;
   gap: 1rem;
-  position: relative;
-  overflow: hidden;
+  text-decoration: none;
+  color: #e2e8f0;
+  transition: all 0.3s;
 }
 
-.stat-icon {
-  font-size: 2rem;
-  width: 3rem;
-  height: 3rem;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: rgba(0, 0, 0, 0.2);
-  border-radius: 0.5rem;
+.quick-card:hover {
+  transform: translateY(-4px);
+  border-color: #3b82f6;
+  box-shadow: 0 8px 24px rgba(59, 130, 246, 0.2);
 }
 
-.stat-details {
-  flex: 1;
+.card-icon {
+  font-size: 1.75rem;
 }
 
-.stat-label {
-  display: block;
-  font-size: 0.75rem;
-  color: #9ca3af;
-  margin-bottom: 0.125rem;
-}
-
-.stat-value {
-  font-size: 1.125rem;
-  font-weight: 700;
-  color: #f9fafb;
-}
-
-.stat-bar {
-  position: absolute;
-  bottom: 0;
-  left: 0;
-  right: 0;
-  height: 3px;
-  background: rgba(0, 0, 0, 0.3);
-}
-
-.bar-fill {
-  height: 100%;
-  background: linear-gradient(90deg, #00bcd4, #0891b2);
-  transition: width 0.3s;
-}
-
-/* Quick Actions */
-.quick-actions {
-  display: flex;
-  gap: 0.75rem;
-  flex-wrap: wrap;
-  margin-bottom: 2.5rem;
-}
-
-.action-card {
+.card-content {
   display: flex;
   flex-direction: column;
-  align-items: center;
-  gap: 0.25rem;
-  padding: 0.75rem 1.25rem;
-  background: rgba(31, 41, 55, 0.5);
-  border: 1px solid rgba(75, 85, 99, 0.3);
-  border-radius: 0.5rem;
-  text-decoration: none;
-  color: #d1d5db;
-  font-size: 0.75rem;
+  gap: 0.125rem;
+}
+
+.card-label {
+  font-size: 1rem;
   font-weight: 600;
-  transition: all 0.2s;
 }
 
-.action-card:hover {
-  background: rgba(0, 188, 212, 0.1);
-  border-color: rgba(0, 188, 212, 0.3);
-  color: #00bcd4;
-  transform: translateY(-2px);
-}
-
-.action-icon {
-  font-size: 1.5rem;
+.card-desc {
+  font-size: 0.75rem;
+  color: #94a3b8;
 }
 
 /* Section Title */
 .section-title {
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #f9fafb;
-  margin: 0 0 1rem;
-  padding-bottom: 0.5rem;
-  border-bottom: 1px solid rgba(75, 85, 99, 0.3);
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 1rem 0;
 }
 
-/* Feature Sections */
-.feature-sections {
-  display: flex;
-  flex-direction: column;
-  gap: 2rem;
-}
-
-.feature-section {
-  background: rgba(31, 41, 55, 0.3);
-  border-radius: 1rem;
-  padding: 1.5rem;
-  border: 1px solid rgba(75, 85, 99, 0.2);
+/* Widgets Grid */
+.widgets-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 /* Features Grid */
 .features-grid {
   display: grid;
   grid-template-columns: repeat(4, 1fr);
-  gap: 1rem;
+  gap: 1.5rem;
+  margin-bottom: 2rem;
 }
 
 .feature-card {
-  background: rgba(17, 24, 39, 0.5);
-  border: 1px solid rgba(75, 85, 99, 0.3);
+  background: linear-gradient(135deg, rgba(6, 95, 134, 0.4) 0%, rgba(14, 116, 144, 0.4) 100%);
+  border: 1px solid rgba(8, 145, 178, 0.3);
   border-radius: 0.5rem;
-  padding: 1.25rem 1rem;
+  padding: 1.5rem;
   text-decoration: none;
   color: #e2e8f0;
-  transition: all 0.2s;
+  transition: all 0.3s;
   display: flex;
   flex-direction: column;
   gap: 0.5rem;
@@ -484,68 +315,101 @@ const isPluginEnabled = (slug: string): boolean => {
 
 .feature-card:hover {
   transform: translateY(-4px);
-  border-color: rgba(0, 188, 212, 0.5);
-  background: rgba(0, 188, 212, 0.1);
-  box-shadow: 0 8px 20px rgba(0, 188, 212, 0.2);
+  border-color: #0891b2;
+  box-shadow: 0 8px 24px rgba(8, 145, 178, 0.3);
+  background: linear-gradient(135deg, rgba(6, 95, 134, 0.6) 0%, rgba(14, 116, 144, 0.6) 100%);
 }
 
 .feature-icon {
-  font-size: 2rem;
+  font-size: 2.5rem;
   line-height: 1;
 }
 
 .feature-title {
-  font-size: 0.9375rem;
-  font-weight: 600;
+  font-size: 1rem;
+  font-weight: 700;
   margin: 0;
   color: #ffffff;
 }
 
 .feature-desc {
-  font-size: 0.75rem;
-  color: #9ca3af;
+  font-size: 0.8125rem;
+  color: #cbd5e1;
   margin: 0;
   line-height: 1.4;
 }
 
-/* Responsive */
-@media (max-width: 1200px) {
-  .features-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
+/* Empty State */
+.empty-state {
+  text-align: center;
+  padding: 4rem 2rem;
+  background: rgba(30, 41, 59, 0.4);
+  border: 1px dashed rgba(148, 163, 184, 0.3);
+  border-radius: 0.5rem;
 }
 
-@media (max-width: 1024px) {
-  .quick-stats {
-    grid-template-columns: repeat(2, 1fr);
-  }
+.empty-icon {
+  font-size: 3rem;
+  margin-bottom: 1rem;
+}
 
+.empty-title {
+  font-size: 1.25rem;
+  font-weight: 700;
+  color: #f1f5f9;
+  margin: 0 0 0.5rem 0;
+}
+
+.empty-desc {
+  font-size: 0.9375rem;
+  color: #94a3b8;
+  margin: 0 0 1.5rem 0;
+  max-width: 400px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.install-link {
+  display: inline-block;
+  background: linear-gradient(135deg, #00bcd4 0%, #0891b2 100%);
+  color: white;
+  text-decoration: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: 0.375rem;
+  font-weight: 600;
+  transition: all 0.2s;
+}
+
+.install-link:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 12px rgba(0, 188, 212, 0.3);
+}
+
+/* Responsive */
+@media (max-width: 1024px) {
   .features-grid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
 @media (max-width: 768px) {
-  .welcome-content {
+  .welcome-banner {
     flex-direction: column;
+    gap: 1rem;
     text-align: center;
   }
 
-  .quick-stats {
-    grid-template-columns: 1fr;
-  }
-
-  .features-grid {
+  .quick-access {
     grid-template-columns: repeat(2, 1fr);
   }
 
-  .quick-actions {
-    justify-content: center;
+  .features-grid {
+    grid-template-columns: 1fr;
   }
 }
 
 @media (max-width: 480px) {
-  .features-grid {
+  .quick-access {
     grid-template-columns: 1fr;
   }
 }

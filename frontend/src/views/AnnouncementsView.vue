@@ -55,10 +55,25 @@
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 
-const loading = ref(true)
-const announcements = ref([])
+interface AnnouncementAuthor {
+  name?: string
+  username?: string
+}
 
-const formatDate = (dateString) => {
+interface Announcement {
+  id: number
+  title: string
+  content: string
+  is_pinned: boolean
+  is_read: boolean
+  created_at: string
+  author?: AnnouncementAuthor
+}
+
+const loading = ref(true)
+const announcements = ref<Announcement[]>([])
+
+const formatDate = (dateString: string): string => {
   const date = new Date(dateString)
   return date.toLocaleDateString('en-US', {
     year: 'numeric',
@@ -87,7 +102,7 @@ const fetchAnnouncements = async () => {
   }
 }
 
-const markAsRead = async (id) => {
+const markAsRead = async (id: number): Promise<void> => {
   try {
     await api.post(`/api/v1/announcements/${id}/view`)
     const announcement = announcements.value.find(a => a.id === id)

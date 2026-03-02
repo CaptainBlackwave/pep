@@ -3,339 +3,112 @@ import { test, expect, type Page } from '@playwright/test'
 // ─── Helpers ─────────────────────────────────────────────────────────────────
 
 /**
- * Login helper for authenticated tests
+ * Set up authenticated session in localStorage
  */
-async function login(page: Page, options: { userId?: number } = {}) {
-  // Mock the login API response
-  await page.route('**/api/**module=auth**action=login**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: {
-          user: {
-            id: options.userId || 1,
-            username: 'testuser',
-            email: 'test@example.com',
-          },
-        },
-      }),
-    }),
-  )
-
-  // Mock the user/me endpoint
-  await page.route('**/api/**module=auth**action=me**', (route) =>
-    route.fulfill({
-      status: 200,
-      contentType: 'application/json',
-      body: JSON.stringify({
-        success: true,
-        data: {
-          user: {
-            id: options.userId || 1,
-            username: 'testuser',
-            email: 'test@example.com',
-            energy: 80,
-            max_energy: 100,
-            health: 90,
-            max_health: 100,
-            cash: 5000,
-            bank: 10000,
-            level: 5,
-          },
-        },
-      }),
-    }),
-  )
-
-  await page.goto('/login')
-  await page.evaluate(() => localStorage.clear())
-  await page.fill('#email', 'test@example.com')
-  await page.fill('#password', 'password123')
-  await page.click('button[type="submit"]')
-
-  // Wait for redirect to dashboard
-  await page.waitForURL(/\/dashboard/, { timeout: 5000 }).catch(() => {
-    // Continue even if redirect doesn't happen in mock mode
-  })
+async function setupAuthSession(page: Page, options: { username?: string } = {}) {
+  await page.evaluate((username) => {
+    localStorage.setItem('user', JSON.stringify({
+      id: 1,
+      username: username || 'testuser',
+      email: 'test@example.com',
+    }))
+  }, options.username || 'testuser')
 }
 
 /**
- * Mock the player stats API
+ * Mock the plugins API
  */
-async function mockPlayerStats(page: Page) {
-  await page.route('**/api/user**', (route) =>
+async function mockPluginsAPI(page: Page) {
+  await page.route('**/api/v1/plugins/enabled*', (route) =>
     route.fulfill({
       status: 200,
       contentType: 'application/json',
       body: JSON.stringify({
-        id: 1,
-        username: 'testuser',
-        energy: 80,
-        max_energy: 100,
-        health: 90,
-        max_health: 100,
-        cash: 5000,
-        bank: 10000,
-        level: 5,
+        success: true,
+        plugins: [],
+        navigation: [],
+        routes: [],
       }),
     }),
   )
 }
 
-// ─── Dashboard Page ──────────────────────────────────────────────────────────
+// ─── Dashboard Page (Core) ───────────────────────────────────────────────────
 
 test.describe('Dashboard Page', () => {
   test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
+    await setupAuthSession(page)
+    await mockPluginsAPI(page)
   })
 
-  test('displays player stats on dashboard', async ({ page }) => {
-    await login(page)
+  test('displays welcome banner on dashboard', async ({ page }) => {
     await page.goto('/dashboard')
 
-    // Check for stat displays
-    await expect(page.locator('body')).toContainText('80') // Energy
+    // Check for welcome banner
+    await expect(page.locator('.welcome-banner')).toBeVisible()
+    await expect(page.locator('.welcome-title')).toContainText('Welcome')
   })
 
-  test('displays navigation menu', async ({ page }) => {
-    await login(page)
+  test('displays quick access cards', async ({ page }) => {
     await page.goto('/dashboard')
 
-    // Check for navigation elements
-    await expect(page.locator('nav')).toBeVisible()
+    // Check for quick access section
+    await expect(page.locator('.quick-access')).toBeVisible()
+
+    // Check for core quick cards
+    await expect(page.locator('.quick-card').filter({ hasText: 'Profile' })).toBeVisible()
+    await expect(page.locator('.quick-card').filter({ hasText: 'Settings' })).toBeVisible()
+    await expect(page.locator('.quick-card').filter({ hasText: 'Activity' })).toBeVisible()
+    await expect(page.locator('.quick-card').filter({ hasText: 'Notifications' })).toBeVisible()
+  })
+
+  test('displays empty state when no plugins installed', async ({ page }) => {
+    await page.goto('/dashboard')
+
+    // Check for empty state (since we mocked no plugins)
+    await expect(page.locator('.empty-state')).toBeVisible()
+    await expect(page.locator('.empty-title')).toContainText('No Plugins Installed')
+  })
+
+  test('displays logout button', async ({ page }) => {
+    await page.goto('/dashboard')
+
+    // Check for logout buttonअव
+    await expect(page.locator('.logout-btn')).toBeVisible()
+    await expect(page.locator('.logout-btn')).toContainText('Logout')
   })
 })
 
-// ─── Crime Module ────────────────────────────────────────────────────────────
+// ─── Core Routes Navigation ──────────────────────────────────────────────────
 
-test.describe('Crime Module', () => {
+test.describe('Core Routes Navigation', () => {
   test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+    await setupAuthSession(page)
+    await mockPluginsAPI(page)
   })
 
-  test('displays crime options', async ({ page }) => {
-    // Mock crimes API
-    await page.route('**/api/**module=crimes**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            crimes: [
-              { id: 1, name: 'Pickpocket', difficulty: 1, reward_min: 10, reward_max: 50 },
-              { id: 2, name: 'Rob Store', difficulty: 2, reward_min: 100, reward_max: 500 },
-            ],
-          },
-        }),
-      }),
-    )
-
-    await page.goto('/crimes')
-
-    // Check for crime options
-    await expect(page.locator('body')).toContainText('Pickpocket')
+  test('can navigate to profile page', async ({ page }) => {
+    await page.goto('/dashboard')
+    await page.click('.quick-card[href="/profile"]')
+    await expect(page).toHaveURL(/\/profile/)
   })
 
-  test('can commit a crime', async ({ page }) => {
-    // Mock commit crime API
-    await page.route('**/api/**module=crimes**action=commit**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'Crime successful!',
-          data: {
-            reward: 150,
-            experience: 10,
-          },
-        }),
-      }),
-    )
-
-    await page.goto('/crimes')
-
-    // Verify crime page loaded and commit button exists
-    const commitButton = page.locator('button').filter({ hasText: /commit|do/i }).first()
-    await expect(commitButton).toBeVisible({ timeout: 2000 })
-    await commitButton.click()
-    // Verify the page is still functional after clicking
-    await expect(page.locator('body')).toBeVisible()
-  })
-})
-
-// ─── Gym Module ──────────────────────────────────────────────────────────────
-
-test.describe('Gym Module', () => {
-  test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+  test('can navigate to settings page', async ({ page }) => {
+    await page.goto('/dashboard')
+    await page.click('.quick-card[href="/settings"]')
+    await expect(page).toHaveURL(/\/settings/)
   })
 
-  test('displays gym training options', async ({ page }) => {
-    await page.goto('/gym')
-
-    // Check for training-related content
-    await expect(page.locator('body')).toBeVisible()
-  })
-})
-
-// ─── Bank Module ─────────────────────────────────────────────────────────────
-
-test.describe('Bank Module', () => {
-  test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+  test('can navigate to activity page', async ({ page }) => {
+    await page.goto('/dashboard')
+    await page.click('.quick-card[href="/activity"]')
+    await expect(page).toHaveURL(/\/activity/)
   })
 
-  test('displays bank balance', async ({ page }) => {
-    await page.goto('/bank')
-
-    // Check for bank-related content
-    await expect(page.locator('body')).toBeVisible()
-  })
-
-  test('can deposit money', async ({ page }) => {
-    // Mock deposit API
-    await page.route('**/api/**module=bank**action=deposit**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          message: 'Deposit successful!',
-          data: {
-            cash: 4000,
-            bank: 11000,
-          },
-        }),
-      }),
-    )
-
-    await page.goto('/bank')
-
-    // Verify bank page loaded
-    await expect(page.locator('body')).toBeVisible()
-    // Look for deposit form and interact with it
-    const depositInput = page.locator('input[type="number"]').first()
-    await expect(depositInput).toBeVisible({ timeout: 2000 })
-    await depositInput.fill('1000')
-    // Verify input was filled
-    await expect(depositInput).toHaveValue('1000')
-  })
-})
-
-// ─── Hospital Module ─────────────────────────────────────────────────────────
-
-test.describe('Hospital Module', () => {
-  test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
-  })
-
-  test('displays hospital options', async ({ page }) => {
-    await page.goto('/hospital')
-
-    await expect(page.locator('body')).toBeVisible()
-  })
-})
-
-// ─── Jail Module ─────────────────────────────────────────────────────────────
-
-test.describe('Jail Module', () => {
-  test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
-  })
-
-  test('displays jail page', async ({ page }) => {
-    // Mock jail API
-    await page.route('**/api/**module=jail**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            inmates: [],
-            is_jailed: false,
-          },
-        }),
-      }),
-    )
-
-    await page.goto('/jail')
-
-    await expect(page.locator('body')).toBeVisible()
-  })
-})
-
-// ─── Travel Module ───────────────────────────────────────────────────────────
-
-test.describe('Travel Module', () => {
-  test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
-  })
-
-  test('displays travel destinations', async ({ page }) => {
-    // Mock travel API
-    await page.route('**/api/**module=travel**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            destinations: [
-              { id: 1, name: 'New York', cost: 500, duration: 30 },
-              { id: 2, name: 'London', cost: 800, duration: 45 },
-            ],
-            current_location: { id: 1, name: 'Downtown' },
-          },
-        }),
-      }),
-    )
-
-    await page.goto('/travel')
-
-    await expect(page.locator('body')).toBeVisible()
-  })
-})
-
-// ─── Shop Module ─────────────────────────────────────────────────────────────
-
-test.describe('Shop Module', () => {
-  test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
-  })
-
-  test('displays shop items', async ({ page }) => {
-    // Mock shop API
-    await page.route('**/api/**module=shop**', (route) =>
-      route.fulfill({
-        status: 200,
-        contentType: 'application/json',
-        body: JSON.stringify({
-          success: true,
-          data: {
-            items: [
-              { id: 1, name: 'Health Pack', price: 100, type: 'consumable' },
-              { id: 2, name: 'Energy Drink', price: 50, type: 'consumable' },
-            ],
-          },
-        }),
-      }),
-    )
-
-    await page.goto('/shop')
-
-    await expect(page.locator('body')).toBeVisible()
+  test('can navigate to notifications page', async ({ page }) => {
+    await page.goto('/dashboard')
+    await page.click('.quick-card[href="/notifications"]')
+    await expect(page).toHaveURL(/\/notifications/)
   })
 })
 
@@ -343,14 +116,16 @@ test.describe('Shop Module', () => {
 
 test.describe('Profile Page', () => {
   test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+    await setupAuthSession(page)
+    await mockPluginsAPI(page)
   })
 
-  test('displays user profile', async ({ page }) => {
+  test('displays profile page', async ({ page }) => {
     await page.goto('/profile')
 
-    await expect(page.locator('body')).toContainText('testuser')
+    // Profile page should load
+    await expect(page).toHaveURL(/\/profile/)
+    await expect(page.locator('body')).toBeVisible()
   })
 })
 
@@ -358,13 +133,155 @@ test.describe('Profile Page', () => {
 
 test.describe('Settings Page', () => {
   test.beforeEach(async ({ page }) => {
-    await mockPlayerStats(page)
-    await login(page)
+    await setupAuthSession(page)
+    await mockPluginsAPI(page)
   })
 
-  test('displays settings options', async ({ page }) => {
+  test('displays settings page', async ({ page }) => {
     await page.goto('/settings')
 
+    // Settings page should load
+    await expect(page).toHaveURL(/\/settings/)
     await expect(page.locator('body')).toBeVisible()
+  })
+})
+
+// ─── Activity Page ───────────────────────────────────────────────────────────
+
+test.describe('Activity Page', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthSession(page)
+    await mockPluginsAPI(page)
+  })
+
+  test('displays activity page', async ({ page }) => {
+    // Mock activity API
+    await page.route('**/api/v1/activity*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: [],
+        }),
+      }),
+    )
+
+    await page.goto('/activity')
+
+    // Activity page should load
+    await expect(page).toHaveURL(/\/activity/)
+    await expect(page.locator('body')).toBeVisible()
+  })
+})
+
+// ─── Notifications Page ──────────────────────────────────────────────────────
+
+test.describe('Notifications Page', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthSession(page)
+    await mockPluginsAPI(page)
+  })
+
+  test('displays notifications page', async ({ page }) => {
+    // Mock notifications API
+    await page.route('**/api/v1/notifications*', (route) =>
+      route.fulfill({
+        status: 200,
+        contentType: 'application/json',
+        body: JSON.stringify({
+          data: [],
+        }),
+      }),
+    )
+
+    await page.goto('/notifications')
+
+    // Notifications page should load
+    await expect(page).toHaveURL(/\/notifications/)
+    await expect(page.locator('body')).toBeVisible()
+  })
+})
+
+// ─── Authentication Guard ────────────────────────────────────────────────────
+
+test.describe('Authentication Guard', () => {
+  test('unauthenticated user is redirected to login from dashboard', async ({ page }) => {
+    await page.goto('/login')
+    await page.evaluate(() => localStorage.clear())
+    await page.goto('/dashboard')
+
+    await expect(page).toHaveURL(/\/login/)
+  })
+
+  test('unauthenticated user is redirected to login from profile', async ({ page }) => {
+    await page.goto('/login')
+    await page.evaluate(() => localStorage.clear())
+    await page.goto('/profile')
+
+    await expect(page).toHaveURL(/\/login/)
+  })
+
+  test('unauthenticated user is redirected to login from settings', async ({ page }) => {
+    await page.goto('/login')
+    await page.evaluate(() => localStorage.clear())
+    await page.goto('/settings')
+
+    await expect(page).toHaveURL(/\/login/)
+  })
+})
+
+// ─── Plugin Routes (Non-existent in Core) ─────────────────────────────────────
+
+test.describe('Plugin Routes (Not in Core)', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthSession(page)
+    await mockPluginsAPI(page)
+  })
+
+  test('gaming routes show 404 when no plugins installed', async ({ page }) => {
+    // These routes are no longer in core - they come from plugins
+    const gamingRoutes = ['/crimes', '/gym', '/bank', '/hospital', '/jail', '/travel', '/shop']
+
+    for (const route of gamingRoutes) {
+      await page.goto(route)
+      // Should show 404 or redirect to dashboard (depends on router config)
+      const url = page.url()
+      const is404 = url.includes('404') || url.includes('not-found')
+      const isDashboard = url.includes('dashboard')
+      expect(is404 || isDashboard).toBe(true)
+    }
+  })
+})
+
+// ─── Responsive Design ───────────────────────────────────────────────────────
+
+test.describe('Responsive Design', () => {
+  test.beforeEach(async ({ page }) => {
+    await setupAuthSession(page)
+    await mockPluginsAPI(page)
+  })
+
+  test('displays correctly on mobile viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 375, height: 667 })
+    await page.goto('/dashboard')
+
+    await expect(page.locator('.welcome-banner')).toBeVisible()
+    await expect(page.locator('.quick-access')).toBeVisible()
+  })
+
+  test('displays correctly on tablet viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 768, height: 1024 })
+    await page.goto('/dashboard')
+
+    await expect(page.locator('.welcome-banner')).toBeVisible()
+    await expect(page.locator('.quick-access')).toBeVisible()
+  })
+
+  test('displays correctly on desktop viewport', async ({ page }) => {
+    await page.setViewportSize({ width: 1280, height: 720 })
+    await page.goto('/dashboard')
+
+    await expect(page.locator('.welcome-banner')).toBeVisible()
+    await expect(page.locator('.quick-access')).toBeVisible()
   })
 })

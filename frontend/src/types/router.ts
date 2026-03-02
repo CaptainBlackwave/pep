@@ -1,5 +1,5 @@
 /**
- * Router Type Definitions for OpenPBBG
+ * Router Type Definitions for Core Web APP OS
  */
 
 import 'vue-router'
@@ -14,6 +14,7 @@ export interface RouteMeta {
   layout?: string
   transition?: string
   keepAlive?: boolean
+  plugin?: string
 }
 
 /**
@@ -27,66 +28,30 @@ declare module 'vue-router' {
     layout?: string
     transition?: string
     keepAlive?: boolean
+    plugin?: string
   }
 }
 
 /**
  * Named routes for type-safe navigation
+ * Core routes only - plugin routes are dynamically registered
  */
 export type AppRouteName =
+  // Authentication routes
   | 'login'
   | 'register'
   | 'forgot-password'
   | 'reset-password'
+  // Core application routes
   | 'dashboard'
   | 'home'
-  | 'city'
-  | 'inventory'
-  | 'missions'
-  | 'combat'
-  | 'scavenge'
-  | 'travel'
-  | 'skills'
-  | 'forums'
   | 'profile'
-  | 'crimes'
-  | 'crime-action'
-  | 'gym'
-  | 'hospital'
-  | 'bank'
-  | 'drugs'
-  | 'theft'
-  | 'racing'
-  | 'jail'
-  | 'properties'
-  | 'bounty'
-  | 'detective'
-  | 'bullets'
-  | 'gang'
-  | 'organized-crime'
-  | 'chat'
-  | 'messaging'
-  | 'achievements'
-  | 'leaderboards'
   | 'activity'
-  | 'employment'
-  | 'education'
-  | 'quests'
-  | 'alliances'
-  | 'shop'
-  | 'market'
-  | 'stocks'
-  | 'casino'
-  | 'explore'
-  | 'hunting'
-  | 'events'
-  | 'tournament'
-  | 'wiki'
-  | 'tickets'
   | 'settings'
   | 'notifications'
+  | 'tickets'
   | 'announcements'
-  | 'daily-rewards'
+  // Utility routes
   | 'not-found'
 
 /**

@@ -89,6 +89,7 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue'
 import { useNotificationsStore } from '@/stores/notifications'
+import type { Notification } from '@/types/notification'
 
 const store = useNotificationsStore()
 
@@ -107,23 +108,19 @@ const filteredNotifications = computed(() => {
   return store.notifications
 })
 
-const getIcon = (type) => {
-  const icons = {
-    achievement: '🏆',
-    combat: '⚔️',
-    crime: '🔫',
-    gang: '👥',
+const getIcon = (type: string): string => {
+  const icons: Record<string, string> = {
     message: '✉️',
-    money: '💰',
-    level_up: '⬆️',
     warning: '⚠️',
     system: 'ℹ️',
+    security: '🔐',
+    update: '🔄',
     default: '📢',
   }
-  return icons[type] || icons.default
+  return icons[type] ?? icons.default
 }
 
-const formatTime = (dateString) => {
+const formatTime = (dateString: string): string => {
   const date = new Date(dateString)
   const now = new Date()
   const diff = now.getTime() - date.getTime()
@@ -140,7 +137,7 @@ const formatTime = (dateString) => {
   return date.toLocaleDateString('en-US', { month: 'short', day: 'numeric' })
 }
 
-const handleClick = (notification) => {
+const handleClick = (notification: Notification): void => {
   if (!notification.read_at) {
     store.markAsRead(notification.id)
   }
@@ -149,15 +146,15 @@ const handleClick = (notification) => {
   }
 }
 
-const markAsRead = (id) => {
+const markAsRead = (id: number): void => {
   store.markAsRead(id)
 }
 
-const markAllAsRead = () => {
+const markAllAsRead = (): void => {
   store.markAllAsRead()
 }
 
-const deleteNotification = (id) => {
+const deleteNotification = (id: number): void => {
   store.deleteNotification(id)
 }
 

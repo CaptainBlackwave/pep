@@ -1,45 +1,51 @@
 <template>
   <nav class="main-nav">
-    <router-link to="/home" class="nav-item" active-class="active">
-      <span class="nav-icon">H</span>
-      <span class="nav-label">HOME</span>
+    <!-- Core navigation items -->
+    <router-link to="/dashboard" class="nav-item" active-class="active">
+      <span class="nav-icon">🏠</span>
+      <span class="nav-label">DASHBOARD</span>
     </router-link>
-    <router-link to="/city" class="nav-item" active-class="active">
-      <span class="nav-icon">C</span>
-      <span class="nav-label">CITY</span>
-    </router-link>
-    <router-link to="/inventory" class="nav-item" active-class="active">
-      <span class="nav-icon">I</span>
-      <span class="nav-label">INVENTORY</span>
-    </router-link>
-    <router-link to="/missions" class="nav-item" active-class="active">
-      <span class="nav-icon">M</span>
-      <span class="nav-label">MISSIONS</span>
-    </router-link>
-    <router-link to="/combat" class="nav-item" active-class="active">
-      <span class="nav-icon">C</span>
-      <span class="nav-label">COMBAT</span>
-    </router-link>
-    <router-link to="/crimes" class="nav-item" active-class="active">
-      <span class="nav-icon">C</span>
-      <span class="nav-label">CRIMES</span>
-    </router-link>
-    <router-link to="/travel" class="nav-item" active-class="active">
-      <span class="nav-icon">T</span>
-      <span class="nav-label">TRAVEL</span>
-    </router-link>
-    <router-link to="/skills" class="nav-item" active-class="active">
-      <span class="nav-icon">S</span>
-      <span class="nav-label">SKILLS</span>
-    </router-link>
-    <router-link to="/forums" class="nav-item" active-class="active">
-      <span class="nav-icon">F</span>
-      <span class="nav-label">FORUMS</span>
+
+    <!-- Dynamic plugin navigation -->
+    <template v-for="item in sortedNavigation" :key="item.slug">
+      <router-link
+        v-if="item.route"
+        :to="item.route"
+        class="nav-item"
+        active-class="active"
+      >
+        <span class="nav-icon">{{ item.icon || '📦' }}</span>
+        <span class="nav-label">{{ item.name.toUpperCase() }}</span>
+      </router-link>
+    </template>
+
+    <!-- Core settings (always show) -->
+    <router-link to="/settings" class="nav-item" active-class="active">
+      <span class="nav-icon">⚙️</span>
+      <span class="nav-label">SETTINGS</span>
     </router-link>
   </nav>
 </template>
 
 <script setup lang="ts">
+import { computed, onMounted } from 'vue'
+import { usePluginsStore } from '@/stores/plugins'
+
+const pluginsStore = usePluginsStore()
+
+// Get navigation items sorted by order
+const sortedNavigation = computed(() => {
+  return [...pluginsStore.navigation]
+    .filter(item => item.section === 'main' || !item.section)
+    .sort((a, b) => a.order - b.order)
+})
+
+// Fetch plugins on mount if not loaded
+onMounted(() => {
+  if (!pluginsStore.loaded) {
+    pluginsStore.fetchPlugins()
+  }
+})
 </script>
 
 <style scoped>

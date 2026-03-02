@@ -36,11 +36,14 @@ return new class extends Migration
             $table->integer('level')->default(1);
             $table->integer('experience')->default(0);
             $table->string('rank')->default('Thug');
-            $table->foreignId('rank_id')->nullable()->constrained('ranks')->nullOnDelete();
+            // rank_id foreign key removed - ranks table provided by Progression plugin
+            $table->unsignedBigInteger('rank_id')->nullable();
 
             // Location
             $table->string('location')->default('Chicago');
-            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete();
+            // location_id is a reference to the locations table provided by the Travel plugin
+            // No foreign key constraint - the table may not exist in core-only installs
+            $table->unsignedBigInteger('location_id')->nullable();
 
             // Game state
             $table->string('status')->default('alive');

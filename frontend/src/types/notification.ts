@@ -1,21 +1,30 @@
 /**
- * Notification Type Definitions for OpenPBBG
+ * Notification Type Definitions for Core Web APP OS
  */
 
 /**
- * Notification types
+ * Notification types - generic types for any application
  */
-export type NotificationType = 'info' | 'success' | 'warning' | 'error'
+export type NotificationType = 'info' | 'success' | 'warning' | 'error' | 'message' | 'system' | 'security' | 'update'
+
+/**
+ * Notification data payload for actions
+ */
+export interface NotificationData {
+  action?: string
+  [key: string]: unknown
+}
 
 /**
  * Notification interface
  */
 export interface Notification {
   id: number
-  type: NotificationType
+  type: NotificationType | string
   title: string
   message: string
   link?: string
+  data?: NotificationData
   read_at: string | null
   created_at: string
 }
@@ -44,6 +53,7 @@ export interface CreateNotificationRequest {
   title: string
   message: string
   link?: string
+  data?: NotificationData
 }
 
 /**
@@ -55,6 +65,7 @@ export interface BulkNotificationRequest {
   title: string
   message: string
   link?: string
+  data?: NotificationData
 }
 
 /**
@@ -67,10 +78,9 @@ export interface NotificationPreferences {
   sound: boolean
   types: {
     system: boolean
-    game: boolean
-    social: boolean
-    gang: boolean
-    market: boolean
+    security: boolean
+    updates: boolean
+    messages: boolean
   }
 }
 
@@ -84,16 +94,4 @@ export interface ToastNotification {
   message: string
   duration?: number
   dismissible?: boolean
-}
-
-/**
- * Notification category for filtering
- */
-export type NotificationCategory = 'system' | 'game' | 'social' | 'gang' | 'market' | 'combat'
-
-/**
- * Categorized notification
- */
-export interface CategorizedNotification extends Notification {
-  category: NotificationCategory
 }

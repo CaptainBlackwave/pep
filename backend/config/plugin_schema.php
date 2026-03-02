@@ -59,6 +59,24 @@ return [
             'profile-tab',
             'inventory-slot',
             'navigation-item',
+            'header-slot',
+            'user-menu-item',
+        ],
+        /*
+        |----------------------------------------------------------------------
+        | Dashboard Widgets
+        |----------------------------------------------------------------------
+        |
+        | Plugins can register dashboard widgets that appear on the main
+        | dashboard. Each widget has a component, width, and optional props.
+        |
+        */
+        'dashboard_widgets' => [
+            'name' => 'required|string',
+            'component' => 'required|string',
+            'width' => 'nullable|string|in:full,half,third,quarter',
+            'order' => 'nullable|integer',
+            'props' => 'nullable|array',
         ],
     ],
 

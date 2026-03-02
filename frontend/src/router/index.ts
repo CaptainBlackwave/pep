@@ -9,44 +9,8 @@ export type { RouteMeta } from '@/types/router'
 
 // Plugin slug to route mapping - used for static route definitions
 // Dynamic routes are loaded from backend via PluginManifestService
-const pluginRoutes: Record<string, string[]> = {
-  achievements: ['achievements'],
-  advancedcrimes: ['advanced-crimes'],
-  alliances: ['alliances'],
-  announcements: ['announcements'],
-  bounty: ['bounty'],
-  bullets: ['bullets'],
-  casino: ['casino', 'tournament'],
-  chat: ['chat'],
-  combat: ['combat'],
-  dailyrewards: ['daily-rewards'],
-  detective: ['detective'],
-  drugs: ['drugs'],
-  education: ['education'],
-  employment: ['employment'],
-  events: ['events'],
-  forum: ['forums'],
-  gang: ['gang'],
-  hospital: ['hospital'],
-  inventory: ['inventory'],
-  jail: ['jail'],
-  leaderboards: ['leaderboards'],
-  market: ['market'],
-  messaging: ['messaging'],
-  minirpg: ['mini-rpg'],
-  missions: ['missions'],
-  organizedcrime: ['organized-crime'],
-  progression: ['progression'],
-  properties: ['properties'],
-  quests: ['quests'],
-  racing: ['racing'],
-  stocks: ['stocks'],
-  theft: ['theft'],
-  tickets: ['tickets'],
-  tournament: ['tournament'],
-  travel: ['travel'],
-  wiki: ['wiki'],
-}
+// All gaming/utility plugins are now loaded dynamically from bundles
+const pluginRoutes: Record<string, string[]> = {}
 
 // Reverse mapping: route name -> plugin slug
 const routeToPlugin: Record<string, string> = {}
@@ -58,6 +22,7 @@ Object.entries(pluginRoutes).forEach(([plugin, routes]) => {
 
 /**
  * Route definitions with lazy loading for optimal bundle size
+ * Core routes only - gaming routes are provided by plugins
  */
 const routes: RouteRecordRaw[] = [
   // Root redirect
@@ -92,13 +57,13 @@ const routes: RouteRecordRaw[] = [
     meta: { requiresGuest: true, title: 'Reset Password' } satisfies RouteMeta
   },
 
-  // Authenticated routes with GameLayout
+  // Authenticated routes with CoreLayout
   {
     path: '/',
-    component: () => import('@/layouts/GameLayout.vue'),
+    component: () => import('@/layouts/CoreLayout.vue'),
     meta: { requiresAuth: true } satisfies RouteMeta,
     children: [
-      // Dashboard & Home
+      // Dashboard & Home (Core)
       {
         path: 'dashboard',
         name: 'dashboard',
@@ -112,279 +77,23 @@ const routes: RouteRecordRaw[] = [
         meta: { title: 'Home' } satisfies RouteMeta
       },
 
-      // Core Game Routes
-      {
-        path: 'city',
-        name: 'city',
-        component: () => import('@/views/plugins/CityView.vue'),
-        meta: { title: 'City' } satisfies RouteMeta
-      },
-      {
-        path: 'inventory',
-        name: 'inventory',
-        component: () => import('@/views/plugins/InventoryView.vue'),
-        meta: { title: 'Inventory' } satisfies RouteMeta
-      },
-      {
-        path: 'missions',
-        name: 'missions',
-        component: () => import('@/views/plugins/MissionsView.vue'),
-        meta: { title: 'Missions' } satisfies RouteMeta
-      },
-      {
-        path: 'combat',
-        name: 'combat',
-        component: () => import('@/views/plugins/CombatView.vue'),
-        meta: { title: 'Combat' } satisfies RouteMeta
-      },
-      {
-        path: 'scavenge',
-        name: 'scavenge',
-        component: () => import('@/views/plugins/ScavengeView.vue'),
-        meta: { title: 'Scavenge' } satisfies RouteMeta
-      },
-      {
-        path: 'travel',
-        name: 'travel',
-        component: () => import('@/views/plugins/TravelView.vue'),
-        meta: { title: 'Travel' } satisfies RouteMeta
-      },
-      {
-        path: 'skills',
-        name: 'skills',
-        component: () => import('@/views/plugins/SkillsView.vue'),
-        meta: { title: 'Skills' } satisfies RouteMeta
-      },
-      {
-        path: 'forums',
-        name: 'forums',
-        component: () => import('@/views/plugins/ForumView.vue'),
-        meta: { title: 'Forums' } satisfies RouteMeta
-      },
+      // Core Profile (Core)
       {
         path: 'profile',
         name: 'profile',
-        component: () => import('@/views/plugins/ProfileView.vue'),
+        component: () => import('@/views/ProfileView.vue'),
         meta: { title: 'Profile' } satisfies RouteMeta
       },
 
-      // Crime & Action Routes
-      {
-        path: 'crimes',
-        name: 'crimes',
-        component: () => import('@/views/plugins/CrimesView.vue'),
-        meta: { title: 'Crimes' } satisfies RouteMeta
-      },
-      {
-        path: 'crimes/:id',
-        name: 'crime-action',
-        component: () => import('@/views/plugins/CrimeActionView.vue'),
-        meta: { title: 'Crime Action' } satisfies RouteMeta
-      },
-      {
-        path: 'gym',
-        name: 'gym',
-        component: () => import('@/views/plugins/GymView.vue'),
-        meta: { title: 'Gym' } satisfies RouteMeta
-      },
-      {
-        path: 'hospital',
-        name: 'hospital',
-        component: () => import('@/views/plugins/HospitalView.vue'),
-        meta: { title: 'Hospital' } satisfies RouteMeta
-      },
-      {
-        path: 'bank',
-        name: 'bank',
-        component: () => import('@/views/plugins/BankView.vue'),
-        meta: { title: 'Bank' } satisfies RouteMeta
-      },
-      {
-        path: 'drugs',
-        name: 'drugs',
-        component: () => import('@/views/plugins/DrugsView.vue'),
-        meta: { title: 'Drugs' } satisfies RouteMeta
-      },
-      {
-        path: 'theft',
-        name: 'theft',
-        component: () => import('@/views/plugins/TheftView.vue'),
-        meta: { title: 'Theft' } satisfies RouteMeta
-      },
-      {
-        path: 'racing',
-        name: 'racing',
-        component: () => import('@/views/plugins/RacingView.vue'),
-        meta: { title: 'Racing' } satisfies RouteMeta
-      },
-      {
-        path: 'jail',
-        name: 'jail',
-        component: () => import('@/views/plugins/JailView.vue'),
-        meta: { title: 'Jail' } satisfies RouteMeta
-      },
-      {
-        path: 'properties',
-        name: 'properties',
-        component: () => import('@/views/plugins/PropertiesView.vue'),
-        meta: { title: 'Properties' } satisfies RouteMeta
-      },
-      {
-        path: 'bounty',
-        name: 'bounty',
-        component: () => import('@/views/plugins/BountyView.vue'),
-        meta: { title: 'Bounty' } satisfies RouteMeta
-      },
-      {
-        path: 'detective',
-        name: 'detective',
-        component: () => import('@/views/plugins/DetectiveView.vue'),
-        meta: { title: 'Detective' } satisfies RouteMeta
-      },
-      {
-        path: 'bullets',
-        name: 'bullets',
-        component: () => import('@/views/plugins/BulletsView.vue'),
-        meta: { title: 'Bullets' } satisfies RouteMeta
-      },
-      {
-        path: 'gang',
-        name: 'gang',
-        component: () => import('@/views/plugins/GangView.vue'),
-        meta: { title: 'Gang' } satisfies RouteMeta
-      },
-      {
-        path: 'organized-crime',
-        name: 'organized-crime',
-        component: () => import('@/views/plugins/OrganizedCrimeView.vue'),
-        meta: { title: 'Organized Crime' } satisfies RouteMeta
-      },
-
-      // Social & Communication
-      {
-        path: 'chat',
-        name: 'chat',
-        component: () => import('@/views/plugins/ChatView.vue'),
-        meta: { title: 'Chat' } satisfies RouteMeta
-      },
-      {
-        path: 'messaging',
-        name: 'messaging',
-        component: () => import('@/views/plugins/MessagingView.vue'),
-        meta: { title: 'Messages' } satisfies RouteMeta
-      },
-
-      // Progression & Stats
-      {
-        path: 'achievements',
-        name: 'achievements',
-        component: () => import('@/views/plugins/AchievementsView.vue'),
-        meta: { title: 'Achievements' } satisfies RouteMeta
-      },
-      {
-        path: 'leaderboards',
-        name: 'leaderboards',
-        component: () => import('@/views/plugins/LeaderboardsView.vue'),
-        meta: { title: 'Leaderboards' } satisfies RouteMeta
-      },
+      // Activity Log (Core)
       {
         path: 'activity',
         name: 'activity',
-        component: () => import('@/views/plugins/ActivityView.vue'),
+        component: () => import('@/views/ActivityView.vue'),
         meta: { title: 'Activity' } satisfies RouteMeta
       },
-      {
-        path: 'employment',
-        name: 'employment',
-        component: () => import('@/views/plugins/EmploymentView.vue'),
-        meta: { title: 'Employment' } satisfies RouteMeta
-      },
-      {
-        path: 'education',
-        name: 'education',
-        component: () => import('@/views/plugins/EducationView.vue'),
-        meta: { title: 'Education' } satisfies RouteMeta
-      },
-      {
-        path: 'quests',
-        name: 'quests',
-        component: () => import('@/views/plugins/QuestsView.vue'),
-        meta: { title: 'Quests' } satisfies RouteMeta
-      },
-      {
-        path: 'alliances',
-        name: 'alliances',
-        component: () => import('@/views/plugins/AlliancesView.vue'),
-        meta: { title: 'Alliances' } satisfies RouteMeta
-      },
 
-      // Economy & Trading
-      {
-        path: 'shop',
-        name: 'shop',
-        component: () => import('@/views/plugins/ShopView.vue'),
-        meta: { title: 'Shop' } satisfies RouteMeta
-      },
-      {
-        path: 'market',
-        name: 'market',
-        component: () => import('@/views/plugins/MarketView.vue'),
-        meta: { title: 'Market' } satisfies RouteMeta
-      },
-      {
-        path: 'stocks',
-        name: 'stocks',
-        component: () => import('@/views/plugins/StocksView.vue'),
-        meta: { title: 'Stocks' } satisfies RouteMeta
-      },
-      {
-        path: 'casino',
-        name: 'casino',
-        component: () => import('@/views/plugins/CasinoView.vue'),
-        meta: { title: 'Casino' } satisfies RouteMeta
-      },
-
-      // Exploration & Events
-      {
-        path: 'explore',
-        name: 'explore',
-        component: () => import('@/views/plugins/ExploreView.vue'),
-        meta: { title: 'Explore' } satisfies RouteMeta
-      },
-      {
-        path: 'hunting',
-        name: 'hunting',
-        component: () => import('@/views/plugins/HuntingView.vue'),
-        meta: { title: 'Hunting' } satisfies RouteMeta
-      },
-      {
-        path: 'events',
-        name: 'events',
-        component: () => import('@/views/plugins/EventsView.vue'),
-        meta: { title: 'Events' } satisfies RouteMeta
-      },
-      {
-        path: 'tournament',
-        name: 'tournament',
-        component: () => import('@/views/plugins/TournamentView.vue'),
-        meta: { title: 'Tournament' } satisfies RouteMeta
-      },
-
-      // Information
-      {
-        path: 'wiki',
-        name: 'wiki',
-        component: () => import('@/views/plugins/WikiView.vue'),
-        meta: { title: 'Wiki' } satisfies RouteMeta
-      },
-      {
-        path: 'tickets',
-        name: 'tickets',
-        component: () => import('@/views/TicketsView.vue'),
-        meta: { title: 'Support Tickets' } satisfies RouteMeta
-      },
-
-      // User Settings
+      // User Settings (Core)
       {
         path: 'settings',
         name: 'settings',
@@ -397,18 +106,14 @@ const routes: RouteRecordRaw[] = [
         component: () => import('@/views/NotificationsView.vue'),
         meta: { title: 'Notifications' } satisfies RouteMeta
       },
-      {
-        path: 'announcements',
-        name: 'announcements',
-        component: () => import('@/views/AnnouncementsView.vue'),
-        meta: { title: 'Announcements' } satisfies RouteMeta
-      },
-      {
-        path: 'daily-rewards',
-        name: 'daily-rewards',
-        component: () => import('@/views/DailyRewardsView.vue'),
-        meta: { title: 'Daily Rewards' } satisfies RouteMeta
-      }
+
+      // NOTE: Gaming routes (crimes, gym, hospital, bank, drugs, theft, racing,
+      // jail, properties, bounty, detective, bullets, gang, organized-crime,
+      // chat, messaging, achievements, leaderboards, employment, education,
+      // quests, alliances, shop, market, stocks, casino, explore, hunting,
+      // events, tournament, inventory, missions, combat, scavenge, skills,
+      // forums, announcements, daily-rewards) are now provided by plugins.
+      // Install the gaming bundle to restore these features.
     ]
   },
 
@@ -464,7 +169,8 @@ router.beforeEach(async (to, _from, next) => {
   // Update document title if route has a title
   const title = to.meta?.title as string | undefined
   if (title) {
-    document.title = `${title} | OpenPBBG`
+    const appName = import.meta.env.VITE_APP_NAME || 'Core Web App'
+    document.title = `${title} | ${appName}`
   }
 
   // Initialize plugin routes on first authenticated navigation
