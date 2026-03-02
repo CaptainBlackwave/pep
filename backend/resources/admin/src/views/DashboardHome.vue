@@ -48,30 +48,30 @@
 
     <!-- Charts Row -->
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-      <!-- Activity Chart -->
+      <!-- User Activity Chart -->
       <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-semibold text-white">Player Activity</h2>
+          <h2 class="text-lg font-semibold text-white">User Activity</h2>
           <span class="px-3 py-1 rounded-full bg-cyan-500/20 text-cyan-400 text-xs font-medium">{{ dateRange }} days</span>
         </div>
         <LineChart :labels="activityChart.labels" :datasets="activityChart.datasets" />
       </div>
 
-      <!-- Crime Distribution -->
+      <!-- User Distribution -->
       <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
         <div class="flex items-center justify-between mb-6">
-          <h2 class="text-lg font-semibold text-white">Crime Distribution</h2>
-          <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">Live</span>
+          <h2 class="text-lg font-semibold text-white">User Distribution</h2>
+          <span class="px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-400 text-xs font-medium">By Role</span>
         </div>
-        <DoughnutChart :labels="crimeChart.labels" :data="crimeChart.data" />
+        <DoughnutChart :labels="userDistribution.labels" :data="userDistribution.data" />
       </div>
     </div>
 
     <!-- Analytics Row -->
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
-      <!-- Retention Cohorts -->
+      <!-- User Retention -->
       <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-        <h2 class="text-lg font-semibold text-white mb-4">Player Retention</h2>
+        <h2 class="text-lg font-semibold text-white mb-4">User Retention</h2>
         <div class="space-y-3">
           <div v-for="cohort in retention" :key="cohort.week" class="p-3 rounded-xl bg-slate-700/30">
             <div class="flex justify-between items-center mb-2">
@@ -101,21 +101,23 @@
         </div>
       </div>
 
-      <!-- Economy Overview -->
+      <!-- Recent Activity -->
       <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-        <h2 class="text-lg font-semibold text-white mb-4">Economy Overview</h2>
-        <div class="space-y-4">
-          <div class="p-4 rounded-xl bg-gradient-to-r from-emerald-500/20 to-emerald-600/10 border border-emerald-500/30">
-            <div class="text-sm text-emerald-400">Cash in Circulation</div>
-            <div class="text-2xl font-bold text-white mt-1">${{ formatMoney(economy.total_cash) }}</div>
+        <h2 class="text-lg font-semibold text-white mb-4">Recent Activity</h2>
+        <div class="space-y-3">
+          <div v-for="activity in recentActivity" :key="activity.id"
+            class="flex items-center gap-3 p-3 rounded-xl bg-slate-700/30"
+          >
+            <div :class="['p-2 rounded-lg', activity.color]">
+              <component :is="activity.icon" class="w-4 h-4 text-white" />
+            </div>
+            <div class="flex-1 min-w-0">
+              <p class="text-sm text-white truncate">{{ activity.message }}</p>
+              <p class="text-xs text-slate-500">{{ activity.time }}</p>
+            </div>
           </div>
-          <div class="p-4 rounded-xl bg-gradient-to-r from-blue-500/20 to-blue-600/10 border border-blue-500/30">
-            <div class="text-sm text-blue-400">Bank Deposits</div>
-            <div class="text-2xl font-bold text-white mt-1">${{ formatMoney(economy.total_bank) }}</div>
-          </div>
-          <div class="p-4 rounded-xl bg-gradient-to-r from-violet-500/20 to-violet-600/10 border border-violet-500/30">
-            <div class="text-sm text-violet-400">Total Economy</div>
-            <div class="text-2xl font-bold text-white mt-1">${{ formatMoney(economy.total) }}</div>
+          <div v-if="recentActivity.length === 0" class="text-center py-4 text-slate-500 text-sm">
+            No recent activity
           </div>
         </div>
       </div>
@@ -148,7 +150,7 @@
     </div>
 
     <!-- Bottom Grid -->
-    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <!-- System Health -->
       <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
         <h2 class="text-lg font-semibold text-white mb-4">System Health</h2>
@@ -176,7 +178,7 @@
       <!-- Quick Actions -->
       <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
         <h2 class="text-lg font-semibold text-white mb-4">Quick Actions</h2>
-        <div class="grid grid-cols-2 gap-3">
+        <div class="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <button
             v-for="action in quickActions"
             :key="action.label"
@@ -186,41 +188,6 @@
             <component :is="action.icon" class="w-6 h-6 text-slate-400 group-hover:text-amber-400 transition-colors" />
             <span class="text-xs font-medium text-slate-300 group-hover:text-white transition-colors">{{ action.label }}</span>
           </button>
-        </div>
-      </div>
-
-      <!-- Game Systems -->
-      <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-        <h2 class="text-lg font-semibold text-white mb-4">Game Systems</h2>
-        <div class="space-y-3">
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-700/30">
-            <div class="flex items-center gap-3">
-              <BriefcaseIcon class="w-5 h-5 text-blue-400" />
-              <span class="text-sm text-slate-300">Employment</span>
-            </div>
-            <span class="text-sm text-white">{{ gameSystems.employment.employed_users }} employed</span>
-          </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-700/30">
-            <div class="flex items-center gap-3">
-              <AcademicCapIcon class="w-5 h-5 text-violet-400" />
-              <span class="text-sm text-slate-300">Education</span>
-            </div>
-            <span class="text-sm text-white">{{ gameSystems.education.active_enrollments }} enrolled</span>
-          </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-700/30">
-            <div class="flex items-center gap-3">
-              <ChartBarIcon class="w-5 h-5 text-emerald-400" />
-              <span class="text-sm text-slate-300">Stock Market</span>
-            </div>
-            <span class="text-sm text-white">{{ gameSystems.stocks.investors }} investors</span>
-          </div>
-          <div class="flex items-center justify-between p-3 rounded-xl bg-slate-700/30">
-            <div class="flex items-center gap-3">
-              <SparklesIcon class="w-5 h-5 text-amber-400" />
-              <span class="text-sm text-slate-300">Casino</span>
-            </div>
-            <span class="text-sm text-white">{{ gameSystems.casino.bets_today }} bets today</span>
-          </div>
         </div>
       </div>
     </div>
@@ -237,17 +204,17 @@ import DoughnutChart from '@/components/charts/DoughnutChart.vue'
 import {
   UsersIcon,
   BoltIcon,
-  FireIcon,
-  CurrencyDollarIcon,
+  TicketIcon,
+  EnvelopeIcon,
   TrashIcon,
   MegaphoneIcon,
   ServerIcon,
   DocumentTextIcon,
   ArrowPathIcon,
-  BriefcaseIcon,
-  AcademicCapIcon,
-  ChartBarIcon,
-  SparklesIcon
+  UserPlusIcon,
+  Cog6ToothIcon,
+  KeyIcon,
+  LifebuoyIcon
 } from '@heroicons/vue/24/outline'
 
 const router = useRouter()
@@ -267,7 +234,7 @@ const stats = ref([
     gradient: 'from-blue-500 to-cyan-500'
   },
   {
-    label: 'Active Players',
+    label: 'Active Users',
     value: '0',
     change: '0%',
     period: 'of total',
@@ -277,22 +244,22 @@ const stats = ref([
     gradient: 'from-emerald-500 to-teal-500'
   },
   {
-    label: 'Crimes Today',
+    label: 'Open Tickets',
     value: '0',
-    change: '0%',
-    period: 'vs yesterday',
+    change: '0',
+    period: 'pending',
     trend: 'neutral',
-    icon: FireIcon,
+    icon: TicketIcon,
     color: 'bg-orange-500',
     gradient: 'from-orange-500 to-amber-500'
   },
   {
-    label: 'Total Economy',
-    value: '$0',
+    label: 'Emails Sent',
+    value: '0',
     change: '',
-    period: 'in circulation',
+    period: 'this period',
     trend: 'neutral',
-    icon: CurrencyDollarIcon,
+    icon: EnvelopeIcon,
     color: 'bg-violet-500',
     gradient: 'from-violet-500 to-purple-500'
   }
@@ -309,7 +276,11 @@ const quickActions = ref([
   { label: 'Clear Cache', icon: TrashIcon, handler: () => clearCache() },
   { label: 'Announcement', icon: MegaphoneIcon, handler: () => router.push('/announcements') },
   { label: 'Backup DB', icon: ServerIcon, handler: () => router.push('/backups') },
-  { label: 'View Logs', icon: DocumentTextIcon, handler: () => router.push('/error-logs') }
+  { label: 'View Logs', icon: DocumentTextIcon, handler: () => router.push('/error-logs') },
+  { label: 'Add User', icon: UserPlusIcon, handler: () => router.push('/users?action=add') },
+  { label: 'Settings', icon: Cog6ToothIcon, handler: () => router.push('/settings') },
+  { label: 'API Keys', icon: KeyIcon, handler: () => router.push('/api-keys') },
+  { label: 'Support', icon: LifebuoyIcon, handler: () => router.push('/tickets') }
 ])
 
 const activityChart = ref({
@@ -317,20 +288,14 @@ const activityChart = ref({
   datasets: []
 })
 
-const crimeChart = ref({
-  labels: [],
-  data: []
+const userDistribution = ref({
+  labels: ['Admins', 'Moderators', 'Users'],
+  data: [0, 0, 0]
 })
 
 const retention = ref([])
 const hourlyActivity = ref([])
-const economy = ref({ total_cash: 0, total_bank: 0, total: 0 })
-const gameSystems = ref({
-  employment: { total_companies: 0, employed_users: 0 },
-  education: { total_courses: 0, active_enrollments: 0 },
-  stocks: { total_stocks: 0, investors: 0 },
-  casino: { total_games: 0, bets_today: 0 }
-})
+const recentActivity = ref([])
 
 const formatMoney = (value) => {
   if (!value) return '0'
@@ -378,13 +343,13 @@ const loadStats = async () => {
       stats.value[1].change = `${data.activePercentage || 0}%`
       stats.value[1].trend = (data.activePercentage || 0) > 10 ? 'up' : 'neutral'
 
-      stats.value[2].value = (data.crimesToday || 0).toLocaleString()
-      stats.value[2].change = `${data.crimesGrowth > 0 ? '+' : ''}${data.crimesGrowth || 0}%`
-      stats.value[2].trend = (data.crimesGrowth || 0) > 0 ? 'up' : (data.crimesGrowth || 0) < 0 ? 'down' : 'neutral'
+      stats.value[2].value = (data.openTickets || 0).toLocaleString()
+      stats.value[2].change = data.pendingTickets || '0'
+      stats.value[2].trend = 'neutral'
 
-      stats.value[3].value = `$${formatMoney(data.totalMoney || 0)}`
+      stats.value[3].value = (data.emailsSent || 0).toLocaleString()
 
-      // Update activity chart - the API returns datasets directly
+      // Update activity chart
       if (data.activityChart) {
         activityChart.value = {
           labels: data.activityChart.labels || [],
@@ -392,17 +357,12 @@ const loadStats = async () => {
         }
       }
 
-      // Update crime chart
-      if (data.crimeChart) {
-        crimeChart.value = {
-          labels: data.crimeChart.labels || [],
-          data: data.crimeChart.data || []
+      // Update user distribution
+      if (data.userDistribution) {
+        userDistribution.value = {
+          labels: data.userDistribution.labels || ['Admins', 'Moderators', 'Users'],
+          data: data.userDistribution.data || [0, 0, 0]
         }
-      }
-
-      // Update economy
-      if (data.economy) {
-        economy.value = data.economy
       }
 
       // Update retention
@@ -415,11 +375,10 @@ const loadStats = async () => {
         hourlyActivity.value = data.hourlyActivity
       }
 
-      // Update game systems
-      if (data.employment) gameSystems.value.employment = data.employment
-      if (data.education) gameSystems.value.education = data.education
-      if (data.stocks) gameSystems.value.stocks = data.stocks
-      if (data.casino) gameSystems.value.casino = data.casino
+      // Update recent activity
+      if (data.recentActivity) {
+        recentActivity.value = data.recentActivity
+      }
     }
   } catch (error) {
     console.error('Failed to load dashboard stats:', error)

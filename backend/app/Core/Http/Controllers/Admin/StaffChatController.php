@@ -121,6 +121,11 @@ class StaffChatController extends Controller
     {
         $user = $request->user();
 
+        // Check if table exists
+        if (!\Schema::hasTable('staff_chat_messages')) {
+            return response()->json(['count' => 0]);
+        }
+
         $readStatus = StaffChatReadStatus::where('user_id', $user->id)->first();
         $lastReadId = $readStatus?->last_read_message_id ?? 0;
 

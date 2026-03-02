@@ -70,6 +70,11 @@ interface Announcement {
   author?: AnnouncementAuthor
 }
 
+interface AnnouncementsResponse {
+  announcements?: Announcement[]
+  data?: Announcement[]
+}
+
 const loading = ref(true)
 const announcements = ref<Announcement[]>([])
 
@@ -86,8 +91,9 @@ const formatDate = (dateString: string): string => {
 
 const fetchAnnouncements = async () => {
   try {
-    const response = await api.get('/api/v1/announcements')
-    announcements.value = response.data.announcements || response.data || []
+    const response = await api.get<AnnouncementsResponse>('/api/v1/announcements')
+    const data = response.data
+    announcements.value = data.announcements ?? (Array.isArray(data.data) ? data.data : [])
 
     // Sort: pinned first, then by date
     announcements.value.sort((a, b) => {

@@ -112,6 +112,13 @@ interface ActivityGroup {
   activities: Activity[]
 }
 
+interface ActivityResponse {
+  activities?: Activity[]
+  data?: Activity[]
+  has_more?: boolean
+  next_page_url?: string | null
+}
+
 const loading = ref(true)
 const loadingMore = ref(false)
 const activities = ref<Activity[]>([])
@@ -152,7 +159,7 @@ const loadActivities = async (page = 1) => {
       params.append('days', filterPeriod.value)
     }
 
-    const response = await api.get(`/api/v1/user/activity?${params}`)
+    const response = await api.get<ActivityResponse>(`/api/v1/user/activity?${params}`)
     const data = response.data
 
     if (page === 1) {
@@ -214,7 +221,7 @@ const getActivityIcon = (type: string): string => {
     plugins: '🧩',
     default: '📌',
   }
-  return icons[type] ?? icons.default
+  return icons[type] ?? '📌'
 }
 
 // Watch for filter changes

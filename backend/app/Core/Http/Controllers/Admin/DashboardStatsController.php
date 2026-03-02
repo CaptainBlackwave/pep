@@ -178,8 +178,8 @@ class DashboardStatsController extends Controller
     {
         $hourlyData = [];
 
-        if (DB::getSchemaBuilder()->hasTable('activity_log')) {
-            $activities = DB::table('activity_log')
+        if (DB::getSchemaBuilder()->hasTable('activity_logs')) {
+            $activities = DB::table('activity_logs')
                 ->select(DB::raw('HOUR(created_at) as hour'), DB::raw('COUNT(*) as count'))
                 ->where('created_at', '>=', Carbon::now()->subDays(7))
                 ->groupBy(DB::raw('HOUR(created_at)'))
@@ -206,14 +206,14 @@ class DashboardStatsController extends Controller
 
     private function getTopActivities($startDate, $endDate): array
     {
-        if (!DB::getSchemaBuilder()->hasTable('activity_log')) {
+        if (!DB::getSchemaBuilder()->hasTable('activity_logs')) {
             return [];
         }
 
-        $activities = DB::table('activity_log')
-            ->select('log_name', DB::raw('COUNT(*) as count'))
+        $activities = DB::table('activity_logs')
+            ->select('type', DB::raw('COUNT(*) as count'))
             ->whereBetween('created_at', [$startDate, $endDate])
-            ->groupBy('log_name')
+            ->groupBy('type')
             ->orderByDesc('count')
             ->limit(5)
             ->get();
@@ -222,7 +222,7 @@ class DashboardStatsController extends Controller
 
         return $activities->map(function ($activity) use ($maxCount) {
             return [
-                'name'       => ucfirst(str_replace('_', ' ', $activity->log_name)),
+                'name'       => ucfirst(str_replace('_', ' ', $activity->type)),
                 'count'      => $activity->count,
                 'percentage' => round(($activity->count / $maxCount) * 100),
             ];

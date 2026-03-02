@@ -181,9 +181,30 @@ const passwordForm = ref({
   confirm: '',
 })
 
+interface UserResponse {
+  user?: {
+    name?: string
+    bio?: string
+    email_notifications?: boolean
+    push_notifications?: boolean
+    sound_enabled?: boolean
+    show_online?: boolean
+    public_profile?: boolean
+    two_factor_enabled?: boolean
+  }
+  name?: string
+  bio?: string
+  email_notifications?: boolean
+  push_notifications?: boolean
+  sound_enabled?: boolean
+  show_online?: boolean
+  public_profile?: boolean
+  two_factor_enabled?: boolean
+}
+
 const loadSettings = async () => {
   try {
-    const response = await api.get('/api/v1/user')
+    const response = await api.get<UserResponse>('/api/v1/user')
     const user = response.data.user || response.data
 
     settings.value = {

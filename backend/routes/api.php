@@ -322,10 +322,18 @@ Route::prefix('v1')->group(function () {
                 Route::post('/{id}/regenerate-secret', 'regenerateSecret');
                 Route::get('/{id}/logs', 'logs');
             });
+
+            // Admin Sidebar (for dynamic menu loading)
+            Route::get('/sidebar', function () {
+                $user = request()->user();
+                $menu = \App\Core\Admin\AdminSidebarService::getSidebarItems($user);
+                return response()->json(['menu' => $menu]);
+            });
         });
     });
 
-    require base_path('routes/admin.php');
+    // Note: routes/admin.php is no longer needed - all admin routes are now in api.php
+    // require base_path('routes/admin.php');
 
     Route::middleware('auth:sanctum')->group(function () {
         // Emoji Routes
