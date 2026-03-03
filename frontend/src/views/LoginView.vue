@@ -136,9 +136,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 
 const form = ref({
   email: '',
@@ -152,6 +154,8 @@ async function handleLogin() {
     password: form.value.password
   })
   if (success) {
+    // Fetch user profile data after successful login
+    await userStore.fetchProfile()
     router.push('/dashboard')
   }
 }

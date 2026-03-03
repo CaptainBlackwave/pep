@@ -15,6 +15,7 @@ import router from './router'
 
 // Stores
 import { useAuthStore } from './stores/auth'
+import { useUserStore } from './stores/user'
 
 // Plugins
 import errorLoggerPlugin, { setupGlobalErrorHandlers, setupAxiosErrorInterceptor } from './plugins/errorLogger'
@@ -37,6 +38,13 @@ setupAxiosErrorInterceptor(axios)
 
 // Initialize auth store and mount app
 const authStore = useAuthStore()
-authStore.init().finally(() => {
+const userStore = useUserStore()
+
+authStore.init().then(async () => {
+  // If user is authenticated, fetch their profile data
+  if (authStore.isAuthenticated) {
+    await userStore.fetchProfile()
+  }
+}).finally(() => {
   app.mount('#app')
 })

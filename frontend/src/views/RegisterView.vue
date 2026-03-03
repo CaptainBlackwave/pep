@@ -126,9 +126,11 @@
 import { ref } from 'vue'
 import { useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
+import { useUserStore } from '@/stores/user'
 
 const router = useRouter()
 const authStore = useAuthStore()
+const userStore = useUserStore()
 
 const form = ref({
   username: '',
@@ -140,6 +142,8 @@ const form = ref({
 async function handleRegister() {
   const success = await authStore.register(form.value)
   if (success) {
+    // Fetch user profile data after successful registration
+    await userStore.fetchProfile()
     router.push('/dashboard')
   }
 }

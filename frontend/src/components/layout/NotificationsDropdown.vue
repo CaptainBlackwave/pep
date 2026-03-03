@@ -1,7 +1,7 @@
 <template>
   <div class="notifications-menu">
     <button class="icon-btn" title="Notifications" @click.stop="toggleDropdown">
-      <span>Bell</span>
+      <span>🔔</span>
       <span v-if="unreadCount > 0" class="badge">{{ badgeText }}</span>
     </button>
     <div v-if="showDropdown" class="notifications-dropdown">

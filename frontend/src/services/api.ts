@@ -73,7 +73,11 @@ function isCacheValid(entry: CacheEntry, ttl: number = DEFAULT_CACHE_TTL): boole
  */
 axiosInstance.interceptors.request.use(
   (config: InternalAxiosRequestConfig) => {
-    // Add any request modifications here (e.g., auth tokens)
+    // Add auth token to requests if available
+    const token = localStorage.getItem('auth_token')
+    if (token) {
+      config.headers.Authorization = `Bearer ${token}`
+    }
     return config
   },
   (error: Error) => {
