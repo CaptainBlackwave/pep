@@ -26,7 +26,7 @@ class UserManagementController extends Controller
     {
         $this->authorize('viewAny', User::class);
 
-        $query = User::with(['profile', 'currentRank', 'profile.currentLocation', 'roles']);
+        $query = User::with(['profile', 'roles']);
 
         if ($request->search) {
             $query->where(function ($q) use ($request) {
@@ -65,7 +65,7 @@ class UserManagementController extends Controller
         $this->authorize('view', $user);
 
         return response()->json(
-            $user->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles.permissions', 'permissions'])
+            $user->load(['profile', 'roles.permissions', 'permissions'])
         );
     }
 
@@ -110,7 +110,7 @@ class UserManagementController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User created successfully',
-            'user'    => $user->load(['profile', 'profile.currentRank', 'profile.currentLocation']),
+            'user'    => $user->load(['profile']),
         ], 201);
     }
 
@@ -186,7 +186,7 @@ class UserManagementController extends Controller
         return response()->json([
             'success' => true,
             'message' => 'User updated successfully',
-            'user'    => $user->fresh()->load(['profile', 'profile.currentRank', 'profile.currentLocation']),
+            'user'    => $user->fresh()->load(['profile']),
         ]);
     }
 

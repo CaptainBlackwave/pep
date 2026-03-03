@@ -46,7 +46,7 @@ class UserToolsController extends Controller
      */
     public function show(int $id)
     {
-        $user = User::with(['currentRank', 'location', 'roles'])
+        $user = User::with(['profile', 'roles'])
             ->findOrFail($id);
 
         return response()->json([
