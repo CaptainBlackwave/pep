@@ -6,6 +6,9 @@ class CoreAdminMenu
 {
     /**
      * Get the default admin sidebar items.
+     *
+     * Only includes items that have complete backend implementations.
+     * See ADMIN_MENU_AUDIT.md for tracking missing features.
      */
     public static function items(): array
     {
@@ -34,30 +37,10 @@ class CoreAdminMenu
                     [ 'route' => '/license',        'label' => 'License',     'icon' => 'KeyIcon' ],
                 ],
             ],
-            [
-                'id' => 'communication',
-                'label' => 'Communication',
-                'icon' => 'ChatBubbleLeftRightIcon',
-                'order' => 45,
-                'children' => [
-                    [ 'route' => '/announcements',    'label' => 'Announcements',    'icon' => 'MegaphoneIcon' ],
-                    [ 'route' => '/wiki',             'label' => 'Wiki',             'icon' => 'BookOpenIcon' ],
-                    [ 'route' => '/faq',              'label' => 'FAQ',              'icon' => 'QuestionMarkCircleIcon' ],
-                    [ 'route' => '/forum-categories', 'label' => 'Forum Categories', 'icon' => 'ChatBubbleLeftRightIcon' ],
-                    [ 'route' => '/events',           'label' => 'Events',           'icon' => 'CalendarIcon' ],
-                    [ 'route' => '/chat-channels',    'label' => 'Chat Channels',    'icon' => 'ChatBubbleLeftRightIcon' ],
-                ],
-            ],
-            [
-                'id' => 'support',
-                'label' => 'Support',
-                'icon' => 'LifebuoyIcon',
-                'order' => 50,
-                'children' => [
-                    [ 'route' => '/tickets',           'label' => 'Tickets',           'icon' => 'TicketIcon' ],
-                    [ 'route' => '/ticket-categories', 'label' => 'Ticket Categories', 'icon' => 'TagIcon' ],
-                ],
-            ],
+            // Communication section removed - no backend implementations
+            // See ADMIN_MENU_AUDIT.md for tracking
+            // Support section removed - no backend implementations
+            // See ADMIN_MENU_AUDIT.md for tracking
             [
                 'id' => 'system',
                 'label' => 'System',
@@ -72,8 +55,8 @@ class CoreAdminMenu
                     [ 'route' => '/webhooks',       'label' => 'Webhooks',        'icon' => 'ArrowTopRightOnSquareIcon' ],
                     [ 'route' => '/api-keys',       'label' => 'API Keys',        'icon' => 'KeyIcon' ],
                     [ 'route' => '/notifications',  'label' => 'Notifications',   'icon' => 'BellIcon' ],
-                    [ 'route' => '/calendar',       'label' => 'Calendar',        'icon' => 'CalendarIcon' ],
-                    [ 'route' => '/tasks',          'label' => 'Tasks',           'icon' => 'ClipboardDocumentCheckIcon' ],
+                    // Calendar and Tasks removed - no backend implementations
+                    // See ADMIN_MENU_AUDIT.md for tracking
                 ],
             ],
         ];
