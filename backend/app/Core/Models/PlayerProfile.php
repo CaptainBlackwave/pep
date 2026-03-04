@@ -90,21 +90,8 @@ class PlayerProfile extends Model
         return $this->belongsTo(User::class);
     }
 
-    /**
-     * The current rank (provided by Progression plugin).
-     * This relation is a shim for plugin compatibility.
-     */
-    public function currentRank(): BelongsTo
-    {
-        return $this->belongsTo(Rank::class, 'rank_id');
-    }
-
-    /**
-     * The current location (provided by Travel plugin).
-     * This relation is a shim for plugin compatibility.
-     */
-    public function currentLocation(): BelongsTo
-    {
-        return $this->belongsTo(Location::class, 'location_id');
-    }
+    // Note: currentRank() and currentLocation() relationships are now defined
+    // by plugins using resolveRelationUsing(). For example:
+    // PlayerProfile::resolveRelationUsing('currentRank', fn($p) => $p->belongsTo(Rank::class, 'rank_id'));
+    // This allows plugins to provide their own Rank and Location models.
 }

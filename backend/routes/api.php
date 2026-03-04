@@ -191,11 +191,9 @@ Route::prefix('v1')->group(function () {
                 Route::post('/templates/{id}/test', 'sendTestTemplate');
             });
 
-            // Locations (Core - for multi-location support)
-            Route::apiResource('locations', \App\Core\Http\Controllers\Admin\LocationController::class);
-
-            // Memberships (Core - for user membership tiers)
-            Route::apiResource('memberships', \App\Core\Http\Controllers\Admin\MembershipController::class);
+            // Locations and Memberships are now provided by plugins
+            // Route::apiResource('locations', \App\Core\Http\Controllers\Admin\LocationController::class);
+            // Route::apiResource('memberships', \App\Core\Http\Controllers\Admin\MembershipController::class);
 
             // Configurable Type Tables (Core - for plugin extensibility)
             Route::apiResource('item-rarities', \App\Core\Http\Controllers\Admin\ItemRarityController::class);
@@ -245,7 +243,9 @@ Route::prefix('v1')->group(function () {
             });
 
             Route::apiResource('ip-bans', \App\Core\Http\Controllers\Admin\IpBanController::class);
-            Route::get('user-timers', [\App\Core\Http\Controllers\Admin\UserTimerController::class, 'index']);
+
+            // User timers are now provided by plugins
+            // Route::get('user-timers', [\App\Core\Http\Controllers\Admin\UserTimerController::class, 'index']);
 
             // User Tools (Admin)
             Route::prefix('user-tools')->controller(\App\Core\Http\Controllers\Admin\UserToolsController::class)->group(function () {
@@ -307,7 +307,7 @@ Route::prefix('v1')->group(function () {
 
             // Developer Tools — hook registry & metrics introspection
             Route::prefix('developer')->controller(\App\Core\Http\Controllers\Admin\DeveloperController::class)->group(function () {
-                Route::get('/hooks',   'hooks');
+                Route::get('/hooks', 'hooks');
                 Route::get('/metrics', 'metrics');
             });
 

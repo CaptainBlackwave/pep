@@ -119,3 +119,17 @@ LOCAL-DEPLOYMENT-PROBLEMS.md
 REBRANDING.md
 docs/BUG-USERNAME-GUEST.md
 backend/docs/ADMIN_MENU_AUDIT.md
+backend/app/Core/Models/archived_plugin/Item.php
+backend/app/Core/Models/archived_plugin/ItemType.php
+backend/app/Core/Models/archived_plugin/Location.php
+backend/app/Core/Models/archived_plugin/Rank.php
+backend/app/Core/Models/archived_plugin/UserTimer.php
+backend/app/Core/Services/archived_plugin/Feature.php
+backend/app/Core/Services/archived_plugin/GameHooks.php
+backend/app/Core/Services/archived_plugin/PlayerStatsService.php
+backend/app/Core/Services/archived_plugin/TimerService.php
+backend/app/Core/Services/archived_plugin/WalletService.php
+backend/app/Core/Models/archived_plugin/LocationController.php
+backend/app/Core/Models/archived_plugin/MembershipController.php
+backend/app/Core/Models/archived_plugin/RankController.php
+backend/app/Core/Models/archived_plugin/UserTimerController.php

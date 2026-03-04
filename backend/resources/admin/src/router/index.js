@@ -81,16 +81,6 @@ const router = createRouter({
           name: 'notifications',
           component: () => import('../views/NotificationsView.vue')
         },
-        {
-          path: '/calendar',
-          name: 'calendar',
-          component: () => import('../views/CalendarView.vue')
-        },
-        {
-          path: '/tasks',
-          name: 'tasks',
-          component: () => import('../views/TasksView.vue')
-        },
         // User Management
         {
           path: '/users',
@@ -127,53 +117,6 @@ const router = createRouter({
           path: '/plugin-settings',
           name: 'plugin-settings',
           component: () => import('../views/PluginsView.vue')
-        },
-        // Communication
-        {
-          path: '/announcements',
-          name: 'announcements',
-          component: () => import('../views/AnnouncementsView.vue')
-        },
-        {
-          path: '/faq',
-          name: 'faq',
-          component: () => import('../views/FaqView.vue')
-        },
-        {
-          path: '/wiki',
-          name: 'wiki',
-          component: () => import('../views/WikiView.vue')
-        },
-        {
-          path: '/forum-categories',
-          name: 'forum-categories',
-          component: () => import('../views/ForumCategoriesView.vue')
-        },
-        {
-          path: '/events',
-          name: 'events',
-          component: () => import('../views/EventsView.vue')
-        },
-        {
-          path: '/chat-channels',
-          name: 'chat-channels',
-          component: () => import('../views/ChatChannelsView.vue')
-        },
-        // Support
-        {
-          path: '/tickets/:id',
-          name: 'ticket-detail',
-          component: () => import('../views/TicketDetailView.vue')
-        },
-        {
-          path: '/tickets',
-          name: 'tickets',
-          component: () => import('../views/TicketListView.vue')
-        },
-        {
-          path: '/ticket-categories',
-          name: 'ticket-categories',
-          component: () => import('../views/TicketCategoriesView.vue')
         },
         // System
         {

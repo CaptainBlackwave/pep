@@ -22,8 +22,8 @@ const coreComponentMap: Record<string, () => Promise<Component>> = {
   // Core views
   ProfileView: () => import('@/views/ProfileView.vue'),
   ActivityView: () => import('@/views/ActivityView.vue'),
-  TicketsView: () => import('@/views/TicketsView.vue'),
-  AnnouncementsView: () => import('@/views/AnnouncementsView.vue'),
+  // Note: TicketsView and AnnouncementsView are plugin features
+  // They should be provided by plugins via dynamic imports
 }
 
 /**
