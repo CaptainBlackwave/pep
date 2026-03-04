@@ -5,6 +5,7 @@ namespace App\Core\Http\Controllers\Admin;
 use App\Core\Http\Controllers\Controller;
 use App\Core\Models\Setting;
 use App\Core\Models\User;
+use App\Core\Models\InstalledPlugin;
 use Illuminate\Http\Request;
 
 class SettingsController extends Controller
@@ -272,5 +273,226 @@ class SettingsController extends Controller
             'success' => true,
             'message' => 'Setting deleted successfully'
         ]);
+    }
+
+    /**
+     * Get all plugin-defined admin settings schemas.
+     * Returns settings groups from enabled plugins.
+     */
+    public function pluginSettingsSchema()
+    {
+        $groups = [];
+        $enabledPlugins = InstalledPlugin::where('enabled', true)->get();
+
+        foreach ($enabledPlugins as $pluginRecord) {
+            $pluginInstance = $this->getPluginInstance($pluginRecord->slug);
+
+            if (!$pluginInstance) {
+                continue;
+            }
+
+            $adminSettings = $pluginInstance->getAdminSettings();
+
+            foreach ($adminSettings as $groupId => $groupConfig) {
+                // Add plugin info to each group
+                $groups[$groupId] = array_merge($groupConfig, [
+                    'plugin_name' => $pluginRecord->name,
+                    'plugin_slug' => $pluginRecord->slug,
+                ]);
+            }
+        }
+
+        // Sort groups by order
+        uasort($groups, function ($a, $b) {
+            return ($a['order'] ?? 100) <=> ($b['order'] ?? 100);
+        });
+
+        return response()->json([
+            'groups' => $groups,
+        ]);
+    }
+
+    /**
+     * Get all settings including plugin defaults.
+     * Returns settings with their current values and default values from plugins.
+     */
+    public function allWithDefaults()
+    {
+        $settings = Setting::all()->pluck('value', 'key')->toArray();
+        $defaults = [];
+        $groups = [];
+
+        // Get defaults from core
+        $coreDefaults = $this->getCoreDefaults();
+        $defaults = array_merge($defaults, $coreDefaults);
+
+        // Get defaults and groups from enabled plugins
+        $enabledPlugins = InstalledPlugin::where('enabled', true)->get();
+
+        foreach ($enabledPlugins as $pluginRecord) {
+            $pluginInstance = $this->getPluginInstance($pluginRecord->slug);
+
+            if (!$pluginInstance) {
+                continue;
+            }
+
+            $adminSettings = $pluginInstance->getAdminSettings();
+
+            foreach ($adminSettings as $groupId => $groupConfig) {
+                // Add to groups
+                $groups[$groupId] = [
+                    'label' => $groupConfig['label'] ?? ucfirst($groupId),
+                    'icon' => $groupConfig['icon'] ?? 'Cog6ToothIcon',
+                    'order' => $groupConfig['order'] ?? 100,
+                    'plugin_name' => $pluginRecord->name,
+                    'plugin_slug' => $pluginRecord->slug,
+                    'settings' => [],
+                ];
+
+                // Extract defaults from settings
+                if (isset($groupConfig['settings'])) {
+                    foreach ($groupConfig['settings'] as $key => $config) {
+                        $defaults[$key] = $config['default'] ?? null;
+                        $groups[$groupId]['settings'][$key] = [
+                            'type' => $config['type'] ?? 'text',
+                            'label' => $config['label'] ?? $key,
+                            'description' => $config['description'] ?? null,
+                            'default' => $config['default'] ?? null,
+                            'min' => $config['min'] ?? null,
+                            'max' => $config['max'] ?? null,
+                            'step' => $config['step'] ?? null,
+                            'options' => $config['options'] ?? null,
+                            'placeholder' => $config['placeholder'] ?? null,
+                            'plugin_id' => $config['plugin_id'] ?? null,
+                        ];
+                    }
+                }
+            }
+        }
+
+        // Add core general settings group
+        $coreGroup = [
+            'label' => 'General',
+            'icon' => 'Cog6ToothIcon',
+            'order' => 0,
+            'plugin_name' => 'Core',
+            'plugin_slug' => 'core',
+            'settings' => [
+                'game_name' => [
+                    'type' => 'text',
+                    'label' => 'Game Name',
+                    'description' => 'The name displayed throughout the game',
+                    'default' => 'Gangster Legends',
+                ],
+                'registration_enabled' => [
+                    'type' => 'boolean',
+                    'label' => 'Registration Status',
+                    'description' => 'Allow new user registrations',
+                    'default' => true,
+                ],
+                'maintenance_mode' => [
+                    'type' => 'boolean',
+                    'label' => 'Maintenance Mode',
+                    'description' => 'Only admins can access when enabled',
+                    'default' => false,
+                ],
+            ],
+        ];
+
+        // Insert core group at beginning
+        $groups = ['general' => $coreGroup] + $groups;
+
+        // Merge settings with defaults
+        $result = [];
+        foreach ($defaults as $key => $default) {
+            $raw = $settings[$key] ?? null;
+            if ($raw === null) {
+                $result[$key] = $default;
+            } elseif ($raw === '1' || $raw === 'true') {
+                $result[$key] = true;
+            } elseif ($raw === '0' || $raw === 'false') {
+                $result[$key] = false;
+            } elseif (is_numeric($raw)) {
+                $result[$key] = strpos($raw, '.') !== false ? (float) $raw : (int) $raw;
+            } else {
+                $result[$key] = $raw;
+            }
+        }
+
+        // Also include existing settings that might not have defaults
+        foreach ($settings as $key => $value) {
+            if (!isset($result[$key])) {
+                if ($value === '1' || $value === 'true') {
+                    $result[$key] = true;
+                } elseif ($value === '0' || $value === 'false') {
+                    $result[$key] = false;
+                } elseif (is_numeric($value)) {
+                    $result[$key] = strpos($value, '.') !== false ? (float) $value : (int) $value;
+                } else {
+                    $result[$key] = $value;
+                }
+            }
+        }
+
+        // Sort groups by order
+        uasort($groups, function ($a, $b) {
+            return ($a['order'] ?? 100) <=> ($b['order'] ?? 100);
+        });
+
+        return response()->json([
+            'settings' => $result,
+            'groups' => $groups,
+        ]);
+    }
+
+    /**
+     * Get core default settings.
+     */
+    protected function getCoreDefaults(): array
+    {
+        return [
+            'game_name' => 'Gangster Legends',
+            'registration_enabled' => true,
+            'maintenance_mode' => false,
+        ];
+    }
+
+    /**
+     * Get plugin instance from slug.
+     */
+    protected function getPluginInstance(string $slug): ?\App\Core\Contracts\PluginInterface
+    {
+        $pluginPath = app_path('Plugins/' . $slug);
+
+        if (!is_dir($pluginPath)) {
+            // Try to find with different casing
+            $directories = glob(app_path('Plugins/*'), GLOB_ONLYDIR);
+            foreach ($directories as $dir) {
+                if (strtolower(basename($dir)) === strtolower($slug)) {
+                    $pluginPath = $dir;
+                    break;
+                }
+            }
+        }
+
+        // Find the plugin class
+        $pluginJsonPath = $pluginPath . '/plugin.json';
+        if (!file_exists($pluginJsonPath)) {
+            return null;
+        }
+
+        $manifest = json_decode(file_get_contents($pluginJsonPath), true);
+        $pascal = str_replace('-', '', ucwords($slug, '-'));
+        $pluginClass = "App\\Plugins\\{$pascal}\\{$pascal}Plugin";
+
+        if (!class_exists($pluginClass)) {
+            return null;
+        }
+
+        try {
+            return app($pluginClass);
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

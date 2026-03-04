@@ -118,4 +118,25 @@ interface PluginInterface
      * ]
      */
     public function getPermissions(): array;
+
+    /**
+     * Get admin settings defined by this plugin.
+     * Returns array of setting groups with their fields:
+     * [
+     *     'combat' => [
+     *         'label' => 'Combat',
+     *         'icon' => 'FireIcon',
+     *         'order' => 10,
+     *         'settings' => [
+     *             'attack_cooldown' => [
+     *                 'type' => 'number',
+     *                 'label' => 'Attack Cooldown (seconds)',
+     *                 'default' => 300,
+     *                 'description' => 'Cooldown between attacks',
+     *             ],
+     *         ],
+     *     ],
+     * ]
+     */
+    public function getAdminSettings(): array;
 }

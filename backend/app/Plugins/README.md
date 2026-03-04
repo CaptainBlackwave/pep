@@ -1008,6 +1008,228 @@ This plugin demonstrates:
 
 ---
 
+## Admin Settings
+
+Plugins can register their own settings tabs in the admin panel by defining `admin_settings` in `plugin.json`.
+
+### Basic Structure
+
+```json
+{
+    "admin_settings": {
+        "combat": {
+            "label": "Combat",
+            "icon": "FireIcon",
+            "order": 10,
+            "settings": {
+                "attack_cooldown": {
+                    "type": "number",
+                    "label": "Attack Cooldown (seconds)",
+                    "default": 300,
+                    "description": "Cooldown between attacks",
+                    "min": 0,
+                    "max": 3600
+                },
+                "allow_friendly_fire": {
+                    "type": "boolean",
+                    "label": "Allow Friendly Fire",
+                    "default": false,
+                    "description": "Allow players to attack gang members"
+                }
+            }
+        }
+    }
+}
+```
+
+### Multiple Settings Groups
+
+A plugin can define multiple settings groups:
+
+```json
+{
+    "admin_settings": {
+        "economy": {
+            "label": "Economy",
+            "icon": "BanknotesIcon",
+            "order": 20,
+            "settings": {
+                "starting_cash": {
+                    "type": "number",
+                    "label": "Starting Cash",
+                    "default": 1000,
+                    "min": 0
+                },
+                "interest_rate": {
+                    "type": "number",
+                    "label": "Bank Interest Rate (%)",
+                    "default": 5,
+                    "min": 0,
+                    "max": 100,
+                    "step": 0.5
+                }
+            }
+        },
+        "features": {
+            "label": "Feature Toggles",
+            "icon": "WrenchScrewdriverIcon",
+            "order": 30,
+            "settings": {
+                "enable_auctions": {
+                    "type": "boolean",
+                    "label": "Enable Auctions",
+                    "default": true
+                },
+                "enable_trading": {
+                    "type": "boolean",
+                    "label": "Enable Player Trading",
+                    "default": true
+                }
+            }
+        }
+    }
+}
+```
+
+### Setting Types
+
+| Type | Description | Additional Fields |
+|------|-------------|-------------------|
+| `text` | Text input | `placeholder` |
+| `number` | Numeric input | `min`, `max`, `step` |
+| `boolean` | Toggle switch | - |
+| `select` | Dropdown select | `options` (array of `{value, label}`) |
+| `json` | JSON editor | - |
+
+### Select Type Example
+
+```json
+{
+    "difficulty": {
+        "type": "select",
+        "label": "Game Difficulty",
+        "default": "normal",
+        "description": "Overall game difficulty setting",
+        "options": [
+            {"value": "easy", "label": "Easy"},
+            {"value": "normal", "label": "Normal"},
+            {"value": "hard", "label": "Hard"},
+            {"value": "extreme", "label": "Extreme"}
+        ]
+    }
+}
+```
+
+### Available Icons
+
+Use these icon names for your settings groups:
+
+- `Cog6ToothIcon` - General settings
+- `FireIcon` - Combat/action
+- `BanknotesIcon` - Economy/money
+- `ChartBarIcon` - Statistics/progression
+- `ClockIcon` - Timers/cooldowns
+- `WrenchScrewdriverIcon` - Features/tools
+- `ShieldCheckIcon` - Security
+- `UserGroupIcon` - Users/teams
+- `ServerIcon` - System
+- `BoltIcon` - Performance
+- `PuzzlePieceIcon` - Plugins
+- `GlobeAltIcon` - Global/regional
+- `ChatBubbleLeftRightIcon` - Communication
+- `Squares2X2Icon` - Dashboard
+- `TrophyIcon` - Achievements
+- `MapIcon` - Locations
+- `TruckIcon` - Transport
+- `BuildingOfficeIcon` - Properties
+- `CurrencyDollarIcon` - Currency
+- `HeartIcon` - Health
+- `KeyIcon` - Authentication
+
+### Accessing Settings in Your Plugin
+
+Use the `getSetting()` method inherited from the base Plugin class:
+
+```php
+// In your plugin class
+$cooldown = $this->getSetting('attack_cooldown', 300);
+
+// Or anywhere using the SettingService
+use App\Core\Services\SettingService;
+
+$setting = app(SettingService::class)->get('plugin.your-plugin.attack_cooldown', 300);
+```
+
+### Setting Storage
+
+Settings are automatically prefixed with `plugin.{slug}.` in the database to avoid collisions. For example, a setting named `attack_cooldown` in a plugin with slug `combat-plugin` will be stored as:
+
+```
+Key: plugin.combat-plugin.attack_cooldown
+```
+
+### Complete Admin Settings Example
+
+```json
+{
+    "name": "Crime System",
+    "slug": "crime-system",
+    "version": "1.0.0",
+    "admin_settings": {
+        "crime_settings": {
+            "label": "Crime Settings",
+            "icon": "FireIcon",
+            "order": 10,
+            "settings": {
+                "crime_cooldown": {
+                    "type": "number",
+                    "label": "Crime Cooldown (seconds)",
+                    "default": 120,
+                    "description": "Time between crimes",
+                    "min": 30,
+                    "max": 600
+                },
+                "crime_success_base_rate": {
+                    "type": "number",
+                    "label": "Base Success Rate (%)",
+                    "default": 70,
+                    "min": 0,
+                    "max": 100
+                },
+                "payout_multiplier": {
+                    "type": "number",
+                    "label": "Payout Multiplier",
+                    "default": 1.0,
+                    "min": 0.1,
+                    "max": 10,
+                    "step": 0.1
+                }
+            }
+        },
+        "crime_features": {
+            "label": "Crime Features",
+            "icon": "WrenchScrewdriverIcon",
+            "order": 20,
+            "settings": {
+                "enable_organized_crime": {
+                    "type": "boolean",
+                    "label": "Enable Organized Crime",
+                    "default": true,
+                    "description": "Allow gang-based organized crimes"
+                },
+                "enable_witnesses": {
+                    "type": "boolean",
+                    "label": "Enable Witness System",
+                    "default": true
+                }
+            }
+        }
+    }
+}
+```
+
+---
+
 ## Additional Resources
 
 - [Hook System Documentation](../docs/PLUGIN_HOOKS.md)

@@ -28,307 +28,113 @@
     </div>
 
     <form v-else @submit.prevent="saveSettings" class="space-y-6">
-      <!-- General Settings -->
-      <div v-show="activeTab === 'general'" class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
+      <!-- Dynamic Settings Groups -->
+      <div
+        v-for="(group, groupId) in groups"
+        v-show="activeTab === groupId"
+        :key="groupId"
+        class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6"
+      >
         <div class="flex items-center gap-3 mb-6">
-          <Cog6ToothIcon class="w-6 h-6 text-amber-400" />
-          <h2 class="text-xl font-semibold text-white">General Settings</h2>
+          <component :is="getIconComponent(group.icon)" class="w-6 h-6 text-amber-400" />
+          <div>
+            <h2 class="text-xl font-semibold text-white">{{ group.label }}</h2>
+            <p v-if="group.plugin_name && group.plugin_slug !== 'core'" class="text-sm text-slate-400">
+              Provided by {{ group.plugin_name }}
+            </p>
+          </div>
         </div>
 
         <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Game Name</label>
-            <input
-              v-model="settings.game_name"
-              type="text"
-              placeholder="Gangster Legends"
-              class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
-            >
-            <p class="text-xs text-slate-400">The name displayed throughout the game</p>
-          </div>
+          <div
+            v-for="(config, key) in group.settings"
+            :key="key"
+            class="space-y-2"
+          >
+            <!-- Boolean Toggle -->
+            <template v-if="config.type === 'boolean'">
+              <label class="flex items-center justify-between">
+                <span class="text-sm font-medium text-slate-300">{{ config.label }}</span>
+                <div class="relative">
+                  <input
+                    v-model="settings[key]"
+                    type="checkbox"
+                    class="sr-only peer"
+                    :id="key"
+                  >
+                  <label
+                    :for="key"
+                    class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-slate-600 px-0.5 outline-none transition-colors duration-200 ease-in-out focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75 peer-checked:bg-gradient-to-r peer-checked:from-amber-500 peer-checked:to-orange-600"
+                  >
+                    <span class="sr-only">{{ config.label }}</span>
+                    <span class="h-5 w-5 rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></span>
+                  </label>
+                </div>
+              </label>
+              <p v-if="config.description" class="text-xs text-slate-400">{{ config.description }}</p>
+            </template>
 
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Starting Cash</label>
-            <div class="relative">
-              <span class="absolute left-4 top-3.5 text-slate-400">$</span>
-              <input
-                v-model.number="settings.starting_cash"
-                type="number"
-                min="0"
-                class="w-full pl-8 pr-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
+            <!-- Number Input -->
+            <template v-else-if="config.type === 'number'">
+              <label class="block text-sm font-medium text-slate-300">{{ config.label }}</label>
+              <div class="relative">
+                <input
+                  v-model.number="settings[key]"
+                  type="number"
+                  :min="config.min"
+                  :max="config.max"
+                  :step="config.step || 1"
+                  :placeholder="config.placeholder"
+                  class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
+                >
+                <span v-if="config.max === 100 && config.min === 1" class="absolute right-4 top-3.5 text-slate-400">%</span>
+                <span v-else-if="key.includes('cash') || key.includes('balance')" class="absolute left-4 top-3.5 text-slate-400">$</span>
+              </div>
+              <p v-if="config.description" class="text-xs text-slate-400">{{ config.description }}</p>
+            </template>
+
+            <!-- Select Input -->
+            <template v-else-if="config.type === 'select'">
+              <label class="block text-sm font-medium text-slate-300">{{ config.label }}</label>
+              <select
+                v-model="settings[key]"
+                class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
               >
-            </div>
-            <p class="text-xs text-slate-400">Amount of cash new players start with</p>
-          </div>
+                <option v-for="option in config.options" :key="option.value" :value="option.value">
+                  {{ option.label }}
+                </option>
+              </select>
+              <p v-if="config.description" class="text-xs text-slate-400">{{ config.description }}</p>
+            </template>
 
-          <div class="space-y-2">
-            <label class="flex items-center justify-between">
-              <span class="text-sm font-medium text-slate-300">Registration Status</span>
-              <div class="relative">
-                <input
-                  v-model="settings.registration_enabled"
-                  type="checkbox"
-                  class="sr-only peer"
-                  id="registration"
-                >
-                <label
-                  for="registration"
-                  class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-slate-600 px-0.5 outline-none transition-colors duration-200 ease-in-out focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75 peer-checked:bg-gradient-to-r peer-checked:from-amber-500 peer-checked:to-orange-600"
-                >
-                  <span class="sr-only">Enable registration</span>
-                  <span class="h-5 w-5 rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></span>
-                </label>
-              </div>
-            </label>
-            <p class="text-xs text-slate-400">Allow new user registrations</p>
-          </div>
-
-          <div class="space-y-2">
-            <label class="flex items-center justify-between">
-              <span class="text-sm font-medium text-slate-300">Maintenance Mode</span>
-              <div class="relative">
-                <input
-                  v-model="settings.maintenance_mode"
-                  type="checkbox"
-                  class="sr-only peer"
-                  id="maintenance"
-                >
-                <label
-                  for="maintenance"
-                  class="relative flex h-6 w-11 cursor-pointer items-center rounded-full bg-slate-600 px-0.5 outline-none transition-colors duration-200 ease-in-out focus-visible:ring focus-visible:ring-amber-500 focus-visible:ring-opacity-75 peer-checked:bg-gradient-to-r peer-checked:from-amber-500 peer-checked:to-orange-600"
-                >
-                  <span class="sr-only">Enable maintenance</span>
-                  <span class="h-5 w-5 rounded-full bg-white shadow-lg transition-transform duration-200 ease-in-out peer-checked:translate-x-5"></span>
-                </label>
-              </div>
-            </label>
-            <p class="text-xs text-slate-400">Only admins can access when enabled</p>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Starting Health</label>
-            <div class="relative">
+            <!-- Text Input (default) -->
+            <template v-else>
+              <label class="block text-sm font-medium text-slate-300">{{ config.label }}</label>
               <input
-                v-model.number="settings.starting_health"
-                type="number"
-                min="1"
-                max="100"
+                v-model="settings[key]"
+                type="text"
+                :placeholder="config.placeholder"
                 class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
               >
-              <span class="absolute right-4 top-3.5 text-slate-400">%</span>
-            </div>
-            <p class="text-xs text-slate-400">Health percentage new players start with</p>
+              <p v-if="config.description" class="text-xs text-slate-400">{{ config.description }}</p>
+            </template>
           </div>
+        </div>
+
+        <!-- Show message if no settings in group -->
+        <div v-if="Object.keys(group.settings || {}).length === 0" class="text-center py-8 text-slate-400">
+          No settings available in this category.
         </div>
       </div>
 
-      <!-- Combat Settings -->
-      <div v-show="activeTab === 'combat'" class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <FireIcon class="w-6 h-6 text-amber-400" />
-          <h2 class="text-xl font-semibold text-white">Combat Settings</h2>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Attack Cooldown (seconds)</label>
-            <input v-model.number="settings.attack_cooldown" type="number" min="0" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Minimum Attack Level</label>
-            <input v-model.number="settings.min_attack_rank" type="number" min="1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-            <p class="text-xs text-slate-400">Minimum rank required to attack other players</p>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Hospital Time Multiplier</label>
-            <input v-model.number="settings.hospital_time_multiplier" type="number" min="0.1" step="0.1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-            <p class="text-xs text-slate-400">Multiply hospital time by this factor</p>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Protection Period (hours)</label>
-            <input v-model.number="settings.newbie_protection_hours" type="number" min="0" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-            <p class="text-xs text-slate-400">Hours of attack protection for new players</p>
-          </div>
-        </div>
+      <!-- No Settings Available -->
+      <div v-if="Object.keys(groups).length === 0" class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-8 text-center">
+        <Cog6ToothIcon class="w-12 h-12 text-slate-500 mx-auto mb-4" />
+        <h3 class="text-lg font-medium text-white mb-2">No Settings Available</h3>
+        <p class="text-slate-400">Install plugins to add configurable settings to your panel.</p>
       </div>
 
-      <!-- Economy Settings -->
-      <div v-show="activeTab === 'economy'" class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <BanknotesIcon class="w-6 h-6 text-amber-400" />
-          <h2 class="text-xl font-semibold text-white">Economy Settings</h2>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Crime Payout Multiplier</label>
-            <input v-model.number="settings.crime_payout_multiplier" type="number" min="0.1" step="0.1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Bank Interest Rate (%)</label>
-            <input v-model.number="settings.bank_interest_rate" type="number" min="0" max="100" step="0.1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Property Income Multiplier</label>
-            <input v-model.number="settings.property_income_multiplier" type="number" min="0.1" step="0.1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Max Bank Balance</label>
-            <input v-model.number="settings.max_bank_balance" type="number" min="0" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-            <p class="text-xs text-slate-400">Maximum amount players can store in bank (0 = unlimited)</p>
-          </div>
-        </div>
-      </div>
-
-      <!-- Experience Settings -->
-      <div v-show="activeTab === 'experience'" class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <ChartBarIcon class="w-6 h-6 text-amber-400" />
-          <h2 class="text-xl font-semibold text-white">Experience & Progression</h2>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">XP Multiplier</label>
-            <input v-model.number="settings.xp_multiplier" type="number" min="0.1" step="0.1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-            <p class="text-xs text-slate-400">Global experience points multiplier</p>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Gym Gains Multiplier</label>
-            <input v-model.number="settings.gym_gains_multiplier" type="number" min="0.1" step="0.1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Energy Regeneration Rate</label>
-            <input v-model.number="settings.energy_regen_rate" type="number" min="1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-            <p class="text-xs text-slate-400">Energy points regenerated per minute</p>
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Max Energy</label>
-            <input v-model.number="settings.max_energy" type="number" min="1" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-        </div>
-      </div>
-
-      <!-- Timer Settings -->
-      <div v-show="activeTab === 'timers'" class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <ClockIcon class="w-6 h-6 text-amber-400" />
-          <h2 class="text-xl font-semibold text-white">Timer Settings</h2>
-        </div>
-
-        <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Crime Cooldown (seconds)</label>
-            <input v-model.number="settings.crime_cooldown" type="number" min="0" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Gym Cooldown (seconds)</label>
-            <input v-model.number="settings.gym_cooldown" type="number" min="0" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Travel Base Time (seconds)</label>
-            <input v-model.number="settings.travel_base_time" type="number" min="0" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Organized Crime Cooldown (minutes)</label>
-            <input v-model.number="settings.oc_cooldown_minutes" type="number" min="0" class="w-full px-4 py-3 bg-slate-900/50 border border-slate-600/50 rounded-xl text-white placeholder-slate-400 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all">
-          </div>
-        </div>
-      </div>
-
-      <!-- Feature Toggles -->
-      <div v-show="activeTab === 'features'" class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-        <div class="flex items-center gap-3 mb-6">
-          <WrenchScrewdriverIcon class="w-6 h-6 text-amber-400" />
-          <h2 class="text-xl font-semibold text-white">Feature Toggles</h2>
-        </div>
-
-        <div class="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_crimes" type="checkbox" id="feature_crimes" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_crimes" class="text-sm font-medium text-slate-300 cursor-pointer">Crimes</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_gym" type="checkbox" id="feature_gym" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_gym" class="text-sm font-medium text-slate-300 cursor-pointer">Gym Training</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_combat" type="checkbox" id="feature_combat" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_combat" class="text-sm font-medium text-slate-300 cursor-pointer">Player Combat</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_gangs" type="checkbox" id="feature_gangs" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_gangs" class="text-sm font-medium text-slate-300 cursor-pointer">Gangs</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_properties" type="checkbox" id="feature_properties" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_properties" class="text-sm font-medium text-slate-300 cursor-pointer">Properties</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_racing" type="checkbox" id="feature_racing" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_racing" class="text-sm font-medium text-slate-300 cursor-pointer">Racing</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_missions" type="checkbox" id="feature_missions" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_missions" class="text-sm font-medium text-slate-300 cursor-pointer">Missions</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_achievements" type="checkbox" id="feature_achievements" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_achievements" class="text-sm font-medium text-slate-300 cursor-pointer">Achievements</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_forum" type="checkbox" id="feature_forum" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_forum" class="text-sm font-medium text-slate-300 cursor-pointer">Forum</label>
-            </div>
-          </div>
-
-          <div class="p-4 bg-slate-900/50 rounded-xl border border-slate-700/50">
-            <div class="flex items-center gap-3">
-              <input v-model="settings.feature_travel" type="checkbox" id="feature_travel" class="w-5 h-5 rounded accent-amber-500">
-              <label for="feature_travel" class="text-sm font-medium text-slate-300 cursor-pointer">Travel</label>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="flex items-center justify-between pt-6 border-t border-slate-700/50">
+      <div v-if="Object.keys(groups).length > 0" class="flex items-center justify-between pt-6 border-t border-slate-700/50">
         <button type="button" @click="resetSettings" class="flex items-center gap-2 px-4 py-2.5 bg-slate-700/50 hover:bg-slate-700 text-slate-300 hover:text-white rounded-xl font-medium transition-all">
           <ArrowPathIcon class="w-5 h-5" />
           Reset to Defaults
@@ -343,7 +149,7 @@
 </template>
 
 <script setup>
-import { ref, reactive, onMounted } from 'vue'
+import { ref, reactive, onMounted, computed, shallowRef } from 'vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import {
@@ -354,7 +160,22 @@ import {
   ClockIcon,
   WrenchScrewdriverIcon,
   ArrowPathIcon,
-  CheckIcon
+  CheckIcon,
+  ShieldCheckIcon,
+  UserGroupIcon,
+  ServerIcon,
+  BoltIcon,
+  PuzzlePieceIcon,
+  GlobeAltIcon,
+  ChatBubbleLeftRightIcon,
+  Squares2X2Icon,
+  TrophyIcon,
+  MapIcon,
+  TruckIcon,
+  BuildingOfficeIcon,
+  CurrencyDollarIcon,
+  HeartIcon,
+  KeyIcon,
 } from '@heroicons/vue/24/outline'
 
 const loading = ref(true)
@@ -362,65 +183,68 @@ const saving = ref(false)
 const activeTab = ref('general')
 const toast = useToast()
 
-const tabs = [
-  { id: 'general', label: 'General', icon: Cog6ToothIcon },
-  { id: 'combat', label: 'Combat', icon: FireIcon },
-  { id: 'economy', label: 'Economy', icon: BanknotesIcon },
-  { id: 'experience', label: 'Experience', icon: ChartBarIcon },
-  { id: 'timers', label: 'Timers', icon: ClockIcon },
-  { id: 'features', label: 'Features', icon: WrenchScrewdriverIcon }
-]
+// Settings data
+const settings = reactive({})
+const groups = reactive({})
 
-const settings = reactive({
-  // General
-  game_name: 'Gangster Legends',
-  registration_enabled: true,
-  maintenance_mode: false,
-  starting_cash: 1000,
-  starting_health: 100,
+// Icon mapping for dynamic icons
+const iconMap = {
+  'Cog6ToothIcon': Cog6ToothIcon,
+  'FireIcon': FireIcon,
+  'BanknotesIcon': BanknotesIcon,
+  'ChartBarIcon': ChartBarIcon,
+  'ClockIcon': ClockIcon,
+  'WrenchScrewdriverIcon': WrenchScrewdriverIcon,
+  'ShieldCheckIcon': ShieldCheckIcon,
+  'UserGroupIcon': UserGroupIcon,
+  'ServerIcon': ServerIcon,
+  'BoltIcon': BoltIcon,
+  'PuzzlePieceIcon': PuzzlePieceIcon,
+  'GlobeAltIcon': GlobeAltIcon,
+  'ChatBubbleLeftRightIcon': ChatBubbleLeftRightIcon,
+  'Squares2X2Icon': Squares2X2Icon,
+  'TrophyIcon': TrophyIcon,
+  'MapIcon': MapIcon,
+  'TruckIcon': TruckIcon,
+  'BuildingOfficeIcon': BuildingOfficeIcon,
+  'CurrencyDollarIcon': CurrencyDollarIcon,
+  'HeartIcon': HeartIcon,
+  'KeyIcon': KeyIcon,
+}
 
-  // Combat
-  attack_cooldown: 300,
-  min_attack_rank: 2,
-  hospital_time_multiplier: 1.0,
-  newbie_protection_hours: 24,
+// Get icon component from string name
+const getIconComponent = (iconName) => {
+  return iconMap[iconName] || Cog6ToothIcon
+}
 
-  // Economy
-  crime_payout_multiplier: 1.0,
-  bank_interest_rate: 1.0,
-  property_income_multiplier: 1.0,
-  max_bank_balance: 0,
-
-  // Experience
-  xp_multiplier: 1.0,
-  gym_gains_multiplier: 1.0,
-  energy_regen_rate: 5,
-  max_energy: 100,
-
-  // Timers
-  crime_cooldown: 120,
-  gym_cooldown: 300,
-  travel_base_time: 600,
-  oc_cooldown_minutes: 60,
-
-  // Features
-  feature_crimes: true,
-  feature_gym: true,
-  feature_combat: true,
-  feature_gangs: true,
-  feature_properties: true,
-  feature_racing: true,
-  feature_missions: true,
-  feature_achievements: true,
-  feature_forum: true,
-  feature_travel: true
+// Computed tabs from groups
+const tabs = computed(() => {
+  return Object.entries(groups).map(([id, group]) => ({
+    id,
+    label: group.label,
+    icon: getIconComponent(group.icon),
+    order: group.order || 100,
+  })).sort((a, b) => a.order - b.order)
 })
 
 const loadSettings = async () => {
   loading.value = true
   try {
-    const response = await api.get('/admin/settings')
-    Object.assign(settings, response.data)
+    const response = await api.get('/admin/settings/all')
+
+    // Clear and populate settings
+    Object.keys(settings).forEach(key => delete settings[key])
+    Object.assign(settings, response.data.settings || {})
+
+    // Clear and populate groups
+    Object.keys(groups).forEach(key => delete groups[key])
+    Object.assign(groups, response.data.groups || {})
+
+    // Set first tab as active if current tab doesn't exist
+    const tabIds = Object.keys(groups)
+    if (tabIds.length > 0 && !tabIds.includes(activeTab.value)) {
+      activeTab.value = tabIds[0]
+    }
   } catch (error) {
     console.error('Error loading settings:', error)
     toast.error('Failed to load settings')

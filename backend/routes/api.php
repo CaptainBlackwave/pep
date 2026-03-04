@@ -150,6 +150,8 @@ Route::prefix('v1')->group(function () {
             // Settings
             Route::prefix('settings')->controller(\App\Core\Http\Controllers\Admin\SettingsController::class)->group(function () {
                 Route::get('/', 'index');
+                Route::get('/all', 'allWithDefaults');
+                Route::get('/plugin-schema', 'pluginSettingsSchema');
                 Route::post('/', 'store');
                 Route::patch('/', 'update');
                 Route::get('/security', 'securityIndex');

@@ -420,6 +420,57 @@ abstract class Plugin implements PluginInterface, PluginLifecycleInterface
     }
 
     /**
+     * Get admin settings defined by this plugin.
+     *
+     * Plugins can define admin settings in their plugin.json:
+     * {
+     *   "admin_settings": {
+     *     "combat": {
+     *       "label": "Combat",
+     *       "icon": "FireIcon",
+     *       "order": 10,
+     *       "settings": {
+     *         "attack_cooldown": {
+     *           "type": "number",
+     *           "label": "Attack Cooldown (seconds)",
+     *           "default": 300,
+     *           "description": "Cooldown between attacks"
+     *         }
+     *       }
+     *     }
+     *   }
+     * }
+     */
+    public function getAdminSettings(): array
+    {
+        $adminSettings = $this->manifest['admin_settings'] ?? [];
+
+        // Prefix all setting keys with plugin slug to avoid collisions
+        $prefixedSettings = [];
+
+        foreach ($adminSettings as $groupId => $groupConfig) {
+            $settings = $groupConfig['settings'] ?? [];
+            $prefixedGroupSettings = [];
+
+            foreach ($settings as $key => $config) {
+                // Use plugin-prefixed key for storage, but keep original for display
+                $prefixedKey = "plugin.{$this->id}.{$key}";
+                $prefixedGroupSettings[$prefixedKey] = array_merge($config, [
+                    'original_key' => $key,
+                    'plugin_id' => $this->id,
+                ]);
+            }
+
+            $prefixedSettings[$groupId] = array_merge($groupConfig, [
+                'settings' => $prefixedGroupSettings,
+                'plugin_id' => $this->id,
+            ]);
+        }
+
+        return $prefixedSettings;
+    }
+
+    /**
      * Resolve a class within this plugin's namespace.
      *
      * @param string $className Class name without namespace.
