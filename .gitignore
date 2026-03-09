@@ -133,3 +133,5 @@ backend/app/Core/Models/archived_plugin/LocationController.php
 backend/app/Core/Models/archived_plugin/MembershipController.php
 backend/app/Core/Models/archived_plugin/RankController.php
 backend/app/Core/Models/archived_plugin/UserTimerController.php
+frontend/.npm-cache
+.npm-cache
