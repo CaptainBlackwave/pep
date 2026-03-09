@@ -90,8 +90,18 @@ class PlayerProfile extends Model
         return $this->belongsTo(User::class);
     }
 
-    // Note: currentRank() and currentLocation() relationships are now defined
-    // by plugins using resolveRelationUsing(). For example:
-    // PlayerProfile::resolveRelationUsing('currentRank', fn($p) => $p->belongsTo(Rank::class, 'rank_id'));
-    // This allows plugins to provide their own Rank and Location models.
+    // Rank and Location relationships have been removed from the Core.
+    // Plugins may provide these relations later. Accessing `$profile->currentRank`
+    // or `$profile->currentLocation` will return the raw string value stored
+    // on the profile (`rank` / `location`) until a plugin registers a relation.
+
+    public function getCurrentRankAttribute()
+    {
+        return $this->attributes['rank'] ?? null;
+    }
+
+    public function getCurrentLocationAttribute()
+    {
+        return $this->attributes['location'] ?? null;
+    }
 }

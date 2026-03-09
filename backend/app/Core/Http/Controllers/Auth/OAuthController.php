@@ -79,7 +79,7 @@ class OAuthController extends Controller
 
             $token = $user->createToken('auth-token')->plainTextToken;
 
-            $userData = $user->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles']);
+            $userData = $user->load(['profile', 'roles']);
 
             // If the request came from a browser redirect (not an XHR/API call),
             // redirect back to the frontend SPA with the token in the query string.
@@ -138,7 +138,7 @@ class OAuthController extends Controller
             $token = $user->createToken('auth-token')->plainTextToken;
 
             return response()->json([
-                'user' => $user->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles']),
+                'user' => $user->load(['profile', 'roles']),
                 'token' => $token,
             ]);
         } catch (\Throwable $e) {

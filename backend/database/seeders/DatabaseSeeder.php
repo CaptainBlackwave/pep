@@ -18,7 +18,6 @@ class DatabaseSeeder extends Seeder
             SettingsTableSeeder::class,
             PluginSeeder::class,
             ModuleSeeder::class,
-            LocationSeeder::class,
             // TicketCategorySeeder::class, // Moved to Tickets plugin
 
             // User accounts for development/testing
@@ -28,7 +27,6 @@ class DatabaseSeeder extends Seeder
 
         // NOTE: Gaming content seeders have been moved to plugins.
         // The following seeders are now provided by the gaming plugin bundle:
-        // - RanksTableSeeder::class (Progression plugin)
         // - CrimeSeeder::class (Crimes plugin)
         // - TheftSeeder::class (Theft plugin)
         // - DrugSeeder::class (Drugs plugin)

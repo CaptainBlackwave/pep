@@ -99,12 +99,8 @@ return new class extends Migration
             // Progression
             $table->integer('level')->default(1)->after('max_nerve');
             $table->integer('experience')->default(0)->after('level');
-            $table->string('rank')->default('Thug')->after('experience');
-            $table->foreignId('rank_id')->nullable()->constrained('ranks')->nullOnDelete()->after('rank');
 
-            // Location
-            $table->string('location')->default('Chicago')->after('rank_id');
-            $table->foreignId('location_id')->nullable()->constrained('locations')->nullOnDelete()->after('location');
+            // Note: rank/location columns are provided by plugins; not restored here.
 
             // Game state
             $table->string('status')->default('alive')->after('location_id');

@@ -51,28 +51,12 @@ class UserResource extends JsonResource
             'respect'      => $profileLoaded ? ($profile?->respect ?? null) : null,
             'bullets'      => $profileLoaded ? ($profile?->bullets ?? null) : null,
 
-            // Rank & location (plugin-owned) — do NOT assume User has rank/location relations
+            // Rank & location (plugin-owned) — core provides raw fields only.
             'rank_id'      => $profileLoaded ? ($profile?->rank_id ?? null) : null,
-            'rank'         => $profileLoaded
-                ? (
-                    $rankLoaded
-                        ? $profile->currentRank?->only(['id', 'name'])
-                        : (method_exists($profile, 'getRawOriginal') ? ($profile->getRawOriginal('rank') ?: null) : null)
-                  )
-                : null,
+            'rank'         => $profileLoaded ? ($profile?->rank ?? null) : null,
 
             'location_id'  => $profileLoaded ? ($profile?->location_id ?? null) : null,
-            'location'     => $profileLoaded
-                ? (
-                    $locationLoaded
-                        ? $profile->currentLocation
-                        : (method_exists($profile, 'getRawOriginal') ? ($profile->getRawOriginal('location') ?: null) : null)
-                  )
-                : null,
-
-            'current_rank' => $profileLoaded && $profile && method_exists($profile, 'relationLoaded') && $profile->relationLoaded('currentRank')
-                ? $profile->currentRank
-                : null,
+            'location'     => $profileLoaded ? ($profile?->location ?? null) : null,
 
             // Cooldowns (likely profile-owned now) — guard behind profileLoaded
             'last_crime_at' => $profileLoaded ? ($profile?->last_crime_at?->toISOString() ?? null) : null,

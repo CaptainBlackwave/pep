@@ -153,8 +153,22 @@ class OAuthService
      */
     public function createUserFromPending(array $pending, string $username): User
     {
-        $firstRank     = \App\Core\Models\Rank::orderBy('required_exp')->first();
-        $firstLocation = \App\Core\Models\Location::orderBy('id')->first();
+        $firstRank = null;
+        $firstLocation = null;
+        try {
+            if (\Schema::hasTable('ranks')) {
+                $firstRank = \App\Core\Models\Rank::orderBy('required_exp')->first();
+            }
+        } catch (\Exception $e) {
+            // ranks table not available
+        }
+        try {
+            if (\Schema::hasTable('locations')) {
+                $firstLocation = \App\Core\Models\Location::orderBy('id')->first();
+            }
+        } catch (\Exception $e) {
+            // locations table not available
+        }
 
         $user = \Illuminate\Support\Facades\DB::transaction(function () use ($pending, $username, $firstRank, $firstLocation) {
             $user = User::create([
@@ -324,8 +338,22 @@ class OAuthService
             ?? Str::slug(explode('@', $socialiteUser->getEmail())[0]);
         $username = $this->generateUniqueUsername($baseUsername);
 
-        $firstRank     = \App\Core\Models\Rank::orderBy('required_exp')->first();
-        $firstLocation = \App\Core\Models\Location::orderBy('id')->first();
+        $firstRank = null;
+        $firstLocation = null;
+        try {
+            if (\Schema::hasTable('ranks')) {
+                $firstRank = \App\Core\Models\Rank::orderBy('required_exp')->first();
+            }
+        } catch (\Exception $e) {
+            // ranks table not available
+        }
+        try {
+            if (\Schema::hasTable('locations')) {
+                $firstLocation = \App\Core\Models\Location::orderBy('id')->first();
+            }
+        } catch (\Exception $e) {
+            // locations table not available
+        }
 
         $user = \Illuminate\Support\Facades\DB::transaction(function () use ($socialiteUser, $username, $provider, $firstRank, $firstLocation) {
             // Identity-only — game stats live on the profile

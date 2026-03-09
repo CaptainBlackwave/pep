@@ -9,7 +9,7 @@ class DashboardController extends Controller
     public function index(Request $request)
     {
         $user = $request->user();
-        $user->load(['profile', 'profile.currentRank', 'profile.currentLocation']);
+        $user->load(['profile']);
 
         $pluginService = app(\App\Core\Services\PluginService::class);
 

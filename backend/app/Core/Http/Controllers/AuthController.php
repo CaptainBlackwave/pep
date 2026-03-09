@@ -108,7 +108,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'user' => new UserResource($user->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles'])),
+            'user' => new UserResource($user->load(['profile', 'roles'])),
             'token' => $token,
         ], 201);
     }
@@ -149,14 +149,14 @@ class AuthController extends Controller
             return response()->json([
                 'two_factor_required' => true,
                 'challenge_token' => $challengeToken,
-                'user' => new UserResource($user->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles'])),
+                'user' => new UserResource($user->load(['profile', 'roles'])),
             ], 200);
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'user' => new UserResource($user->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles'])),
+            'user' => new UserResource($user->load(['profile', 'roles'])),
             'token' => $token,
         ]);
     }
@@ -166,7 +166,7 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
-        $user = $request->user()->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles', 'permissions', 'oauthProviders']);
+        $user = $request->user()->load(['profile', 'roles', 'permissions', 'oauthProviders']);
 
         return response()->json(new UserResource($user)); // Return user directly for frontend compatibility
     }
@@ -241,7 +241,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Username updated successfully',
-            'user' => new UserResource($user->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles'])),
+            'user' => new UserResource($user->load(['profile', 'roles'])),
         ]);
     }
 }

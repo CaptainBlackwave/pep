@@ -45,7 +45,10 @@ class TestUserSeeder extends Seeder
         if (DB::getSchemaBuilder()->hasTable('ranks')) {
             $firstRank = DB::table('ranks')->orderBy('required_exp')->first();
         }
-        $firstLocation = DB::table('locations')->orderBy('id')->first();
+        $firstLocation = null;
+        if (DB::getSchemaBuilder()->hasTable('locations')) {
+            $firstLocation = DB::table('locations')->orderBy('id')->first();
+        }
 
         $this->command->info('Creating test user...');
 

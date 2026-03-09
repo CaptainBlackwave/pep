@@ -35,15 +35,11 @@ return new class extends Migration
             // Progression
             $table->integer('level')->default(1);
             $table->integer('experience')->default(0);
-            $table->string('rank')->default('Thug');
-            // rank_id foreign key removed - ranks table provided by Progression plugin
-            $table->unsignedBigInteger('rank_id')->nullable();
+
+            // Note: rank fields removed from core — provided by Progression plugin
 
             // Location
-            $table->string('location')->default('Chicago');
-            // location_id is a reference to the locations table provided by the Travel plugin
-            // No foreign key constraint - the table may not exist in core-only installs
-            $table->unsignedBigInteger('location_id')->nullable();
+            // Note: location fields removed from core — provided by Travel plugin
 
             // Game state
             $table->string('status')->default('alive');
@@ -56,8 +52,7 @@ return new class extends Migration
             $table->timestamps();
 
             // Indexes for common game queries
-            $table->index('rank_id');
-            $table->index('location_id');
+            // rank/location indexes removed; plugins may add their own indexes
             $table->index('status');
             $table->index('jail_until');
             $table->index('experience');

@@ -38,3 +38,7 @@ _ide_helper.php
 _ide_helper_models.php
 .phpstorm.meta.php
 license_private.pem
+
+# Ignore per-project npm cache used during containerized builds
+frontend/.npm-cache
+.npm-cache

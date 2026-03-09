@@ -158,7 +158,7 @@ class TwoFactorAuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'user' => $user->load(['profile', 'profile.currentRank', 'profile.currentLocation', 'roles']),
+            'user' => $user->load(['profile', 'roles']),
             'token' => $token,
         ]);
     }
