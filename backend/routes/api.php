@@ -12,6 +12,7 @@ use App\Core\Http\Controllers\CommunityUserActionController;
 use App\Core\Http\Controllers\CommunityVendorController;
 use App\Core\Http\Controllers\EmojiController;
 use App\Core\Http\Controllers\PluginController;
+use App\Core\Http\Controllers\PushSubscriptionController;
 use App\Core\Http\Controllers\UserSettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -125,6 +126,10 @@ Route::prefix('v1')->group(function () {
             Route::patch('/discussions/{discussion}', [CommunityDiscussionController::class, 'update']);
             Route::delete('/discussions/{discussion}', [CommunityDiscussionController::class, 'destroy']);
             Route::post('/discussions/{discussion}/replies', [CommunityDiscussionController::class, 'reply']);
+            Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe']);
+            Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe']);
+            Route::get('/push/vapid-key', [PushSubscriptionController::class, 'vapidPublicKey']);
+
             Route::post('/discussions/{discussion}/reactions', [CommunityDiscussionController::class, 'reactToDiscussion']);
             Route::post('/discussions/{discussion}/report', [CommunityDiscussionController::class, 'reportDiscussion']);
             Route::post('/discussion-replies/{reply}/reactions', [CommunityDiscussionController::class, 'reactToReply']);

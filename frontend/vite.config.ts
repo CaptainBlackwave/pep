@@ -5,6 +5,7 @@ import vue from '@vitejs/plugin-vue'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import compression from 'vite-plugin-compression'
 import { visualizer } from 'rollup-plugin-visualizer'
+import { VitePWA } from 'vite-plugin-pwa'
 
 // https://vite.dev/config/
 export default defineConfig({
@@ -12,6 +13,43 @@ export default defineConfig({
   plugins: [
     vue(),
     vueJsx(),
+    VitePWA({
+      registerType: 'autoUpdate',
+      includeAssets: ['icons/icon-192.svg', 'icons/icon-512.svg'],
+      srcDir: '',
+      filename: 'sw.js',
+      swDest: 'dist/sw.js',
+      strategies: 'injectManifest',
+      manifest: {
+        name: 'Peptide Community',
+        short_name: 'PepVGuides',
+        description: 'Peptide research community — guides, research, and discussions',
+        start_url: '/',
+        scope: '/',
+        display: 'standalone',
+        orientation: 'portrait-primary',
+        theme_color: '#1e1b4b',
+        background_color: '#0f172a',
+        icons: [
+          { src: 'icons/icon-192.svg', sizes: '192x192', type: 'image/svg+xml' },
+          { src: 'icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml' },
+          { src: 'icons/icon-512.svg', sizes: '512x512', type: 'image/svg+xml', purpose: 'maskable' },
+        ],
+      },
+      workbox: {
+        globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],
+        runtimeCaching: [
+          {
+            urlPattern: /^https:\/\/pepvguides\.com\/api\/.*/i,
+            handler: 'NetworkFirst',
+            options: {
+              cacheName: 'api-cache',
+              expiration: { maxEntries: 50, maxAgeSeconds: 300 },
+            },
+          },
+        ],
+      },
+    }),
     // Gzip compression
     compression({
       algorithm: 'gzip',

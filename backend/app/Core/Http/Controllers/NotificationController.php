@@ -2,6 +2,7 @@
 
 namespace App\Core\Http\Controllers;
 
+use App\Core\Models\CommunityMessageThread;
 use App\Core\Services\NotificationService;
 use Illuminate\Http\Request;
 
@@ -70,7 +71,18 @@ class NotificationController extends Controller
         $user = $request->user();
         $count = $this->notificationService->getUnreadCount($user);
 
-        return response()->json(['count' => $count]);
+        $messageUnread = CommunityMessageThread::query()
+            ->where('status', 'active')
+            ->where(function ($query) use ($user) {
+                $query->where('user_id', $user->id)
+                    ->orWhere('participant_user_id', $user->id);
+            })
+            ->sum('unread_count');
+
+        return response()->json([
+            'count' => $count + (int) $messageUnread,
+            'unread_count' => $count + (int) $messageUnread,
+        ]);
     }
 
     /**
