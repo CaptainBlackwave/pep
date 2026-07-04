@@ -401,7 +401,6 @@
             <button class="pv-small-button" @click="toggleDiscussionFollow"><PvIcon name="star" /> {{ isFollowingDiscussion ? 'Unfollow' : 'Follow' }}</button>
             <span class="pv-flex-spacer"></span>
             <button class="pv-small-button" @click="toggleDiscussionSave"><PvIcon name="bookmark" /> {{ isSavedDiscussion ? 'Saved' : 'Save' }}</button>
-            <button class="pv-small-button" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /> Share</button>
           </div>
         </article>
         <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
