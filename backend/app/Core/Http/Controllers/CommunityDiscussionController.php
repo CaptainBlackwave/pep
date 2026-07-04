@@ -344,10 +344,14 @@ class CommunityDiscussionController extends Controller
 
     public function destroyReply(Request $request, string $reply)
     {
-        $replyModel = CommunityDiscussionReply::query()
-            ->whereKey($reply)
-            ->where('user_id', $request->user()->id)
-            ->firstOrFail();
+        $user = $request->user();
+        $replyModel = CommunityDiscussionReply::with('discussion')->findOrFail($reply);
+
+        abort_unless(
+            $replyModel->user_id === $user->id || $user->hasRole('admin') || $user->hasRole('moderator'),
+            403,
+            'You can only delete your own replies.'
+        );
 
         $discussion = $replyModel->discussion;
         if ($discussion) {

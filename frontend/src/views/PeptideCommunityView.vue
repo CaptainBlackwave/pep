@@ -431,7 +431,7 @@
                 <strong>{{ reactionCount(reply, emoji) }}</strong>
               </button>
             </div>
-            <div class="pv-reply-actions"><button @click="prepareReply(reply)">Reply</button><button @click="prepareReply(reply, true)">Quote</button><button @click="openReplyReport(reply)">Report</button><button v-if="authStore.user?.id === reply.authorId" class="pv-reply-delete" @click="deleteReply(reply)">Delete</button></div>
+            <div class="pv-reply-actions"><button @click="prepareReply(reply)">Reply</button><button @click="prepareReply(reply, true)">Quote</button><button @click="openReplyReport(reply)">Report</button><button v-if="authStore.user?.id === reply.authorId || authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')" class="pv-reply-delete" @click="deleteReply(reply)">Delete</button></div>
           </div>
           <button class="pv-upvote" :class="{ active: hasVotedReply(reply) }" @click="toggleReplyVote(reply)">↑ {{ replyVoteCount(reply) }}</button>
         </article>
