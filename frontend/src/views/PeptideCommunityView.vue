@@ -357,7 +357,7 @@
             </div>
             <div class="pv-detail-actions">
               <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-icon-button pv-icon-button--static" aria-label="Edit topic" @click="startEditDiscussion"><PvIcon name="settings" /></button>
-              <button class="pv-icon-button pv-icon-button--static" aria-label="Share topic" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /></button>
+
               <button class="pv-icon-button pv-icon-button--static" aria-label="Report topic" @click="openDiscussionReport"><PvIcon name="shield" /></button>
               <button class="pv-primary-button" @click="toggleDiscussionFollow"><PvIcon name="shield" /> {{ isFollowingDiscussion ? 'Following' : 'Follow' }}</button>
             </div>
