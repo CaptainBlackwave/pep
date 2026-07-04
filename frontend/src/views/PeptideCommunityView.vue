@@ -114,6 +114,43 @@
     </form>
   </div>
 
+  <div v-if="showReportModal" class="pv-modal-backdrop" @click.self="closeReportModal">
+    <form class="pv-modal pv-modal--compact" @submit.prevent="submitReport">
+      <header class="pv-panel-header">
+        <div>
+          <h2>Report Content</h2>
+          <p class="pv-muted">Send this to moderators for review.</p>
+        </div>
+        <button type="button" class="pv-icon-button" aria-label="Close" @click="closeReportModal">
+          <PvIcon name="close" />
+        </button>
+      </header>
+      <label>
+        Reason
+        <select v-model="reportReason">
+          <option value="source-discussion">Source or transaction discussion</option>
+          <option value="medical-claims">Medical claims</option>
+          <option value="scam">Scam or solicitation</option>
+          <option value="harassment">Harassment</option>
+          <option value="privacy">Privacy concern</option>
+          <option value="spam">Spam</option>
+          <option value="other">Other</option>
+        </select>
+      </label>
+      <label>
+        Details
+        <textarea v-model="reportDetails" rows="4" maxlength="1000" placeholder="Add context for moderators."></textarea>
+      </label>
+      <footer>
+        <button type="button" class="pv-small-button" @click="closeReportModal">Cancel</button>
+        <button type="submit" class="pv-primary-button" :disabled="reportSubmitting">
+          <PvIcon name="shield" />
+          {{ reportSubmitting ? 'Sending...' : 'Send Report' }}
+        </button>
+      </footer>
+    </form>
+  </div>
+
   <section v-if="page === 'home'" class="pv-page pv-dashboard">
     <div class="pv-dashboard-grid">
       <div class="pv-stack">
@@ -138,7 +175,8 @@
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No trending discussions yet.</p>
             <router-link v-for="topic in discussions.slice(0, 4)" :key="topic.title" :to="topic.href" class="pv-topic-row">
-              <span class="pv-avatar" :class="topic.color">{{ topic.initial }}</span>
+              <span v-if="topic.avatarUrl" class="pv-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author" class="pv-avatar-img"></span>
+              <span v-else class="pv-avatar" :class="topic.color">{{ topic.initial }}</span>
               <span class="pv-topic-main">
                 <strong>{{ topic.title }}</strong>
                 <small>{{ topic.excerpt }}</small>
@@ -201,7 +239,7 @@
           <div class="pv-ranked-list">
             <p v-if="vendorsLoaded && vendors.length === 0" class="pv-muted">No reviewed vendors yet.</p>
             <router-link v-for="vendor in vendors.slice(0, 5)" :key="vendor.name" :to="vendor.href" class="pv-ranked-row">
-              <span class="pv-vendor-logo">{{ vendor.logo }}</span>
+              <span class="pv-vendor-logo"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logo }}</template></span>
               <span><strong>{{ vendor.name }}</strong><small class="pv-stars">★★★★★ <em>{{ vendor.rating }} ({{ vendor.reviews }})</em></small></span>
               <PvIcon name="chevron" />
             </router-link>
@@ -248,7 +286,8 @@
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
             <router-link v-for="topic in discussions" :key="topic.title" :to="topic.href" class="pv-topic-row pv-topic-row--large">
-              <span class="pv-avatar" :class="topic.color">{{ topic.initial }}</span>
+              <span v-if="topic.avatarUrl" class="pv-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author" class="pv-avatar-img"></span>
+              <span v-else class="pv-avatar" :class="topic.color">{{ topic.initial }}</span>
               <span class="pv-topic-main">
                 <strong>{{ topic.title }} <em class="pv-tag">{{ topic.tag }}</em></strong>
                 <small>{{ topic.excerpt }}</small>
@@ -259,6 +298,7 @@
               <PvIcon name="bookmark" />
             </router-link>
           </div>
+          <PaginationBlock :meta="discussionPagination" @page="setDiscussionPage" />
         </article>
       </main>
       <aside class="pv-stack">
@@ -308,19 +348,53 @@
               </div>
               <h1>{{ detailDiscussion.title }}</h1>
               <div class="pv-author-line">
-                <span class="pv-avatar" :class="detailDiscussion.color">{{ detailDiscussion.initial }}</span>
+                <span v-if="detailDiscussion.avatarUrl" class="pv-avatar" :class="detailDiscussion.color"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author" class="pv-avatar-img"></span>
+                <span v-else class="pv-avatar" :class="detailDiscussion.color">{{ detailDiscussion.initial }}</span>
                 <strong>{{ detailDiscussion.author }}</strong>
                 <span class="pv-tag">OP</span>
                 <span>{{ detailDiscussion.time }}</span>
               </div>
             </div>
             <div class="pv-detail-actions">
+              <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-icon-button pv-icon-button--static" aria-label="Edit topic" @click="startEditDiscussion"><PvIcon name="settings" /></button>
               <button class="pv-icon-button pv-icon-button--static" aria-label="Share topic" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /></button>
+              <button class="pv-icon-button pv-icon-button--static" aria-label="Report topic" @click="openDiscussionReport"><PvIcon name="shield" /></button>
               <button class="pv-primary-button" @click="toggleDiscussionFollow"><PvIcon name="shield" /> {{ isFollowingDiscussion ? 'Following' : 'Follow' }}</button>
             </div>
           </header>
-          <div class="pv-topic-body">
+          <div v-if="!isEditingDiscussion" class="pv-topic-body">
             <p v-for="paragraph in detailParagraphs" :key="paragraph">{{ paragraph }}</p>
+          </div>
+          <div v-else class="pv-edit-discussion-form">
+            <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
+            <label>
+              Title
+              <input v-model="editDiscussionTitle" required maxlength="160">
+            </label>
+            <label>
+              Body
+              <textarea v-model="editDiscussionBody" required rows="8" maxlength="10000"></textarea>
+            </label>
+            <div class="pv-form-actions">
+              <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
+              <button type="button" class="pv-primary-button" :disabled="discussionEditSaving" @click="saveEditDiscussion">
+                {{ discussionEditSaving ? 'Saving...' : 'Save Changes' }}
+              </button>
+            </div>
+          </div>
+          <div class="pv-reaction-bar" aria-label="Topic reactions">
+            <button
+              v-for="emoji in quickReactionEmojis"
+              :key="emoji"
+              type="button"
+              class="pv-reaction-chip"
+              :class="{ active: hasViewerReaction(detailDiscussion, emoji) }"
+              :disabled="discussionReactionLoading === emoji"
+              @click="toggleDiscussionReaction(emoji)"
+            >
+              <span>{{ emoji }}</span>
+              <strong>{{ reactionCount(detailDiscussion, emoji) }}</strong>
+            </button>
           </div>
           <div class="pv-action-row pv-topic-actions">
             <button class="pv-primary-button" @click="jumpToReplyComposer"><PvIcon name="message" /> Reply</button>
@@ -333,12 +407,31 @@
         <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
         <div class="pv-thread-bar"><span>{{ replies.length }} replies · Sort by <strong>Latest activity</strong></span><a href="#reply-composer">Jump to reply</a></div>
         <article v-for="reply in replies" :key="`${reply.author}-${reply.time}`" class="pv-reply-card">
-          <span class="pv-avatar" :class="reply.color">{{ reply.initial }}</span>
+            <span v-if="reply.avatarUrl" class="pv-avatar" :class="reply.color"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author" class="pv-avatar-img"></span>
+            <span v-else class="pv-avatar" :class="reply.color">{{ reply.initial }}</span>
           <div class="pv-reply-main">
             <div class="pv-reply-head"><strong>{{ reply.author }}</strong><span class="pv-tag" v-if="reply.badge">{{ reply.badge }}</span><span>{{ reply.time }}</span></div>
             <p>{{ reply.text }}</p>
-            <div v-if="reply.file" class="pv-file-card"><PvIcon name="document" /><span><strong>{{ reply.file }}</strong><small>245 KB · PDF</small></span><PvIcon name="download" /></div>
-            <div class="pv-reply-actions"><button @click="prepareReply(reply)">Reply</button><button @click="prepareReply(reply, true)">Quote</button></div>
+            <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
+              <img :src="reply.attachmentUrl || ''" :alt="reply.file || 'Reply attachment'">
+              <figcaption>{{ reply.file }} <span>{{ attachmentLabel(reply) }}</span></figcaption>
+            </figure>
+            <div v-else-if="reply.file" class="pv-file-card"><PvIcon name="document" /><span><strong>{{ reply.file }}</strong><small>{{ attachmentLabel(reply) || 'Attachment' }}</small></span><PvIcon name="download" /></div>
+            <div class="pv-reaction-bar pv-reaction-bar--reply">
+              <button
+                v-for="emoji in quickReactionEmojis"
+                :key="emoji"
+                type="button"
+                class="pv-reaction-chip"
+                :class="{ active: hasViewerReaction(reply, emoji) }"
+                :disabled="replyReactionLoading === `${reply.id}:${emoji}`"
+                @click="toggleReplyReaction(reply, emoji)"
+              >
+                <span>{{ emoji }}</span>
+                <strong>{{ reactionCount(reply, emoji) }}</strong>
+              </button>
+            </div>
+            <div class="pv-reply-actions"><button @click="prepareReply(reply)">Reply</button><button @click="prepareReply(reply, true)">Quote</button><button @click="openReplyReport(reply)">Report</button></div>
           </div>
           <button class="pv-upvote" :class="{ active: hasVotedReply(reply) }" @click="toggleReplyVote(reply)">↑ {{ replyVoteCount(reply) }}</button>
         </article>
@@ -347,8 +440,16 @@
           <span class="pv-avatar purple">U</span>
           <div class="pv-composer-field">
             <textarea v-model="replyBody" placeholder="Write a reply..."></textarea>
+            <div v-if="replyAttachmentFile || replyAttachmentGifUrl" class="pv-attachment-preview">
+              <img v-if="replyAttachmentPreviewUrl || replyAttachmentGifUrl" :src="replyAttachmentPreviewUrl || replyAttachmentGifUrl" alt="Attachment preview">
+              <span><strong>{{ replyAttachmentName() }}</strong><small>{{ replyAttachmentFile ? 'Image attachment' : 'Linked GIF' }}</small></span>
+              <button type="button" class="pv-icon-button" aria-label="Remove attachment" @click="clearReplyAttachment"><PvIcon name="close" /></button>
+            </div>
             <div class="pv-composer-tools">
               <EmojiPicker v-model="replyBody" />
+              <label class="pv-icon-button" for="reply-image-upload" aria-label="Attach image"><PvIcon name="image" /></label>
+              <input id="reply-image-upload" class="pv-sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" @change="handleReplyAttachment">
+              <GiphyPicker @select="onGifSelect" />
               <button type="submit" class="pv-primary-button" :disabled="submittingReply">
                 {{ submittingReply ? 'Posting...' : 'Post Reply' }}
               </button>
@@ -370,7 +471,7 @@
         <article class="pv-panel">
           <header class="pv-panel-header"><h2>Participants</h2><span class="pv-count">{{ discussionParticipants.length }}</span></header>
           <div class="pv-avatar-stack"><span v-for="member in discussionParticipants.slice(0, 5)" :key="member.name" class="pv-avatar" :class="member.color">{{ member.initial }}</span><span v-if="discussionParticipants.length > 5" class="pv-more">+{{ discussionParticipants.length - 5 }}</span></div>
-          <router-link class="pv-small-button pv-full" to="/members"><PvIcon name="users" /> View all participants</router-link>
+          <router-link class="pv-small-button pv-full" :to="{ path: '/members', query: { discussion: currentDiscussionSlug } }"><PvIcon name="users" /> View all participants</router-link>
         </article>
         <article class="pv-panel">
           <h2>Similar topics</h2>
@@ -435,6 +536,7 @@
             <span class="pv-small-button">View Report</span>
             <span class="pv-row-meta"><PvIcon name="eye" /> {{ result.views }} <PvIcon name="message" /> {{ result.comments }}</span>
           </router-link>
+          <PaginationBlock :meta="labPagination" @page="setLabPage" />
         </article>
       </main>
       <aside class="pv-stack">
@@ -515,7 +617,9 @@
   <section v-else-if="page === 'vendorReviews'" class="pv-page">
     <div class="pv-content-grid">
       <main class="pv-stack">
-        <header class="pv-page-header"><div><h1>Vendor Reviews</h1><p>Real reviews from real community members. Share your experience, help others make informed decisions.</p></div><router-link v-if="firstVendorReviewHref" :to="firstVendorReviewHref" class="pv-primary-button"><PvIcon name="plus" /> Write a Review</router-link></header>
+        <header class="pv-page-header">
+          <div><h1>Vendor Reviews</h1><p>Browse vendor profiles, compare community feedback, and write a review from the vendor row.</p></div>
+        </header>
         <div class="pv-metrics"><span v-for="metric in vendorMetricCards" :key="metric.label"><PvIcon :name="metric.icon" /><strong>{{ metric.value }}</strong><small>{{ metric.label }}</small></span></div>
         <article class="pv-panel">
           <div class="pv-toolbar"><div class="pv-tabs"><button :class="{ active: vendorStatusFilter === '' }" @click="setVendorStatusFilter('')">All Vendors</button><button v-for="status in vendorFilterOptions.statuses" :key="status.slug" :class="{ active: vendorStatusFilter === status.slug }" @click="setVendorStatusFilter(status.slug)">{{ status.name }}</button></div><button class="pv-small-button" type="button" @click="cycleVendorSort">{{ vendorSortLabel }} <PvIcon name="chevron" /></button><button class="pv-icon-button" @click="loadVendors"><PvIcon name="filter" /></button></div>
@@ -529,12 +633,13 @@
           </form>
           <p v-if="vendorStatusMessage" class="pv-alert pv-alert--compact">{{ vendorStatusMessage }}</p>
           <p v-if="vendorsLoaded && vendors.length === 0" class="pv-muted">No vendors found.</p>
-          <router-link v-for="vendor in vendors" :key="vendor.slug" :to="vendor.href" class="pv-vendor-row">
-            <span class="pv-logo-card" :class="vendor.class">{{ vendor.logoText }}</span>
-            <span class="pv-topic-main"><strong>{{ vendor.name }} <em class="pv-tag" :class="vendor.statusClass">{{ vendor.status }}</em></strong><small><PvIcon name="star" /> {{ vendor.reviews }} reviews · Member since {{ vendor.since }}</small><span class="pv-chip-row"><span v-for="chip in vendor.chips" :key="chip">{{ chip }}</span></span></span>
+          <article v-for="vendor in vendors" :key="vendor.slug" class="pv-vendor-row">
+            <router-link :to="vendor.href" class="pv-logo-card" :class="vendor.class"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logoText }}</template></router-link>
+            <router-link :to="vendor.href" class="pv-topic-main"><strong>{{ vendor.name }} <em class="pv-tag" :class="vendor.statusClass">{{ vendor.status }}</em></strong><small><PvIcon name="star" /> {{ vendor.reviews }} reviews · Member since {{ vendor.since }}</small><span class="pv-chip-row"><span v-for="chip in vendor.chips" :key="chip">{{ chip }}</span></span></router-link>
             <span class="pv-rating" :class="vendor.tone"><PvIcon name="star" /> {{ vendor.rating }} / 5<small>Would buy again {{ vendor.buyAgain }}</small></span>
-            <span class="pv-small-button">View Reviews</span>
-          </router-link>
+            <span class="pv-vendor-row-actions"><router-link :to="vendor.href" class="pv-small-button">View Reviews</router-link><router-link :to="`${vendor.href}/review`" class="pv-primary-button">Write Review</router-link></span>
+          </article>
+          <PaginationBlock :meta="vendorPagination" @page="setVendorPage" />
         </article>
       </main>
       <aside class="pv-stack">
@@ -550,7 +655,149 @@
           <label>Tag<select v-model="vendorTagFilter"><option value="">All tags</option><option v-for="tag in vendorFilterOptions.tags" :key="tag" :value="tag">{{ tag }}</option></select></label>
           <button class="pv-primary-button pv-full" type="button" @click="applyVendorFilters">Apply Filters</button>
         </article>
-        <article class="pv-panel"><header class="pv-panel-header"><h2>Top Vendors</h2><router-link to="/vendor-reviews" class="pv-purple-link">View all</router-link></header><div class="pv-ranked-list"><router-link v-for="(vendor, index) in topVendors" :key="vendor.name" :to="vendor.href" class="pv-ranked-row"><span class="pv-rank">{{ index + 1 }}</span><span class="pv-vendor-logo">{{ vendor.logo }}</span><strong>{{ vendor.name }}</strong><span class="pv-green-text"><PvIcon name="star" /> {{ vendor.rating }}</span></router-link></div></article>
+        <article class="pv-panel"><header class="pv-panel-header"><h2>Top Vendors</h2><router-link to="/vendor-reviews" class="pv-purple-link">View all</router-link></header><div class="pv-ranked-list"><router-link v-for="(vendor, index) in topVendors" :key="vendor.name" :to="vendor.href" class="pv-ranked-row"><span class="pv-rank">{{ index + 1 }}</span><span class="pv-vendor-logo"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logo }}</template></span><strong>{{ vendor.name }}</strong><span class="pv-green-text"><PvIcon name="star" /> {{ vendor.rating }}</span></router-link></div></article>
+      </aside>
+    </div>
+  </section>
+
+  <section v-else-if="page === 'vendorPortal'" class="pv-page">
+    <div class="pv-content-grid">
+      <main class="pv-stack">
+        <header class="pv-page-header">
+          <div>
+            <h1>Vendor Portal</h1>
+            <p>Manage your approved vendor listing and public contact details.</p>
+          </div>
+          <router-link v-if="apiMyVendor && apiMyVendor.publishStatus === 'published'" :to="apiMyVendor.href" class="pv-small-button">
+            View Public Profile <PvIcon name="chevron" />
+          </router-link>
+        </header>
+
+        <article v-if="apiMyVendor" class="pv-panel pv-vendor-owner-card">
+          <span class="pv-logo-card" :class="apiMyVendor.class"><img v-if="apiMyVendor.imageUrl" :src="apiMyVendor.imageUrl" :alt="apiMyVendor.name"><template v-else>{{ apiMyVendor.logoText }}</template></span>
+          <span>
+            <strong>{{ vendorPortalAccessApproved ? `You control ${apiMyVendor.name}` : `${apiMyVendor.name} is locked` }}</strong>
+            <small>{{ apiMyVendor.publishStatus }} profile · {{ vendorPortalAccessApproved ? 'approved vendor' : 'vendor access disabled' }}</small>
+          </span>
+          <router-link v-if="apiMyVendor.publishStatus === 'published'" :to="apiMyVendor.href" class="pv-small-button">Open Profile</router-link>
+        </article>
+
+        <p v-if="vendorPortalStatusMessage" class="pv-alert pv-alert--compact">{{ vendorPortalStatusMessage }}</p>
+        <p v-if="vendorPortalFormError" class="pv-alert pv-alert--compact">{{ vendorPortalFormError }}</p>
+
+        <form v-if="vendorPortalAccessApproved" class="pv-form-card pv-vendor-portal-form" @submit.prevent="saveVendorProfile">
+          <header class="pv-panel-header">
+            <div>
+              <h2>{{ apiMyVendor ? 'Edit Vendor Profile' : 'Set Up Vendor Profile' }}</h2>
+              <p class="pv-muted">This information appears on your vendor review page for contact and support only.</p>
+            </div>
+            <span v-if="vendorPortalLoaded" class="pv-tag trusted">approved</span>
+          </header>
+
+          <div class="pv-two-col">
+            <label>
+              Vendor Name *
+              <input v-model="vendorPortalForm.name" required maxlength="160" placeholder="Public vendor name">
+            </label>
+            <label>
+              Profile Slug
+              <input v-model="vendorPortalForm.slug" maxlength="180" pattern="[a-zA-Z0-9-]+" placeholder="vendor-name">
+            </label>
+          </div>
+          <label>
+            About
+            <textarea v-model="vendorPortalForm.description" maxlength="4000" rows="5" placeholder="Describe support expectations, service area, and public profile details."></textarea>
+          </label>
+          <label>
+            Tags
+            <input v-model="vendorPortalForm.tags" placeholder="Comma-separated tags, e.g. Domestic, Lab Tested">
+          </label>
+
+          <div class="pv-two-col">
+            <label>
+              Website
+              <input v-model="vendorPortalForm.website_url" type="url" maxlength="255" placeholder="https://example.com">
+            </label>
+            <div class="pv-upload-control">
+              <strong>Vendor Image</strong>
+              <div class="pv-image-upload-row">
+                <span class="pv-logo-card" :class="apiMyVendor?.class"><img v-if="vendorPortalForm.image_url" :src="assetUrl(vendorPortalForm.image_url)" alt="Vendor image preview"><template v-else>{{ apiMyVendor?.logoText ?? 'V' }}</template></span>
+                <span>
+                  <small>Upload a logo or product-safe vendor image up to 5 MB.</small>
+                  <input ref="vendorImageFileInput" type="file" accept="image/*" class="pv-sr-only" @change="uploadVendorImage">
+                  <button class="pv-small-button" type="button" :disabled="uploadingVendorImage" @click="vendorImageFileInput?.click()"><PvIcon name="upload" /> {{ uploadingVendorImage ? 'Uploading...' : 'Upload Image' }}</button>
+                </span>
+              </div>
+            </div>
+          </div>
+          <div class="pv-two-col">
+            <label>
+              Support URL
+              <input v-model="vendorPortalForm.support_url" type="url" maxlength="255" placeholder="https://example.com/support">
+            </label>
+            <label>
+              Contact Email
+              <input v-model="vendorPortalForm.contact_email" type="email" maxlength="255" placeholder="support@example.com">
+            </label>
+          </div>
+          <div class="pv-two-col">
+            <label>
+              Telegram
+              <input v-model="vendorPortalForm.contact_telegram" maxlength="120" placeholder="@handle">
+            </label>
+            <label>
+              Signal
+              <input v-model="vendorPortalForm.contact_signal" maxlength="120" placeholder="Signal username or number">
+            </label>
+          </div>
+          <div class="pv-two-col">
+            <label>
+              Discord
+              <input v-model="vendorPortalForm.contact_discord" maxlength="120" placeholder="Discord handle">
+            </label>
+          </div>
+          <label>
+            Response Policy
+            <textarea v-model="vendorPortalForm.response_policy" maxlength="1000" rows="3" placeholder="Expected response times, support hours, and preferred contact channel."></textarea>
+          </label>
+          <label>
+            Public Contact Notes
+            <textarea v-model="vendorPortalForm.public_contact_notes" maxlength="1000" rows="3" placeholder="Anything members should know before contacting you."></textarea>
+          </label>
+          <footer class="pv-form-actions">
+            <button class="pv-primary-button" type="submit" :disabled="savingVendorProfile">{{ savingVendorProfile ? 'Saving...' : apiMyVendor ? 'Save Profile' : 'Publish Profile' }}</button>
+            <router-link v-if="apiMyVendor?.publishStatus === 'published'" :to="apiMyVendor.href" class="pv-small-button">Preview</router-link>
+          </footer>
+        </form>
+        <article v-else class="pv-panel">
+          <h2>Vendor Access Required</h2>
+          <p class="pv-muted">An admin needs to approve this account as a vendor before you can create or edit a vendor profile.</p>
+          <dl class="pv-data-list">
+            <div><dt>Account</dt><dd>{{ authStore.user?.username || authStore.user?.name || 'Current user' }}</dd></div>
+            <div><dt>Vendor Access</dt><dd>Not approved</dd></div>
+            <div v-if="apiMyVendor"><dt>Existing Profile</dt><dd>{{ apiMyVendor.publishStatus }}</dd></div>
+          </dl>
+        </article>
+      </main>
+
+      <aside class="pv-stack">
+        <article class="pv-panel">
+          <h2>Vendor Access</h2>
+          <dl class="pv-data-list">
+            <div><dt>Status</dt><dd>{{ vendorPortalAccessApproved ? 'Approved' : 'Not approved' }}</dd></div>
+            <div><dt>Profile</dt><dd>{{ apiMyVendor ? apiMyVendor.publishStatus : 'Not created' }}</dd></div>
+          </dl>
+        </article>
+
+        <article class="pv-panel">
+          <h2>What Vendors Can Control</h2>
+          <ul class="pv-check-list">
+            <li>Approved vendors can edit public profile text and tags</li>
+            <li>Approved vendors can maintain support links and contact channels</li>
+            <li>Vendor images, websites, and support links are public</li>
+            <li>No sales, checkout, payments, or order handling</li>
+          </ul>
+        </article>
       </aside>
     </div>
   </section>
@@ -559,10 +806,12 @@
     <div v-if="detailVendor" class="pv-content-grid">
       <main class="pv-stack">
         <nav class="pv-breadcrumbs">Vendor Reviews <PvIcon name="chevron" /> {{ detailVendor.name }} <PvIcon name="chevron" /> Reviews</nav>
-        <article class="pv-vendor-hero">
-          <span class="pv-logo-card" :class="detailVendor.class">{{ detailVendor.logoText }}</span>
-          <div class="pv-topic-main"><h1>{{ detailVendor.name }} <span class="pv-tag" :class="detailVendor.statusClass">{{ detailVendor.status }}</span></h1><p><PvIcon name="star" /> {{ detailVendor.rating }} / 5 · {{ detailVendor.reviews }} reviews</p><span class="pv-chip-row"><span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span></span></div>
-          <div class="pv-vendor-actions"><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a><small>Member since {{ detailVendor.since }}<br>Last active {{ detailVendor.lastActive }}</small></div>
+        <article class="pv-vendor-hero" :style="detailVendor.imageUrl ? { backgroundImage: `url(${detailVendor.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
+          <div class="pv-vendor-hero-overlay">
+            <span class="pv-logo-card" :class="detailVendor.class"><img v-if="detailVendor.imageUrl" :src="detailVendor.imageUrl" :alt="detailVendor.name"><template v-else>{{ detailVendor.logoText }}</template></span>
+            <div class="pv-topic-main"><h1>{{ detailVendor.name }} <span class="pv-tag" :class="detailVendor.statusClass">{{ detailVendor.status }}</span></h1><p><PvIcon name="star" /> {{ detailVendor.rating }} / 5 · {{ detailVendor.reviews }} reviews</p><span class="pv-chip-row"><span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span></span></div>
+            <div class="pv-vendor-actions"><router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="pv-small-button">Manage Profile <PvIcon name="settings" /></router-link><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a><small>Member since {{ detailVendor.since }}<br>Last active {{ detailVendor.lastActive }}</small></div>
+          </div>
         </article>
         <div class="pv-tabs pv-tabs--line"><button :class="{ active: vendorDetailTab === 'overview' }" @click="vendorDetailTab = 'overview'">Overview</button><button :class="{ active: vendorDetailTab === 'reviews' }" @click="vendorDetailTab = 'reviews'">Reviews ({{ detailVendor.reviews }})</button><button :class="{ active: vendorDetailTab === 'about' }" @click="vendorDetailTab = 'about'">About</button></div>
         <article v-if="vendorDetailTab === 'overview'" class="pv-panel pv-review-summary">
@@ -583,11 +832,16 @@
           <article v-for="review in reviews" :key="review.author" class="pv-review-row">
             <span class="pv-avatar" :class="review.color">{{ review.initial }}</span>
             <div>
-              <div class="pv-reply-head"><strong>{{ review.author }}</strong><span class="pv-tag trusted">Verified Buyer</span><span>{{ review.date }}</span></div>
+              <div class="pv-reply-head"><strong>{{ review.author }}</strong><span class="pv-tag" :class="review.verifiedBuyer ? 'trusted' : 'caution'">{{ review.verifiedBuyer ? 'Verified Buyer' : 'Community Review' }}</span><span>{{ review.date }}</span></div>
               <span class="pv-stars">★★★★★ <em>{{ review.rating }}/5</em></span>
               <h3>{{ review.title }}</h3>
               <p>{{ review.text }}</p>
               <span class="pv-chip-row"><span v-for="chip in review.chips" :key="chip">{{ chip }}</span></span>
+              <div v-if="review.photoUrls.length" class="pv-review-photo-grid">
+                <a v-for="photo in review.photoUrls" :key="photo" :href="photo" target="_blank" rel="noreferrer">
+                  <img :src="photo" alt="Review photo">
+                </a>
+              </div>
             </div>
             <button class="pv-small-button" :disabled="markingReviewHelpful === review.id" @click="markReviewHelpful(review)"><PvIcon name="thumbs" /> Helpful ({{ review.helpful }})</button>
           </article>
@@ -602,11 +856,31 @@
             <div><dt>Response Rate</dt><dd>{{ detailVendor.responseRate }}</dd></div>
             <div><dt>Average Response</dt><dd>{{ detailVendor.avgResponseTime }}</dd></div>
           </dl>
+          <div v-if="hasVendorContact(detailVendor)" class="pv-contact-list">
+            <a v-for="link in detailVendorContactLinks" :key="`${link.label}-${link.value}`" :href="link.href" target="_blank" rel="noreferrer" class="pv-contact-row">
+              <PvIcon :name="link.icon" />
+              <span><strong>{{ link.label }}</strong><small>{{ link.value }}</small></span>
+            </a>
+            <p v-if="detailVendor.contact.responsePolicy" class="pv-muted"><strong>Response policy:</strong> {{ detailVendor.contact.responsePolicy }}</p>
+            <p v-if="detailVendor.contact.publicNotes" class="pv-muted">{{ detailVendor.contact.publicNotes }}</p>
+          </div>
           <a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a>
         </article>
       </main>
       <aside class="pv-stack">
         <article class="pv-panel"><h2>Vendor Summary</h2><dl class="pv-data-list"><div><dt>Total Reviews</dt><dd>{{ detailVendor.reviews }}</dd></div><div><dt>Average Rating</dt><dd><span class="pv-stars">★</span> {{ detailVendor.rating }} / 5</dd></div><div><dt>Would Buy Again</dt><dd>{{ detailVendor.buyAgain }}</dd></div><div><dt>Response Rate</dt><dd>{{ detailVendor.responseRate }}</dd></div><div><dt>Avg. Response Time</dt><dd>{{ detailVendor.avgResponseTime }}</dd></div></dl></article>
+        <article v-if="hasVendorContact(detailVendor)" class="pv-panel">
+          <h2>Contact & Support</h2>
+          <div class="pv-contact-list">
+            <a v-for="link in detailVendorContactLinks" :key="`${link.label}-sidebar-${link.value}`" :href="link.href" target="_blank" rel="noreferrer" class="pv-contact-row">
+              <PvIcon :name="link.icon" />
+              <span><strong>{{ link.label }}</strong><small>{{ link.value }}</small></span>
+            </a>
+          </div>
+          <p v-if="detailVendor.contact.responsePolicy" class="pv-muted">{{ detailVendor.contact.responsePolicy }}</p>
+          <p v-if="detailVendor.contact.publicNotes" class="pv-muted">{{ detailVendor.contact.publicNotes }}</p>
+          <p class="pv-muted">Vendor contact details are for support and profile verification context only.</p>
+        </article>
         <article class="pv-panel"><h2>Top Rated Products</h2><div class="pv-ranked-list"><span v-for="product in detailVendor.topProducts" :key="product.name" class="pv-ranked-row"><span class="pv-vendor-logo"><PvIcon name="flask" /></span><strong>{{ product.name }}</strong><span>{{ product.rating }} ★ ({{ product.reviews }})</span></span></div><button class="pv-small-button pv-full" @click="vendorReviewProductFilter = ''; jumpToVendorReviews()">View all products</button></article>
         <article class="pv-panel"><h2>Active Discussions</h2><div class="pv-mini-list"><router-link v-for="topic in discussions.slice(0, 3)" :key="topic.title" :to="topic.href" class="pv-mini-row"><PvIcon name="discussions" /><span><strong>{{ topic.title }}</strong></span><span>{{ topic.replies }}</span></router-link></div><router-link class="pv-small-button pv-full" to="/discussions">View all discussions</router-link></article>
         <article class="pv-panel"><h2>About {{ detailVendor.name }}</h2><p class="pv-muted">{{ detailVendor.description }}</p><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a></article>
@@ -618,7 +892,7 @@
     </div>
     <div v-if="page === 'reviewModal'" class="pv-modal-backdrop">
       <form v-if="detailVendor" class="pv-modal" @submit.prevent="submitVendorReview">
-        <header class="pv-panel-header"><div><h2>Write a Review</h2><p class="pv-muted">Share your experience to help others in the community.</p></div><router-link :to="detailVendor.href" class="pv-icon-button pv-icon-button--static"><PvIcon name="close" /></router-link></header>
+        <header class="pv-panel-header"><div><h2>Write a Review</h2><p class="pv-muted">Reviewing {{ detailVendor.name }}. Share your experience to help others in the community.</p></div><router-link :to="detailVendor.href" class="pv-icon-button pv-icon-button--static"><PvIcon name="close" /></router-link></header>
         <p v-if="vendorReviewFormError" class="pv-alert pv-alert--compact">{{ vendorReviewFormError }}</p>
         <label>Overall Rating *<input v-model.number="newVendorReview.rating" type="number" min="1" max="5" required></label>
         <label>Review Title *<input v-model="newVendorReview.title" required maxlength="160" placeholder="Summarise your experience in a few words..."><small>{{ newVendorReview.title.length }}/160</small></label>
@@ -631,7 +905,16 @@
         <label>Product<input v-model="newVendorReview.product_name" maxlength="120" placeholder="Product reviewed"></label>
         <label>Tags<input v-model="newVendorReview.tags" placeholder="Comma-separated review tags"></label>
         <div><strong>Would you buy from this vendor again?</strong><div class="pv-choice-row"><button type="button" :class="{ active: newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = true"><PvIcon name="thumbs" /> Yes, I would</button><button type="button" :class="{ active: !newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = false">No, I wouldn&apos;t</button></div></div>
-        <label>Add Photos (Optional)<span class="pv-upload-box"><PvIcon name="image" /> Click to upload or drag and drop<br><small>PNG, JPG up to 5MB each (max 5 images)</small></span></label>
+        <label>Add Photos (Optional)
+          <input ref="vendorReviewPhotoInput" type="file" accept="image/*" multiple class="pv-sr-only" @change="selectVendorReviewPhotos">
+          <button class="pv-upload-box" type="button" @click="vendorReviewPhotoInput?.click()"><PvIcon name="image" /> Click to upload photos<br><small>PNG, JPG up to 5MB each (max 5 images)</small></button>
+        </label>
+        <div v-if="vendorReviewPhotoPreviews.length" class="pv-upload-preview-grid">
+          <span v-for="(preview, index) in vendorReviewPhotoPreviews" :key="preview">
+            <img :src="preview" :alt="`Review photo ${index + 1}`">
+            <button type="button" aria-label="Remove photo" @click="removeVendorReviewPhoto(index)"><PvIcon name="close" /></button>
+          </span>
+        </div>
         <footer><router-link :to="detailVendor.href" class="pv-small-button">Cancel</router-link><button class="pv-primary-button" type="submit" :disabled="submittingVendorReview">{{ submittingVendorReview ? 'Submitting...' : 'Submit Review' }}</button></footer>
       </form>
     </div>
@@ -647,7 +930,7 @@
         <p v-if="contentLoaded && articles.length === 0" class="pv-muted">No research articles published yet.</p>
         <div class="pv-article-grid">
           <router-link v-for="(article, index) in articles" :key="article.title" :to="article.href" class="pv-article-card">
-            <span class="pv-thumb" :style="thumbnailStyle(article.imageIndex || index)"></span>
+            <span class="pv-thumb" :style="contentThumbnailStyle(article, index)"></span>
             <span class="pv-tag">{{ article.tag }}</span>
             <h2>{{ article.title }}</h2>
             <p>{{ article.excerpt }}</p>
@@ -655,7 +938,7 @@
             <PvIcon name="bookmark" class="pv-bookmark" :class="{ active: isBookmarkedContent(article.slug) }" />
           </router-link>
         </div>
-        <PaginationBlock />
+        <PaginationBlock :meta="researchPagination" @page="setResearchPage" />
       </main>
       <aside class="pv-stack">
         <article class="pv-panel pv-filter-panel">
@@ -684,7 +967,7 @@
         <nav class="pv-breadcrumbs">Research Library <PvIcon name="chevron" /> {{ detailArticle.category }} <PvIcon name="chevron" /> {{ detailArticle.title }}</nav>
         <article class="pv-article-hero">
           <div><span class="pv-tag">{{ detailArticle.tag }}</span><h1>{{ detailArticle.title }}</h1><p>{{ detailArticle.excerpt }}</p><div class="pv-author-line"><span class="pv-avatar purple">{{ detailArticle.authorInitial }}</span><strong>{{ detailArticle.author }}</strong><span v-if="detailArticle.authorBadge" class="pv-tag trusted">{{ detailArticle.authorBadge }}</span><span>{{ detailArticle.date }}</span><span><PvIcon name="eye" /> {{ detailArticle.timeLabel }} read</span></div></div>
-          <span class="pv-article-image" :style="thumbnailStyle(detailArticle.imageIndex)"></span>
+          <span class="pv-article-image" :style="contentThumbnailStyle(detailArticle)"></span>
         </article>
         <div class="pv-tabs pv-tabs--line"><button :class="{ active: researchDetailTab === 'article' }" @click="researchDetailTab = 'article'">Article</button><button :class="{ active: researchDetailTab === 'data' }" @click="researchDetailTab = 'data'">Figures & Data</button><button :class="{ active: researchDetailTab === 'references' }" @click="researchDetailTab = 'references'">References</button><button :class="{ active: researchDetailTab === 'comments' }" @click="researchDetailTab = 'comments'">Comments ({{ detailArticle.comments }})</button></div>
         <article v-if="researchDetailTab === 'article'" class="pv-prose">
@@ -701,7 +984,7 @@
       <aside class="pv-stack">
         <article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Category</dt><dd>{{ detailArticle.category }}</dd></div><div><dt>Compound</dt><dd>{{ detailArticle.metadata.compound ?? detailArticle.title }}</dd></div><div><dt>Also Known As</dt><dd>{{ detailArticle.metadata.also_known_as ?? '' }}</dd></div><div><dt>Research Phase</dt><dd>{{ detailArticle.metadata.research_phase ?? '' }}</dd></div><div><dt>Last Updated</dt><dd>{{ detailArticle.date }}</dd></div><div><dt>Views</dt><dd>{{ detailArticle.views }}</dd></div><div><dt>Downloads</dt><dd>{{ detailArticle.downloads }}</dd></div></dl></article>
         <article class="pv-panel"><h2>Table of Contents</h2><ol class="pv-toc"><li v-for="heading in articleHeadings" :key="heading" :class="{ active: heading === articleHeadings[0] }">{{ heading }}</li></ol></article>
-        <article class="pv-panel"><h2>Related Articles</h2><div class="pv-mini-list"><router-link v-for="(article, index) in articles.filter(item => item.slug !== detailArticle.slug).slice(0, 3)" :key="article.title" :to="article.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="thumbnailStyle(article.imageIndex || index + 1)"></span><span><strong>{{ article.title }}</strong><small>{{ article.date }}</small></span></router-link></div><router-link to="/research-library" class="pv-primary-button pv-full">View all related articles</router-link></article>
+        <article class="pv-panel"><h2>Related Articles</h2><div class="pv-mini-list"><router-link v-for="(article, index) in articles.filter(item => item.slug !== detailArticle.slug).slice(0, 3)" :key="article.title" :to="article.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(article, index + 1)"></span><span><strong>{{ article.title }}</strong><small>{{ article.date }}</small></span></router-link></div><router-link to="/research-library" class="pv-primary-button pv-full">View all related articles</router-link></article>
       </aside>
     </div>
     <div v-else class="pv-empty-route"><h1>Research article not found</h1><p>This article has not been published or does not exist.</p></div>
@@ -716,11 +999,12 @@
         <article class="pv-panel">
           <header class="pv-panel-header"><h2>Popular Guides</h2><router-link to="/guides" class="pv-purple-link">View all guides →</router-link></header>
           <p v-if="contentLoaded && guides.length === 0" class="pv-muted">No guides published yet.</p>
-          <router-link v-for="(guide, index) in guides" :key="guide.title" :to="guide.href" class="pv-guide-row"><span class="pv-mini-thumb pv-guide-thumb" :style="thumbnailStyle(guide.imageIndex || index)"></span><span class="pv-topic-main"><strong>{{ guide.title }}</strong><small>{{ guide.excerpt }}</small><em>{{ guide.category }}</em></span><span><PvIcon name="document" /> {{ guide.metadata.guide_type ?? guide.type }}<br><PvIcon name="clock" /> {{ guide.timeLabel }} read<br><PvIcon name="eye" /> {{ guide.views }} views</span></router-link>
+          <router-link v-for="(guide, index) in guides" :key="guide.title" :to="guide.href" class="pv-guide-row"><span class="pv-mini-thumb pv-guide-thumb" :style="contentThumbnailStyle(guide, index)"></span><span class="pv-topic-main"><strong>{{ guide.title }}</strong><small>{{ guide.excerpt }}</small><em>{{ guide.category }}</em></span><span><PvIcon name="document" /> {{ guide.metadata.guide_type ?? guide.type }}<br><PvIcon name="clock" /> {{ guide.timeLabel }} read<br><PvIcon name="eye" /> {{ guide.views }} views</span></router-link>
+          <PaginationBlock :meta="guidePagination" @page="setGuidePage" />
         </article>
         <article id="faq-list" class="pv-panel"><header class="pv-panel-header"><h2>Frequently Asked Questions</h2><a class="pv-purple-link" href="#faq-list">View all FAQ →</a></header><details v-for="faq in faqs" :key="faq.slug"><summary><PvIcon name="question" /> {{ faq.title }}</summary><p class="pv-muted">{{ faq.body || faq.excerpt }}</p></details></article>
       </main>
-      <aside class="pv-stack"><article class="pv-panel pv-help-card"><PvIcon name="question" /><h2>Need Help?</h2><p>Can&apos;t find what you&apos;re looking for?</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article><article class="pv-panel"><h2>Top FAQ Topics</h2><dl class="pv-data-list"><div v-for="category in contentCategories.faq" :key="category.slug"><dt>{{ category.name }}</dt><dd>{{ category.count }}</dd></div></dl></article><article class="pv-panel"><h2>Community Help</h2><div class="pv-mini-list"><router-link to="/discussions" class="pv-mini-row"><PvIcon name="question" /><span><strong>Ask the Community</strong><small>Get answers from experienced members</small></span><PvIcon name="chevron" /></router-link><a href="/admin/community-content" class="pv-mini-row"><PvIcon name="document" /><span><strong>Submit a Guide</strong><small>Share your knowledge with others</small></span><PvIcon name="chevron" /></a><router-link to="/announcements" class="pv-mini-row"><PvIcon name="bell" /><span><strong>Report an Issue</strong><small>Report outdated or incorrect info</small></span><PvIcon name="chevron" /></router-link></div></article><article class="pv-panel"><h2>Popular Tags</h2><span class="pv-chip-row"><span v-for="topic in contentTopics.guide" :key="topic.name">{{ topic.name }}</span></span></article></aside>
+      <aside class="pv-stack"><article class="pv-panel pv-help-card"><PvIcon name="question" /><h2>Need Help?</h2><p>Can&apos;t find what you&apos;re looking for?</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article><article class="pv-panel"><h2>Top FAQ Topics</h2><dl class="pv-data-list"><div v-for="category in contentCategories.faq" :key="category.slug"><dt>{{ category.name }}</dt><dd>{{ category.count }}</dd></div></dl></article><article class="pv-panel"><h2>Community Help</h2><div class="pv-mini-list"><router-link to="/discussions" class="pv-mini-row"><PvIcon name="question" /><span><strong>Ask the Community</strong><small>Get answers from experienced members</small></span><PvIcon name="chevron" /></router-link><a href="/admin/community-content" class="pv-mini-row"><PvIcon name="document" /><span><strong>Submit a Guide</strong><small>Share your knowledge with others</small></span><PvIcon name="chevron" /></a><router-link :to="{ path: '/discussions', query: { q: 'issue' } }" class="pv-mini-row"><PvIcon name="bell" /><span><strong>Report an Issue</strong><small>Report outdated or incorrect info</small></span><PvIcon name="chevron" /></router-link></div></article><article class="pv-panel"><h2>Popular Tags</h2><span class="pv-chip-row"><span v-for="topic in contentTopics.guide" :key="topic.name">{{ topic.name }}</span></span></article></aside>
     </div>
   </section>
 
@@ -729,7 +1013,7 @@
       <main class="pv-stack">
         <nav class="pv-breadcrumbs">Guides & FAQ <PvIcon name="chevron" /> {{ detailGuide.category }} <PvIcon name="chevron" /></nav>
         <header class="pv-page-header"><div><h1>{{ detailGuide.title }}</h1><p>{{ detailGuide.excerpt }}</p><span class="pv-muted"><PvIcon name="calendar" /> {{ detailGuide.date }} · <PvIcon name="clock" /> {{ detailGuide.timeLabel }} read · <PvIcon name="eye" /> {{ detailGuide.views }} views</span></div><div class="pv-action-row"><button class="pv-small-button" @click="toggleContentBookmark(detailGuide.slug)"><PvIcon name="bookmark" /> {{ isBookmarkedContent(detailGuide.slug) ? 'Bookmarked' : 'Bookmark' }}</button><button class="pv-primary-button" @click="printCurrentPage"><PvIcon name="download" /> Print / PDF</button></div></header>
-        <span class="pv-guide-hero" :style="thumbnailStyle(detailGuide.imageIndex)"></span>
+        <span class="pv-guide-hero" :style="contentThumbnailStyle(detailGuide)"></span>
         <article class="pv-alert"><PvIcon name="shield" /><strong>Disclaimer</strong><p>This guide is for educational purposes only and does not constitute medical advice. Always follow lab safety best practices and consult a healthcare professional for personal guidance.</p></article>
         <article class="pv-prose">
           <template v-for="block in guideBodyBlocks" :key="block.text">
@@ -742,26 +1026,74 @@
           <div class="pv-pass-box"><PvIcon name="shield" /> <span><strong>Safety First</strong><br>When in doubt, do not use the product. Your health and safety come first.</span></div>
         </article>
       </main>
-      <aside class="pv-stack"><article class="pv-panel"><h2>On This Page</h2><ol class="pv-toc"><li v-for="heading in guideHeadings" :key="heading" :class="{ active: heading === guideHeadings[0] }">{{ heading }}</li></ol></article><article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Difficulty</dt><dd><span class="pv-green-dot"></span> {{ detailGuide.metadata.difficulty ?? 'Beginner' }}</dd></div><div><dt>Time to Complete</dt><dd>{{ detailGuide.timeLabel }}</dd></div><div><dt>Category</dt><dd>{{ detailGuide.category }}</dd></div><div><dt>Last Updated</dt><dd>{{ detailGuide.date }}</dd></div></dl></article><article class="pv-panel"><h2>Related Guides</h2><div class="pv-mini-list"><router-link v-for="(guide, index) in guides.filter(item => item.slug !== detailGuide.slug).slice(0, 3)" :key="guide.title" :to="guide.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="thumbnailStyle(guide.imageIndex || index + 1)"></span><span><strong>{{ guide.title }}</strong><small>{{ guide.timeLabel }} read</small></span></router-link></div></article><article class="pv-panel pv-help-card"><h2>Still Need Help?</h2><p>Ask the community or submit a question.</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article></aside>
+      <aside class="pv-stack"><article class="pv-panel"><h2>On This Page</h2><ol class="pv-toc"><li v-for="heading in guideHeadings" :key="heading" :class="{ active: heading === guideHeadings[0] }">{{ heading }}</li></ol></article><article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Difficulty</dt><dd><span class="pv-green-dot"></span> {{ detailGuide.metadata.difficulty ?? 'Beginner' }}</dd></div><div><dt>Time to Complete</dt><dd>{{ detailGuide.timeLabel }}</dd></div><div><dt>Category</dt><dd>{{ detailGuide.category }}</dd></div><div><dt>Last Updated</dt><dd>{{ detailGuide.date }}</dd></div></dl></article><article class="pv-panel"><h2>Related Guides</h2><div class="pv-mini-list"><router-link v-for="(guide, index) in guides.filter(item => item.slug !== detailGuide.slug).slice(0, 3)" :key="guide.title" :to="guide.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(guide, index + 1)"></span><span><strong>{{ guide.title }}</strong><small>{{ guide.timeLabel }} read</small></span></router-link></div></article><article class="pv-panel pv-help-card"><h2>Still Need Help?</h2><p>Ask the community or submit a question.</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article></aside>
     </div>
     <div v-else class="pv-empty-route"><h1>Guide not found</h1><p>This guide has not been published or does not exist.</p></div>
   </section>
 
-  <section v-else-if="page === 'members'" class="pv-page">
+   <section v-else-if="page === 'members'" class="pv-page">
     <div class="pv-content-grid">
       <main class="pv-stack">
-        <header class="pv-page-header"><div><h1>Members</h1><p>Browse published community profiles and contributors.</p></div></header>
-        <article class="pv-panel">
-          <header class="pv-panel-header"><h2>Community Members</h2><span class="pv-tag">{{ memberStats.total }} total</span></header>
-          <p v-if="membersLoaded && apiMembers.length === 0" class="pv-muted">No member profiles have been published yet.</p>
-          <router-link v-for="member in apiMembers" :key="member.slug" :to="member.href" class="pv-action-card">
-            <span class="pv-avatar" :class="member.color">{{ member.initial }}</span>
-            <span><strong>{{ member.name }} <em v-if="member.isVerified" class="pv-tag trusted">Verified</em></strong><small>{{ member.bio }}</small><em>{{ member.group }} · {{ member.lastActive }}</em></span>
-            <PvIcon name="chevron" />
-          </router-link>
+        <header class="pv-page-header"><div><h1>Members</h1><p>Find contributors, moderators, reviewers, and active community voices.</p></div><router-link to="/settings/profile" class="pv-small-button"><PvIcon name="user" /> Edit Profile</router-link></header>
+        <div class="pv-metrics pv-metrics--member">
+          <span><PvIcon name="users" /><strong>{{ memberStats.total }}</strong><small>Total Members</small></span>
+          <span><PvIcon name="clock" /><strong>{{ memberStats.online }}</strong><small>Online Now</small></span>
+          <span><PvIcon name="shield" /><strong>{{ apiMembers.filter(member => member.isModerator).length }}</strong><small>Moderators</small></span>
+          <span><PvIcon name="star" /><strong>{{ topContributors.length }}</strong><small>Top Contributors</small></span>
+        </div>
+        <article class="pv-panel pv-member-directory">
+          <header class="pv-panel-header">
+            <div>
+              <h2>Community Directory</h2>
+              <p class="pv-muted">{{ members.length }} showing · {{ memberSortLabel }}</p>
+            </div>
+            <span class="pv-tag">{{ memberStats.total }} total</span>
+          </header>
+          <div class="pv-toolbar">
+            <label class="pv-input-search">
+              <input v-model="memberSearch" placeholder="Search members, bios, roles..." type="search" @keydown.enter="loadMembers">
+              <PvIcon name="search" />
+            </label>
+            <div class="pv-tabs">
+              <button :class="{ active: memberFilter === 'all' }" @click="memberFilter = 'all'">All</button>
+              <button :class="{ active: memberFilter === 'online' }" @click="memberFilter = 'online'">Online</button>
+              <button :class="{ active: memberFilter === 'moderators' }" @click="memberFilter = 'moderators'">Moderators</button>
+              <button :class="{ active: memberFilter === 'contributors' }" @click="memberFilter = 'contributors'">Contributors</button>
+            </div>
+            <button class="pv-small-button" type="button" @click="cycleMemberSort">{{ memberSortLabel }} <PvIcon name="chevron" /></button>
+            <button class="pv-icon-button" type="button" @click="loadMembers"><PvIcon name="filter" /></button>
+          </div>
+          <p v-if="membersLoaded && members.length === 0" class="pv-muted">No member profiles match those filters.</p>
+          <div class="pv-member-grid">
+            <router-link v-for="member in members" :key="member.slug" :to="member.href" class="pv-member-card">
+              <header class="pv-member-card-banner">
+                <span v-if="member.avatarUrl" class="pv-avatar pv-avatar--large" :class="member.color"><img :src="assetUrl(member.avatarUrl)" :alt="member.name" class="pv-avatar-img"></span>
+                <span v-else class="pv-avatar pv-avatar--large" :class="member.color">{{ member.initial }}</span>
+                <span class="pv-member-presence" :class="{ online: member.isOnline }">{{ member.isOnline ? 'Online' : 'Away' }}</span>
+              </header>
+              <strong>{{ member.name }}</strong>
+              <span class="pv-chip-row">
+                <span v-if="member.isVerified" class="trusted">Verified</span>
+                <span v-if="member.isModerator" class="trusted">Moderator</span>
+                <span v-if="member.group">{{ member.group }}</span>
+              </span>
+              <p>{{ member.bio || 'No bio yet.' }}</p>
+              <dl>
+                <span><dt>Posts</dt><dd>{{ formatCount(member.stats.posts) }}</dd></span>
+                <span><dt>Reviews</dt><dd>{{ formatCount(member.stats.reviews) }}</dd></span>
+                <span><dt>Labs</dt><dd>{{ formatCount(member.stats.lab_reports) }}</dd></span>
+              </dl>
+              <footer><small>{{ member.lastActive || 'No recent activity' }}</small><PvIcon name="chevron" /></footer>
+            </router-link>
+          </div>
+          <PaginationBlock :meta="memberPagination" @page="setMemberPage" />
         </article>
       </main>
-      <aside class="pv-stack"><article class="pv-panel"><h2>Member Stats</h2><dl class="pv-data-list"><div><dt>Total Members</dt><dd>{{ memberStats.total }}</dd></div><div><dt>Online Now</dt><dd>{{ memberStats.online }}</dd></div></dl></article><article class="pv-panel"><h2>Online Members</h2><div class="pv-avatar-stack"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color">{{ member.initial }}</router-link></div></article></aside>
+      <aside class="pv-stack">
+        <article class="pv-panel"><h2>Top Contributors</h2><div class="pv-mini-list"><router-link v-for="member in topContributors" :key="member.slug" :to="member.href" class="pv-mini-row"><span class="pv-avatar" :class="member.color">{{ member.initial }}</span><span><strong>{{ member.name }}</strong><small>{{ formatCount(memberEngagementScore(member)) }} contributions</small></span><PvIcon name="chevron" /></router-link></div></article>
+        <article class="pv-panel"><h2>Online Members</h2><div class="pv-avatar-stack"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color">{{ member.initial }}</router-link><span v-if="onlineMembers.length === 0" class="pv-muted">Nobody online right now.</span></div></article>
+        <article class="pv-panel"><h2>Member Tips</h2><ul class="pv-check-list"><li>Keep your profile bio current</li><li>Use reports for moderation issues</li><li>Message members from their profile</li><li>Reputation grows from useful posts</li></ul></article>
+      </aside>
     </div>
   </section>
 
@@ -771,7 +1103,7 @@
   </section>
 
   <section v-else-if="page === 'messages'" class="pv-page pv-messages-page">
-    <div class="pv-messages">
+    <div class="pv-messages" :class="{ 'pv-messages--thread-active': !!currentThread }">
       <aside class="pv-message-list">
         <header><h1>Messages</h1><span class="pv-icon-button active pv-mode-indicator" aria-label="Primary messages"><PvIcon name="document" /></span></header>
         <label class="pv-input-search"><input v-model="messageSearch" placeholder="Search messages..."><PvIcon name="search" /></label>
@@ -781,7 +1113,7 @@
         <button v-for="chat in chats" :key="chat.id" class="pv-chat-row" :class="{ active: currentThread?.id === chat.id }" @click="loadMessageThread(chat.id)"><span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span><span><strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag">{{ chat.participant.role }}</em></strong><small>{{ chat.preview }}</small></span><time>{{ chat.time }}</time></button>
       </aside>
       <main v-if="currentThread" class="pv-chat-panel">
-        <header><router-link to="/messages" class="pv-icon-button pv-icon-button--static"><PvIcon name="chevron" /></router-link><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div><h2>{{ currentThread.participant.name }} <span class="pv-tag">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static" aria-label="View member profile"><PvIcon name="settings" /></router-link></header>
+        <header><button class="pv-icon-button pv-icon-button--static pv-mobile-back" @click="apiCurrentMessageThread = null" aria-label="Back to threads"><PvIcon name="chevron" /></button><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div><h2>{{ currentThread.participant.name }} <span class="pv-tag">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static" aria-label="View member profile"><PvIcon name="settings" /></router-link></header>
         <div v-if="showMessageSafetyNotice" class="pv-alert"><PvIcon name="shield" /><span>Messages are visible only to you and the recipient. Do not share personal info or make any transactions.</span><button type="button" class="pv-icon-button" aria-label="Dismiss notice" @click="showMessageSafetyNotice = false"><PvIcon name="close" /></button></div>
         <div class="pv-chat-stream"><span class="pv-date-sep">Messages</span><MessageBubble v-for="message in currentThread.messages" :key="message.id ?? message.time" :side="message.side" :text="message.text" :time="message.time" :file="Boolean(message.attachmentName)" :attachment-name="message.attachmentName ?? ''" :attachment-label="message.attachmentLabel" :avatar-initial="message.avatarInitial || currentThread.participant.initial" :avatar-color="message.avatarColor || currentThread.participant.color" /></div>
         <form class="pv-chat-input" @submit.prevent="sendMessage"><PvIcon name="share" /><input v-model="messageBody" placeholder="Type a message..."><PvIcon name="question" /><button class="pv-primary-button" :disabled="sendingMessage"><PvIcon name="send" /></button></form>
@@ -869,8 +1201,8 @@
 
   <section v-else-if="page === 'notifications'" class="pv-page">
     <div class="pv-content-grid">
-      <main class="pv-stack"><header class="pv-page-header"><div><h1>Notifications</h1></div><button v-if="authStore.isAuthenticated" class="pv-small-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead">Mark all as read</button><router-link to="/settings/notifications" class="pv-icon-button"><PvIcon name="settings" /></router-link></header><div class="pv-tabs pv-tabs--line"><button :class="{ active: activeNotificationFilter === 'all' }" @click="setNotificationFilter('all')">All</button><button :class="{ active: activeNotificationFilter === 'unread' }" @click="setNotificationFilter('unread')">Unread <span>{{ notificationCounts.unread }}</span></button><button :class="{ active: activeNotificationFilter === 'announcements' }" @click="setNotificationFilter('announcements')">Announcements <span>{{ notificationCounts.announcements }}</span></button><button :class="{ active: activeNotificationFilter === 'lab-results' }" @click="setNotificationFilter('lab-results')">Lab Results <span>{{ notificationCounts.labResults }}</span></button><button :class="{ active: activeNotificationFilter === 'discussions' }" @click="setNotificationFilter('discussions')">Discussions <span>{{ notificationCounts.discussions }}</span></button><button :class="{ active: activeNotificationFilter === 'vendor-reviews' }" @click="setNotificationFilter('vendor-reviews')">Vendors <span>{{ notificationCounts.vendors }}</span></button></div><article class="pv-panel pv-notification-list"><p v-if="notificationStatusMessage" class="pv-muted">{{ notificationStatusMessage }}</p><p v-if="notificationsLoaded && notifications.length === 0" class="pv-muted">No notifications yet.</p><router-link v-for="item in notifications" :key="item.slug" :to="item.detailHref" class="pv-notification-row"><span class="pv-large-icon" :class="item.tone"><PvIcon :name="item.icon" /></span><span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em class="pv-tag" :class="item.tone">{{ item.category }}</em></span><time>{{ item.time }}</time><b v-if="item.unread"></b></router-link></article><PaginationBlock :label="notificationPaginationLabel" /></main>
-      <aside class="pv-stack"><article class="pv-panel"><h2>Filter Notifications</h2><div class="pv-filter-list"><button :class="{ active: activeNotificationFilter === 'all' }" @click="setNotificationFilter('all')"><PvIcon name="bell" /> All Notifications <strong>{{ notificationCounts.total }}</strong></button><button :class="{ active: activeNotificationFilter === 'unread' }" @click="setNotificationFilter('unread')"><PvIcon name="clock" /> Unread <strong>{{ notificationCounts.unread }}</strong></button><button :class="{ active: activeNotificationFilter === 'announcements' }" @click="setNotificationFilter('announcements')"><PvIcon name="megaphone" /> Announcements <strong>{{ notificationCounts.announcements }}</strong></button><button :class="{ active: activeNotificationFilter === 'lab-results' }" @click="setNotificationFilter('lab-results')"><PvIcon name="flask" /> Lab Results <strong>{{ notificationCounts.labResults }}</strong></button><button :class="{ active: activeNotificationFilter === 'discussions' }" @click="setNotificationFilter('discussions')"><PvIcon name="message" /> Discussions <strong>{{ notificationCounts.discussions }}</strong></button><button :class="{ active: activeNotificationFilter === 'vendor-reviews' }" @click="setNotificationFilter('vendor-reviews')"><PvIcon name="star" /> Vendors <strong>{{ notificationCounts.vendors }}</strong></button></div></article><article class="pv-panel"><h2>Notification Summary</h2><div class="pv-mini-list"><span v-for="item in notificationSummary" :key="item.label" class="pv-mini-row"><PvIcon :name="item.icon" /><span><strong>{{ item.label }}</strong><small>{{ item.latest }}</small></span><strong>{{ item.count }}</strong></span></div></article><router-link to="/settings/notifications" class="pv-panel pv-settings-link"><PvIcon name="settings" /> View Notification Settings <PvIcon name="chevron" /></router-link></aside>
+      <main class="pv-stack"><header class="pv-page-header"><div><h1>Notifications</h1></div><button v-if="authStore.isAuthenticated" class="pv-small-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead">Mark all as read</button><router-link to="/settings/notifications" class="pv-icon-button"><PvIcon name="settings" /></router-link></header><div class="pv-tabs pv-tabs--line"><button :class="{ active: activeNotificationFilter === 'all' }" @click="setNotificationFilter('all')">All</button><button :class="{ active: activeNotificationFilter === 'unread' }" @click="setNotificationFilter('unread')">Unread <span>{{ notificationCounts.unread }}</span></button><button :class="{ active: activeNotificationFilter === 'replies' }" @click="setNotificationFilter('replies')">Replies <span>{{ notificationCounts.repliesUnread }}</span></button><button :class="{ active: activeNotificationFilter === 'announcements' }" @click="setNotificationFilter('announcements')">Announcements <span>{{ notificationCounts.announcements }}</span></button><button :class="{ active: activeNotificationFilter === 'lab-results' }" @click="setNotificationFilter('lab-results')">Lab Results <span>{{ notificationCounts.labResults }}</span></button><button :class="{ active: activeNotificationFilter === 'discussions' }" @click="setNotificationFilter('discussions')">Discussions <span>{{ notificationCounts.discussions }}</span></button><button :class="{ active: activeNotificationFilter === 'vendor-reviews' }" @click="setNotificationFilter('vendor-reviews')">Vendors <span>{{ notificationCounts.vendors }}</span></button></div><article class="pv-panel pv-notification-list"><p v-if="notificationStatusMessage" class="pv-muted">{{ notificationStatusMessage }}</p><p v-if="notificationsLoaded && notifications.length === 0" class="pv-muted">No notifications yet.</p><router-link v-for="item in notifications" :key="item.slug" :to="item.detailHref" class="pv-notification-row" @click="markNotificationRead(item.slug)"><span class="pv-large-icon" :class="item.tone"><PvIcon :name="item.icon" /></span><span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em class="pv-tag" :class="item.tone">{{ item.category }}</em></span><time>{{ item.time }}</time><b v-if="item.unread"></b></router-link></article><PaginationBlock :meta="notificationPagination" :label="notificationPaginationLabel" @page="setNotificationPage" /></main>
+      <aside class="pv-stack"><article class="pv-panel"><h2>Filter Notifications</h2><div class="pv-filter-list"><button :class="{ active: activeNotificationFilter === 'all' }" @click="setNotificationFilter('all')"><PvIcon name="bell" /> All Notifications <strong>{{ notificationCounts.total }}</strong></button><button :class="{ active: activeNotificationFilter === 'unread' }" @click="setNotificationFilter('unread')"><PvIcon name="clock" /> Unread <strong>{{ notificationCounts.unread }}</strong></button><button :class="{ active: activeNotificationFilter === 'announcements' }" @click="setNotificationFilter('announcements')"><PvIcon name="megaphone" /> Announcements <strong>{{ notificationCounts.announcements }}</strong></button><button :class="{ active: activeNotificationFilter === 'lab-results' }" @click="setNotificationFilter('lab-results')"><PvIcon name="flask" /> Lab Results <strong>{{ notificationCounts.labResults }}</strong></button><button :class="{ active: activeNotificationFilter === 'discussions' }" @click="setNotificationFilter('discussions')"><PvIcon name="message" /> Discussions <strong>{{ notificationCounts.discussions }}</strong></button><button :class="{ active: activeNotificationFilter === 'vendor-reviews' }" @click="setNotificationFilter('vendor-reviews')"><PvIcon name="star" /> Vendors <strong>{{ notificationCounts.vendors }}</strong></button><button :class="{ active: activeNotificationFilter === 'replies' }" @click="setNotificationFilter('replies')"><PvIcon name="message" /> Replies <strong>{{ notificationCounts.repliesUnread }}</strong></button></div></article><article class="pv-panel"><h2>Notification Summary</h2><div class="pv-mini-list"><span v-for="item in notificationSummary" :key="item.label" class="pv-mini-row"><PvIcon :name="item.icon" /><span><strong>{{ item.label }}</strong><small>{{ item.latest }}</small></span><strong>{{ item.count }}</strong></span></div></article><router-link to="/settings/notifications" class="pv-panel pv-settings-link"><PvIcon name="settings" /> View Notification Settings <PvIcon name="chevron" /></router-link></aside>
     </div>
   </section>
 
@@ -884,6 +1216,36 @@
 
   <section v-else-if="page.startsWith('settings')" class="pv-page">
     <SettingsScreens :page="page" />
+  </section>
+
+  <section v-else-if="page === 'telegramUpdates'" class="pv-page">
+    <div class="pv-content-grid">
+      <main class="pv-stack">
+        <header class="pv-page-header">
+          <div>
+            <h1>Telegram Updates</h1>
+            <p>Follow community alerts, announcements, and status updates from the Peptide Vendors team.</p>
+          </div>
+          <a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-primary-button"><PvIcon name="send" /> Join Telegram</a>
+        </header>
+        <article class="pv-panel pv-telegram-updates">
+          <span class="pv-large-icon purple"><PvIcon name="send" /></span>
+          <div>
+            <h2>Community Broadcasts</h2>
+            <p class="pv-muted">Telegram is used for quick notices when new announcements, lab results, or platform updates are published.</p>
+            <a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-small-button">Open Telegram <PvIcon name="share" /></a>
+          </div>
+        </article>
+        <div class="pv-profile-grid">
+          <article class="pv-panel"><h2>Latest Announcements</h2><div class="pv-mini-list"><router-link v-for="announcement in announcementPreview" :key="announcement.slug" :to="announcement.href" class="pv-mini-row"><PvIcon :name="announcement.icon" /><span><strong>{{ announcement.title }}</strong><small>{{ announcement.time }}</small></span><PvIcon name="chevron" /></router-link><p v-if="announcementPreview.length === 0" class="pv-muted">No announcements published yet.</p></div></article>
+          <article class="pv-panel"><h2>Notification Controls</h2><p class="pv-muted">Choose email, push, and sound preferences from account settings.</p><router-link to="/settings/notifications" class="pv-small-button">Open Notification Settings</router-link></article>
+        </div>
+      </main>
+      <aside class="pv-stack">
+        <article class="pv-panel"><h2>Telegram Link</h2><p class="pv-muted">{{ publicTelegramUrl }}</p><a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-primary-button pv-full">Join Telegram</a></article>
+        <article class="pv-panel"><h2>Community Updates</h2><dl class="pv-data-list"><div><dt>Announcements</dt><dd>{{ announcementStats.total }}</dd></div><div><dt>Notifications</dt><dd>{{ notificationCounts.total }}</dd></div><div><dt>Unread</dt><dd>{{ notificationCounts.unread }}</dd></div></dl></article>
+      </aside>
+    </div>
   </section>
 
   <section v-else-if="page.startsWith('legal')" class="pv-page">
@@ -917,10 +1279,11 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, onMounted, ref, watch, type PropType } from 'vue'
+import { computed, defineComponent, h, onMounted, onUnmounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
+import GiphyPicker from '@/components/ui/GiphyPicker.vue'
 import api from '@/services/api'
 import { useAuthStore } from '@/stores/auth'
 import heroImage from '@/assets/peptide/hero-vials.png'
@@ -933,9 +1296,11 @@ const page = computed(() => String(route.meta.page ?? 'home'))
 const fallbackTitle = computed(() => String(route.meta.title ?? ''))
 
 interface UiDiscussion {
+  id?: number
   title: string
   excerpt: string
   author: string
+  authorId?: number
   time: string
   replies: number
   views: string
@@ -947,17 +1312,35 @@ interface UiDiscussion {
   body?: string
   category?: string
   lastActivity?: string
+  reactions: Record<string, number>
+  viewerReactions: string[]
+  avatarUrl?: string | null
+}
+
+interface PaginationMeta {
+  current_page?: number
+  last_page?: number
+  per_page?: number
+  total?: number
+  from?: number | null
+  to?: number | null
 }
 
 interface UiReply {
+  id?: number
   author: string
   initial: string
   color: string
+  avatarUrl?: string | null
   badge?: string
   time: string
   text: string
   votes: number
   file?: string
+  attachmentUrl?: string | null
+  attachmentMeta: Record<string, any>
+  reactions: Record<string, number>
+  viewerReactions: string[]
 }
 
 interface ApiDiscussion {
@@ -973,8 +1356,12 @@ interface ApiDiscussion {
   time_ago?: string | null
   last_activity?: string | null
   category?: { name?: string | null; color?: string | null } | null
-  author?: { name?: string | null; initial?: string | null } | null
+  author?: { id?: number; name?: string | null; initial?: string | null } | null
+  reactions?: Record<string, number>
+  viewer_reactions?: string[]
   reply_items?: ApiReply[]
+  participants?: ApiMemberProfile[]
+  similar_discussions?: ApiDiscussion[]
 }
 
 interface ApiCategory {
@@ -987,17 +1374,26 @@ interface ApiCategory {
 }
 
 interface ApiReply {
+  id?: number
   body?: string | null
   attachment_name?: string | null
+  attachment_url?: string | null
+  attachment_meta?: Record<string, any> | null
   votes?: number
   time_ago?: string | null
+  reactions?: Record<string, number>
+  viewer_reactions?: string[]
   author?: { name?: string | null; initial?: string | null; badge?: string | null } | null
 }
 
 interface DiscussionIndexResponse {
   data: ApiDiscussion[]
-  meta?: {
+  meta?: PaginationMeta & {
     categories?: ApiCategory[]
+    stats?: {
+      total_discussions?: number
+      total_replies?: number
+    }
   }
 }
 
@@ -1084,7 +1480,7 @@ interface LabFilterOptions {
 
 interface LabResultIndexResponse {
   data: ApiLabResult[]
-  meta?: {
+  meta?: PaginationMeta & {
     stats?: LabStats
     filters?: Partial<LabFilterOptions>
   }
@@ -1106,14 +1502,29 @@ interface VendorProduct {
   reviews: number
 }
 
+interface VendorContact {
+  email?: string | null
+  telegram?: string | null
+  signal?: string | null
+  discord?: string | null
+  supportUrl?: string | null
+  responsePolicy?: string | null
+  publicNotes?: string | null
+}
+
 interface UiVendor {
   id?: number
+  ownerUserId?: number | null
+  claimStatus: string
+  isOwnedByViewer: boolean
   name: string
   slug: string
   logo: string
   logoText: string
+  imageUrl?: string | null
   class: string
   status: string
+  publishStatus: string
   statusClass: string
   rating: string
   reviews: number
@@ -1124,6 +1535,7 @@ interface UiVendor {
   href: string
   description: string
   websiteUrl?: string | null
+  contact: VendorContact
   lastActive: string
   responseRate: string
   avgResponseTime: string
@@ -1142,7 +1554,9 @@ interface UiVendorReview {
   text: string
   productName?: string | null
   chips: string[]
+  photoUrls: string[]
   helpful: number
+  verifiedBuyer: boolean
 }
 
 interface ApiVendorReview {
@@ -1154,6 +1568,7 @@ interface ApiVendorReview {
   helpful_count?: number
   is_verified_buyer?: boolean
   tags?: string[]
+  photo_urls?: string[]
   status?: string
   reviewed_date?: string | null
   author?: { name?: string | null; initial?: string | null } | null
@@ -1161,6 +1576,9 @@ interface ApiVendorReview {
 
 interface ApiVendor {
   id?: number
+  owner_user_id?: number | null
+  claim_status?: string | null
+  is_owned_by_viewer?: boolean
   name: string
   slug: string
   logo_initials?: string | null
@@ -1168,9 +1586,20 @@ interface ApiVendor {
   logo_class?: string | null
   status_label?: string | null
   status_class?: string | null
+  status?: string | null
   tone?: string | null
   description?: string | null
   website_url?: string | null
+  image_url?: string | null
+  contact?: {
+    email?: string | null
+    telegram?: string | null
+    signal?: string | null
+    discord?: string | null
+    support_url?: string | null
+    response_policy?: string | null
+    public_notes?: string | null
+  } | null
   member_since_label?: string | null
   last_active_label?: string | null
   review_count?: number
@@ -1207,7 +1636,7 @@ interface VendorFilterOptions {
 
 interface VendorIndexResponse {
   data: ApiVendor[]
-  meta?: {
+  meta?: PaginationMeta & {
     stats?: VendorStats
     top_vendors?: ApiVendor[]
     filters?: Partial<VendorFilterOptions>
@@ -1216,6 +1645,12 @@ interface VendorIndexResponse {
 
 interface VendorDetailResponse {
   data: ApiVendor
+}
+
+interface VendorProfileResponse {
+  data: ApiVendor | null
+  is_approved_vendor?: boolean
+  can_create_vendor_profile?: boolean
 }
 
 interface UiAnnouncement {
@@ -1303,6 +1738,7 @@ interface UiContentItem {
   timeLabel: string
   href: string
   imageIndex: number
+  imageUrl?: string | null
   author: string
   authorInitial: string
   authorBadge?: string | null
@@ -1320,6 +1756,7 @@ interface ApiContentItem {
   excerpt?: string | null
   body?: string | null
   image_index?: number
+  image_url?: string | null
   read_minutes?: number
   read_label?: string | null
   views?: number
@@ -1361,7 +1798,7 @@ interface ContentFilterOptions {
 
 interface ContentIndexResponse {
   data: ApiContentItem[]
-  meta?: {
+  meta?: PaginationMeta & {
     categories?: ContentCategory[]
     topics?: ContentTopic[]
     filters?: Partial<ContentFilterOptions>
@@ -1395,6 +1832,8 @@ interface UiMemberProfile {
   badges: string[]
   href: string
   activities: UiMemberActivity[]
+  tabData: MemberTabData
+  avatarUrl?: string | null
 }
 
 interface UiMemberActivity {
@@ -1405,6 +1844,25 @@ interface UiMemberActivity {
   category?: string | null
   time: string
 }
+
+interface UiMemberTabItem {
+  type: string
+  title: string
+  text?: string | null
+  href?: string | null
+  time?: string | null
+}
+
+interface MemberTabData {
+  overview?: UiMemberTabItem[]
+  activity?: UiMemberActivity[]
+  posts?: UiMemberTabItem[]
+  reviews?: UiMemberTabItem[]
+  guides?: UiMemberTabItem[]
+  badges?: string[]
+}
+
+type MemberTabKey = 'overview' | 'activity' | 'posts' | 'reviews' | 'guides' | 'badges'
 
 interface ApiMemberProfile {
   id?: number
@@ -1429,6 +1887,14 @@ interface ApiMemberProfile {
   badges?: string[]
   href?: string
   activities?: ApiMemberActivity[]
+  tab_data?: {
+    overview?: UiMemberTabItem[]
+    activity?: ApiMemberActivity[]
+    posts?: UiMemberTabItem[]
+    reviews?: UiMemberTabItem[]
+    guides?: UiMemberTabItem[]
+    badges?: string[]
+  }
 }
 
 interface ApiMemberActivity {
@@ -1442,8 +1908,10 @@ interface ApiMemberActivity {
 
 interface MemberIndexResponse {
   data: ApiMemberProfile[]
-  meta?: {
+  meta?: PaginationMeta & {
     stats?: { total?: number; online?: number }
+    top_contributors?: ApiMemberProfile[]
+    online_members?: ApiMemberProfile[]
   }
 }
 
@@ -1547,6 +2015,8 @@ interface NotificationStats {
   lab_results: number
   discussions: number
   vendors: number
+  message_unread?: number
+  system_unread?: number
 }
 
 interface NotificationCategory {
@@ -1560,7 +2030,7 @@ interface NotificationCategory {
 
 interface NotificationIndexResponse {
   data: ApiNotification[]
-  meta?: {
+  meta?: PaginationMeta & {
     stats?: NotificationStats
     categories?: NotificationCategory[]
   }
@@ -1623,13 +2093,55 @@ interface ApiTokenIndexResponse {
   data: ApiTokenSummary[]
 }
 
+interface TwoFactorStatus {
+  enabled: boolean
+  confirmed_at?: string | null
+}
+
+interface TwoFactorSetup {
+  secret: string
+  qr_code: string
+  qr_code_url: string
+}
+
+interface LegalPageContent {
+  title: string
+  paragraphs: string[]
+}
+
+interface PublicSettingsResponse {
+  telegram_url?: string | null
+  legal_pages?: {
+    terms?: LegalPageContent
+    privacy?: LegalPageContent
+    rules?: LegalPageContent
+  }
+}
+
+interface UserActionsResponse {
+  data: {
+    followed_discussions?: string[]
+    saved_discussions?: string[]
+    bookmarked_content?: string[]
+    followed_members?: string[]
+  }
+}
+
+interface BlockedUsersResponse {
+  data: ApiMemberProfile[]
+}
+
 const avatarColors = ['purple', 'blue', 'green', 'pink', 'orange', 'teal']
 
 const apiDiscussions = ref<UiDiscussion[]>([])
 const apiDetailDiscussion = ref<UiDiscussion | null>(null)
 const apiReplies = ref<UiReply[]>([])
 const apiCategories = ref<ApiCategory[]>([])
+const apiDiscussionParticipants = ref<UiMemberProfile[]>([])
+const apiSimilarDiscussions = ref<UiDiscussion[]>([])
 const discussionsLoaded = ref(false)
+const discussionPagination = ref<PaginationMeta | null>(null)
+const discussionPage = ref(1)
 const discussionSearch = ref('')
 const activeCategory = ref('')
 const discussionStatusMessage = ref('')
@@ -1639,14 +2151,35 @@ const discussionFormError = ref('')
 const replyBody = ref('')
 const submittingReply = ref(false)
 const replyStatusMessage = ref('')
+const quickReactionEmojis = ['👍', '❤️', '😂', '👀', '✅', '🔥']
+const discussionReactionLoading = ref('')
+const isEditingDiscussion = ref(false)
+const editDiscussionTitle = ref('')
+const editDiscussionBody = ref('')
+const discussionEditError = ref('')
+const discussionEditSaving = ref(false)
+const replyReactionLoading = ref('')
+const showReportModal = ref(false)
+const reportTarget = ref<{ type: 'discussion' } | { type: 'reply'; reply: UiReply } | null>(null)
+const reportReason = ref('source-discussion')
+const reportDetails = ref('')
+const reportSubmitting = ref(false)
+const replyAttachmentFile = ref<File | null>(null)
+const replyAttachmentPreviewUrl = ref('')
+const replyAttachmentGifUrl = ref('')
+
 const discussionSort = ref<'latest' | 'replies' | 'views'>('latest')
 const actionStatusMessage = ref('')
 const followedDiscussionSlugs = ref<string[]>([])
 const savedDiscussionSlugs = ref<string[]>([])
 const votedReplyKeys = ref<string[]>([])
+const followedMemberSlugs = ref<string[]>([])
+const userActionsLoaded = ref(false)
 const apiLabResults = ref<UiLabResult[]>([])
 const apiDetailLabResult = ref<UiLabResult | null>(null)
 const labResultsLoaded = ref(false)
+const labPagination = ref<PaginationMeta | null>(null)
+const labPage = ref(1)
 const labStats = ref<LabStats | null>(null)
 const labSort = ref<'latest' | 'purity' | 'compound'>('latest')
 const labDetailTab = ref<'overview' | 'certificate' | 'raw' | 'batch'>('overview')
@@ -1670,6 +2203,8 @@ const apiTopVendors = ref<UiVendor[]>([])
 const apiDetailVendor = ref<UiVendor | null>(null)
 const apiVendorReviews = ref<UiVendorReview[]>([])
 const vendorsLoaded = ref(false)
+const vendorPagination = ref<PaginationMeta | null>(null)
+const vendorPage = ref(1)
 const vendorSearch = ref('')
 const vendorStatusFilter = ref('')
 const vendorRatingFilter = ref('')
@@ -1680,9 +2215,35 @@ const vendorFilterOptions = ref<VendorFilterOptions>({
   tags: [],
 })
 const vendorStatusMessage = ref('')
+const apiMyVendor = ref<UiVendor | null>(null)
+const vendorPortalAccessApproved = ref(false)
+const vendorPortalLoaded = ref(false)
+const vendorPortalStatusMessage = ref('')
+const vendorPortalFormError = ref('')
+const savingVendorProfile = ref(false)
+const vendorImageFileInput = ref<HTMLInputElement | null>(null)
+const uploadingVendorImage = ref(false)
+const vendorPortalForm = ref({
+  name: '',
+  slug: '',
+  description: '',
+  website_url: '',
+  image_url: '',
+  contact_email: '',
+  contact_telegram: '',
+  contact_signal: '',
+  contact_discord: '',
+  support_url: '',
+  response_policy: '',
+  public_contact_notes: '',
+  tags: '',
+})
 const vendorReviewStatusMessage = ref('')
 const vendorReviewFormError = ref('')
 const submittingVendorReview = ref(false)
+const vendorReviewPhotoInput = ref<HTMLInputElement | null>(null)
+const vendorReviewPhotos = ref<File[]>([])
+const vendorReviewPhotoPreviews = ref<string[]>([])
 const markingReviewHelpful = ref<number | undefined>()
 const vendorSort = ref<'rating' | 'reviews' | 'name'>('rating')
 const vendorReviewRatingFilter = ref('')
@@ -1714,6 +2275,8 @@ const apiDetailResearchArticle = ref<UiContentItem | null>(null)
 const apiGuides = ref<UiContentItem[]>([])
 const apiDetailGuide = ref<UiContentItem | null>(null)
 const apiFaqs = ref<UiContentItem[]>([])
+const researchPagination = ref<PaginationMeta | null>(null)
+const guidePagination = ref<PaginationMeta | null>(null)
 const contentCategories = ref<Record<string, ContentCategory[]>>({
   research: [],
   guide: [],
@@ -1747,14 +2310,22 @@ const researchSort = ref('latest')
 const researchDetailTab = ref<'article' | 'data' | 'references' | 'comments'>('article')
 const researchPublishedFrom = ref('')
 const researchPublishedTo = ref('')
+const researchPage = ref(1)
 const guideSearch = ref('')
+const guidePage = ref(1)
 const bookmarkedContentSlugs = ref<string[]>([])
 const apiMembers = ref<UiMemberProfile[]>([])
+const apiTopContributorMembers = ref<UiMemberProfile[]>([])
+const apiOnlineMemberSummaries = ref<UiMemberProfile[]>([])
 const apiDetailMember = ref<UiMemberProfile | null>(null)
 const memberStats = ref({ total: 0, online: 0 })
 const communityStats = ref({ total_discussions: 0, total_replies: 0 })
 const membersLoaded = ref(false)
+const memberPagination = ref<PaginationMeta | null>(null)
+const memberPage = ref(1)
 const memberSearch = ref('')
+const memberFilter = ref<'all' | 'online' | 'moderators' | 'contributors'>('all')
+const memberSort = ref<'active' | 'posts' | 'reputation'>('active')
 const apiMessageThreads = ref<UiMessageThread[]>([])
 const apiCurrentMessageThread = ref<UiMessageThread | null>(null)
 const messagesLoaded = ref(false)
@@ -1766,6 +2337,8 @@ const showMessageSafetyNotice = ref(true)
 const apiNotifications = ref<UiNotification[]>([])
 const apiDetailNotification = ref<UiNotification | null>(null)
 const notificationsLoaded = ref(false)
+const notificationPagination = ref<PaginationMeta | null>(null)
+const notificationPage = ref(1)
 const notificationStatusMessage = ref('')
 const activeNotificationFilter = ref('all')
 const markingNotificationsRead = ref(false)
@@ -1805,6 +2378,47 @@ const apiTokenForm = ref({
 const newPlainApiToken = ref('')
 const avatarFileInput = ref<HTMLInputElement | null>(null)
 const uploadingAvatar = ref(false)
+const exportingAccountData = ref(false)
+const signingOutEverywhere = ref(false)
+const twoFactorStatus = ref<TwoFactorStatus | null>(null)
+const twoFactorSetup = ref<TwoFactorSetup | null>(null)
+const twoFactorCode = ref('')
+const twoFactorPassword = ref('')
+const twoFactorRecoveryCodes = ref<string[]>([])
+const loadingTwoFactor = ref(false)
+const savingTwoFactor = ref(false)
+const publicSettingsLoaded = ref(false)
+const publicTelegramUrl = ref('https://t.me/peptidevendors')
+const publicLegalPages = ref<Record<'terms' | 'privacy' | 'rules', LegalPageContent>>({
+  terms: {
+    title: 'Terms of Service',
+    paragraphs: [
+      'By using Peptide Vendors, you agree to use the community for lawful, educational discussion and to follow all community rules and moderation decisions.',
+      'Content is provided by community members and administrators for informational purposes. You are responsible for verifying information before relying on it.',
+      'Accounts may be restricted or removed for abuse, unsafe conduct, spam, evasion, or attempts to use the site as a marketplace.',
+    ],
+  },
+  privacy: {
+    title: 'Privacy Policy',
+    paragraphs: [
+      'Peptide Vendors keeps account data, profile preferences, messages, submissions, and moderation records only for operating the private community.',
+      'We use your information to authenticate access, show community content, support account settings, prevent abuse, and improve reliability.',
+      'Do not post private medical, payment, or identifying information in public areas. You can manage profile visibility, notifications, privacy, sessions, and API tokens from account settings.',
+    ],
+  },
+  rules: {
+    title: 'Community Rules',
+    paragraphs: [
+      'Keep discussion educational, evidence-led, and respectful. Personal attacks, harassment, spam, scams, and transaction coordination are not allowed.',
+      'Vendor reviews and lab-result submissions should be specific, honest, and batch-aware where possible. Moderators may hide incomplete, unsafe, promotional, or unverifiable submissions.',
+      'This community is for information sharing and harm-reduction context only. It is not medical advice, legal advice, or a marketplace.',
+    ],
+  },
+})
+const blockedUsers = ref<UiMemberProfile[]>([])
+const blockedUsersLoaded = ref(false)
+const blockingUserId = ref<number | null>(null)
+const blockUserSearch = ref('')
 const newDiscussion = ref({
   title: '',
   body: '',
@@ -1887,7 +2501,41 @@ const guides = computed(() => apiGuides.value)
 const faqs = computed(() => apiFaqs.value)
 const popularTopics = computed(() => contentTopics.value.research.length > 0 ? contentTopics.value.research : contentTopics.value.guide)
 const researchSortLabel = computed(() => contentFilterOptions.value.research.sorts.find(sort => sort.value === researchSort.value)?.label ?? 'Latest Added')
-const onlineMembers = computed(() => apiMembers.value.filter(member => member.isOnline).slice(0, 6))
+const memberEngagementScore = (member: UiMemberProfile) => Number(member.stats.posts ?? 0) + Number(member.stats.reviews ?? 0) + Number(member.stats.lab_reports ?? 0) + Number(member.stats.solutions ?? 0)
+const members = computed(() => {
+  let items = [...apiMembers.value]
+
+  if (memberFilter.value === 'online') {
+    items = items.filter(member => member.isOnline)
+  } else if (memberFilter.value === 'moderators') {
+    items = items.filter(member => member.isModerator)
+  } else if (memberFilter.value === 'contributors') {
+    items = items.filter(member => memberEngagementScore(member) > 0)
+  }
+
+  if (memberSort.value === 'posts') {
+    return items.sort((a, b) => Number(b.stats.posts ?? 0) - Number(a.stats.posts ?? 0))
+  }
+
+  if (memberSort.value === 'reputation') {
+    return items.sort((a, b) => memberEngagementScore(b) - memberEngagementScore(a))
+  }
+
+  return items.sort((a, b) => Number(b.isOnline) - Number(a.isOnline) || memberEngagementScore(b) - memberEngagementScore(a))
+})
+const memberSortLabel = computed(() => {
+  if (memberSort.value === 'posts') return 'Most Posts'
+  if (memberSort.value === 'reputation') return 'Reputation'
+  return 'Recently Active'
+})
+const topContributors = computed(() => apiTopContributorMembers.value.length > 0
+  ? apiTopContributorMembers.value
+  : [...apiMembers.value]
+    .sort((a, b) => memberEngagementScore(b) - memberEngagementScore(a))
+    .slice(0, 5))
+const onlineMembers = computed(() => apiOnlineMemberSummaries.value.length > 0
+  ? apiOnlineMemberSummaries.value
+  : apiMembers.value.filter(member => member.isOnline).slice(0, 6))
 const chats = computed(() => {
   const search = messageSearch.value.trim().toLowerCase()
   if (!search) {
@@ -1931,7 +2579,11 @@ const detailParagraphs = computed(() => {
   return body.split(/\n+/).map(paragraph => paragraph.trim()).filter(Boolean)
 })
 const detailCategoryLabel = computed(() => detailDiscussion.value?.category || detailDiscussion.value?.tag || 'Discussion')
-const discussionParticipants = computed(() => {
+const discussionParticipants = computed<UiMemberProfile[]>(() => {
+  if (apiDiscussionParticipants.value.length > 0) {
+    return apiDiscussionParticipants.value
+  }
+
   const participants = new Map<string, { name: string; initial: string; color: string }>()
   if (detailDiscussion.value) {
     participants.set(detailDiscussion.value.author, {
@@ -1948,11 +2600,37 @@ const discussionParticipants = computed(() => {
     })
   })
 
-  return Array.from(participants.values())
+  return Array.from(participants.values()).map(member => ({
+    id: undefined,
+    name: member.name,
+    username: member.name,
+    slug: member.name,
+    initial: member.initial,
+    color: member.color,
+    role: '',
+    group: '',
+    badge: null,
+    bio: '',
+    location: '',
+    websiteUrl: null,
+    isOnline: false,
+    isVerified: false,
+    isModerator: false,
+    joined: '',
+    lastActive: '',
+    interests: [],
+    stats: {},
+    badges: [],
+    href: '/members',
+    activities: [],
+    tabData: {},
+  }))
 })
-const similarDiscussionTopics = computed(() => discussions.value
-  .filter(topic => topic.slug !== currentDiscussionSlug.value && topic.href !== detailDiscussion.value?.href)
-  .slice(0, 3))
+const similarDiscussionTopics = computed(() => apiSimilarDiscussions.value.length > 0
+  ? apiSimilarDiscussions.value
+  : discussions.value
+    .filter(topic => topic.slug !== currentDiscussionSlug.value && topic.href !== detailDiscussion.value?.href)
+    .slice(0, 3))
 const currentAnnouncementSlug = computed(() => {
   const parts = route.path.split('/').filter(Boolean)
   return String(route.params.slug ?? parts[parts.length - 1] ?? '')
@@ -1997,6 +2675,16 @@ const detailMember = computed(() => {
     ?? apiMembers.value.find(member => member.slug === currentMemberSlug.value || member.href.endsWith(`/${currentMemberSlug.value}`))
     ?? null
 })
+const blockableMembers = computed(() => {
+  const currentUserId = Number(authUserValue('id') ?? 0)
+  const blockedIds = new Set(blockedUsers.value.map(member => member.id).filter(Boolean))
+  const search = blockUserSearch.value.trim().toLowerCase()
+
+  return apiMembers.value
+    .filter(member => member.id && member.id !== currentUserId && !blockedIds.has(member.id))
+    .filter(member => !search || [member.name, member.username, member.role, member.group].some(value => value.toLowerCase().includes(search)))
+    .slice(0, 8)
+})
 
 function defaultUserSettings(): UserSettingsPayload {
   return {
@@ -2022,6 +2710,88 @@ function defaultUserSettings(): UserSettingsPayload {
 
 function userRecord(): Record<string, any> {
   return (authStore.user as Record<string, any> | null) ?? {}
+}
+
+function backendAssetOrigin(): string {
+  const configured = String(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+
+  if (configured) {
+    return configured
+  }
+
+  if (window.location.port.startsWith('517')) {
+    return `${window.location.protocol}//${window.location.hostname}:8001`
+  }
+
+  return window.location.origin
+}
+
+function assetUrl(value?: string | null): string {
+  const path = String(value || '')
+
+  if (!path) {
+    return ''
+  }
+
+  if (/^(https?:|data:|blob:)/i.test(path)) {
+    return path
+  }
+
+  if (path.startsWith('/storage/')) {
+    return `${backendAssetOrigin()}${path}`
+  }
+
+  return path
+}
+
+function extractPagination(meta?: PaginationMeta | null): PaginationMeta | null {
+  if (!meta || meta.current_page === undefined || meta.last_page === undefined) {
+    return null
+  }
+
+  return {
+    current_page: Number(meta.current_page ?? 1),
+    last_page: Number(meta.last_page ?? 1),
+    per_page: Number(meta.per_page ?? 0),
+    total: Number(meta.total ?? 0),
+    from: meta.from ?? null,
+    to: meta.to ?? null,
+  }
+}
+
+function paginationText(meta: PaginationMeta | null, noun: string): string {
+  if (!meta || !meta.total) {
+    return `Showing 0 ${noun}`
+  }
+
+  return `Showing ${meta.from ?? 1} to ${meta.to ?? 0} of ${meta.total} ${noun}`
+}
+
+async function loadPublicCommunitySettings(force = false): Promise<void> {
+  if (publicSettingsLoaded.value && !force) {
+    return
+  }
+
+  try {
+    const response = await api.get<PublicSettingsResponse>('/api/v1/settings/public', {
+      cacheTTL: 60000,
+      skipDeduplication: true,
+    })
+    publicTelegramUrl.value = response.data.telegram_url || publicTelegramUrl.value
+    publicLegalPages.value = {
+      terms: response.data.legal_pages?.terms ?? publicLegalPages.value.terms,
+      privacy: response.data.legal_pages?.privacy ?? publicLegalPages.value.privacy,
+      rules: response.data.legal_pages?.rules ?? publicLegalPages.value.rules,
+    }
+    publicSettingsLoaded.value = true
+  } catch {
+    publicSettingsLoaded.value = true
+  }
+}
+
+function setAuthUser(user: Record<string, any>): void {
+  authStore.user = user as any
+  localStorage.setItem('user', JSON.stringify(user))
 }
 
 function hydrateSettingsFromUser(user: Record<string, any>): void {
@@ -2076,7 +2846,7 @@ async function loadUserSettings(): Promise<void> {
       cacheTTL: 0,
       skipDeduplication: true,
     })
-    authStore.user = response.data as any
+    setAuthUser(response.data)
     hydrateSettingsFromUser(response.data)
     settingsLoaded.value = true
   } catch {
@@ -2087,6 +2857,7 @@ async function loadUserSettings(): Promise<void> {
   await Promise.all([
     loadUserSessions(),
     loadUserApiTokens(),
+    loadTwoFactorStatus(),
   ])
 }
 
@@ -2137,7 +2908,7 @@ async function saveUserSettings(payload: Partial<UserSettingsPayload> = userSett
   try {
     const response = await api.patch<{ user?: Record<string, any> }>('/api/v1/user', payload)
     if (response.data.user) {
-      authStore.user = response.data.user as any
+      setAuthUser(response.data.user)
       hydrateSettingsFromUser(response.data.user)
     }
     settingsStatusMessage.value = 'Settings saved.'
@@ -2167,7 +2938,7 @@ async function saveAccountProfile(): Promise<void> {
       website_url: accountForm.value.website_url,
     })
     if (response.data.user) {
-      authStore.user = response.data.user as any
+      setAuthUser(response.data.user)
       hydrateSettingsFromUser(response.data.user)
     }
     settingsStatusMessage.value = 'Profile saved.'
@@ -2262,6 +3033,13 @@ async function deleteApiToken(tokenId: number): Promise<void> {
   }
 }
 
+function settingsApiError(error: unknown, fallback: string): string {
+  const apiError = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+  const errors = apiError.response?.data?.errors
+
+  return errors ? Object.values(errors)[0]?.[0] ?? fallback : apiError.response?.data?.message ?? fallback
+}
+
 async function uploadProfileAvatar(event: Event): Promise<void> {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0]
@@ -2280,7 +3058,7 @@ async function uploadProfileAvatar(event: Event): Promise<void> {
       skipDeduplication: true,
     })
     if (response.data.user) {
-      authStore.user = response.data.user as any
+      setAuthUser(response.data.user)
       hydrateSettingsFromUser(response.data.user)
     }
     settingsStatusMessage.value = 'Profile photo updated.'
@@ -2289,6 +3067,181 @@ async function uploadProfileAvatar(event: Event): Promise<void> {
   } finally {
     uploadingAvatar.value = false
     input.value = ''
+  }
+}
+
+async function loadTwoFactorStatus(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    twoFactorStatus.value = null
+    return
+  }
+
+  loadingTwoFactor.value = true
+
+  try {
+    const response = await api.get<TwoFactorStatus>('/api/v1/2fa/status', {
+      cacheTTL: 0,
+      skipDeduplication: true,
+    })
+    twoFactorStatus.value = response.data
+  } catch {
+    twoFactorStatus.value = null
+  } finally {
+    loadingTwoFactor.value = false
+  }
+}
+
+async function startTwoFactorSetup(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    settingsStatusMessage.value = 'Please log in to manage two-factor authentication.'
+    return
+  }
+
+  savingTwoFactor.value = true
+  settingsStatusMessage.value = ''
+  twoFactorRecoveryCodes.value = []
+
+  try {
+    const response = await api.post<TwoFactorSetup>('/api/v1/2fa/setup', {}, {
+      skipDeduplication: true,
+    })
+    twoFactorSetup.value = response.data
+    twoFactorCode.value = ''
+    settingsStatusMessage.value = 'Scan the QR code, then enter the 6-digit code from your authenticator app.'
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to start 2FA setup.')
+  } finally {
+    savingTwoFactor.value = false
+  }
+}
+
+async function confirmTwoFactorSetup(): Promise<void> {
+  if (!twoFactorCode.value.trim()) {
+    settingsStatusMessage.value = 'Enter the 6-digit authenticator code.'
+    return
+  }
+
+  savingTwoFactor.value = true
+  settingsStatusMessage.value = ''
+
+  try {
+    const response = await api.post<{ message?: string; recovery_codes?: string[] }>('/api/v1/2fa/confirm', {
+      code: twoFactorCode.value.trim(),
+    }, {
+      skipDeduplication: true,
+    })
+    twoFactorRecoveryCodes.value = response.data.recovery_codes ?? []
+    twoFactorSetup.value = null
+    twoFactorCode.value = ''
+    settingsStatusMessage.value = response.data.message ?? 'Two-factor authentication enabled.'
+    await loadTwoFactorStatus()
+    await authStore.fetchUser()
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to confirm 2FA setup.')
+  } finally {
+    savingTwoFactor.value = false
+  }
+}
+
+async function disableTwoFactor(): Promise<void> {
+  if (!twoFactorPassword.value) {
+    settingsStatusMessage.value = 'Enter your current password to disable 2FA.'
+    return
+  }
+
+  savingTwoFactor.value = true
+  settingsStatusMessage.value = ''
+
+  try {
+    await api.post('/api/v1/2fa/disable', {
+      password: twoFactorPassword.value,
+    }, {
+      skipDeduplication: true,
+    })
+    twoFactorPassword.value = ''
+    twoFactorRecoveryCodes.value = []
+    settingsStatusMessage.value = 'Two-factor authentication disabled.'
+    await loadTwoFactorStatus()
+    await authStore.fetchUser()
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to disable 2FA.')
+  } finally {
+    savingTwoFactor.value = false
+  }
+}
+
+function cancelTwoFactorSetup(): void {
+  twoFactorSetup.value = null
+  twoFactorCode.value = ''
+  twoFactorRecoveryCodes.value = []
+  settingsStatusMessage.value = ''
+}
+
+async function exportAccountData(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    settingsStatusMessage.value = 'Please log in to export account data.'
+    return
+  }
+
+  exportingAccountData.value = true
+  settingsStatusMessage.value = ''
+
+  try {
+    await Promise.all([
+      loadUserSessions(),
+      loadUserApiTokens(),
+    ])
+
+    const payload = {
+      exported_at: new Date().toISOString(),
+      user: userRecord(),
+      settings: userSettings.value,
+      sessions: userSessions.value,
+      api_tokens: userApiTokens.value.map(token => ({
+        id: token.id,
+        name: token.name,
+        abilities: token.abilities ?? [],
+        last_used_at: token.last_used_at ?? null,
+        expires_at: token.expires_at ?? null,
+        created_at: token.created_at ?? null,
+      })),
+    }
+    const blob = new Blob([JSON.stringify(payload, null, 2)], { type: 'application/json;charset=utf-8' })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement('a')
+    const name = accountName().toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/(^-|-$)/g, '') || 'account'
+    link.href = url
+    link.download = `peptide-vendors-${name}-account-data.json`
+    link.click()
+    URL.revokeObjectURL(url)
+    settingsStatusMessage.value = 'Account data exported.'
+  } catch {
+    settingsStatusMessage.value = 'Unable to export account data.'
+  } finally {
+    exportingAccountData.value = false
+  }
+}
+
+async function signOutEverywhere(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    return
+  }
+
+  signingOutEverywhere.value = true
+  settingsStatusMessage.value = ''
+
+  try {
+    await api.post('/api/v1/logout-all', {}, {
+      skipDeduplication: true,
+    })
+  } catch {
+    // Local logout still protects the browser even if the server call fails.
+  } finally {
+    authStore.user = null as any
+    localStorage.removeItem('user')
+    localStorage.removeItem('auth_token')
+    signingOutEverywhere.value = false
+    await router.push('/login')
   }
 }
 
@@ -2374,7 +3327,79 @@ function loadLocalActionState(): void {
   followedDiscussionSlugs.value = readLocalList('pv.followedDiscussions')
   savedDiscussionSlugs.value = readLocalList('pv.savedDiscussions')
   votedReplyKeys.value = readLocalList('pv.votedReplies')
+  followedMemberSlugs.value = readLocalList('pv.followedMembers')
   bookmarkedContentSlugs.value = readLocalList('pv.bookmarkedContent')
+}
+
+function applyUserActionPayload(payload: UserActionsResponse['data']): void {
+  followedDiscussionSlugs.value = payload.followed_discussions ?? []
+  savedDiscussionSlugs.value = payload.saved_discussions ?? []
+  followedMemberSlugs.value = payload.followed_members ?? []
+  bookmarkedContentSlugs.value = payload.bookmarked_content ?? []
+}
+
+async function loadUserActions(force = false): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    userActionsLoaded.value = false
+    return
+  }
+
+  if (userActionsLoaded.value && !force) {
+    return
+  }
+
+  try {
+    const response = await api.get<UserActionsResponse>('/api/v1/community/user-actions', {
+      cacheTTL: 0,
+      skipDeduplication: true,
+    })
+    applyUserActionPayload(response.data.data)
+    userActionsLoaded.value = true
+  } catch {
+    userActionsLoaded.value = true
+  }
+}
+
+async function toggleCommunityAction(
+  action: 'follow' | 'save' | 'bookmark',
+  targetType: 'discussion' | 'content' | 'member',
+  targetKey: string,
+  addedMessage: string,
+  removedMessage: string,
+): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    const localKey = targetType === 'discussion' && action === 'follow'
+      ? 'pv.followedDiscussions'
+      : targetType === 'discussion' && action === 'save'
+        ? 'pv.savedDiscussions'
+        : targetType === 'member'
+          ? 'pv.followedMembers'
+          : 'pv.bookmarkedContent'
+    const localList = targetType === 'discussion' && action === 'follow'
+      ? followedDiscussionSlugs
+      : targetType === 'discussion' && action === 'save'
+        ? savedDiscussionSlugs
+        : targetType === 'member'
+          ? followedMemberSlugs
+          : bookmarkedContentSlugs
+
+    toggleLocalValue(localList, localKey, targetKey, addedMessage, removedMessage)
+    return
+  }
+
+  try {
+    const response = await api.post<UserActionsResponse & { active?: boolean }>('/api/v1/community/user-actions/toggle', {
+      action,
+      target_type: targetType,
+      target_key: targetKey,
+    }, {
+      skipDeduplication: true,
+    })
+    applyUserActionPayload(response.data.data)
+    actionStatusMessage.value = response.data.active ? addedMessage : removedMessage
+  } catch {
+    actionStatusMessage.value = 'Unable to update that action.'
+  }
 }
 
 function syncFiltersFromRouteQuery(): void {
@@ -2411,28 +3436,83 @@ function cycleResearchSort(): void {
     : [{ value: 'latest', label: 'Latest Added' }]
   const currentIndex = Math.max(0, options.findIndex(sort => sort.value === researchSort.value))
   researchSort.value = options[(currentIndex + 1) % options.length]?.value ?? 'latest'
+  researchPage.value = 1
   void loadResearchContent()
 }
 
-function toggleDiscussionFollow(): void {
+function cycleMemberSort(): void {
+  memberSort.value = memberSort.value === 'active' ? 'posts' : memberSort.value === 'posts' ? 'reputation' : 'active'
+}
+
+function startEditDiscussion(): void {
+  if (!detailDiscussion.value) return
+  editDiscussionTitle.value = detailDiscussion.value.title
+  editDiscussionBody.value = detailDiscussion.value.body ?? ''
+  isEditingDiscussion.value = true
+  discussionEditError.value = ''
+}
+
+function cancelEditDiscussion(): void {
+  isEditingDiscussion.value = false
+  editDiscussionTitle.value = ''
+  editDiscussionBody.value = ''
+  discussionEditError.value = ''
+}
+
+async function saveEditDiscussion(): Promise<void> {
   if (!detailDiscussion.value?.slug) return
-  toggleLocalValue(
-    followedDiscussionSlugs,
-    'pv.followedDiscussions',
+  const title = editDiscussionTitle.value.trim()
+  const body = editDiscussionBody.value.trim()
+  if (!title || !body) {
+    discussionEditError.value = 'Title and body are required.'
+    return
+  }
+  discussionEditSaving.value = true
+  discussionEditError.value = ''
+  try {
+    await api.patch(`/api/v1/community/discussions/${detailDiscussion.value.slug}`, { title, body })
+    await loadDiscussionDetail()
+    isEditingDiscussion.value = false
+  } catch (err: any) {
+    discussionEditError.value = err?.response?.data?.message ?? 'Failed to update discussion.'
+  } finally {
+    discussionEditSaving.value = false
+  }
+}
+
+async function toggleDiscussionFollow(): Promise<void> {
+  if (!detailDiscussion.value?.slug) return
+  await toggleCommunityAction(
+    'follow',
+    'discussion',
     detailDiscussion.value.slug,
     'You are following this discussion.',
     'You are no longer following this discussion.',
   )
 }
 
-function toggleDiscussionSave(): void {
+async function toggleDiscussionSave(): Promise<void> {
   if (!detailDiscussion.value?.slug) return
-  toggleLocalValue(
-    savedDiscussionSlugs,
-    'pv.savedDiscussions',
+  await toggleCommunityAction(
+    'save',
+    'discussion',
     detailDiscussion.value.slug,
     'Discussion saved.',
     'Discussion removed from saved items.',
+  )
+}
+
+function isFollowingMember(member: UiMemberProfile): boolean {
+  return followedMemberSlugs.value.includes(member.slug)
+}
+
+async function toggleMemberFollow(member: UiMemberProfile): Promise<void> {
+  await toggleCommunityAction(
+    'follow',
+    'member',
+    member.slug,
+    `Following ${member.name}.`,
+    `Stopped following ${member.name}.`,
   )
 }
 
@@ -2440,10 +3520,10 @@ function isBookmarkedContent(slug: string): boolean {
   return bookmarkedContentSlugs.value.includes(slug)
 }
 
-function toggleContentBookmark(slug: string): void {
-  toggleLocalValue(
-    bookmarkedContentSlugs,
-    'pv.bookmarkedContent',
+async function toggleContentBookmark(slug: string): Promise<void> {
+  await toggleCommunityAction(
+    'bookmark',
+    'content',
     slug,
     'Content bookmarked.',
     'Bookmark removed.',
@@ -2548,6 +3628,138 @@ function prepareReply(reply: UiReply, quote = false): void {
   jumpToReplyComposer()
 }
 
+function reactionCount(target: { reactions: Record<string, number> }, emoji: string): number {
+  return Number(target.reactions?.[emoji] ?? 0)
+}
+
+function hasViewerReaction(target: { viewerReactions: string[] }, emoji: string): boolean {
+  return target.viewerReactions.includes(emoji)
+}
+
+async function toggleDiscussionReaction(emoji: string): Promise<void> {
+  if (!detailDiscussion.value?.slug || !ensureAuthenticated('react')) return
+
+  discussionReactionLoading.value = emoji
+  try {
+    const response = await api.post<DiscussionDetailResponse>(`/api/v1/community/discussions/${detailDiscussion.value.slug}/reactions`, { emoji })
+    const updated = mapDiscussion(response.data.data)
+    apiDetailDiscussion.value = updated
+    actionStatusMessage.value = hasViewerReaction(updated, emoji) ? 'Reaction added.' : 'Reaction removed.'
+  } catch {
+    actionStatusMessage.value = 'Unable to update reaction.'
+  } finally {
+    discussionReactionLoading.value = ''
+  }
+}
+
+async function toggleReplyReaction(reply: UiReply, emoji: string): Promise<void> {
+  if (!reply.id || !ensureAuthenticated('react')) return
+
+  replyReactionLoading.value = `${reply.id}:${emoji}`
+  try {
+    const response = await api.post<{ data: ApiReply }>(`/api/v1/community/discussion-replies/${reply.id}/reactions`, { emoji })
+    const updated = mapReply(response.data.data)
+    apiReplies.value = apiReplies.value.map(item => item.id === updated.id ? updated : item)
+  } catch {
+    replyStatusMessage.value = 'Unable to update reaction.'
+  } finally {
+    replyReactionLoading.value = ''
+  }
+}
+
+function openDiscussionReport(): void {
+  if (!ensureAuthenticated('report content')) return
+  reportTarget.value = { type: 'discussion' }
+  reportReason.value = 'source-discussion'
+  reportDetails.value = ''
+  showReportModal.value = true
+}
+
+function openReplyReport(reply: UiReply): void {
+  if (!ensureAuthenticated('report content')) return
+  reportTarget.value = { type: 'reply', reply }
+  reportReason.value = 'source-discussion'
+  reportDetails.value = ''
+  showReportModal.value = true
+}
+
+function closeReportModal(): void {
+  showReportModal.value = false
+  reportTarget.value = null
+  reportDetails.value = ''
+}
+
+async function submitReport(): Promise<void> {
+  if (!reportTarget.value) return
+
+  reportSubmitting.value = true
+  try {
+    const payload = { reason: reportReason.value, details: reportDetails.value || undefined }
+    if (reportTarget.value.type === 'discussion') {
+      await api.post(`/api/v1/community/discussions/${currentDiscussionSlug.value}/report`, payload)
+    } else if (reportTarget.value.reply.id) {
+      await api.post(`/api/v1/community/discussion-replies/${reportTarget.value.reply.id}/report`, payload)
+    }
+
+    actionStatusMessage.value = 'Report sent to moderators.'
+    replyStatusMessage.value = 'Report sent to moderators.'
+    closeReportModal()
+  } catch {
+    actionStatusMessage.value = 'Unable to submit report.'
+  } finally {
+    reportSubmitting.value = false
+  }
+}
+
+function handleReplyAttachment(event: Event): void {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0] ?? null
+
+  if (replyAttachmentPreviewUrl.value) {
+    URL.revokeObjectURL(replyAttachmentPreviewUrl.value)
+  }
+
+  replyAttachmentFile.value = file
+  replyAttachmentGifUrl.value = ''
+  replyAttachmentPreviewUrl.value = file ? URL.createObjectURL(file) : ''
+}
+
+function onGifSelect(url: string): void {
+  if (replyAttachmentPreviewUrl.value) {
+    URL.revokeObjectURL(replyAttachmentPreviewUrl.value)
+  }
+  replyAttachmentFile.value = null
+  replyAttachmentPreviewUrl.value = ''
+  replyAttachmentGifUrl.value = url
+}
+
+function clearReplyAttachment(): void {
+  if (replyAttachmentPreviewUrl.value) {
+    URL.revokeObjectURL(replyAttachmentPreviewUrl.value)
+  }
+
+  replyAttachmentFile.value = null
+  replyAttachmentPreviewUrl.value = ''
+  replyAttachmentGifUrl.value = ''
+}
+
+function replyAttachmentName(): string {
+  if (replyAttachmentFile.value) return replyAttachmentFile.value.name
+  if (replyAttachmentGifUrl.value) return replyAttachmentGifUrl.value.split('/').filter(Boolean).pop()?.split('?')[0] || 'Linked GIF'
+  return ''
+}
+
+function isVisualAttachment(reply: UiReply): boolean {
+  const type = String(reply.attachmentMeta?.type ?? '')
+  return Boolean(reply.attachmentUrl && ['image', 'gif'].includes(type))
+}
+
+function attachmentLabel(reply: UiReply): string {
+  const type = String(reply.attachmentMeta?.type ?? 'file').toUpperCase()
+  const size = Number(reply.attachmentMeta?.size ?? 0)
+  return [type, size > 0 ? `${Math.round(size / 1024)} KB` : ''].filter(Boolean).join(' · ')
+}
+
 function jumpToVendorReviews(): void {
   document.querySelector('.pv-review-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
@@ -2568,6 +3780,13 @@ function formatMetadataValue(value: unknown): string {
   return String(value ?? '')
 }
 
+function mapReactionSummary(value?: Record<string, number> | null): Record<string, number> {
+  return Object.entries(value ?? {}).reduce<Record<string, number>>((summary, [emoji, count]) => {
+    summary[emoji] = Number(count || 0)
+    return summary
+  }, {})
+}
+
 function colorForName(value: string): string {
   const seed = value.charCodeAt(0) || 0
   return avatarColors[seed % avatarColors.length] ?? 'purple'
@@ -2580,11 +3799,15 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
   const color = item.category?.color && avatarColors.includes(item.category.color)
     ? item.category.color
     : colorForName(author)
+  const avatarUrl = item.author?.avatar ?? null
 
   return {
+    id: item.id,
     title: item.title,
     excerpt: item.excerpt ?? item.body?.slice(0, 140) ?? '',
     author,
+    authorId: item.author?.id,
+    avatarUrl,
     time: item.time_ago ?? '',
     replies: item.replies ?? 0,
     views: formatCount(item.views),
@@ -2596,20 +3819,29 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     body: item.body ?? undefined,
     category,
     lastActivity: item.last_activity ?? undefined,
+    reactions: mapReactionSummary(item.reactions),
+    viewerReactions: item.viewer_reactions ?? [],
   }
 }
 
 function mapReply(item: ApiReply): UiReply {
   const author = item.author?.name ?? ''
+  const replyAvatarUrl = item.author?.avatar ?? null
 
   return {
+    id: item.id,
     author,
     initial: item.author?.initial ?? author.charAt(0).toUpperCase(),
     color: colorForName(author),
+    avatarUrl: replyAvatarUrl,
     badge: item.author?.badge ?? undefined,
     time: item.time_ago ?? '',
     text: item.body ?? '',
     file: item.attachment_name ?? undefined,
+    attachmentUrl: item.attachment_url ?? null,
+    attachmentMeta: item.attachment_meta ?? {},
+    reactions: mapReactionSummary(item.reactions),
+    viewerReactions: item.viewer_reactions ?? [],
     votes: item.votes ?? 0,
   }
 }
@@ -2621,16 +3853,19 @@ async function loadDiscussions(): Promise<void> {
       params: {
         search: discussionSearch.value || undefined,
         category: activeCategory.value || undefined,
+        page: discussionPage.value,
       },
     })
     apiDiscussions.value = response.data.data.map(mapDiscussion)
     apiCategories.value = response.data.meta?.categories ?? apiCategories.value
     communityStats.value = response.data.meta?.stats ?? { total_discussions: 0, total_replies: 0 }
+    discussionPagination.value = extractPagination(response.data.meta)
     discussionsLoaded.value = true
   } catch {
     apiDiscussions.value = []
     apiCategories.value = []
     communityStats.value = { total_discussions: 0, total_replies: 0 }
+    discussionPagination.value = null
     discussionsLoaded.value = true
     discussionStatusMessage.value = 'Unable to load discussions from the API.'
   }
@@ -2648,41 +3883,99 @@ async function loadDiscussionDetail(): Promise<void> {
     })
     apiDetailDiscussion.value = mapDiscussion(response.data.data)
     apiReplies.value = (response.data.data.reply_items ?? []).map(mapReply)
+    apiDiscussionParticipants.value = (response.data.data.participants ?? []).map(mapMember)
+    apiSimilarDiscussions.value = (response.data.data.similar_discussions ?? []).map(mapDiscussion)
   } catch {
     apiDetailDiscussion.value = null
     apiReplies.value = []
+    apiDiscussionParticipants.value = []
+    apiSimilarDiscussions.value = []
   }
 }
 
 async function syncCommunityContent(): Promise<void> {
-  if (page.value.startsWith('legal')) {
-    return
-  }
-
   syncFiltersFromRouteQuery()
+  await Promise.all([
+    loadPublicCommunitySettings(),
+    loadUserActions(),
+  ])
 
-  await Promise.all([
-    loadDiscussions(),
-    loadLabResults(),
-    loadVendors(),
-    loadAnnouncements(),
-    loadResearchContent(),
-    loadGuidesContent(),
-    loadFaqContent(),
-    loadMembers(),
-    loadMessages(),
-    loadNotifications(),
-    loadUserSettings(),
-  ])
-  await Promise.all([
-    loadDiscussionDetail(),
-    loadLabResultDetail(),
-    loadVendorDetail(),
-    loadAnnouncementDetail(),
-    loadContentDetails(),
-    loadMemberDetail(),
-    loadNotificationDetail(),
-  ])
+  switch (page.value) {
+    case 'home':
+      await Promise.all([
+        loadDiscussions(),
+        loadLabResults(),
+        loadVendors(),
+        loadAnnouncements(),
+        loadMembers(),
+      ])
+      return
+    case 'discussions':
+      await Promise.all([loadDiscussions(), loadMembers()])
+      return
+    case 'discussionDetail':
+      await Promise.all([loadDiscussionDetail(), loadDiscussions()])
+      return
+    case 'labResults':
+      await loadLabResults()
+      return
+    case 'labReport':
+      await loadLabResultDetail()
+      return
+    case 'vendorReviews':
+      await loadVendors()
+      return
+    case 'vendorDetail':
+    case 'reviewModal':
+      await Promise.all([loadVendorDetail(), loadDiscussions()])
+      return
+    case 'vendorPortal':
+      await Promise.all([loadVendorProfile(), loadVendors()])
+      return
+    case 'researchLibrary':
+      await loadResearchContent()
+      return
+    case 'researchArticle':
+      await Promise.all([loadContentDetails(), loadResearchContent()])
+      return
+    case 'guides':
+      await Promise.all([loadGuidesContent(), loadFaqContent()])
+      return
+    case 'guideDetail':
+      await Promise.all([loadContentDetails(), loadGuidesContent()])
+      return
+    case 'members':
+      await loadMembers()
+      return
+    case 'memberDetail':
+      await Promise.all([loadMemberDetail(), loadMembers()])
+      return
+    case 'messages':
+      await loadMessages()
+      return
+    case 'announcements':
+      await loadAnnouncements()
+      return
+    case 'announcementDetail':
+      await loadAnnouncementDetail()
+      return
+    case 'notifications':
+      await loadNotifications()
+      return
+    case 'notificationDetail':
+      await Promise.all([loadNotificationDetail(), loadNotifications()])
+      return
+    case 'telegramUpdates':
+      await Promise.all([loadAnnouncements(), loadNotifications()])
+      return
+    case 'settingsBlocked':
+      await Promise.all([loadUserSettings(), loadMembers(), loadBlockedUsers()])
+      return
+    default:
+      if (page.value.startsWith('settings')) {
+        await loadUserSettings()
+      }
+  }
 }
 
 function ensureAuthenticated(action: string): boolean {
@@ -2754,9 +4047,25 @@ async function submitReply(): Promise<void> {
   replyStatusMessage.value = ''
 
   try {
-    const response = await api.post<{ data: ApiReply }>(`/api/v1/community/discussions/${currentDiscussionSlug.value}/replies`, {
-      body,
-    })
+    const hasAttachment = Boolean(replyAttachmentFile.value || replyAttachmentGifUrl.value.trim())
+    const payload = hasAttachment ? new FormData() : { body }
+
+    if (payload instanceof FormData) {
+      payload.append('body', body)
+      if (replyAttachmentFile.value) {
+        payload.append('attachment', replyAttachmentFile.value)
+      } else if (replyAttachmentGifUrl.value.trim()) {
+        payload.append('attachment_url', replyAttachmentGifUrl.value.trim())
+        payload.append('attachment_name', replyAttachmentName())
+        payload.append('attachment_type', 'gif')
+      }
+    }
+
+    const response = await api.post<{ data: ApiReply }>(
+      `/api/v1/community/discussions/${currentDiscussionSlug.value}/replies`,
+      payload,
+      payload instanceof FormData ? { headers: { 'Content-Type': 'multipart/form-data' } } : undefined,
+    )
     apiReplies.value = [...apiReplies.value, mapReply(response.data.data)]
     if (detailDiscussion.value) {
       apiDetailDiscussion.value = {
@@ -2766,6 +4075,7 @@ async function submitReply(): Promise<void> {
       }
     }
     replyBody.value = ''
+    clearReplyAttachment()
     replyStatusMessage.value = 'Reply posted.'
     await loadDiscussions()
   } catch (error) {
@@ -2779,26 +4089,48 @@ async function submitReply(): Promise<void> {
 
 function setDiscussionCategory(slug: string): void {
   activeCategory.value = slug
+  discussionPage.value = 1
   void loadDiscussions()
 }
 
 function applyDiscussionFilters(): void {
+  discussionPage.value = 1
   void loadDiscussions()
 }
 
 function clearDiscussionFilters(): void {
   discussionSearch.value = ''
   activeCategory.value = ''
+  discussionPage.value = 1
+  void loadDiscussions()
+}
+
+function setDiscussionPage(pageNumber: number): void {
+  discussionPage.value = pageNumber
   void loadDiscussions()
 }
 
 onMounted(() => {
   loadLocalActionState()
   void syncCommunityContent()
+
+  if (authStore.isAuthenticated && authStore.user?.id) {
+    import('@/composables/usePushNotifications').then(({ usePushNotifications }) => {
+      const { init } = usePushNotifications()
+      init(authStore.user!.id)
+    })
+  }
 })
 
 watch(() => route.fullPath, () => {
   void syncCommunityContent()
+  if (page.value !== 'reviewModal') {
+    clearVendorReviewPhotos()
+  }
+})
+
+onUnmounted(() => {
+  clearVendorReviewPhotos()
 })
 
 const labResults = computed(() => {
@@ -2893,10 +4225,12 @@ async function loadLabResults(): Promise<void> {
         compound: labCompoundFilter.value || undefined,
         vendor: labVendorFilter.value || undefined,
         lab: labLabFilter.value || undefined,
+        page: labPage.value,
       },
     })
     apiLabResults.value = response.data.data.map(mapLabResult)
     labStats.value = response.data.meta?.stats ?? labStats.value
+    labPagination.value = extractPagination(response.data.meta)
     labFilterOptions.value = {
       compound_types: response.data.meta?.filters?.compound_types ?? [],
       compounds: response.data.meta?.filters?.compounds ?? [],
@@ -2907,6 +4241,7 @@ async function loadLabResults(): Promise<void> {
   } catch {
     apiLabResults.value = []
     labStats.value = { total: 0, batches: 0, avg_purity: 0, labs: 0 }
+    labPagination.value = null
     labFilterOptions.value = { compound_types: [], compounds: [], vendors: [], labs: [] }
     labResultsLoaded.value = true
     labStatusMessage.value = 'Unable to load lab results from the API.'
@@ -2931,10 +4266,12 @@ async function loadLabResultDetail(): Promise<void> {
 
 function setLabTypeFilter(type: string): void {
   labTypeFilter.value = type
+  labPage.value = 1
   void loadLabResults()
 }
 
 function applyLabFilters(): void {
+  labPage.value = 1
   void loadLabResults()
 }
 
@@ -2944,6 +4281,12 @@ function clearLabFilters(): void {
   labCompoundFilter.value = ''
   labVendorFilter.value = ''
   labLabFilter.value = ''
+  labPage.value = 1
+  void loadLabResults()
+}
+
+function setLabPage(pageNumber: number): void {
+  labPage.value = pageNumber
   void loadLabResults()
 }
 
@@ -3011,7 +4354,6 @@ const vendorMetricCards = computed(() => [
   { label: 'Average Rating', value: `${vendorStats.value.average_rating} / 5`, icon: 'star' },
   { label: 'Would Buy Again', value: `${vendorStats.value.would_buy_again}%`, icon: 'heart' },
 ])
-const firstVendorReviewHref = computed(() => vendors.value[0] ? `${vendors.value[0].href}/review` : '')
 const topVendors = computed(() => apiTopVendors.value.length > 0 ? apiTopVendors.value : vendors.value.slice(0, 5))
 const vendorHasActiveFilters = computed(() => Boolean(vendorSearch.value || vendorStatusFilter.value || vendorRatingFilter.value || vendorTagFilter.value))
 const vendorSortLabel = computed(() => {
@@ -3021,16 +4363,22 @@ const vendorSortLabel = computed(() => {
 })
 const vendorReviewProductOptions = computed(() => [...new Set(apiVendorReviews.value.map(review => review.productName).filter(Boolean) as string[])])
 const vendorReviewSortLabel = computed(() => vendorReviewSort.value === 'helpful' ? 'Most Helpful' : 'Recent First')
+const detailVendorContactLinks = computed(() => detailVendor.value ? vendorContactLinks(detailVendor.value) : [])
 
 function mapVendor(item: ApiVendor): UiVendor {
   return {
     id: item.id,
+    ownerUserId: item.owner_user_id ?? null,
+    claimStatus: item.claim_status ?? 'unclaimed',
+    isOwnedByViewer: Boolean(item.is_owned_by_viewer),
     name: item.name,
     slug: item.slug,
     logo: item.logo_initials ?? item.name.slice(0, 2).toUpperCase(),
     logoText: item.logo_text ?? item.name,
+    imageUrl: assetUrl(item.image_url),
     class: item.logo_class ?? '',
     status: item.status_label ?? '',
+    publishStatus: item.status ?? 'published',
     statusClass: item.status_class ?? '',
     rating: item.rating_label ?? (item.average_rating !== undefined ? String(item.average_rating) : ''),
     reviews: item.review_count ?? 0,
@@ -3041,12 +4389,105 @@ function mapVendor(item: ApiVendor): UiVendor {
     href: item.href ?? `/vendor-reviews/${item.slug}`,
     description: item.description ?? '',
     websiteUrl: item.website_url ?? null,
+    contact: {
+      email: item.contact?.email ?? '',
+      telegram: item.contact?.telegram ?? '',
+      signal: item.contact?.signal ?? '',
+      discord: item.contact?.discord ?? '',
+      supportUrl: item.contact?.support_url ?? '',
+      responsePolicy: item.contact?.response_policy ?? '',
+      publicNotes: item.contact?.public_notes ?? '',
+    },
     lastActive: item.last_active_label ?? '',
     responseRate: item.response_rate_label ?? '',
     avgResponseTime: item.avg_response_time ?? '',
     topProducts: item.top_products ?? [],
     ratingDistribution: item.rating_distribution ?? [],
   }
+}
+
+function normalizeHandle(value?: string | null): string {
+  return (value ?? '').trim().replace(/^@+/, '')
+}
+
+function vendorContactLinks(vendor: UiVendor): Array<{ label: string; value: string; href?: string; icon: string }> {
+  const links: Array<{ label: string; value: string; href?: string; icon: string }> = []
+  const contact = vendor.contact
+
+  if (vendor.websiteUrl) {
+    links.push({ label: 'Website', value: vendor.websiteUrl, href: vendor.websiteUrl, icon: 'share' })
+  }
+
+  if (contact.supportUrl) {
+    links.push({ label: 'Support', value: contact.supportUrl, href: contact.supportUrl, icon: 'question' })
+  }
+
+  if (contact.email) {
+    links.push({ label: 'Email', value: contact.email, href: `mailto:${contact.email}`, icon: 'mail' })
+  }
+
+  const telegram = normalizeHandle(contact.telegram)
+  if (telegram) {
+    links.push({ label: 'Telegram', value: `@${telegram}`, href: `https://t.me/${telegram}`, icon: 'send' })
+  }
+
+  if (contact.signal) {
+    links.push({ label: 'Signal', value: contact.signal, icon: 'message' })
+  }
+
+  if (contact.discord) {
+    links.push({ label: 'Discord', value: contact.discord, icon: 'discussions' })
+  }
+
+  return links
+}
+
+function hasVendorContact(vendor: UiVendor): boolean {
+  return vendorContactLinks(vendor).length > 0 || Boolean(vendor.contact.responsePolicy || vendor.contact.publicNotes)
+}
+
+function hydrateVendorPortalForm(vendor: UiVendor | null = apiMyVendor.value): void {
+  vendorPortalForm.value = {
+    name: vendor?.name ?? '',
+    slug: vendor?.slug ?? '',
+    description: vendor?.description ?? '',
+    website_url: vendor?.websiteUrl ?? '',
+    image_url: vendor?.imageUrl ?? '',
+    contact_email: vendor?.contact.email ?? '',
+    contact_telegram: vendor?.contact.telegram ?? '',
+    contact_signal: vendor?.contact.signal ?? '',
+    contact_discord: vendor?.contact.discord ?? '',
+    support_url: vendor?.contact.supportUrl ?? '',
+    response_policy: vendor?.contact.responsePolicy ?? '',
+    public_contact_notes: vendor?.contact.publicNotes ?? '',
+    tags: vendor?.chips.join(', ') ?? '',
+  }
+}
+
+function vendorPortalPayload() {
+  const form = vendorPortalForm.value
+
+  return {
+    name: form.name.trim(),
+    slug: form.slug.trim() || undefined,
+    description: form.description.trim() || undefined,
+    website_url: form.website_url.trim() || undefined,
+    image_url: form.image_url.trim() || undefined,
+    contact_email: form.contact_email.trim() || undefined,
+    contact_telegram: form.contact_telegram.trim() || undefined,
+    contact_signal: form.contact_signal.trim() || undefined,
+    contact_discord: form.contact_discord.trim() || undefined,
+    support_url: form.support_url.trim() || undefined,
+    response_policy: form.response_policy.trim() || undefined,
+    public_contact_notes: form.public_contact_notes.trim() || undefined,
+    tags: form.tags.split(',').map(tag => tag.trim()).filter(Boolean),
+  }
+}
+
+function vendorPortalError(error: unknown, fallback: string): string {
+  const apiError = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+  const errors = apiError.response?.data?.errors
+  return errors ? Object.values(errors)[0]?.[0] ?? fallback : apiError.response?.data?.message ?? fallback
 }
 
 function mapVendorReview(item: ApiVendorReview): UiVendorReview {
@@ -3063,7 +4504,9 @@ function mapVendorReview(item: ApiVendorReview): UiVendorReview {
     text: item.body,
     productName: item.product_name,
     chips: item.tags ?? [],
+    photoUrls: (item.photo_urls ?? []).map(assetUrl).filter(Boolean),
     helpful: item.helpful_count ?? 0,
+    verifiedBuyer: Boolean(item.is_verified_buyer),
   }
 }
 
@@ -3076,11 +4519,13 @@ async function loadVendors(): Promise<void> {
         status: vendorStatusFilter.value || undefined,
         rating_min: vendorRatingFilter.value || undefined,
         tag: vendorTagFilter.value || undefined,
+        page: vendorPage.value,
       },
     })
     apiVendors.value = response.data.data.map(mapVendor)
     apiTopVendors.value = (response.data.meta?.top_vendors ?? []).map(mapVendor)
     vendorStats.value = response.data.meta?.stats ?? vendorStats.value
+    vendorPagination.value = extractPagination(response.data.meta)
     vendorFilterOptions.value = {
       statuses: response.data.meta?.filters?.statuses ?? [],
       ratings: response.data.meta?.filters?.ratings ?? [],
@@ -3090,6 +4535,7 @@ async function loadVendors(): Promise<void> {
   } catch {
     apiVendors.value = []
     apiTopVendors.value = []
+    vendorPagination.value = null
     vendorsLoaded.value = true
     vendorStats.value = {
       vendors_reviewed: 0,
@@ -3119,12 +4565,149 @@ async function loadVendorDetail(): Promise<void> {
   }
 }
 
+async function loadVendorProfile(): Promise<void> {
+  if (page.value !== 'vendorPortal') {
+    return
+  }
+
+  vendorPortalLoaded.value = false
+
+  try {
+    const response = await api.get<VendorProfileResponse>('/api/v1/community/vendor-profile', {
+      cacheTTL: 0,
+      skipDeduplication: true,
+    })
+    apiMyVendor.value = response.data.data ? mapVendor(response.data.data) : null
+    vendorPortalAccessApproved.value = Boolean(response.data.is_approved_vendor)
+    hydrateVendorPortalForm(apiMyVendor.value)
+    vendorPortalLoaded.value = true
+  } catch {
+    apiMyVendor.value = null
+    vendorPortalAccessApproved.value = false
+    vendorPortalLoaded.value = true
+    vendorPortalStatusMessage.value = 'Unable to load your vendor profile.'
+  }
+}
+
+async function saveVendorProfile(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    vendorPortalFormError.value = 'Please log in to manage a vendor profile.'
+    return
+  }
+
+  if (!vendorPortalAccessApproved.value) {
+    vendorPortalFormError.value = 'An admin must approve this account as a vendor before you can manage a vendor profile.'
+    return
+  }
+
+  savingVendorProfile.value = true
+  vendorPortalFormError.value = ''
+  vendorPortalStatusMessage.value = ''
+
+  try {
+    const creatingProfile = !apiMyVendor.value
+    const request = apiMyVendor.value
+      ? api.patch<{ data: ApiVendor }>('/api/v1/community/vendor-profile', vendorPortalPayload())
+      : api.post<{ data: ApiVendor }>('/api/v1/community/vendor-profile', vendorPortalPayload())
+    const response = await request
+    apiMyVendor.value = mapVendor(response.data.data)
+    vendorPortalAccessApproved.value = true
+    hydrateVendorPortalForm(apiMyVendor.value)
+    vendorPortalStatusMessage.value = creatingProfile ? 'Vendor profile published.' : 'Vendor profile saved.'
+    await loadVendors()
+  } catch (error) {
+    vendorPortalFormError.value = vendorPortalError(error, 'Unable to save vendor profile.')
+  } finally {
+    savingVendorProfile.value = false
+  }
+}
+
+async function uploadVendorImage(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+
+  if (!file) {
+    return
+  }
+
+  if (!authStore.isAuthenticated) {
+    vendorPortalFormError.value = 'Please log in to upload a vendor image.'
+    input.value = ''
+    return
+  }
+
+  if (!vendorPortalAccessApproved.value) {
+    vendorPortalFormError.value = 'An admin must approve this account as a vendor before you can upload a vendor image.'
+    input.value = ''
+    return
+  }
+
+  uploadingVendorImage.value = true
+  vendorPortalFormError.value = ''
+  vendorPortalStatusMessage.value = ''
+
+  try {
+    const form = new FormData()
+    form.append('image', file)
+
+    const response = await api.post<{ image_url?: string; data?: ApiVendor | null }>('/api/v1/community/vendor-profile/image', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      skipDeduplication: true,
+    })
+
+    if (response.data.data) {
+      apiMyVendor.value = mapVendor(response.data.data)
+      hydrateVendorPortalForm(apiMyVendor.value)
+    } else if (response.data.image_url) {
+      vendorPortalForm.value.image_url = assetUrl(response.data.image_url)
+    }
+
+    vendorPortalStatusMessage.value = apiMyVendor.value
+      ? 'Vendor image updated.'
+      : 'Vendor image uploaded. Save the profile to publish it.'
+  } catch (error) {
+    vendorPortalFormError.value = vendorPortalError(error, 'Unable to upload vendor image.')
+  } finally {
+    uploadingVendorImage.value = false
+    input.value = ''
+  }
+}
+
+function selectVendorReviewPhotos(event: Event): void {
+  const input = event.target as HTMLInputElement
+  const files = Array.from(input.files ?? []).slice(0, 5)
+
+  vendorReviewPhotoPreviews.value.forEach(url => URL.revokeObjectURL(url))
+  vendorReviewPhotos.value = files
+  vendorReviewPhotoPreviews.value = files.map(file => URL.createObjectURL(file))
+  input.value = ''
+}
+
+function removeVendorReviewPhoto(index: number): void {
+  const preview = vendorReviewPhotoPreviews.value[index]
+
+  if (preview) {
+    URL.revokeObjectURL(preview)
+  }
+
+  vendorReviewPhotos.value = vendorReviewPhotos.value.filter((_, itemIndex) => itemIndex !== index)
+  vendorReviewPhotoPreviews.value = vendorReviewPhotoPreviews.value.filter((_, itemIndex) => itemIndex !== index)
+}
+
+function clearVendorReviewPhotos(): void {
+  vendorReviewPhotoPreviews.value.forEach(url => URL.revokeObjectURL(url))
+  vendorReviewPhotos.value = []
+  vendorReviewPhotoPreviews.value = []
+}
+
 function setVendorStatusFilter(status: string): void {
   vendorStatusFilter.value = status
+  vendorPage.value = 1
   void loadVendors()
 }
 
 function applyVendorFilters(): void {
+  vendorPage.value = 1
   void loadVendors()
 }
 
@@ -3133,6 +4716,12 @@ function clearVendorFilters(): void {
   vendorStatusFilter.value = ''
   vendorRatingFilter.value = ''
   vendorTagFilter.value = ''
+  vendorPage.value = 1
+  void loadVendors()
+}
+
+function setVendorPage(pageNumber: number): void {
+  vendorPage.value = pageNumber
   void loadVendors()
 }
 
@@ -3151,15 +4740,30 @@ async function submitVendorReview(): Promise<void> {
   vendorReviewFormError.value = ''
 
   try {
-    await api.post(`/api/v1/community/vendors/${detailVendor.value.slug}/reviews`, {
-      rating: newVendorReview.value.rating,
-      title: newVendorReview.value.title,
-      body: newVendorReview.value.body,
-      product_name: newVendorReview.value.product_name || undefined,
-      tags: newVendorReview.value.tags.split(',').map(tag => tag.trim()).filter(Boolean),
-      would_buy_again: newVendorReview.value.would_buy_again,
+    const form = new FormData()
+    form.append('rating', String(newVendorReview.value.rating))
+    form.append('title', newVendorReview.value.title)
+    form.append('body', newVendorReview.value.body)
+    form.append('would_buy_again', newVendorReview.value.would_buy_again ? '1' : '0')
+
+    if (newVendorReview.value.product_name) {
+      form.append('product_name', newVendorReview.value.product_name)
+    }
+
+    newVendorReview.value.tags
+      .split(',')
+      .map(tag => tag.trim())
+      .filter(Boolean)
+      .forEach(tag => form.append('tags[]', tag))
+
+    vendorReviewPhotos.value.forEach(file => form.append('photos[]', file))
+
+    await api.post(`/api/v1/community/vendors/${detailVendor.value.slug}/reviews`, form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      skipDeduplication: true,
     })
-    vendorReviewStatusMessage.value = 'Review submitted for admin approval.'
+
+    vendorReviewStatusMessage.value = 'Review posted.'
     newVendorReview.value = {
       rating: 5,
       title: '',
@@ -3168,6 +4772,7 @@ async function submitVendorReview(): Promise<void> {
       tags: '',
       would_buy_again: true,
     }
+    clearVendorReviewPhotos()
     await router.push(detailVendor.value.href)
   } catch (error) {
     const apiError = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
@@ -3297,6 +4902,7 @@ function mapContent(item: ApiContentItem): UiContentItem {
     timeLabel: item.read_label ?? `${item.read_minutes ?? 5} min`,
     href: item.href ?? (item.type === 'guide' ? `/guides/${item.slug}` : `/research-library/${item.slug}`),
     imageIndex: item.image_index ?? 0,
+    imageUrl: assetUrl(item.image_url),
     author,
     authorInitial: item.author?.initial ?? author.slice(0, 2).toUpperCase(),
     authorBadge: item.author?.badge ?? null,
@@ -3304,7 +4910,20 @@ function mapContent(item: ApiContentItem): UiContentItem {
   }
 }
 
+function mapMemberActivity(activity: ApiMemberActivity): UiMemberActivity {
+  return {
+    icon: activity.icon ?? 'message',
+    tone: activity.tone ?? 'purple',
+    title: activity.title,
+    subtitle: activity.subtitle,
+    category: activity.category,
+    time: activity.time_ago ?? '',
+  }
+}
+
 function mapMember(item: ApiMemberProfile): UiMemberProfile {
+  const activities = (item.activities ?? []).map(mapMemberActivity)
+
   return {
     id: item.id,
     name: item.display_name,
@@ -3312,6 +4931,7 @@ function mapMember(item: ApiMemberProfile): UiMemberProfile {
     slug: item.slug,
     initial: item.initial,
     color: item.color ?? colorForName(item.display_name),
+    avatarUrl: item.avatar ?? null,
     role: item.role_label ?? '',
     group: item.group_label ?? '',
     badge: item.badge_label ?? null,
@@ -3327,14 +4947,15 @@ function mapMember(item: ApiMemberProfile): UiMemberProfile {
     stats: item.stats ?? {},
     badges: item.badges ?? [],
     href: item.href ?? `/members/${item.slug}`,
-    activities: (item.activities ?? []).map(activity => ({
-      icon: activity.icon ?? 'message',
-      tone: activity.tone ?? 'purple',
-      title: activity.title,
-      subtitle: activity.subtitle,
-      category: activity.category,
-      time: activity.time_ago ?? '',
-    })),
+    activities,
+    tabData: {
+      overview: item.tab_data?.overview ?? [],
+      activity: item.tab_data?.activity?.map(mapMemberActivity) ?? activities,
+      posts: item.tab_data?.posts ?? [],
+      reviews: item.tab_data?.reviews ?? [],
+      guides: item.tab_data?.guides ?? [],
+      badges: item.tab_data?.badges ?? item.badges ?? [],
+    },
   }
 }
 
@@ -3382,9 +5003,11 @@ async function loadResearchContent(): Promise<void> {
         sort: researchSort.value || undefined,
         published_from: researchPublishedFrom.value || undefined,
         published_to: researchPublishedTo.value || undefined,
+        page: researchPage.value,
       },
     })
     apiResearchArticles.value = response.data.data.map(mapContent)
+    researchPagination.value = extractPagination(response.data.meta)
     contentCategories.value.research = response.data.meta?.categories ?? []
     contentTopics.value.research = response.data.meta?.topics ?? []
     contentFilterOptions.value.research = {
@@ -3397,6 +5020,7 @@ async function loadResearchContent(): Promise<void> {
     contentLoaded.value = true
   } catch {
     apiResearchArticles.value = []
+    researchPagination.value = null
     contentFilterOptions.value.research = emptyContentFilterOptions()
     contentLoaded.value = true
     contentStatusMessage.value = 'Unable to load research content from the API.'
@@ -3404,6 +5028,7 @@ async function loadResearchContent(): Promise<void> {
 }
 
 function applyResearchFilters(): void {
+  researchPage.value = 1
   void loadResearchContent()
 }
 
@@ -3415,7 +5040,23 @@ function clearResearchFilters(): void {
   researchSort.value = 'latest'
   researchPublishedFrom.value = ''
   researchPublishedTo.value = ''
+  researchPage.value = 1
   void loadResearchContent()
+}
+
+function setResearchPage(pageNumber: number): void {
+  researchPage.value = pageNumber
+  void loadResearchContent()
+}
+
+function setGuidePage(pageNumber: number): void {
+  guidePage.value = pageNumber
+  void loadGuidesContent()
+}
+
+function setMemberPage(pageNumber: number): void {
+  memberPage.value = pageNumber
+  void loadMembers()
 }
 
 async function loadGuidesContent(): Promise<void> {
@@ -3425,14 +5066,17 @@ async function loadGuidesContent(): Promise<void> {
       params: {
         search: guideSearch.value || undefined,
         category: activeGuideCategory.value || undefined,
+        page: guidePage.value,
       },
     })
     apiGuides.value = response.data.data.map(mapContent)
+    guidePagination.value = extractPagination(response.data.meta)
     contentCategories.value.guide = response.data.meta?.categories ?? []
     contentTopics.value.guide = response.data.meta?.topics ?? []
     contentLoaded.value = true
   } catch {
     apiGuides.value = []
+    guidePagination.value = null
     contentLoaded.value = true
     contentStatusMessage.value = 'Unable to load guides from the API.'
   }
@@ -3483,18 +5127,91 @@ async function loadMembers(): Promise<void> {
       cacheTTL: 0,
       params: {
         search: memberSearch.value || undefined,
+        discussion: typeof route.query.discussion === 'string' ? route.query.discussion : undefined,
+        page: memberPage.value,
       },
     })
     apiMembers.value = response.data.data.map(mapMember)
+    apiTopContributorMembers.value = (response.data.meta?.top_contributors ?? []).map(mapMember)
+    apiOnlineMemberSummaries.value = (response.data.meta?.online_members ?? []).map(mapMember)
     memberStats.value = {
       total: response.data.meta?.stats?.total ?? 0,
       online: response.data.meta?.stats?.online ?? 0,
     }
+    memberPagination.value = extractPagination(response.data.meta)
     membersLoaded.value = true
   } catch {
     apiMembers.value = []
+    apiTopContributorMembers.value = []
+    apiOnlineMemberSummaries.value = []
     memberStats.value = { total: 0, online: 0 }
+    memberPagination.value = null
     membersLoaded.value = true
+  }
+}
+
+async function loadBlockedUsers(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    blockedUsers.value = []
+    blockedUsersLoaded.value = true
+    return
+  }
+
+  try {
+    const response = await api.get<BlockedUsersResponse>('/api/v1/user/blocked-users', {
+      cacheTTL: 0,
+      skipDeduplication: true,
+    })
+    blockedUsers.value = response.data.data.map(mapMember)
+    blockedUsersLoaded.value = true
+  } catch {
+    blockedUsers.value = []
+    blockedUsersLoaded.value = true
+    settingsStatusMessage.value = 'Unable to load blocked users.'
+  }
+}
+
+async function blockMember(member: UiMemberProfile): Promise<void> {
+  if (!member.id || !authStore.isAuthenticated) {
+    return
+  }
+
+  blockingUserId.value = member.id
+  settingsStatusMessage.value = ''
+
+  try {
+    const response = await api.post<BlockedUsersResponse>('/api/v1/user/blocked-users', {
+      user_id: member.id,
+    }, {
+      skipDeduplication: true,
+    })
+    blockedUsers.value = response.data.data.map(mapMember)
+    settingsStatusMessage.value = `${member.name} has been blocked.`
+  } catch {
+    settingsStatusMessage.value = `Unable to block ${member.name}.`
+  } finally {
+    blockingUserId.value = null
+  }
+}
+
+async function unblockMember(member: UiMemberProfile): Promise<void> {
+  if (!member.id || !authStore.isAuthenticated) {
+    return
+  }
+
+  blockingUserId.value = member.id
+  settingsStatusMessage.value = ''
+
+  try {
+    const response = await api.delete<BlockedUsersResponse>(`/api/v1/user/blocked-users/${member.id}`, {
+      skipDeduplication: true,
+    })
+    blockedUsers.value = response.data.data.map(mapMember)
+    settingsStatusMessage.value = `${member.name} has been unblocked.`
+  } catch {
+    settingsStatusMessage.value = `Unable to unblock ${member.name}.`
+  } finally {
+    blockingUserId.value = null
   }
 }
 
@@ -3623,16 +5340,19 @@ async function loadNotifications(): Promise<void> {
       params: {
         category,
         status,
+        page: notificationPage.value,
       },
     })
     apiNotifications.value = response.data.data.map(mapNotification)
     notificationStats.value = response.data.meta?.stats ?? notificationStats.value
     notificationCategories.value = response.data.meta?.categories ?? []
+    notificationPagination.value = extractPagination(response.data.meta)
     notificationsLoaded.value = true
     notificationStatusMessage.value = ''
   } catch {
     apiNotifications.value = []
     notificationCategories.value = []
+    notificationPagination.value = null
     notificationStats.value = {
       total: 0,
       unread: 0,
@@ -3664,6 +5384,12 @@ async function loadNotificationDetail(): Promise<void> {
 
 function setNotificationFilter(filter: string): void {
   activeNotificationFilter.value = filter
+  notificationPage.value = 1
+  void loadNotifications()
+}
+
+function setNotificationPage(pageNumber: number): void {
+  notificationPage.value = pageNumber
   void loadNotifications()
 }
 
@@ -3714,6 +5440,7 @@ const notificationCounts = computed(() => ({
   labResults: notificationStats.value.lab_results,
   discussions: notificationStats.value.discussions,
   vendors: notificationStats.value.vendors,
+  repliesUnread: notificationStats.value.replies_unread ?? 0,
 }))
 const notificationSummary = computed(() => notificationCategories.value.map(category => ({
   label: category.name,
@@ -3721,7 +5448,7 @@ const notificationSummary = computed(() => notificationCategories.value.map(cate
   count: category.count,
   latest: `${category.count} published`,
 })))
-const notificationPaginationLabel = computed(() => notifications.value.length > 0 ? `Showing 1 to ${notifications.value.length} of ${notificationCounts.value.total} notifications` : 'Showing 0 notifications')
+const notificationPaginationLabel = computed(() => paginationText(notificationPagination.value, 'notifications'))
 const currentNotificationSlug = computed(() => String(route.params.slug ?? ''))
 const primaryNotification = computed(() => apiDetailNotification.value ?? notifications.value.find(item => item.slug === currentNotificationSlug.value) ?? null)
 const currentNotificationIndex = computed(() => notifications.value.findIndex(item => item.slug === primaryNotification.value?.slug))
@@ -3729,44 +5456,35 @@ const previousNotification = computed(() => currentNotificationIndex.value > 0 ?
 const nextNotification = computed(() => currentNotificationIndex.value >= 0 && currentNotificationIndex.value < notifications.value.length - 1 ? notifications.value[currentNotificationIndex.value + 1] : null)
 const legalPage = computed(() => {
   if (page.value === 'legalPrivacy') {
-    return {
-      title: 'Privacy Policy',
-      paragraphs: [
-        'Peptide Vendors keeps account data, profile preferences, messages, submissions, and moderation records only for operating the private community.',
-        'We use your information to authenticate access, show community content, support account settings, prevent abuse, and improve reliability.',
-        'Do not post private medical, payment, or identifying information in public areas. You can manage profile visibility, notifications, privacy, sessions, and API tokens from account settings.',
-      ],
-    }
+    return publicLegalPages.value.privacy
   }
 
   if (page.value === 'legalRules') {
+    return publicLegalPages.value.rules
+  }
+
+  return publicLegalPages.value.terms
+})
+
+function thumbnailStyle(index: number, imageUrl?: string | null) {
+  if (imageUrl) {
     return {
-      title: 'Community Rules',
-      paragraphs: [
-        'Keep discussion educational, evidence-led, and respectful. Personal attacks, harassment, spam, scams, and transaction coordination are not allowed.',
-        'Vendor reviews and lab-result submissions should be specific, honest, and batch-aware where possible. Moderators may hide incomplete, unsafe, promotional, or unverifiable submissions.',
-        'This community is for information sharing and harm-reduction context only. It is not medical advice, legal advice, or a marketplace.',
-      ],
+      backgroundImage: `url(${assetUrl(imageUrl)})`,
+      backgroundSize: 'cover',
+      backgroundPosition: 'center',
     }
   }
 
-  return {
-    title: 'Terms of Service',
-    paragraphs: [
-      'By using Peptide Vendors, you agree to use the community for lawful, educational discussion and to follow all community rules and moderation decisions.',
-      'Content is provided by community members and administrators for informational purposes. You are responsible for verifying information before relying on it.',
-      'Accounts may be restricted or removed for abuse, unsafe conduct, spam, evasion, or attempts to use the site as a marketplace.',
-    ],
-  }
-})
-
-function thumbnailStyle(index: number) {
   const positions = ['0% 0%', '50% 0%', '100% 0%', '0% 50%', '50% 50%', '100% 50%', '0% 100%', '50% 100%', '100% 100%']
   return {
     backgroundImage: `url(${researchImage})`,
     backgroundSize: '300% 300%',
     backgroundPosition: positions[index % positions.length] ?? '0% 0%',
   }
+}
+
+function contentThumbnailStyle(item: UiContentItem, fallbackIndex = 0) {
+  return thumbnailStyle(item.imageIndex || fallbackIndex, item.imageUrl)
 }
 
 const PanelTrending = defineComponent({
@@ -3779,9 +5497,39 @@ const PanelTrending = defineComponent({
 })
 
 const PaginationBlock = defineComponent({
-  props: { label: { type: String, default: '' } },
-  setup(props) {
-    return () => props.label ? h('div', { class: 'pv-pagination' }, [h('span', props.label)]) : null
+  props: {
+    label: { type: String, default: '' },
+    meta: { type: Object as PropType<PaginationMeta | null>, default: null },
+  },
+  emits: {
+    page: (value: number) => Number.isFinite(value),
+  },
+  setup(props, { emit }) {
+    return () => {
+      const meta = props.meta
+      const current = Number(meta?.current_page ?? 1)
+      const last = Number(meta?.last_page ?? 1)
+      const total = Number(meta?.total ?? 0)
+      const label = props.label || paginationText(meta, 'items')
+
+      if (!props.label && (!meta || total <= Number(meta.per_page ?? total))) {
+        return null
+      }
+
+      const first = Math.max(1, Math.min(current - 2, Math.max(1, last - 4)))
+      const pages = Array.from({ length: Math.min(5, last) }, (_, index) => first + index).filter(pageNumber => pageNumber <= last)
+
+      return h('div', { class: 'pv-pagination' }, [
+        h('button', { disabled: current <= 1, onClick: () => emit('page', current - 1) }, 'Previous'),
+        h('span', label),
+        ...pages.map(pageNumber => h('button', {
+          class: pageNumber === current ? 'active' : '',
+          disabled: pageNumber === current,
+          onClick: () => emit('page', pageNumber),
+        }, String(pageNumber))),
+        h('button', { disabled: current >= last, onClick: () => emit('page', current + 1) }, 'Next'),
+      ])
+    }
   },
 })
 
@@ -3789,9 +5537,18 @@ const MemberProfile = defineComponent({
   props: { profile: { type: Object as PropType<UiMemberProfile>, required: true } },
   setup(props) {
     const badgeIcons = ['shield', 'flask', 'star', 'trophy']
+    const activeTab = ref<MemberTabKey>('overview')
     return () => {
       const profile = props.profile
       const stats = profile.stats
+      const tabs: Array<{ key: MemberTabKey; label: string }> = [
+        { key: 'overview', label: 'Overview' },
+        { key: 'activity', label: 'Activity' },
+        { key: 'posts', label: `Posts (${formatCount(stats.posts)})` },
+        { key: 'reviews', label: `Reviews (${formatCount(stats.reviews)})` },
+        { key: 'guides', label: `Guides (${formatCount(stats.guides)})` },
+        { key: 'badges', label: 'Badges' },
+      ]
       const statCards: Array<[string, string, string]> = [
         ['Posts', formatCount(stats.posts), 'discussions'],
         ['Likes Received', formatCount(stats.likes), 'thumbs'],
@@ -3803,18 +5560,20 @@ const MemberProfile = defineComponent({
       return h('div', { class: 'pv-content-grid' }, [
         h('main', { class: 'pv-stack' }, [
           h('nav', { class: 'pv-breadcrumbs' }, `Members › ${profile.name}`),
-          h('article', { class: ['pv-member-hero', profile.isModerator ? 'pv-member-hero--banner' : ''] }, [
-            h('span', { class: ['pv-avatar', 'pv-avatar--xl', profile.color] }, profile.initial),
+          h('article', { class: ['pv-member-hero', 'pv-member-hero--banner'] }, [
+            profile.avatarUrl
+              ? h('span', { class: ['pv-avatar', 'pv-avatar--xl', profile.color] }, [h('img', { src: assetUrl(profile.avatarUrl), alt: profile.name, class: 'pv-avatar-img' })])
+              : h('span', { class: ['pv-avatar', 'pv-avatar--xl', profile.color] }, profile.initial),
             h('div', { class: 'pv-topic-main' }, [h('h1', [profile.name, ' ', h('span', { class: 'pv-tag trusted' }, profile.role)]), h('p', `${profile.badge ?? profile.group} · Joined ${profile.joined} · Last seen ${profile.lastActive}`), h('p', profile.bio), h('span', { class: 'pv-chip-row' }, profile.interests.map(interest => h('span', interest)))]),
-            h('div', { class: 'pv-member-actions' }, [h('button', { class: 'pv-primary-button', onClick: () => void startMessage(profile) }, [h(PvIcon, { name: 'message' }), ' Message']), h('button', { class: 'pv-small-button' }, [h(PvIcon, { name: 'users' }), ' Follow'])]),
+            h('div', { class: 'pv-member-actions' }, [
+              h('button', { class: 'pv-primary-button', onClick: () => void startMessage(profile) }, [h(PvIcon, { name: 'message' }), ' Message']),
+              h('button', { class: 'pv-small-button', onClick: () => void toggleMemberFollow(profile) }, [h(PvIcon, { name: 'users' }), isFollowingMember(profile) ? ' Following' : ' Follow']),
+              h('button', { class: 'pv-small-button', disabled: blockingUserId.value === profile.id, onClick: () => void blockMember(profile) }, [h(PvIcon, { name: 'close' }), blockingUserId.value === profile.id ? ' Blocking...' : ' Block']),
+            ]),
           ]),
           h('div', { class: 'pv-metrics pv-metrics--member' }, statCards.map(stat => h('span', [h(PvIcon, { name: stat[2] }), h('strong', stat[1]), h('small', stat[0])]))),
-          h('div', { class: 'pv-tabs pv-tabs--line' }, ['Overview', 'Activity', `Posts (${formatCount(stats.posts)})`, `Reviews (${formatCount(stats.reviews)})`, `Guides (${formatCount(stats.guides)})`, 'Badges'].map((tab, index) => h('button', { class: index === 0 ? 'active' : '' }, tab))),
-          h('div', { class: 'pv-profile-grid' }, [
-            h('article', { class: 'pv-panel' }, [h('h2', `About ${profile.name}`), h('p', profile.bio), h('dl', { class: 'pv-data-list' }, [h('div', [h('dt', 'Location'), h('dd', profile.location || '')]), h('div', [h('dt', 'Website'), h('dd', profile.websiteUrl ?? '')]), h('div', [h('dt', 'Member Since'), h('dd', profile.joined)]), h('div', [h('dt', 'Last Active'), h('dd', profile.lastActive)])])]),
-            h('article', { class: 'pv-panel' }, [h('header', { class: 'pv-panel-header' }, [h('h2', 'Badges'), h('a', { class: 'pv-purple-link' }, 'View all')]), h('div', { class: 'pv-badge-grid' }, profile.badges.map((badge, i) => h('span', [h(PvIcon, { name: badgeIcons[i % badgeIcons.length] ?? 'shield' }), h('small', badge)])))]),
-            h('article', { class: 'pv-panel' }, [h('h2', 'Recent Activity'), h('div', { class: 'pv-mini-list' }, profile.activities.map(activity => h('span', { class: 'pv-mini-row' }, [h(PvIcon, { name: activity.icon }), h('span', [h('strong', activity.title), h('small', activity.subtitle ? `${activity.subtitle} · ${activity.time}` : activity.time)])])))]),
-          ]),
+          h('div', { class: 'pv-tabs pv-tabs--line' }, tabs.map(tab => h('button', { class: activeTab.value === tab.key ? 'active' : '', onClick: () => { activeTab.value = tab.key } }, tab.label))),
+          memberTabPanel(profile, activeTab.value, badgeIcons),
         ]),
         h('aside', { class: 'pv-stack' }, [
           h('article', { class: 'pv-panel' }, [h('h2', 'Reputation'), h('div', { class: 'pv-ring' }, [h('strong', formatCount(stats.reputation)), h('span', 'Reputation')])]),
@@ -3825,6 +5584,79 @@ const MemberProfile = defineComponent({
     }
   },
 })
+
+function memberTabPanel(profile: UiMemberProfile, tab: MemberTabKey, badgeIcons: string[]) {
+  if (tab === 'overview') {
+    return h('div', { class: 'pv-profile-grid' }, [
+      h('article', { class: 'pv-panel' }, [
+        h('h2', `About ${profile.name}`),
+        h('p', profile.bio || 'No bio has been added yet.'),
+        h('dl', { class: 'pv-data-list' }, [
+          h('div', [h('dt', 'Location'), h('dd', profile.location || 'Not shared')]),
+          h('div', [h('dt', 'Website'), h('dd', profile.websiteUrl ? h('a', { href: profile.websiteUrl, target: '_blank', rel: 'noreferrer' }, profile.websiteUrl) : 'Not shared')]),
+          h('div', [h('dt', 'Member Since'), h('dd', profile.joined)]),
+          h('div', [h('dt', 'Last Active'), h('dd', profile.lastActive)]),
+        ]),
+      ]),
+      memberItemPanel('Recent Contributions', profile.tabData.overview ?? [], 'No recent public contributions.'),
+      memberBadgePanel(profile, badgeIcons),
+    ])
+  }
+
+  if (tab === 'activity') {
+    const activities = profile.tabData.activity ?? profile.activities
+
+    return h('article', { class: 'pv-panel' }, [
+      h('h2', 'Activity'),
+      h('div', { class: 'pv-mini-list' }, activities.length > 0
+        ? activities.map(activity => h('span', { class: 'pv-mini-row' }, [
+          h(PvIcon, { name: activity.icon }),
+          h('span', [h('strong', activity.title), h('small', activity.subtitle ? `${activity.subtitle} · ${activity.time}` : activity.time)]),
+        ]))
+        : [h('p', { class: 'pv-muted' }, 'No recent public activity.')]),
+    ])
+  }
+
+  if (tab === 'badges') {
+    return memberBadgePanel(profile, badgeIcons)
+  }
+
+  const title = tab === 'posts' ? 'Posts' : tab === 'reviews' ? 'Reviews' : 'Guides'
+  return memberItemPanel(title, profile.tabData[tab] as UiMemberTabItem[] | undefined ?? [], `No ${title.toLowerCase()} yet.`)
+}
+
+function memberItemPanel(title: string, items: UiMemberTabItem[], emptyText: string) {
+  return h('article', { class: 'pv-panel' }, [
+    h('h2', title),
+    h('div', { class: 'pv-mini-list' }, items.length > 0
+      ? items.map(item => {
+        const content = [
+          h(PvIcon, { name: item.type === 'review' ? 'star' : item.type === 'lab' ? 'flask' : 'message' }),
+          h('span', [h('strong', item.title), h('small', [item.text, item.time].filter(Boolean).join(' · '))]),
+          h(PvIcon, { name: 'chevron' }),
+        ]
+
+        return item.href
+          ? h(RouterLink, { to: item.href, class: 'pv-mini-row' }, () => content)
+          : h('span', { class: 'pv-mini-row' }, content)
+      })
+      : [h('p', { class: 'pv-muted' }, emptyText)]),
+  ])
+}
+
+function memberBadgePanel(profile: UiMemberProfile, badgeIcons: string[]) {
+  const badges = profile.tabData.badges ?? profile.badges
+
+  return h('article', { class: 'pv-panel' }, [
+    h('header', { class: 'pv-panel-header' }, [
+      h('h2', 'Badges'),
+      h('span', { class: 'pv-purple-link' }, `${badges.length} earned`),
+    ]),
+    badges.length > 0
+      ? h('div', { class: 'pv-badge-grid' }, badges.map((badge, index) => h('span', [h(PvIcon, { name: badgeIcons[index % badgeIcons.length] ?? 'shield' }), h('small', badge)])))
+      : h('p', { class: 'pv-muted' }, 'No badges earned yet.'),
+  ])
+}
 
 const MessageBubble = defineComponent({
   props: {
@@ -3886,7 +5718,7 @@ function settingsMain(pageName: string) {
         settingsInput('New Password', passwordSettingsForm.value.new_password, value => { passwordSettingsForm.value.new_password = value }, 'password'),
         settingsInput('Confirm New Password', passwordSettingsForm.value.new_password_confirmation, value => { passwordSettingsForm.value.new_password_confirmation = value }, 'password'),
       ]), h('button', { class: 'pv-primary-button', disabled: changingSettingsPassword.value, onClick: changeSettingsPassword }, changingSettingsPassword.value ? 'Updating...' : 'Update Password')])]),
-      h('article', { class: 'pv-panel pv-settings-card' }, [h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'shield' })]), h('div', [h('h2', 'Two-Factor Authentication (2FA)'), h('p', 'Add an extra layer of security to your account.'), h('span', { class: authUserValue('two_factor_enabled') ? 'pv-success-pill' : 'pv-tag' }, authUserValue('two_factor_enabled') ? 'Enabled' : 'Disabled')]), h('button', { class: 'pv-small-button' }, 'Manage 2FA')]),
+      twoFactorSecurityPanel(),
       h('article', { class: 'pv-panel pv-settings-card' }, [h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'document' })]), h('div', [h('h2', 'Login Sessions'), h('p', 'Manage your active sessions across different devices.'), sessionList()]), h(RouterLink, { to: '/settings/sessions', class: 'pv-small-button' }, () => 'View Sessions')]),
     ])
   }
@@ -3941,7 +5773,33 @@ function settingsMain(pageName: string) {
     ])
   }
   if (pageName === 'settingsBlocked') {
-    return h('article', { class: 'pv-panel' }, [h('h2', 'Blocked Users'), h('p', { class: 'pv-muted' }, 'Blocked users will appear here once you block someone from the community.'), h('div', { class: 'pv-mini-list' }, [])])
+    return h('div', { class: 'pv-stack' }, [
+      status,
+      h('article', { class: 'pv-panel' }, [
+        h('header', { class: 'pv-panel-header' }, [
+          h('div', [h('h2', 'Blocked Users'), h('p', { class: 'pv-muted' }, 'Blocked members cannot start new message threads with you.')]),
+          h('span', { class: 'pv-tag' }, `${blockedUsers.value.length} blocked`),
+        ]),
+        h('div', { class: 'pv-mini-list' }, blockedUsers.value.length > 0
+          ? blockedUsers.value.map(member => h('span', { class: 'pv-mini-row' }, [
+            h('span', { class: ['pv-avatar', member.color] }, member.initial),
+            h('span', [h('strong', member.name), h('small', member.username)]),
+            h('button', { class: 'pv-small-button', disabled: blockingUserId.value === member.id, onClick: () => void unblockMember(member) }, blockingUserId.value === member.id ? 'Unblocking...' : 'Unblock'),
+          ]))
+          : [h('p', { class: 'pv-muted' }, blockedUsersLoaded.value ? 'No blocked users.' : 'Loading blocked users...')]),
+      ]),
+      h('article', { class: 'pv-panel' }, [
+        h('h2', 'Block a Member'),
+        settingsInput('Search Members', blockUserSearch.value, value => { blockUserSearch.value = value }),
+        h('div', { class: 'pv-mini-list' }, blockableMembers.value.length > 0
+          ? blockableMembers.value.map(member => h('span', { class: 'pv-mini-row' }, [
+            h('span', { class: ['pv-avatar', member.color] }, member.initial),
+            h('span', [h('strong', member.name), h('small', member.role || member.group || 'Member')]),
+            h('button', { class: 'pv-small-button', disabled: blockingUserId.value === member.id, onClick: () => void blockMember(member) }, blockingUserId.value === member.id ? 'Blocking...' : 'Block'),
+          ]))
+          : [h('p', { class: 'pv-muted' }, membersLoaded.value ? 'No matching members available to block.' : 'Loading member directory...')]),
+      ]),
+    ])
   }
   if (pageName === 'settingsApi') {
     return h('article', { class: 'pv-panel' }, [
@@ -3965,12 +5823,27 @@ function settingsMain(pageName: string) {
     return h('article', { class: 'pv-panel' }, [h('h2', 'Sessions'), status, sessionList()])
   }
   if (pageName === 'settingsDanger') {
-    return h('article', { class: 'pv-panel' }, [h('h2', 'Danger Zone'), h('p', { class: 'pv-muted' }, 'Account deactivation actions require authentication and confirmation.'), h('button', { class: 'pv-small-button' }, 'Deactivate Account')])
+    return h('div', { class: 'pv-stack' }, [
+      status,
+      h('article', { class: 'pv-panel pv-settings-card' }, [
+        h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'download' })]),
+        h('div', [h('h2', 'Export Account Data'), h('p', 'Download your profile, preferences, sessions, and API token metadata as a JSON file.')]),
+        h('button', { class: 'pv-small-button', disabled: exportingAccountData.value, onClick: exportAccountData }, exportingAccountData.value ? 'Exporting...' : 'Download Data'),
+      ]),
+      h('article', { class: 'pv-alert pv-alert--danger' }, [
+        h(PvIcon, { name: 'shield' }),
+        h('div', [
+          h('h2', 'Sign Out Everywhere'),
+          h('p', 'This revokes every active API/session token for your account, including this browser.'),
+          h('button', { class: 'pv-small-button', disabled: signingOutEverywhere.value, onClick: signOutEverywhere }, signingOutEverywhere.value ? 'Signing out...' : 'Sign Out Everywhere'),
+        ]),
+      ]),
+    ])
   }
   return h('article', { class: 'pv-panel pv-form-card' }, [
     h('h2', 'Profile Information'),
     status,
-    h('div', { class: 'pv-profile-form-head' }, [h('span', { class: 'pv-avatar pv-avatar--xl purple' }, accountInitial()), h('div', { class: 'pv-input-group' }, [
+    h('div', { class: 'pv-profile-form-head' }, [accountAvatarNode('pv-avatar--xl'), h('div', { class: 'pv-input-group' }, [
       settingsInput('Username', accountForm.value.username, value => { accountForm.value.username = value }),
       settingsInput('Display Name', accountForm.value.name, value => { accountForm.value.name = value }),
     ])]),
@@ -3983,15 +5856,57 @@ function settingsMain(pageName: string) {
     h('button', { class: 'pv-primary-button', disabled: savingSettings.value, onClick: saveAccountProfile }, savingSettings.value ? 'Saving...' : 'Save Changes'),
     h('hr'),
     h('h2', 'Profile Photo'),
+    h('div', { class: 'pv-avatar-upload-row' }, [
+      accountAvatarNode('pv-avatar--xl'),
+      h('div', [
+        h('strong', accountName()),
+        h('p', { class: 'pv-muted' }, 'Upload a square image up to 2 MB.'),
+      ]),
+    ]),
     h('input', { ref: (el) => { avatarFileInput.value = el as HTMLInputElement | null }, type: 'file', accept: 'image/*', style: 'display:none', onChange: uploadProfileAvatar }),
     h('button', { class: 'pv-small-button', disabled: uploadingAvatar.value, onClick: () => avatarFileInput.value?.click() }, [h(PvIcon, { name: 'upload' }), uploadingAvatar.value ? ' Uploading...' : ' Change Photo']),
-    h('h2', 'Banner Image'),
-    h('button', { class: 'pv-small-button' }, [h(PvIcon, { name: 'image' }), ' Change Banner']),
   ])
 }
 
 function settingsInput(label: string, value: string, onValue: (value: string) => void, type = 'text', disabled = false) {
   return h('label', [label, h('input', { type, placeholder: label, value, disabled, onInput: (event: Event) => onValue((event.target as HTMLInputElement).value) })])
+}
+
+function twoFactorSecurityPanel() {
+  const enabled = Boolean(twoFactorStatus.value?.enabled || authUserValue('two_factor_enabled'))
+  const qrSource = twoFactorSetup.value?.qr_code ? `data:image/svg+xml;base64,${twoFactorSetup.value.qr_code}` : ''
+  const action = twoFactorSetup.value
+    ? h('div', { class: 'pv-input-group' }, [
+      qrSource ? h('img', { class: 'pv-qr-code', src: qrSource, alt: 'Two-factor setup QR code' }) : null,
+      h('p', { class: 'pv-muted' }, `Secret: ${twoFactorSetup.value.secret}`),
+      settingsInput('Authenticator Code', twoFactorCode.value, value => { twoFactorCode.value = value }, 'text'),
+      h('div', { class: 'pv-action-row' }, [
+        h('button', { class: 'pv-primary-button', disabled: savingTwoFactor.value, onClick: confirmTwoFactorSetup }, savingTwoFactor.value ? 'Confirming...' : 'Confirm 2FA'),
+        h('button', { class: 'pv-small-button', disabled: savingTwoFactor.value, onClick: cancelTwoFactorSetup }, 'Cancel'),
+      ]),
+    ])
+    : enabled
+      ? h('div', { class: 'pv-input-group' }, [
+        h('p', { class: 'pv-muted' }, 'Two-factor authentication is active for this account. Enter your current password to disable it.'),
+        settingsInput('Current Password', twoFactorPassword.value, value => { twoFactorPassword.value = value }, 'password'),
+        h('button', { class: 'pv-small-button', disabled: savingTwoFactor.value, onClick: disableTwoFactor }, savingTwoFactor.value ? 'Disabling...' : 'Disable 2FA'),
+      ])
+      : h('button', { class: 'pv-primary-button', disabled: savingTwoFactor.value || loadingTwoFactor.value, onClick: startTwoFactorSetup }, savingTwoFactor.value ? 'Starting...' : 'Set Up 2FA')
+
+  return h('article', { class: 'pv-panel pv-settings-card' }, [
+    h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'shield' })]),
+    h('div', [
+      h('h2', 'Two-Factor Authentication (2FA)'),
+      h('p', 'Add an extra layer of security to your account.'),
+      h('span', { class: enabled ? 'pv-success-pill' : 'pv-tag' }, enabled ? 'Enabled' : 'Disabled'),
+      twoFactorRecoveryCodes.value.length > 0 ? h('div', { class: 'pv-recovery-code-list' }, [
+        h('strong', 'Recovery Codes'),
+        h('p', { class: 'pv-muted' }, 'Save these now. They will not be shown again.'),
+        h('code', twoFactorRecoveryCodes.value.join('\n')),
+      ]) : null,
+      action,
+    ]),
+  ])
 }
 
 function settingsTextarea(label: string, value: string, onValue: (value: string) => void) {
@@ -4028,11 +5943,19 @@ function sessionList() {
 }
 
 function settingsSummary() {
-  return h('article', { class: 'pv-panel' }, [h('h2', 'Account Summary'), h('div', { class: 'pv-summary-user' }, [h('span', { class: 'pv-avatar pv-avatar--xl purple' }, accountInitial()), h('div', [h('strong', accountName()), h('span', { class: 'pv-tag' }, accountRole())])]), h('dl', { class: 'pv-data-list' }, [['Joined', authUserDate('created_at') || 'Not signed in'], ['Last Active', authUserDate('last_active') || ''], ['Email', accountEmail()], ['Two-Factor Authentication', authUserValue('two_factor_enabled') ? 'Enabled' : 'Disabled']].map(row => h('div', [h('dt', row[0]), h('dd', row[1])])))])
+  return h('article', { class: 'pv-panel' }, [h('h2', 'Account Summary'), h('div', { class: 'pv-summary-user' }, [accountAvatarNode('pv-avatar--xl'), h('div', [h('strong', accountName()), h('span', { class: 'pv-tag' }, accountRole())])]), h('dl', { class: 'pv-data-list' }, [['Joined', authUserDate('created_at') || 'Not signed in'], ['Last Active', authUserDate('last_active') || ''], ['Email', accountEmail()], ['Two-Factor Authentication', authUserValue('two_factor_enabled') ? 'Enabled' : 'Disabled']].map(row => h('div', [h('dt', row[0]), h('dd', row[1])])))])
 }
 
 function quickActions() {
-  return h('article', { class: 'pv-panel' }, [h('h2', 'Quick Actions'), h('div', { class: 'pv-filter-list' }, ['Change Password', 'Two-Factor Authentication', 'Download My Data', 'Deactivate Account'].map(action => h('button', [h(PvIcon, { name: 'shield' }), action, h(PvIcon, { name: 'chevron' })])))])
+  return h('article', { class: 'pv-panel' }, [
+    h('h2', 'Quick Actions'),
+    h('div', { class: 'pv-filter-list' }, [
+      h(RouterLink, { to: '/settings/security' }, () => [h(PvIcon, { name: 'lock' }), ' Change Password', h(PvIcon, { name: 'chevron' })]),
+      h(RouterLink, { to: '/settings/security' }, () => [h(PvIcon, { name: 'shield' }), ' Two-Factor Authentication', h(PvIcon, { name: 'chevron' })]),
+      h('button', { disabled: exportingAccountData.value, onClick: exportAccountData }, [h(PvIcon, { name: 'download' }), exportingAccountData.value ? ' Exporting...' : ' Download My Data', h(PvIcon, { name: 'chevron' })]),
+      h(RouterLink, { to: '/settings/danger-zone' }, () => [h(PvIcon, { name: 'settings' }), ' Sign Out Everywhere', h(PvIcon, { name: 'chevron' })]),
+    ]),
+  ])
 }
 
 function settingsOptionPanel(title: string, options: Array<[string, BooleanUserSettingKey]>) {
@@ -4076,6 +5999,18 @@ function accountEmail(): string {
 
 function accountInitial(): string {
   return accountName().charAt(0).toUpperCase()
+}
+
+function accountAvatar(): string {
+  return assetUrl(String(authUserValue('avatar') || authUserValue('profile_photo_path') || authUserValue('profile_picture') || ''))
+}
+
+function accountAvatarNode(sizeClass = '') {
+  const avatar = accountAvatar()
+
+  return h('span', { class: ['pv-avatar', sizeClass, 'purple'] }, avatar
+    ? [h('img', { src: avatar, alt: accountName() })]
+    : accountInitial())
 }
 
 function accountRole(): string {

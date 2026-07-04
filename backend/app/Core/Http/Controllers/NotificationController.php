@@ -69,19 +69,18 @@ class NotificationController extends Controller
     public function unreadCount(Request $request)
     {
         $user = $request->user();
-        $count = $this->notificationService->getUnreadCount($user);
+        $systemUnread = $this->notificationService->getUnreadCount($user);
 
-        $messageUnread = CommunityMessageThread::query()
-            ->where('status', 'active')
-            ->where(function ($query) use ($user) {
-                $query->where('user_id', $user->id)
-                    ->orWhere('participant_user_id', $user->id);
-            })
-            ->sum('unread_count');
+        $communityUnread = \App\Core\Models\CommunityNotification::query()
+            ->where('status', 'published')
+            ->whereDoesntHave('reads', fn ($q) => $q->where('user_id', $user->id))
+            ->count();
+
+        $total = $systemUnread + $communityUnread;
 
         return response()->json([
-            'count' => $count + (int) $messageUnread,
-            'unread_count' => $count + (int) $messageUnread,
+            'count' => $total,
+            'unread_count' => $total,
         ]);
     }
 

@@ -71,6 +71,9 @@ Route::prefix('v1')->group(function () {
     // Public settings
     Route::get('/settings/public', [\App\Core\Http\Controllers\PublicSettingsController::class, 'index']);
 
+    // Public push VAPID key (needed before subscribing)
+    Route::get('/push/vapid-key', [PushSubscriptionController::class, 'vapidPublicKey']);
+
     // Private community content
     Route::middleware('auth:sanctum')->prefix('community')->group(function () {
         Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories']);
@@ -128,8 +131,6 @@ Route::prefix('v1')->group(function () {
             Route::post('/discussions/{discussion}/replies', [CommunityDiscussionController::class, 'reply']);
             Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe']);
             Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe']);
-            Route::get('/push/vapid-key', [PushSubscriptionController::class, 'vapidPublicKey']);
-
             Route::post('/discussions/{discussion}/reactions', [CommunityDiscussionController::class, 'reactToDiscussion']);
             Route::post('/discussions/{discussion}/report', [CommunityDiscussionController::class, 'reportDiscussion']);
             Route::post('/discussion-replies/{reply}/reactions', [CommunityDiscussionController::class, 'reactToReply']);

@@ -2,6 +2,7 @@
 
 namespace App\Core\Http\Resources;
 
+use App\Core\Models\CommunityDiscussionReaction;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -14,6 +15,11 @@ class CommunityDiscussionResource extends JsonResource
     public function toArray(Request $request): array
     {
         $authorName = $this->displayAuthorName();
+        $reactions = CommunityDiscussionReaction::query()
+            ->where('target_type', 'discussion')
+            ->where('target_id', $this->id)
+            ->get();
+        $userId = $request->user()?->id;
 
         return [
             'id' => $this->id,
@@ -27,6 +33,13 @@ class CommunityDiscussionResource extends JsonResource
             'is_locked' => $this->is_locked,
             'replies' => $this->replies_count,
             'views' => $this->views_count,
+            'reactions' => $reactions
+                ->groupBy('emoji')
+                ->map(fn ($items) => $items->count())
+                ->all(),
+            'viewer_reactions' => $userId
+                ? $reactions->where('user_id', $userId)->pluck('emoji')->values()->all()
+                : [],
             'href' => "/discussions/{$this->slug}",
             'category' => $this->category ? [
                 'id' => $this->category->id,
@@ -40,6 +53,7 @@ class CommunityDiscussionResource extends JsonResource
                 'name' => $authorName,
                 'username' => $this->user?->username,
                 'initial' => Str::upper(Str::substr($authorName, 0, 1)),
+                'avatar' => $this->user?->profile_picture ?? $this->user?->profile_photo_path ?? null,
             ],
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
@@ -47,6 +61,8 @@ class CommunityDiscussionResource extends JsonResource
             'time_ago' => $this->created_at?->diffForHumans(),
             'last_activity' => $this->last_reply_at?->diffForHumans() ?? $this->updated_at?->diffForHumans(),
             'reply_items' => CommunityDiscussionReplyResource::collection($this->whenLoaded('replies')),
+            'participants' => $this->community_participants ?? [],
+            'similar_discussions' => $this->community_similar_discussions ?? [],
         ];
     }
 }

@@ -5,6 +5,8 @@ const pushSupported = ref(false)
 const pushGranted = ref(false)
 
 export function usePushNotifications() {
+  let pendingInit = false
+
   async function init(userId: number | string) {
     if (!('serviceWorker' in navigator) || !('PushManager' in window)) {
       return
@@ -12,10 +14,29 @@ export function usePushNotifications() {
 
     pushSupported.value = true
 
+    if (Notification.permission === 'granted') {
+      await doSubscribe(userId)
+    }
+  }
+
+  async function requestPermission(userId: number | string) {
+    if (pendingInit) return
+    pendingInit = true
+    try {
+      const permission = await Notification.requestPermission()
+      if (permission === 'granted') {
+        pushGranted.value = true
+        await doSubscribe(userId)
+      }
+    } finally {
+      pendingInit = false
+    }
+  }
+
+  async function doSubscribe(userId: number | string) {
     try {
       const registration = await navigator.serviceWorker.ready
       const existing = await registration.pushManager.getSubscription()
-
       if (existing) {
         pushGranted.value = true
         return
@@ -24,17 +45,13 @@ export function usePushNotifications() {
       const { data } = await api.get<{ public_key: string }>('/api/v1/push/vapid-key')
       if (!data.public_key) return
 
-      const permission = await Notification.requestPermission()
-      if (permission !== 'granted') return
-
-      pushGranted.value = true
       const key = urlBase64ToUint8Array(data.public_key)
       const subscription = await registration.pushManager.subscribe({
         userVisibleOnly: true,
         applicationServerKey: key,
       })
 
-      await api.post('/api/v1/push/subscribe', {
+      await api.post('/api/v1/community/push/subscribe', {
         endpoint: subscription.endpoint,
         public_key: arrayBufferToBase64(subscription.getKey('p256dh')),
         auth_token: arrayBufferToBase64(subscription.getKey('auth')),
@@ -44,7 +61,7 @@ export function usePushNotifications() {
     }
   }
 
-  return { pushSupported, pushGranted, init }
+  return { pushSupported, pushGranted, init, requestPermission }
 }
 
 function urlBase64ToUint8Array(base64String: string): Uint8Array {

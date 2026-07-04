@@ -135,8 +135,8 @@ class CommunityVendorController extends Controller
             'logo_initials' => $this->initials($name),
             'logo_text' => $this->initials($name),
             'logo_class' => 'purple',
-            'status_label' => 'Listed',
-            'status_class' => 'caution',
+            'status_label' => 'Trusted',
+            'status_class' => 'trusted',
             'status' => 'published',
             'member_since' => now()->toDateString(),
             'last_active_at' => now(),
@@ -171,8 +171,8 @@ class CommunityVendorController extends Controller
             'claim_status' => 'verified',
             'status' => 'published',
             'status_label' => $vendor->status_label === 'Pending Verification'
-                ? 'Listed'
-                : ($vendor->status_label ?: 'Listed'),
+                ? 'Trusted'
+                : ($vendor->status_label ?: 'Trusted'),
             'status_class' => $vendor->status_class ?: 'caution',
             'last_active_at' => now(),
             'profile_submitted_at' => now(),
