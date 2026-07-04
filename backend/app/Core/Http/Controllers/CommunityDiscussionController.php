@@ -342,6 +342,23 @@ class CommunityDiscussionController extends Controller
             ->firstOrFail();
     }
 
+    public function destroyReply(Request $request, string $reply)
+    {
+        $replyModel = CommunityDiscussionReply::query()
+            ->whereKey($reply)
+            ->where('user_id', $request->user()->id)
+            ->firstOrFail();
+
+        $discussion = $replyModel->discussion;
+        if ($discussion) {
+            $discussion->decrement('replies_count');
+        }
+
+        $replyModel->update(['body' => '[deleted]']);
+
+        return response()->json(['success' => true, 'message' => 'Reply deleted.']);
+    }
+
     private function findPublishedReply(string $value): CommunityDiscussionReply
     {
         return CommunityDiscussionReply::query()

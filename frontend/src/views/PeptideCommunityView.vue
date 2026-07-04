@@ -431,7 +431,7 @@
                 <strong>{{ reactionCount(reply, emoji) }}</strong>
               </button>
             </div>
-            <div class="pv-reply-actions"><button @click="prepareReply(reply)">Reply</button><button @click="prepareReply(reply, true)">Quote</button><button @click="openReplyReport(reply)">Report</button></div>
+            <div class="pv-reply-actions"><button @click="prepareReply(reply)">Reply</button><button @click="prepareReply(reply, true)">Quote</button><button @click="openReplyReport(reply)">Report</button><button v-if="authStore.user?.id === reply.authorId" class="pv-reply-delete" @click="deleteReply(reply)">Delete</button></div>
           </div>
           <button class="pv-upvote" :class="{ active: hasVotedReply(reply) }" @click="toggleReplyVote(reply)">↑ {{ replyVoteCount(reply) }}</button>
         </article>
@@ -1341,6 +1341,7 @@ interface UiReply {
   attachmentMeta: Record<string, any>
   reactions: Record<string, number>
   viewerReactions: string[]
+  authorId?: number
 }
 
 interface ApiDiscussion {
@@ -3711,6 +3712,20 @@ async function submitReport(): Promise<void> {
   }
 }
 
+async function deleteReply(reply: UiReply): Promise<void> {
+  if (!reply.id || !confirm('Delete this reply?')) return
+
+  try {
+    await api.delete(`/api/v1/community/discussion-replies/${reply.id}`)
+    if (apiDetailDiscussion.value) {
+      apiDetailDiscussion.value = { ...apiDetailDiscussion.value, replies: Math.max(0, (apiDetailDiscussion.value.replies ?? 1) - 1) }
+    }
+    await loadDiscussionDetail()
+  } catch {
+    replyStatusMessage.value = 'Unable to delete reply.'
+  }
+}
+
 function handleReplyAttachment(event: Event): void {
   const input = event.target as HTMLInputElement
   const file = input.files?.[0] ?? null
@@ -3831,6 +3846,7 @@ function mapReply(item: ApiReply): UiReply {
   return {
     id: item.id,
     author,
+    authorId: item.author?.id,
     initial: item.author?.initial ?? author.charAt(0).toUpperCase(),
     color: colorForName(author),
     avatarUrl: replyAvatarUrl,

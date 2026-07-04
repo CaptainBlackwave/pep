@@ -1220,6 +1220,10 @@ table {
   color: var(--pv-muted);
 }
 
+.pv-reply-actions .pv-reply-delete {
+  color: #ef4444;
+}
+
 .pv-upvote {
   align-self: center;
   padding: 7px 13px;

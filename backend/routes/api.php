@@ -135,6 +135,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/discussions/{discussion}/report', [CommunityDiscussionController::class, 'reportDiscussion']);
             Route::post('/discussion-replies/{reply}/reactions', [CommunityDiscussionController::class, 'reactToReply']);
             Route::post('/discussion-replies/{reply}/report', [CommunityDiscussionController::class, 'reportReply']);
+            Route::delete('/discussion-replies/{reply}', [CommunityDiscussionController::class, 'destroyReply']);
             Route::post('/lab-results', [CommunityLabResultController::class, 'store']);
             Route::get('/vendor-profile', [CommunityVendorController::class, 'myVendorProfile']);
             Route::post('/vendor-profile/image', [CommunityVendorController::class, 'uploadVendorImage']);
