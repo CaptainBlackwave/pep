@@ -310,7 +310,7 @@
           <input
             v-model="testEmail"
             type="email"
-            placeholder="test@example.com"
+            placeholder="Recipient email address"
             class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:ring-amber-500 focus:border-amber-500"
           />
         </div>
@@ -488,7 +488,7 @@
           <input
             v-model="templateTestEmail"
             type="email"
-            placeholder="test@example.com"
+            placeholder="Recipient email address"
             class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:ring-amber-500 focus:border-amber-500"
           />
         </div>

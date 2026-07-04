@@ -1,8 +1,17 @@
 <?php
 
 use App\Core\Http\Controllers\AuthController;
+use App\Core\Http\Controllers\CommunityAnnouncementController;
+use App\Core\Http\Controllers\CommunityContentController;
+use App\Core\Http\Controllers\CommunityDiscussionController;
+use App\Core\Http\Controllers\CommunityLabResultController;
+use App\Core\Http\Controllers\CommunityMemberController;
+use App\Core\Http\Controllers\CommunityMessageController;
+use App\Core\Http\Controllers\CommunityNotificationController;
+use App\Core\Http\Controllers\CommunityVendorController;
 use App\Core\Http\Controllers\EmojiController;
 use App\Core\Http\Controllers\PluginController;
+use App\Core\Http\Controllers\UserSettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 
@@ -57,13 +66,65 @@ Route::prefix('v1')->group(function () {
         Route::post('/log-vue-error', [\App\Core\Http\Controllers\FrontendErrorController::class, 'logVueError']);
     });
 
+    // Public settings
+    Route::get('/settings/public', [\App\Core\Http\Controllers\PublicSettingsController::class, 'index']);
+
+    // Private community content
+    Route::middleware('auth:sanctum')->prefix('community')->group(function () {
+        Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories']);
+        Route::get('/discussions', [CommunityDiscussionController::class, 'index']);
+        Route::get('/discussions/{discussion}', [CommunityDiscussionController::class, 'show']);
+        Route::get('/lab-results', [CommunityLabResultController::class, 'index']);
+        Route::get('/lab-results/{result}', [CommunityLabResultController::class, 'show']);
+        Route::get('/vendors', [CommunityVendorController::class, 'index']);
+        Route::get('/vendors/{vendor}', [CommunityVendorController::class, 'show']);
+        Route::get('/announcements', [CommunityAnnouncementController::class, 'index']);
+        Route::get('/announcements/{announcement}', [CommunityAnnouncementController::class, 'show']);
+        Route::get('/notifications', [CommunityNotificationController::class, 'index']);
+        Route::get('/notifications/{notification}', [CommunityNotificationController::class, 'show']);
+        Route::get('/research-library', [CommunityContentController::class, 'researchIndex']);
+        Route::get('/research-library/{content}', [CommunityContentController::class, 'researchShow']);
+        Route::get('/guides', [CommunityContentController::class, 'guideIndex']);
+        Route::get('/guides/{content}', [CommunityContentController::class, 'guideShow']);
+        Route::get('/faqs', [CommunityContentController::class, 'faqIndex']);
+        Route::get('/members', [CommunityMemberController::class, 'index']);
+        Route::get('/members/{member}', [CommunityMemberController::class, 'show']);
+        Route::get('/messages', [CommunityMessageController::class, 'index']);
+        Route::get('/messages/{thread}', [CommunityMessageController::class, 'show']);
+    });
+
     // Protected authentication routes
     Route::middleware('auth:sanctum')->group(function () {
         Route::get('/user', [AuthController::class, 'user']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/logout-all', [AuthController::class, 'logoutAll']);
+        Route::patch('/user', [UserSettingsController::class, 'update']);
         Route::post('/user/change-password', [AuthController::class, 'changePassword']);
         Route::post('/user/username', [AuthController::class, 'updateUsername']);
+        Route::patch('/user/profile', [UserSettingsController::class, 'updateProfile']);
+        Route::post('/user/avatar', [UserSettingsController::class, 'avatar']);
+        Route::get('/user/notification-settings', [UserSettingsController::class, 'notificationSettings']);
+        Route::patch('/user/notification-settings', [UserSettingsController::class, 'updateNotificationSettings']);
+        Route::get('/user/preferences', [UserSettingsController::class, 'preferences']);
+        Route::patch('/user/preferences', [UserSettingsController::class, 'updatePreferences']);
+        Route::get('/user/privacy', [UserSettingsController::class, 'privacy']);
+        Route::patch('/user/privacy', [UserSettingsController::class, 'updatePrivacy']);
+        Route::get('/user/sessions', [UserSettingsController::class, 'sessions']);
+        Route::get('/user/api-tokens', [UserSettingsController::class, 'apiTokens']);
+        Route::post('/user/api-tokens', [UserSettingsController::class, 'createApiToken']);
+        Route::delete('/user/api-tokens/{token}', [UserSettingsController::class, 'deleteApiToken']);
+
+        Route::prefix('community')->group(function () {
+            Route::post('/discussions', [CommunityDiscussionController::class, 'store']);
+            Route::post('/discussions/{discussion}/replies', [CommunityDiscussionController::class, 'reply']);
+            Route::post('/lab-results', [CommunityLabResultController::class, 'store']);
+            Route::post('/vendors/{vendor}/reviews', [CommunityVendorController::class, 'storeReview']);
+            Route::post('/vendor-reviews/{review}/helpful', [CommunityVendorController::class, 'markReviewHelpful']);
+            Route::post('/messages', [CommunityMessageController::class, 'storeThread']);
+            Route::post('/messages/{thread}/messages', [CommunityMessageController::class, 'store']);
+            Route::post('/notifications/{notification}/read', [CommunityNotificationController::class, 'markAsRead']);
+            Route::post('/notifications/read-all', [CommunityNotificationController::class, 'markAllAsRead']);
+        });
 
         // Two-Factor Authentication (authenticated routes)
         Route::prefix('2fa')->controller(\App\Core\Http\Controllers\Auth\TwoFactorAuthController::class)->group(function () {
@@ -189,6 +250,61 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/templates/{id}', 'deleteTemplate');
                 Route::post('/templates/{id}/preview', 'previewTemplate');
                 Route::post('/templates/{id}/test', 'sendTestTemplate');
+            });
+
+            Route::prefix('community/discussions')->controller(\App\Core\Http\Controllers\Admin\CommunityDiscussionModerationController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::patch('/{discussion}', 'update');
+                Route::delete('/{discussion}', 'destroy');
+            });
+
+            Route::apiResource('community/categories', \App\Core\Http\Controllers\Admin\CommunityCategoryAdminController::class)
+                ->parameters(['categories' => 'category']);
+
+            Route::prefix('community/lab-results')->controller(\App\Core\Http\Controllers\Admin\CommunityLabResultAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::patch('/{result}', 'update');
+                Route::delete('/{result}', 'destroy');
+            });
+
+            Route::prefix('community/vendors')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store');
+                Route::patch('/{vendor}', 'update');
+                Route::delete('/{vendor}', 'destroy');
+            });
+
+            Route::prefix('community/vendor-reviews')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorReviewAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::patch('/{review}', 'update');
+                Route::delete('/{review}', 'destroy');
+            });
+
+            Route::prefix('community/announcements')->controller(\App\Core\Http\Controllers\Admin\CommunityAnnouncementAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store');
+                Route::patch('/{announcement}', 'update');
+                Route::delete('/{announcement}', 'destroy');
+            });
+
+            Route::prefix('community/notifications')->controller(\App\Core\Http\Controllers\Admin\CommunityNotificationAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store');
+                Route::patch('/{notification}', 'update');
+                Route::delete('/{notification}', 'destroy');
+            });
+
+            Route::prefix('community/access-codes')->controller(\App\Core\Http\Controllers\Admin\CommunityAccessCodeAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store');
+                Route::delete('/{accessCode}', 'destroy');
+            });
+
+            Route::prefix('community/content')->controller(\App\Core\Http\Controllers\Admin\CommunityContentAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store');
+                Route::patch('/{content}', 'update');
+                Route::delete('/{content}', 'destroy');
             });
 
             // Locations and Memberships are now provided by plugins

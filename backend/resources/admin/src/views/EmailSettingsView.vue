@@ -248,7 +248,7 @@
         <h3 class="text-lg font-medium text-white mb-4">Send Test Email</h3>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
-          <input v-model="testEmail" type="email" placeholder="test@example.com" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:ring-amber-500 focus:border-amber-500" />
+          <input v-model="testEmail" type="email" placeholder="Recipient email address" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:ring-amber-500 focus:border-amber-500" />
         </div>
         <div class="flex justify-end space-x-3">
           <button @click="showTestModal = false" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500">Cancel</button>
@@ -339,7 +339,7 @@
         <h3 class="text-lg font-medium text-white mb-4">Send Test Email</h3>
         <div class="mb-4">
           <label class="block text-sm font-medium text-gray-300 mb-1">Email Address</label>
-          <input v-model="templateTestEmail" type="email" placeholder="test@example.com" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:ring-amber-500 focus:border-amber-500" />
+          <input v-model="templateTestEmail" type="email" placeholder="Recipient email address" class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:ring-amber-500 focus:border-amber-500" />
         </div>
         <div class="flex justify-end space-x-3">
           <button @click="showSendTestTemplateModal = false" class="px-4 py-2 bg-gray-600 text-white rounded-md hover:bg-gray-500">Cancel</button>

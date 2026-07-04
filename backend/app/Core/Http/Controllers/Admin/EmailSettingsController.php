@@ -249,17 +249,17 @@ class EmailSettingsController extends Controller
     {
         $template = EmailTemplate::findOrFail($id);
 
-        // Generate sample data for preview
-        $sampleData = [
+        $user = $request->user();
+        $previewData = array_merge([
             'app_name' => config('app.name'),
-            'username' => 'SampleUser',
-            'email' => 'sample@example.com',
+            'username' => $user?->username ?: $user?->name,
+            'email' => $user?->email,
             'login_url' => config('app.frontend_url', config('app.url')) . '/login',
-            'reset_url' => config('app.frontend_url', config('app.url')) . '/reset-password?token=sample-token',
+            'reset_url' => config('app.frontend_url', config('app.url')) . '/reset-password',
             'expiry_minutes' => '60',
-        ];
+        ], $request->input('data', []));
 
-        $rendered = $template->render($sampleData);
+        $rendered = $template->render($previewData);
 
         return response()->json([
             'success' => true,

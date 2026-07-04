@@ -4,6 +4,7 @@ namespace App\Core\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\Relations\HasOne;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
@@ -74,7 +75,11 @@ class User extends Authenticatable
         'password',
         'email_verified_at',
         'bio',
+        'timezone',
+        'locale',
+        'website_url',
         'profile_picture',
+        'profile_photo_path',
         'force_password_change',
         'last_active',
         'last_login_at',
@@ -147,6 +152,31 @@ class User extends Authenticatable
     public function profile(): HasOne
     {
         return $this->hasOne(PlayerProfile::class);
+    }
+
+    public function settings(): HasOne
+    {
+        return $this->hasOne(UserSetting::class);
+    }
+
+    public function communityDiscussions(): HasMany
+    {
+        return $this->hasMany(CommunityDiscussion::class);
+    }
+
+    public function communityDiscussionReplies(): HasMany
+    {
+        return $this->hasMany(CommunityDiscussionReply::class);
+    }
+
+    public function communityLabResults(): HasMany
+    {
+        return $this->hasMany(CommunityLabResult::class, 'submitted_by_user_id');
+    }
+
+    public function communityVendorReviews(): HasMany
+    {
+        return $this->hasMany(CommunityVendorReview::class);
     }
 
     public function oauthProviders()

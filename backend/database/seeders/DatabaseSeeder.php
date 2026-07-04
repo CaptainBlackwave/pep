@@ -12,18 +12,22 @@ class DatabaseSeeder extends Seeder
      */
     public function run(): void
     {
-        // Core seeders (always run)
+        // Core system metadata only. Community content is created by members/admins.
         $this->call([
             RolePermissionSeeder::class,
             SettingsTableSeeder::class,
             PluginSeeder::class,
             ModuleSeeder::class,
             // TicketCategorySeeder::class, // Moved to Tickets plugin
-
-            // User accounts for development/testing
-            DefaultAdminSeeder::class,
-            TestUserSeeder::class,
         ]);
+
+        if ((bool) env('SEED_DEVELOPMENT_USERS', false)) {
+            $this->call([
+                // User accounts for development/testing
+                DefaultAdminSeeder::class,
+                TestUserSeeder::class,
+            ]);
+        }
 
         // NOTE: Gaming content seeders have been moved to plugins.
         // The following seeders are now provided by the gaming plugin bundle:

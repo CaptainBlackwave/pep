@@ -156,9 +156,7 @@ class SystemHealthController extends Controller
      */
     protected function getNetworkSpeed(string $direction): string
     {
-        // This would require continuous monitoring to calculate speed
-        // For now, return placeholder
-        return $direction === 'tx' ? '125 KB/s' : '890 KB/s';
+        return 'Unavailable';
     }
 
     /**
@@ -660,8 +658,15 @@ class SystemHealthController extends Controller
      */
     protected function getProcessUptime(string $process): ?string
     {
-        // Would need to check process list - return placeholder
-        return '15 days';
+        $process = preg_replace('/[^a-zA-Z0-9:_-]/', '', $process);
+        if (!$process) {
+            return null;
+        }
+
+        $output = shell_exec("ps -eo comm,etime | awk '$1 ~ /{$process}/ {print $2; exit}' 2>/dev/null");
+        $elapsed = trim((string) $output);
+
+        return $elapsed !== '' ? $elapsed : null;
     }
 
     protected function isQueueWorkerRunning(): bool

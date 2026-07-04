@@ -118,6 +118,46 @@ const router = createRouter({
           name: 'plugin-settings',
           component: () => import('../views/PluginsView.vue')
         },
+        {
+          path: '/community-discussions',
+          name: 'community-discussions',
+          component: () => import('../views/CommunityDiscussionsView.vue')
+        },
+        {
+          path: '/community-categories',
+          name: 'community-categories',
+          component: () => import('../views/CommunityCategoriesView.vue')
+        },
+        {
+          path: '/community-lab-results',
+          name: 'community-lab-results',
+          component: () => import('../views/CommunityLabResultsView.vue')
+        },
+        {
+          path: '/community-vendors',
+          name: 'community-vendors',
+          component: () => import('../views/CommunityVendorsView.vue')
+        },
+        {
+          path: '/community-announcements',
+          name: 'community-announcements',
+          component: () => import('../views/CommunityAnnouncementsView.vue')
+        },
+        {
+          path: '/community-notifications',
+          name: 'community-notifications',
+          component: () => import('../views/CommunityNotificationsView.vue')
+        },
+        {
+          path: '/community-access-codes',
+          name: 'community-access-codes',
+          component: () => import('../views/CommunityAccessCodesView.vue')
+        },
+        {
+          path: '/community-content',
+          name: 'community-content',
+          component: () => import('../views/CommunityContentView.vue')
+        },
         // System
         {
           path: '/ip-bans',

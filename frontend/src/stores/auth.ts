@@ -93,7 +93,8 @@ export const useAuthStore = defineStore('auth', () => {
           username: userData.username,
           email: userData.email,
           password: userData.password,
-          password_confirmation: userData.password_confirmation
+          password_confirmation: userData.password_confirmation,
+          access_code: userData.access_code
         }
       )
 

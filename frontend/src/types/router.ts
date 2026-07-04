@@ -15,6 +15,7 @@ export interface RouteMeta {
   transition?: string
   keepAlive?: boolean
   plugin?: string
+  page?: string
 }
 
 /**
@@ -29,6 +30,7 @@ declare module 'vue-router' {
     transition?: string
     keepAlive?: boolean
     plugin?: string
+    page?: string
   }
 }
 

@@ -147,7 +147,7 @@ export default defineConfig({
   },
   // Optimize dependencies
   optimizeDeps: {
-    include: ['vue', 'vue-router', 'pinia', 'axios'],
+    include: ['vue', 'vue-router', 'pinia', 'axios', 'emoji-mart'],
     // Force pre-bundling even if dependencies change
     force: false,
   },

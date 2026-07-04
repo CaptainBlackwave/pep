@@ -630,16 +630,11 @@ async function loadBackups() {
     stats.value = response.data.stats || stats.value
   } catch (error) {
     console.error('Failed to load backups:', error)
-    // Sample data
-    backups.value = [
-      { id: 1, name: 'Daily Backup', filename: 'backup_2025_02_04_030000.zip', type: 'full', size: '256 MB', created_at: '2025-02-04 03:00', status: 'completed' },
-      { id: 2, name: 'Manual Backup', filename: 'backup_2025_02_03_142530.zip', type: 'database', size: '128 MB', created_at: '2025-02-03 14:25', status: 'completed' },
-      { id: 3, name: 'Pre-update Backup', filename: 'backup_2025_02_02_180000.zip', type: 'full', size: '245 MB', created_at: '2025-02-02 18:00', status: 'completed' }
-    ]
+    backups.value = []
     stats.value = {
-      total_backups: 3,
-      storage_used: '629 MB',
-      last_backup: '2 hours ago'
+      total_backups: 0,
+      storage_used: '0 B',
+      last_backup: null
     }
   } finally {
     loading.value = false

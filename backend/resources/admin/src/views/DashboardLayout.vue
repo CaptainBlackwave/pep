@@ -186,7 +186,7 @@
                 >
                   <div class="p-4 border-b border-slate-700/50">
                     <p class="text-sm font-medium text-white">{{ user?.username || 'Admin' }}</p>
-                    <p class="text-xs text-slate-400">{{ user?.email || 'admin@example.com' }}</p>
+                    <p class="text-xs text-slate-400">{{ user?.email || 'No email on file' }}</p>
                   </div>
                   <div class="py-2">
                     <button
@@ -445,10 +445,16 @@ const toggleSidebarCollapse = () => {
   localStorage.setItem('sidebar_collapsed', sidebarCollapsed.value.toString())
 }
 
-const logout = () => {
-  localStorage.removeItem('admin_token')
-  localStorage.removeItem('admin_user')
-  router.push('/login')
+const logout = async () => {
+  try {
+    await api.post('/logout')
+  } catch {
+    // Clear the local admin session even if the token was already invalid.
+  } finally {
+    localStorage.removeItem('admin_token')
+    localStorage.removeItem('admin_user')
+    router.push('/login')
+  }
 }
 
 const editProfile = () => {

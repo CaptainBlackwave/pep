@@ -32,7 +32,10 @@
             </div>
             <div class="form-group">
               <label>Bio</label>
-              <textarea v-model="settings.bio" class="form-textarea" rows="3" placeholder="Tell us about yourself..."></textarea>
+              <div class="pv-textarea-with-emoji">
+                <textarea v-model="settings.bio" class="form-textarea" rows="3" placeholder="Tell us about yourself..."></textarea>
+                <EmojiPicker v-model="settings.bio" />
+              </div>
             </div>
           </div>
         </section>
@@ -152,6 +155,7 @@
 import { ref, onMounted } from 'vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
+import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 
 interface Message {
   type: 'success' | 'error'

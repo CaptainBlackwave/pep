@@ -17,6 +17,8 @@ class UserResource extends JsonResource
 
         $profileLoaded = $this->resource->relationLoaded('profile');
         $profile = $profileLoaded ? $this->resource->profile : null;
+        $settingsLoaded = $this->resource->relationLoaded('settings');
+        $settings = $settingsLoaded ? $this->resource->settings : null;
 
         // Use the profile's currentRank/currentLocation relations (plugin-owned)
         $rankLoaded = $profileLoaded && $profile && method_exists($profile, 'relationLoaded') && $profile->relationLoaded('currentRank');
@@ -28,6 +30,12 @@ class UserResource extends JsonResource
             'name'     => $this->name,
             'username' => $attrs['username'] ?? $this->name ?? null,
             'email'    => $this->email,
+            'bio'      => $attrs['bio'] ?? null,
+            'avatar'   => $attrs['profile_photo_path'] ?? $attrs['profile_picture'] ?? null,
+            'profile_photo_path' => $attrs['profile_photo_path'] ?? null,
+            'timezone' => $attrs['timezone'] ?? null,
+            'locale'   => $attrs['locale'] ?? null,
+            'website_url' => $attrs['website_url'] ?? null,
 
             // Game/plugin stats (Progression-owned) — only if profile eager-loaded
             'level'        => $profileLoaded ? ($profile?->level ?? null) : null,
@@ -79,6 +87,23 @@ class UserResource extends JsonResource
                 ? ($attrs['email_verified_at'] ? \Illuminate\Support\Carbon::parse($attrs['email_verified_at'])->toISOString() : null)
                 : null,
             'two_factor_enabled'    => $this->hasTwoFactorEnabled(),
+            'email_notifications'   => $settings?->email_notifications ?? true,
+            'push_notifications'    => $settings?->push_notifications ?? true,
+            'sound_enabled'         => $settings?->sound_enabled ?? true,
+            'show_online'           => $settings?->show_online ?? true,
+            'public_profile'        => $settings?->public_profile ?? true,
+            'profile_visibility'    => $settings?->profile_visibility ?? 'everyone',
+            'direct_messages'       => $settings?->direct_messages ?? 'members_only',
+            'show_read_topics'      => $settings?->show_read_topics ?? true,
+            'show_typing'           => $settings?->show_typing ?? true,
+            'show_recent_activity'  => $settings?->show_recent_activity ?? true,
+            'personalize_experience' => $settings?->personalize_experience ?? true,
+            'allow_analytics'       => $settings?->allow_analytics ?? false,
+            'compact_discussions'   => $settings?->compact_discussions ?? false,
+            'show_online_members'   => $settings?->show_online_members ?? true,
+            'remember_content_filters' => $settings?->remember_content_filters ?? true,
+            'theme'                 => $settings?->theme ?? 'dark',
+            'language'              => $settings?->language ?? 'en',
 
             // Relationships (only when eager-loaded)
             'roles' => $this->whenLoaded('roles', fn () => $this->roles->pluck('name')),

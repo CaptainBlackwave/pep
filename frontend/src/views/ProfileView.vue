@@ -85,12 +85,15 @@
             </div>
             <div class="form-group">
               <label>Bio</label>
-              <textarea
-                v-model="profileForm.bio"
-                class="form-textarea"
-                rows="4"
-                placeholder="Tell us about yourself..."
-              ></textarea>
+              <div class="pv-textarea-with-emoji">
+                <textarea
+                  v-model="profileForm.bio"
+                  class="form-textarea"
+                  rows="4"
+                  placeholder="Tell us about yourself..."
+                ></textarea>
+                <EmojiPicker v-model="profileForm.bio" />
+              </div>
             </div>
           </div>
         </section>
@@ -150,6 +153,7 @@
 import { ref, onMounted } from 'vue'
 import { useUserStore } from '@/stores/user'
 import { useToast } from '@/composables/useToast'
+import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 
 interface Message {
   type: 'success' | 'error'

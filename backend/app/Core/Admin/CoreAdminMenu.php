@@ -37,6 +37,22 @@ class CoreAdminMenu
                     [ 'route' => '/license',        'label' => 'License',     'icon' => 'KeyIcon' ],
                 ],
             ],
+            [
+                'id' => 'peptide-vendors',
+                'label' => 'Peptide Vendors',
+                'icon' => 'BeakerIcon',
+                'order' => 3,
+                'children' => [
+                    [ 'route' => '/community-discussions', 'label' => 'Discussions', 'icon' => 'ChatBubbleLeftRightIcon' ],
+                    [ 'route' => '/community-categories', 'label' => 'Categories', 'icon' => 'TagIcon' ],
+                    [ 'route' => '/community-lab-results', 'label' => 'Lab Results', 'icon' => 'BeakerIcon' ],
+                    [ 'route' => '/community-vendors', 'label' => 'Vendors', 'icon' => 'StarIcon' ],
+                    [ 'route' => '/community-announcements', 'label' => 'Announcements', 'icon' => 'MegaphoneIcon' ],
+                    [ 'route' => '/community-notifications', 'label' => 'Notifications', 'icon' => 'BellIcon' ],
+                    [ 'route' => '/community-access-codes', 'label' => 'Access Codes', 'icon' => 'KeyIcon' ],
+                    [ 'route' => '/community-content', 'label' => 'Content Library', 'icon' => 'DocumentTextIcon' ],
+                ],
+            ],
             // Communication section removed - no backend implementations
             // See ADMIN_MENU_AUDIT.md for tracking
             // Support section removed - no backend implementations

@@ -1,205 +1,140 @@
 import { createRouter, createWebHistory, type RouteRecordRaw } from 'vue-router'
+import { useAuthStore } from '@/stores/auth'
 import type { RouteMeta } from '@/types/router'
-import '@/types/router' // Import for route meta type augmentation
-import { usePluginsStore } from '@/stores/plugins'
-import { registerPluginRoutes } from '@/composables/usePluginRoutes'
+import '@/types/router'
 
-// Re-export RouteMeta for convenience
 export type { RouteMeta } from '@/types/router'
 
-// Plugin slug to route mapping - used for static route definitions
-// Dynamic routes are loaded from backend via PluginManifestService
-// All gaming/utility plugins are now loaded dynamically from bundles
-const pluginRoutes: Record<string, string[]> = {}
+const peptidePage = () => import('@/views/PeptideCommunityView.vue')
 
-// Reverse mapping: route name -> plugin slug
-const routeToPlugin: Record<string, string> = {}
-Object.entries(pluginRoutes).forEach(([plugin, routes]) => {
-  routes.forEach(route => {
-    routeToPlugin[route] = plugin
-  })
-})
-
-/**
- * Route definitions with lazy loading for optimal bundle size
- * Core routes only - gaming routes are provided by plugins
- */
 const routes: RouteRecordRaw[] = [
-  // Root redirect
   {
     path: '/',
-    redirect: '/dashboard'
+    redirect: '/home',
   },
-
-  // Guest-only routes (authentication)
   {
     path: '/login',
     name: 'login',
     component: () => import('@/views/LoginView.vue'),
-    meta: { requiresGuest: true, title: 'Login' } satisfies RouteMeta
+    meta: { title: 'Login', requiresGuest: true } satisfies RouteMeta,
   },
   {
     path: '/register',
     name: 'register',
     component: () => import('@/views/RegisterView.vue'),
-    meta: { requiresGuest: true, title: 'Register' } satisfies RouteMeta
+    meta: { title: 'Register', requiresGuest: true } satisfies RouteMeta,
   },
   {
     path: '/forgot-password',
     name: 'forgot-password',
     component: () => import('@/views/ForgotPasswordView.vue'),
-    meta: { requiresGuest: true, title: 'Forgot Password' } satisfies RouteMeta
+    meta: { title: 'Forgot Password' } satisfies RouteMeta,
   },
   {
     path: '/reset-password',
     name: 'reset-password',
     component: () => import('@/views/ResetPasswordView.vue'),
-    meta: { requiresGuest: true, title: 'Reset Password' } satisfies RouteMeta
+    meta: { title: 'Reset Password' } satisfies RouteMeta,
   },
-
-  // Authenticated routes with CoreLayout
+  {
+    path: '/terms',
+    name: 'terms',
+    component: peptidePage,
+    meta: { title: 'Terms of Service', page: 'legalTerms' } satisfies RouteMeta,
+  },
+  {
+    path: '/privacy',
+    name: 'privacy',
+    component: peptidePage,
+    meta: { title: 'Privacy Policy', page: 'legalPrivacy' } satisfies RouteMeta,
+  },
+  {
+    path: '/community-rules',
+    name: 'community-rules',
+    component: peptidePage,
+    meta: { title: 'Community Rules', page: 'legalRules' } satisfies RouteMeta,
+  },
   {
     path: '/',
     component: () => import('@/layouts/CoreLayout.vue'),
     meta: { requiresAuth: true } satisfies RouteMeta,
     children: [
-      // Dashboard & Home (Core)
-      {
-        path: 'dashboard',
-        name: 'dashboard',
-        component: () => import('@/views/HomeView.vue'),
-        meta: { title: 'Dashboard' } satisfies RouteMeta
-      },
-      {
-        path: 'home',
-        name: 'home',
-        component: () => import('@/views/HomeView.vue'),
-        meta: { title: 'Home' } satisfies RouteMeta
-      },
-
-      // Core Profile (Core)
-      {
-        path: 'profile',
-        name: 'profile',
-        component: () => import('@/views/ProfileView.vue'),
-        meta: { title: 'Profile' } satisfies RouteMeta
-      },
-
-      // Activity Log (Core)
-      {
-        path: 'activity',
-        name: 'activity',
-        component: () => import('@/views/ActivityView.vue'),
-        meta: { title: 'Activity' } satisfies RouteMeta
-      },
-
-      // User Settings (Core)
-      {
-        path: 'settings',
-        name: 'settings',
-        component: () => import('@/views/SettingsView.vue'),
-        meta: { title: 'Settings' } satisfies RouteMeta
-      },
-      {
-        path: 'notifications',
-        name: 'notifications',
-        component: () => import('@/views/NotificationsView.vue'),
-        meta: { title: 'Notifications' } satisfies RouteMeta
-      },
-
-      // NOTE: Gaming routes (crimes, gym, hospital, bank, drugs, theft, racing,
-      // jail, properties, bounty, detective, bullets, gang, organized-crime,
-      // chat, messaging, achievements, leaderboards, employment, education,
-      // quests, alliances, shop, market, stocks, casino, explore, hunting,
-      // events, tournament, inventory, missions, combat, scavenge, skills,
-      // forums, announcements, daily-rewards) are now provided by plugins.
-      // Install the gaming bundle to restore these features.
-    ]
+      { path: 'dashboard', name: 'dashboard', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
+      { path: 'home', name: 'home', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
+      { path: 'discussions', name: 'discussions', component: peptidePage, meta: { title: 'Discussions', page: 'discussions' } satisfies RouteMeta },
+      { path: 'discussions/:slug', name: 'discussion-detail', component: peptidePage, meta: { title: 'Discussion', page: 'discussionDetail' } satisfies RouteMeta },
+      { path: 'lab-results', name: 'lab-results', component: peptidePage, meta: { title: 'Lab Results', page: 'labResults' } satisfies RouteMeta },
+      { path: 'lab-results/:slug', name: 'lab-report', component: peptidePage, meta: { title: 'Lab Result Report', page: 'labReport' } satisfies RouteMeta },
+      { path: 'vendor-reviews', name: 'vendor-reviews', component: peptidePage, meta: { title: 'Vendor Reviews', page: 'vendorReviews' } satisfies RouteMeta },
+      { path: 'vendor-reviews/:slug', name: 'vendor-detail', component: peptidePage, meta: { title: 'Vendor Reviews', page: 'vendorDetail' } satisfies RouteMeta },
+      { path: 'vendor-reviews/:slug/reviews', redirect: to => `/vendor-reviews/${String(to.params.slug)}` },
+      { path: 'vendor-reviews/:slug/review', name: 'vendor-review-modal', component: peptidePage, meta: { title: 'Write a Review', page: 'reviewModal' } satisfies RouteMeta },
+      { path: 'research-library', name: 'research-library', component: peptidePage, meta: { title: 'Research Library', page: 'researchLibrary' } satisfies RouteMeta },
+      { path: 'research-library/:slug', name: 'research-article', component: peptidePage, meta: { title: 'Research Article', page: 'researchArticle' } satisfies RouteMeta },
+      { path: 'guides', name: 'guides', component: peptidePage, meta: { title: 'Guides & FAQ', page: 'guides' } satisfies RouteMeta },
+      { path: 'guides/:slug', name: 'guide-detail', component: peptidePage, meta: { title: 'Guide', page: 'guideDetail' } satisfies RouteMeta },
+      { path: 'members', name: 'members', component: peptidePage, meta: { title: 'Members', page: 'members' } satisfies RouteMeta },
+      { path: 'members/:slug', name: 'member-detail', component: peptidePage, meta: { title: 'Member Profile', page: 'memberDetail' } satisfies RouteMeta },
+      { path: 'messages', name: 'messages', component: peptidePage, meta: { title: 'Messages', page: 'messages' } satisfies RouteMeta },
+      { path: 'announcements', name: 'announcements', component: peptidePage, meta: { title: 'Announcements', page: 'announcements' } satisfies RouteMeta },
+      { path: 'announcements/new', name: 'announcement-new', component: peptidePage, meta: { title: 'Create New Announcement', page: 'announcementNew' } satisfies RouteMeta },
+      { path: 'announcements/:slug', name: 'announcement-detail', component: peptidePage, meta: { title: 'Announcement', page: 'announcementDetail' } satisfies RouteMeta },
+      { path: 'notifications', name: 'notifications', component: peptidePage, meta: { title: 'Notifications', page: 'notifications' } satisfies RouteMeta },
+      { path: 'notifications/:slug', name: 'notification-detail', component: peptidePage, meta: { title: 'Notification', page: 'notificationDetail' } satisfies RouteMeta },
+      { path: 'settings', name: 'settings', component: peptidePage, meta: { title: 'Account Settings', page: 'settingsProfile' } satisfies RouteMeta },
+      { path: 'settings/account', name: 'settings-account', component: peptidePage, meta: { title: 'Account Settings', page: 'settingsAccount' } satisfies RouteMeta },
+      { path: 'settings/security', name: 'settings-security', component: peptidePage, meta: { title: 'Security', page: 'settingsSecurity' } satisfies RouteMeta },
+      { path: 'settings/privacy', name: 'settings-privacy', component: peptidePage, meta: { title: 'Privacy', page: 'settingsPrivacy' } satisfies RouteMeta },
+      { path: 'settings/notifications', name: 'settings-notifications', component: peptidePage, meta: { title: 'Notification Settings', page: 'settingsNotifications' } satisfies RouteMeta },
+      { path: 'settings/preferences', name: 'settings-preferences', component: peptidePage, meta: { title: 'Preferences', page: 'settingsPreferences' } satisfies RouteMeta },
+      { path: 'settings/blocked-users', name: 'settings-blocked-users', component: peptidePage, meta: { title: 'Blocked Users', page: 'settingsBlocked' } satisfies RouteMeta },
+      { path: 'settings/api-tokens', name: 'settings-api-tokens', component: peptidePage, meta: { title: 'API Tokens', page: 'settingsApi' } satisfies RouteMeta },
+      { path: 'settings/sessions', name: 'settings-sessions', component: peptidePage, meta: { title: 'Sessions', page: 'settingsSessions' } satisfies RouteMeta },
+      { path: 'settings/danger-zone', name: 'settings-danger-zone', component: peptidePage, meta: { title: 'Danger Zone', page: 'settingsDanger' } satisfies RouteMeta },
+      { path: 'settings/:section', name: 'settings-placeholder', component: peptidePage, meta: { title: 'Account Settings', page: 'settingsProfile' } satisfies RouteMeta },
+      { path: 'telegram-updates', name: 'telegram-updates', component: peptidePage, meta: { title: 'Telegram Updates', page: 'telegramUpdates' } satisfies RouteMeta },
+      { path: 'profile', redirect: '/settings' },
+      { path: 'activity', redirect: '/members' },
+    ],
   },
-
-  // 404 Catch-all route
   {
     path: '/:pathMatch(.*)*',
     name: 'not-found',
     component: () => import('@/views/NotFoundView.vue'),
-    meta: { title: 'Page Not Found' } satisfies RouteMeta
-  }
+    meta: { title: 'Page Not Found' } satisfies RouteMeta,
+  },
 ]
 
-/**
- * Create router instance
- */
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
   routes,
   scrollBehavior(_to, _from, savedPosition) {
-    if (savedPosition) {
-      return savedPosition
-    }
-    return { top: 0 }
-  }
+    return savedPosition ?? { top: 0 }
+  },
 })
 
-/**
- * Initialize dynamic plugin routes
- * Called after plugins are loaded from the backend
- */
-export async function initializePluginRoutes(): Promise<void> {
-  const pluginsStore = usePluginsStore()
-
-  // Fetch enabled plugins if not already loaded
-  if (!pluginsStore.loaded) {
-    await pluginsStore.fetchPlugins()
-  }
-
-  // Register dynamic routes from plugins
-  if (pluginsStore.routes.length > 0) {
-    registerPluginRoutes(router, pluginsStore.routes)
-  }
-}
-
-/**
- * Navigation guard for authentication and plugin routes
- */
-router.beforeEach(async (to, _from, next) => {
-  const user = localStorage.getItem('user')
-  const requiresAuth = to.matched.some(record => record.meta.requiresAuth)
-  const requiresGuest = to.matched.some(record => record.meta.requiresGuest)
-
-  // Update document title if route has a title
+router.beforeEach((to) => {
+  const authStore = useAuthStore()
+  const hasStoredToken = Boolean(localStorage.getItem('auth_token'))
   const title = to.meta?.title as string | undefined
   if (title) {
-    const appName = import.meta.env.VITE_APP_NAME || 'Core Web App'
-    document.title = `${title} | ${appName}`
+    document.title = `${title} | Peptide Vendors`
   }
 
-  // Initialize plugin routes on first authenticated navigation
-  const pluginsStore = usePluginsStore()
-  if (user && !pluginsStore.loaded) {
-    await initializePluginRoutes()
+  if (to.meta.requiresAuth && !authStore.isAuthenticated && !hasStoredToken) {
+    return {
+      path: '/login',
+      query: { redirect: to.fullPath },
+    }
   }
 
-  if (requiresAuth && !user) {
-    // Redirect to login if auth required but not authenticated
-    next({ name: 'login', query: { redirect: to.fullPath } })
-    return
+  if (to.meta.requiresGuest && (authStore.isAuthenticated || hasStoredToken)) {
+    return '/home'
   }
-
-  if (requiresGuest && user) {
-    // Redirect to dashboard if guest route but already authenticated
-    next({ name: 'dashboard' })
-    return
-  }
-
-  // Check if route requires an enabled plugin
-  const pluginSlug = to.meta?.plugin as string | undefined
-  if (pluginSlug && !pluginsStore.isEnabled(pluginSlug)) {
-    // Plugin not enabled, redirect to dashboard
-    next({ name: 'dashboard' })
-    return
-  }
-
-  next()
 })
+
+export async function initializePluginRoutes(): Promise<void> {
+  // Kept as a no-op compatibility hook for code that imports the old initializer.
+}
 
 export default router

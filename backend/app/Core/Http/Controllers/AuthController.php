@@ -7,6 +7,7 @@ use App\Core\Http\Requests\ChangePasswordRequest;
 use App\Core\Http\Requests\LoginRequest;
 use App\Core\Http\Requests\RegisterRequest;
 use App\Core\Http\Resources\UserResource;
+use App\Core\Models\CommunityAccessCode;
 use App\Core\Models\EmailSetting;
 use App\Core\Models\User;
 use App\Mail\DynamicEmail;
@@ -52,6 +53,18 @@ class AuthController extends Controller
         // Wrap user creation, profile seeding, and role assignment in a transaction.
         // A partial failure (e.g. role table missing) must not leave a user without a profile.
         $user = DB::transaction(function () use ($validated, $firstRank, $firstLocation) {
+            $accessCode = CommunityAccessCode::query()
+                ->available()
+                ->where('code_hash', CommunityAccessCode::hashCode($validated['access_code']))
+                ->lockForUpdate()
+                ->first();
+
+            if (!$accessCode) {
+                throw ValidationException::withMessages([
+                    'access_code' => ['The access code is invalid or has already been used.'],
+                ]);
+            }
+
             // Create identity-only — no game stats on the users table.
             $user = User::create([
                 'name'     => $validated['username'],
@@ -61,8 +74,8 @@ class AuthController extends Controller
             ]);
 
             // User::booted() auto-creates a profile with column defaults.
-            // Seed the game-specific starting values on top of those defaults.
-            $user->profile()->update([
+            // Seed only columns present in this install; rank/location are plugin-owned.
+            $profileDefaults = [
                 'rank_id'     => $firstRank?->id,
                 'rank'        => $firstRank?->name ?? 'Thug',
                 'location_id' => $firstLocation?->id,
@@ -77,12 +90,18 @@ class AuthController extends Controller
                 'bank'        => 0,
                 'bullets'     => 50,
                 'respect'     => 0,
-            ]);
+            ];
+            $profileColumns = \Schema::hasTable('player_profiles')
+                ? array_flip(\Schema::getColumnListing('player_profiles'))
+                : [];
+            $user->profile()->update(array_intersect_key($profileDefaults, $profileColumns));
 
             // Assign default player role
             if (\Spatie\Permission\Models\Role::where('name', 'user')->exists()) {
                 $user->assignRole('user');
             }
+
+            $accessCode->markUsedBy($user);
 
             return $user;
         });
@@ -108,7 +127,7 @@ class AuthController extends Controller
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'user' => new UserResource($user->load(['profile', 'roles'])),
+            'user' => new UserResource($user->load(['profile', 'roles', 'settings'])),
             'token' => $token,
         ], 201);
     }
@@ -149,14 +168,14 @@ class AuthController extends Controller
             return response()->json([
                 'two_factor_required' => true,
                 'challenge_token' => $challengeToken,
-                'user' => new UserResource($user->load(['profile', 'roles'])),
+                'user' => new UserResource($user->load(['profile', 'roles', 'settings'])),
             ], 200);
         }
 
         $token = $user->createToken('auth-token')->plainTextToken;
 
         return response()->json([
-            'user' => new UserResource($user->load(['profile', 'roles'])),
+            'user' => new UserResource($user->load(['profile', 'roles', 'settings'])),
             'token' => $token,
         ]);
     }
@@ -166,7 +185,7 @@ class AuthController extends Controller
      */
     public function user(Request $request)
     {
-        $user = $request->user()->load(['profile', 'roles', 'permissions', 'oauthProviders']);
+        $user = $request->user()->load(['profile', 'roles', 'permissions', 'oauthProviders', 'settings']);
 
         return response()->json(new UserResource($user)); // Return user directly for frontend compatibility
     }
@@ -241,8 +260,7 @@ class AuthController extends Controller
 
         return response()->json([
             'message' => 'Username updated successfully',
-            'user' => new UserResource($user->load(['profile', 'roles'])),
+            'user' => new UserResource($user->load(['profile', 'roles', 'settings'])),
         ]);
     }
 }
-

@@ -396,6 +396,13 @@ class SettingsController extends Controller
                     'description' => 'Only admins can access when enabled',
                     'default' => false,
                 ],
+                'telegram_url' => [
+                    'type' => 'text',
+                    'label' => 'Telegram URL',
+                    'description' => 'Link for the "Join Telegram" button in the community sidebar',
+                    'default' => 'https://t.me/peptidevendors',
+                    'placeholder' => 'https://t.me/yourgroup',
+                ],
             ],
         ];
 
@@ -454,6 +461,7 @@ class SettingsController extends Controller
             'game_name' => 'Gangster Legends',
             'registration_enabled' => true,
             'maintenance_mode' => false,
+            'telegram_url' => 'https://t.me/peptidevendors',
         ];
     }
 
