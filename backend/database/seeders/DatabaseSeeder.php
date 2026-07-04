@@ -21,6 +21,10 @@ class DatabaseSeeder extends Seeder
             // TicketCategorySeeder::class, // Moved to Tickets plugin
         ]);
 
+        $this->call([
+            CommunityContentSeeder::class,
+        ]);
+
         if ((bool) env('SEED_DEVELOPMENT_USERS', false)) {
             $this->call([
                 // User accounts for development/testing

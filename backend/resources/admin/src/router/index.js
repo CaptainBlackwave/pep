@@ -139,6 +139,11 @@ const router = createRouter({
           component: () => import('../views/CommunityVendorsView.vue')
         },
         {
+          path: '/community-vendor-claims',
+          name: 'community-vendor-claims',
+          component: () => import('../views/CommunityVendorClaimsView.vue')
+        },
+        {
           path: '/community-announcements',
           name: 'community-announcements',
           component: () => import('../views/CommunityAnnouncementsView.vue')

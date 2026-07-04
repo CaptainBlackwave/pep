@@ -43,10 +43,10 @@ class CoreAdminMenu
                 'icon' => 'BeakerIcon',
                 'order' => 3,
                 'children' => [
-                    [ 'route' => '/community-discussions', 'label' => 'Discussions', 'icon' => 'ChatBubbleLeftRightIcon' ],
+                    [ 'route' => '/community-vendors', 'label' => 'Vendors', 'icon' => 'BuildingStorefrontIcon' ],
+                [ 'route' => '/community-discussions', 'label' => 'Discussions', 'icon' => 'ChatBubbleLeftRightIcon' ],
                     [ 'route' => '/community-categories', 'label' => 'Categories', 'icon' => 'TagIcon' ],
                     [ 'route' => '/community-lab-results', 'label' => 'Lab Results', 'icon' => 'BeakerIcon' ],
-                    [ 'route' => '/community-vendors', 'label' => 'Vendors', 'icon' => 'StarIcon' ],
                     [ 'route' => '/community-announcements', 'label' => 'Announcements', 'icon' => 'MegaphoneIcon' ],
                     [ 'route' => '/community-notifications', 'label' => 'Notifications', 'icon' => 'BellIcon' ],
                     [ 'route' => '/community-access-codes', 'label' => 'Access Codes', 'icon' => 'KeyIcon' ],

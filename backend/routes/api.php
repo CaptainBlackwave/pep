@@ -8,6 +8,7 @@ use App\Core\Http\Controllers\CommunityLabResultController;
 use App\Core\Http\Controllers\CommunityMemberController;
 use App\Core\Http\Controllers\CommunityMessageController;
 use App\Core\Http\Controllers\CommunityNotificationController;
+use App\Core\Http\Controllers\CommunityUserActionController;
 use App\Core\Http\Controllers\CommunityVendorController;
 use App\Core\Http\Controllers\EmojiController;
 use App\Core\Http\Controllers\PluginController;
@@ -113,11 +114,27 @@ Route::prefix('v1')->group(function () {
         Route::get('/user/api-tokens', [UserSettingsController::class, 'apiTokens']);
         Route::post('/user/api-tokens', [UserSettingsController::class, 'createApiToken']);
         Route::delete('/user/api-tokens/{token}', [UserSettingsController::class, 'deleteApiToken']);
+        Route::get('/user/blocked-users', [UserSettingsController::class, 'blockedUsers']);
+        Route::post('/user/blocked-users', [UserSettingsController::class, 'blockUser']);
+        Route::delete('/user/blocked-users/{user}', [UserSettingsController::class, 'unblockUser']);
 
         Route::prefix('community')->group(function () {
+            Route::get('/user-actions', [CommunityUserActionController::class, 'index']);
+            Route::post('/user-actions/toggle', [CommunityUserActionController::class, 'toggle']);
             Route::post('/discussions', [CommunityDiscussionController::class, 'store']);
+            Route::patch('/discussions/{discussion}', [CommunityDiscussionController::class, 'update']);
+            Route::delete('/discussions/{discussion}', [CommunityDiscussionController::class, 'destroy']);
             Route::post('/discussions/{discussion}/replies', [CommunityDiscussionController::class, 'reply']);
+            Route::post('/discussions/{discussion}/reactions', [CommunityDiscussionController::class, 'reactToDiscussion']);
+            Route::post('/discussions/{discussion}/report', [CommunityDiscussionController::class, 'reportDiscussion']);
+            Route::post('/discussion-replies/{reply}/reactions', [CommunityDiscussionController::class, 'reactToReply']);
+            Route::post('/discussion-replies/{reply}/report', [CommunityDiscussionController::class, 'reportReply']);
             Route::post('/lab-results', [CommunityLabResultController::class, 'store']);
+            Route::get('/vendor-profile', [CommunityVendorController::class, 'myVendorProfile']);
+            Route::post('/vendor-profile/image', [CommunityVendorController::class, 'uploadVendorImage']);
+            Route::post('/vendor-profile', [CommunityVendorController::class, 'storeVendorProfile']);
+            Route::patch('/vendor-profile', [CommunityVendorController::class, 'updateVendorProfile']);
+            Route::post('/vendors/{vendor}/claim', [CommunityVendorController::class, 'claimVendor']);
             Route::post('/vendors/{vendor}/reviews', [CommunityVendorController::class, 'storeReview']);
             Route::post('/vendor-reviews/{review}/helpful', [CommunityVendorController::class, 'markReviewHelpful']);
             Route::post('/messages', [CommunityMessageController::class, 'storeThread']);
@@ -195,6 +212,8 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{user}', 'destroy');
                 Route::post('/{user}/ban', 'ban');
                 Route::post('/{user}/unban', 'unban');
+                Route::patch('/{user}/vendor-access', 'updateVendorAccess');
+                Route::post('/{user}/vendor-profile', 'grantVendorProfile');
             });
 
             // Roles & Permissions
@@ -267,6 +286,12 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{result}', 'destroy');
             });
 
+            Route::prefix('community/vendor-reviews')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorReviewAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::patch('/{review}', 'update');
+                Route::delete('/{review}', 'destroy');
+            });
+
             Route::prefix('community/vendors')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorAdminController::class)->group(function () {
                 Route::get('/', 'index');
                 Route::post('/', 'store');
@@ -274,10 +299,9 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{vendor}', 'destroy');
             });
 
-            Route::prefix('community/vendor-reviews')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorReviewAdminController::class)->group(function () {
+            Route::prefix('community/vendor-claims')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorClaimAdminController::class)->group(function () {
                 Route::get('/', 'index');
-                Route::patch('/{review}', 'update');
-                Route::delete('/{review}', 'destroy');
+                Route::patch('/{claim}', 'update');
             });
 
             Route::prefix('community/announcements')->controller(\App\Core\Http\Controllers\Admin\CommunityAnnouncementAdminController::class)->group(function () {

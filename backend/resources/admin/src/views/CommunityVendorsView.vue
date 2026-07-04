@@ -1,177 +1,23 @@
 <template>
-  <div
-    v-if="showCreateVendor"
-    class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 px-4"
-    @click.self="closeCreateVendor"
-  >
-    <form
-      class="w-full max-w-2xl rounded-2xl border border-slate-700 bg-slate-900 p-6 shadow-2xl"
-      @submit.prevent="createVendor"
-    >
-      <div class="flex items-start justify-between gap-4">
-        <div>
-          <h2 class="text-xl font-semibold text-white">
-            Add Vendor
-          </h2>
-          <p class="mt-1 text-sm text-slate-400">
-            Create a vendor profile that can receive public reviews.
-          </p>
-        </div>
-        <button
-          type="button"
-          class="rounded-lg px-3 py-2 text-slate-400 hover:bg-slate-800 hover:text-white"
-          @click="closeCreateVendor"
-        >
-          Close
-        </button>
-      </div>
-
-      <p
-        v-if="vendorFormError"
-        class="mt-4 rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300"
-      >
-        {{ vendorFormError }}
-      </p>
-
-      <div class="mt-5 grid grid-cols-1 gap-4 md:grid-cols-2">
-        <label class="text-sm text-slate-300">
-          Vendor name
-          <input
-            v-model="createVendorForm.name"
-            required
-            maxlength="160"
-            class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-            placeholder="Vendor name"
-          >
-        </label>
-        <label class="text-sm text-slate-300">
-          Slug
-          <input
-            v-model="createVendorForm.slug"
-            maxlength="180"
-            class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-            placeholder="auto-generated"
-          >
-        </label>
-        <label class="text-sm text-slate-300">
-          Website
-          <input
-            v-model="createVendorForm.website_url"
-            type="url"
-            maxlength="255"
-            class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-            placeholder="https://example.com"
-          >
-        </label>
-        <label class="text-sm text-slate-300">
-          Logo initials
-          <input
-            v-model="createVendorForm.logo_initials"
-            maxlength="12"
-            class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-            placeholder="auto"
-          >
-        </label>
-        <label class="text-sm text-slate-300">
-          Visibility
-          <select
-            v-model="createVendorForm.status"
-            class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-          >
-            <option value="published">
-              Published
-            </option>
-            <option value="hidden">
-              Hidden
-            </option>
-          </select>
-        </label>
-        <label class="text-sm text-slate-300">
-          Trust status
-          <select
-            v-model="createVendorForm.status_class"
-            class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-          >
-            <option value="trusted">
-              Trusted
-            </option>
-            <option value="caution">
-              Caution
-            </option>
-            <option value="avoid">
-              Avoid
-            </option>
-          </select>
-        </label>
-      </div>
-
-      <label class="mt-4 block text-sm text-slate-300">
-        Tags
-        <input
-          v-model="createVendorForm.tags"
-          maxlength="500"
-          class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-          placeholder="Fast Shipping, Lab Tested"
-        >
-      </label>
-
-      <label class="mt-4 block text-sm text-slate-300">
-        Description
-        <textarea
-          v-model="createVendorForm.description"
-          rows="4"
-          maxlength="4000"
-          class="mt-1 w-full rounded-xl border border-slate-700 bg-slate-950/70 px-4 py-3 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-          placeholder="Short vendor profile..."
-        />
-      </label>
-
-      <div class="mt-6 flex flex-wrap justify-end gap-3">
-        <button
-          type="button"
-          class="rounded-xl bg-slate-800 px-5 py-3 font-medium text-slate-200 hover:bg-slate-700"
-          @click="closeCreateVendor"
-        >
-          Cancel
-        </button>
-        <button
-          type="submit"
-          class="rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-5 py-3 font-medium text-white hover:from-violet-700 hover:to-indigo-700 disabled:cursor-not-allowed disabled:opacity-60"
-          :disabled="creatingVendor"
-        >
-          {{ creatingVendor ? 'Adding...' : 'Add Vendor' }}
-        </button>
-      </div>
-    </form>
-  </div>
-
   <div class="space-y-6">
     <div class="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
       <div>
         <h1 class="text-2xl font-bold text-white">
-          Community Vendors
+          Vendors
         </h1>
         <p class="text-slate-400 mt-1">
-          Manage vendor visibility, trust status, and submitted reviews.
+          Manage vendor profiles. Admins can create and edit vendors directly.
         </p>
       </div>
-      <div class="flex flex-wrap gap-3">
-        <button
-          class="inline-flex items-center justify-center rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 px-4 py-2 font-medium text-white transition-all hover:from-violet-700 hover:to-indigo-700"
-          @click="openCreateVendor"
-        >
-          Add Vendor
-        </button>
-        <button
-          class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-slate-700 text-slate-200 hover:bg-slate-600 transition-colors"
-          @click="refreshAll"
-        >
-          Refresh
-        </button>
-      </div>
+      <button
+        class="inline-flex items-center justify-center px-4 py-2 rounded-xl bg-slate-700 text-slate-200 hover:bg-slate-600 transition-colors"
+        @click="fetchVendors"
+      >
+        Refresh
+      </button>
     </div>
 
-    <div class="grid grid-cols-2 lg:grid-cols-6 gap-4">
+    <div class="grid grid-cols-3 gap-4">
       <div
         v-for="card in statCards"
         :key="card.label"
@@ -184,219 +30,285 @@
       </div>
     </div>
 
-    <div class="rounded-2xl bg-slate-800/50 border border-slate-700/50 p-5">
-      <div class="grid grid-cols-1 md:grid-cols-[1fr_180px_auto] gap-3">
-        <input
-          v-model="vendorFilters.search"
-          type="search"
-          placeholder="Search vendors..."
-          class="w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-          @keydown.enter="fetchVendors"
-        >
-        <select
-          v-model="vendorFilters.status"
-          class="w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white focus:outline-none focus:ring-2 focus:ring-violet-500/50"
-        >
-          <option value="all">
-            All statuses
-          </option>
-          <option value="published">
-            Published
-          </option>
-          <option value="hidden">
-            Hidden
-          </option>
-        </select>
-        <button
-          class="px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-medium hover:from-violet-700 hover:to-indigo-700 transition-all"
-          @click="fetchVendors"
-        >
-          Apply
-        </button>
-      </div>
-    </div>
-
-    <div
-      v-if="error"
-      class="rounded-2xl bg-red-500/10 border border-red-500/30 p-5 text-red-300"
-    >
-      {{ error }}
-    </div>
-
-    <div class="rounded-2xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
-      <div
-        v-if="loadingVendors"
-        class="p-10 text-center text-slate-400"
+    <div class="grid grid-cols-1 xl:grid-cols-[420px_1fr] gap-6">
+      <form
+        class="rounded-2xl bg-slate-800/50 border border-slate-700/50 p-5 space-y-4"
+        @submit.prevent="saveVendor"
       >
-        Loading vendors...
-      </div>
-      <div
-        v-else-if="vendors.length === 0"
-        class="p-10 text-center text-slate-400"
-      >
-        No vendors found.
-      </div>
-      <div
-        v-else
-        class="overflow-x-auto"
-      >
-        <table class="w-full">
-          <thead class="bg-slate-900/80 border-b border-slate-700">
-            <tr>
-              <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Vendor
-              </th>
-              <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Rating
-              </th>
-              <th class="px-5 py-4 text-left text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Status
-              </th>
-              <th class="px-5 py-4 text-right text-xs font-semibold uppercase tracking-wider text-slate-400">
-                Actions
-              </th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-slate-700/60">
-            <tr
-              v-for="vendor in vendors"
-              :key="vendor.id"
-              class="hover:bg-slate-700/25"
-            >
-              <td class="px-5 py-4">
-                <p class="font-semibold text-white">
-                  {{ vendor.name }}
-                </p>
-                <p class="text-sm text-slate-400 line-clamp-2">
-                  {{ vendor.description }}
-                </p>
-              </td>
-              <td class="px-5 py-4 text-sm text-slate-300">
-                <div>{{ vendor.rating_label }} / 5</div>
-                <div class="text-slate-500">
-                  {{ vendor.review_count }} reviews
-                </div>
-              </td>
-              <td class="px-5 py-4">
-                <div class="flex flex-wrap gap-2">
-                  <span :class="trustClass(vendor.status_class)">
-                    {{ vendor.status_label }}
-                  </span>
-                  <span :class="publishClass(vendor.status)">
-                    {{ vendor.status }}
-                  </span>
-                </div>
-              </td>
-              <td class="px-5 py-4">
-                <div class="flex flex-wrap justify-end gap-2">
-                  <button
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
-                    @click="setTrust(vendor, 'Trusted', 'trusted')"
-                  >
-                    Trust
-                  </button>
-                  <button
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/15 text-amber-300 hover:bg-amber-500/25"
-                    @click="setTrust(vendor, 'Caution', 'caution')"
-                  >
-                    Caution
-                  </button>
-                  <button
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/15 text-red-300 hover:bg-red-500/25"
-                    @click="setTrust(vendor, 'Avoid', 'avoid')"
-                  >
-                    Avoid
-                  </button>
-                  <button
-                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-500/15 text-slate-300 hover:bg-slate-500/25"
-                    @click="toggleVendorStatus(vendor)"
-                  >
-                    {{ vendor.status === 'published' ? 'Hide' : 'Publish' }}
-                  </button>
-                </div>
-              </td>
-            </tr>
-          </tbody>
-        </table>
-      </div>
-    </div>
-
-    <div class="rounded-2xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
-      <div class="flex items-center justify-between p-5 border-b border-slate-700/60">
         <div>
           <h2 class="text-lg font-semibold text-white">
-            Vendor Reviews
+            {{ editingItem ? 'Edit Vendor' : 'New Vendor' }}
           </h2>
           <p class="text-sm text-slate-400">
-            Moderate submitted vendor reviews.
+            Create or update a vendor profile. Published vendors appear on the public site.
           </p>
         </div>
-        <select
-          v-model="reviewFilters.status"
-          class="px-3 py-2 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
-          @change="fetchReviews"
-        >
-          <option value="pending">
-            Pending
-          </option>
-          <option value="published">
-            Published
-          </option>
-          <option value="hidden">
-            Hidden
-          </option>
-          <option value="all">
-            All
-          </option>
-        </select>
-      </div>
-      <div
-        v-if="loadingReviews"
-        class="p-10 text-center text-slate-400"
-      >
-        Loading reviews...
-      </div>
-      <div
-        v-else-if="reviews.length === 0"
-        class="p-10 text-center text-slate-400"
-      >
-        No reviews found.
-      </div>
-      <div
-        v-else
-        class="divide-y divide-slate-700/60"
-      >
-        <article
-          v-for="review in reviews"
-          :key="review.id"
-          class="p-5 flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between hover:bg-slate-700/25"
-        >
-          <div class="max-w-3xl">
-            <p class="font-semibold text-white">
-              {{ review.title }}
-            </p>
-            <p class="text-sm text-slate-400">
-              {{ [review.author?.name, `${review.rating} / 5`, review.vendor?.name].filter(Boolean).join(' · ') }}
-            </p>
-            <p class="text-sm text-slate-300 mt-2 line-clamp-2">
-              {{ review.body }}
-            </p>
-          </div>
-          <div class="flex flex-wrap gap-2">
-            <button
-              class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
-              @click="updateReview(review, { status: 'published', is_verified_buyer: true })"
+
+        <label class="block">
+          <span class="text-sm font-medium text-slate-300">Vendor Name</span>
+          <input
+            v-model="form.name"
+            required
+            maxlength="160"
+            class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+            placeholder="Vendor name"
+          >
+        </label>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Slug</span>
+            <input
+              v-model="form.slug"
+              maxlength="180"
+              pattern="[a-zA-Z0-9-]+"
+              class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+              placeholder="vendor-name"
             >
-              Publish
-            </button>
-            <button
-              class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/15 text-red-300 hover:bg-red-500/25"
-              @click="updateReview(review, { status: 'hidden' })"
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Status</span>
+            <select
+              v-model="form.status"
+              class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
             >
-              Hide
+              <option value="published">
+                Published
+              </option>
+              <option value="hidden">
+                Hidden
+              </option>
+            </select>
+          </label>
+        </div>
+
+        <label class="block">
+          <span class="text-sm font-medium text-slate-300">Owner (User ID — leave blank for self)</span>
+          <input
+            v-model="form.owner_user_id"
+            type="number"
+            min="1"
+            class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+            placeholder="User ID"
+          >
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-slate-300">Description</span>
+          <textarea
+            v-model="form.description"
+            rows="4"
+            class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+            placeholder="Vendor description"
+          />
+        </label>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Website URL</span>
+            <input
+              v-model="form.website_url"
+              type="url"
+              maxlength="255"
+              class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+              placeholder="https://example.com"
+            >
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Image URL</span>
+            <input
+              v-model="form.image_url"
+              maxlength="2048"
+              class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+              placeholder="https://example.com/logo.png"
+            >
+          </label>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Contact Email</span>
+            <input
+              v-model="form.contact_email"
+              type="email"
+              maxlength="255"
+              class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+              placeholder="support@example.com"
+            >
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Telegram</span>
+            <input
+              v-model="form.contact_telegram"
+              maxlength="120"
+              class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+              placeholder="@handle"
+            >
+          </label>
+        </div>
+
+        <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Signal</span>
+            <input
+              v-model="form.contact_signal"
+              maxlength="120"
+              class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+              placeholder="Signal username"
+            >
+          </label>
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Discord</span>
+            <input
+              v-model="form.contact_discord"
+              maxlength="120"
+              class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+              placeholder="Discord handle"
+            >
+          </label>
+        </div>
+
+        <label class="block">
+          <span class="text-sm font-medium text-slate-300">Support URL</span>
+          <input
+            v-model="form.support_url"
+            type="url"
+            maxlength="255"
+            class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+            placeholder="https://example.com/support"
+          >
+        </label>
+
+        <label class="block">
+          <span class="text-sm font-medium text-slate-300">Tags (comma-separated)</span>
+          <input
+            v-model="tagsInput"
+            class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+            placeholder="Domestic, Lab Tested, Fast Shipping"
+          >
+        </label>
+
+        <div
+          v-if="error"
+          class="rounded-xl bg-red-500/10 border border-red-500/30 p-4 text-sm text-red-300"
+        >
+          {{ error }}
+        </div>
+
+        <div class="flex flex-wrap gap-3">
+          <button
+            type="submit"
+            :disabled="saving"
+            class="px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-medium disabled:opacity-60"
+          >
+            {{ saving ? 'Saving...' : editingItem ? 'Save Changes' : 'Create Vendor' }}
+          </button>
+          <button
+            v-if="editingItem"
+            type="button"
+            class="px-5 py-3 rounded-xl bg-slate-700 text-slate-200 hover:bg-slate-600"
+            @click="resetForm"
+          >
+            Cancel
+          </button>
+        </div>
+      </form>
+
+      <div class="space-y-4">
+        <div class="rounded-2xl bg-slate-800/50 border border-slate-700/50 p-5">
+          <div class="grid grid-cols-1 md:grid-cols-[1fr_160px_auto] gap-3">
+            <input
+              v-model="filters.search"
+              type="search"
+              placeholder="Search vendors..."
+              class="w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+              @keydown.enter="fetchVendors"
+            >
+            <select
+              v-model="filters.status"
+              class="w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+            >
+              <option value="all">
+                All statuses
+              </option>
+              <option value="published">
+                Published
+              </option>
+              <option value="hidden">
+                Hidden
+              </option>
+            </select>
+            <button
+              class="px-5 py-3 rounded-xl bg-gradient-to-r from-violet-600 to-indigo-600 text-white font-medium"
+              @click="fetchVendors"
+            >
+              Apply
             </button>
           </div>
-        </article>
+        </div>
+
+        <div class="rounded-2xl bg-slate-800/50 border border-slate-700/50 overflow-hidden">
+          <div
+            v-if="loading"
+            class="p-10 text-center text-slate-400"
+          >
+            Loading vendors...
+          </div>
+          <div
+            v-else-if="items.length === 0"
+            class="p-10 text-center text-slate-400"
+          >
+            No vendors found.
+          </div>
+          <div
+            v-else
+            class="divide-y divide-slate-700/60"
+          >
+            <article
+              v-for="vendor in items"
+              :key="vendor.id"
+              class="p-5 flex flex-col gap-4 lg:flex-row lg:items-start lg:justify-between hover:bg-slate-700/25"
+            >
+              <div class="max-w-3xl">
+                <div class="flex flex-wrap gap-2">
+                  <span :class="publishClass(vendor.status)">{{ vendor.status }}</span>
+                  <span class="px-2 py-1 rounded-lg bg-slate-500/20 text-slate-300 text-xs">{{ vendor.claim_status }}</span>
+                </div>
+                <h2 class="mt-3 text-lg font-semibold text-white">
+                  {{ vendor.name }}
+                </h2>
+                <p class="mt-2 text-sm text-slate-400 line-clamp-2">
+                  {{ vendor.description }}
+                </p>
+                <p class="mt-3 text-xs text-slate-500">
+                  {{ vendor.member_since_label || 'N/A' }} · {{ vendor.review_count }} reviews · {{ vendor.average_rating }} rating · Owner ID: {{ vendor.owner_user_id || 'none' }}
+                </p>
+              </div>
+              <div class="flex flex-wrap gap-2 lg:justify-end">
+                <button
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium bg-slate-500/15 text-slate-300 hover:bg-slate-500/25"
+                  @click="editItem(vendor)"
+                >
+                  Edit
+                </button>
+                <button
+                  v-if="vendor.status !== 'published'"
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium bg-emerald-500/15 text-emerald-300 hover:bg-emerald-500/25"
+                  @click="updateItem(vendor, { status: 'published' })"
+                >
+                  Publish
+                </button>
+                <button
+                  v-if="vendor.status !== 'hidden'"
+                  class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/15 text-red-300 hover:bg-red-500/25"
+                  @click="updateItem(vendor, { status: 'hidden' })"
+                >
+                  Hide
+                </button>
+              </div>
+            </article>
+          </div>
+        </div>
       </div>
     </div>
   </div>
@@ -406,203 +318,149 @@
 import { computed, onMounted, reactive, ref } from 'vue'
 import api from '../services/api'
 
-const vendors = ref([])
-const reviews = ref([])
-const loadingVendors = ref(false)
-const loadingReviews = ref(false)
+const items = ref([])
+const loading = ref(false)
+const saving = ref(false)
 const error = ref('')
-const showCreateVendor = ref(false)
-const creatingVendor = ref(false)
-const vendorFormError = ref('')
+const editingItem = ref(null)
 const stats = ref({
   total: 0,
   published: 0,
   hidden: 0,
-  trusted: 0,
-  caution: 0,
-  avoid: 0,
 })
 
-const vendorFilters = reactive({
+const filters = reactive({
   search: '',
   status: 'all',
 })
 
-const reviewFilters = reactive({
-  status: 'pending',
+const emptyForm = () => ({
+  name: '',
+  slug: '',
+  owner_user_id: '',
+  description: '',
+  website_url: '',
+  image_url: '',
+  contact_email: '',
+  contact_telegram: '',
+  contact_signal: '',
+  contact_discord: '',
+  support_url: '',
+  status: 'published',
 })
 
-const trustLabels = {
-  trusted: 'Trusted',
-  caution: 'Caution',
-  avoid: 'Avoid',
-}
+const form = reactive(emptyForm())
 
-const createVendorForm = reactive(defaultVendorForm())
+const tagsInput = ref('')
 
 const statCards = computed(() => [
   { label: 'Total', value: stats.value.total },
   { label: 'Published', value: stats.value.published },
   { label: 'Hidden', value: stats.value.hidden },
-  { label: 'Trusted', value: stats.value.trusted },
-  { label: 'Caution', value: stats.value.caution },
-  { label: 'Avoid', value: stats.value.avoid },
 ])
 
-function defaultVendorForm() {
-  return {
-    name: '',
-    slug: '',
-    website_url: '',
-    logo_initials: '',
-    status: 'published',
-    status_class: 'trusted',
-    tags: '',
-    description: '',
-  }
-}
-
-function resetCreateVendorForm() {
-  Object.assign(createVendorForm, defaultVendorForm())
-  vendorFormError.value = ''
-}
-
-function openCreateVendor() {
-  resetCreateVendorForm()
-  showCreateVendor.value = true
-}
-
-function closeCreateVendor() {
-  if (creatingVendor.value) {
-    return
-  }
-
-  showCreateVendor.value = false
-}
-
-function splitTags(value) {
-  return value
-    .split(',')
-    .map(tag => tag.trim())
-    .filter(Boolean)
-    .slice(0, 12)
-}
-
-async function createVendor() {
-  creatingVendor.value = true
-  vendorFormError.value = ''
-
-  try {
-    await api.post('/admin/community/vendors', {
-      name: createVendorForm.name,
-      slug: createVendorForm.slug || undefined,
-      website_url: createVendorForm.website_url || null,
-      logo_initials: createVendorForm.logo_initials || null,
-      status: createVendorForm.status,
-      status_class: createVendorForm.status_class,
-      status_label: trustLabels[createVendorForm.status_class],
-      tags: splitTags(createVendorForm.tags),
-      description: createVendorForm.description || null,
-    })
-
-    showCreateVendor.value = false
-    resetCreateVendorForm()
-    await fetchVendors()
-  } catch (err) {
-    vendorFormError.value = err.response?.data?.message || 'Unable to add vendor.'
-  } finally {
-    creatingVendor.value = false
-  }
-}
-
 async function fetchVendors() {
-  loadingVendors.value = true
+  loading.value = true
   error.value = ''
 
   try {
     const response = await api.get('/admin/community/vendors', {
       params: {
-        search: vendorFilters.search || undefined,
-        status: vendorFilters.status,
+        search: filters.search || undefined,
+        status: filters.status,
       },
     })
-    vendors.value = response.data.data || []
+    items.value = response.data.data || []
     stats.value = response.data.meta?.stats || stats.value
   } catch (err) {
     error.value = err.response?.data?.message || 'Unable to load vendors.'
   } finally {
-    loadingVendors.value = false
+    loading.value = false
   }
 }
 
-async function fetchReviews() {
-  loadingReviews.value = true
+async function saveVendor() {
+  saving.value = true
+  error.value = ''
+
+  const payload = {
+    name: form.name,
+    slug: form.slug || undefined,
+    owner_user_id: form.owner_user_id ? Number(form.owner_user_id) : undefined,
+    description: form.description || null,
+    website_url: form.website_url || null,
+    image_url: form.image_url || null,
+    contact_email: form.contact_email || null,
+    contact_telegram: form.contact_telegram || null,
+    contact_signal: form.contact_signal || null,
+    contact_discord: form.contact_discord || null,
+    support_url: form.support_url || null,
+    tags: tagsInput.value ? tagsInput.value.split(',').map(t => t.trim()).filter(Boolean) : null,
+    status: form.status,
+  }
 
   try {
-    const response = await api.get('/admin/community/vendor-reviews', {
-      params: {
-        status: reviewFilters.status,
-      },
-    })
-    reviews.value = response.data.data || []
+    if (editingItem.value) {
+      await api.patch(`/admin/community/vendors/${editingItem.value.id}`, payload)
+    } else {
+      await api.post('/admin/community/vendors', payload)
+    }
+
+    resetForm()
+    await fetchVendors()
   } catch (err) {
-    error.value = err.response?.data?.message || 'Unable to load vendor reviews.'
+    const errors = err.response?.data?.errors
+    error.value = errors ? Object.values(errors)[0]?.[0] || 'Unable to save vendor.' : err.response?.data?.message || 'Unable to save vendor.'
   } finally {
-    loadingReviews.value = false
+    saving.value = false
   }
 }
 
-async function updateVendor(vendor, payload) {
-  const response = await api.patch(`/admin/community/vendors/${vendor.slug}`, payload)
-  const updated = response.data.data
-  const index = vendors.value.findIndex(item => item.id === updated.id)
-
-  if (index >= 0) {
-    vendors.value[index] = updated
-  }
-
-  await fetchVendors()
-}
-
-function setTrust(vendor, label, statusClass) {
-  void updateVendor(vendor, {
-    status_label: label,
-    status_class: statusClass,
+function editItem(vendor) {
+  editingItem.value = vendor
+  Object.assign(form, {
+    name: vendor.name,
+    slug: vendor.slug || '',
+    owner_user_id: vendor.owner_user_id ? String(vendor.owner_user_id) : '',
+    description: vendor.description || '',
+    website_url: vendor.website_url || '',
+    image_url: vendor.image_url || '',
+    contact_email: vendor.contact?.email || '',
+    contact_telegram: vendor.contact?.telegram || '',
+    contact_signal: vendor.contact?.signal || '',
+    contact_discord: vendor.contact?.discord || '',
+    support_url: vendor.contact?.support_url || '',
+    status: vendor.status,
   })
+  tagsInput.value = Array.isArray(vendor.tags) ? vendor.tags.join(', ') : ''
 }
 
-function toggleVendorStatus(vendor) {
-  void updateVendor(vendor, {
-    status: vendor.status === 'published' ? 'hidden' : 'published',
-  })
+function resetForm() {
+  editingItem.value = null
+  Object.assign(form, emptyForm())
+  tagsInput.value = ''
 }
 
-async function updateReview(review, payload) {
-  await api.patch(`/admin/community/vendor-reviews/${review.id}`, payload)
-  await Promise.all([fetchReviews(), fetchVendors()])
-}
+async function updateItem(vendor, payload) {
+  error.value = ''
 
-function refreshAll() {
-  void Promise.all([fetchVendors(), fetchReviews()])
-}
-
-function trustClass(statusClass) {
-  if (statusClass === 'avoid') {
-    return 'px-2 py-1 rounded-lg bg-red-500/15 text-red-300 text-xs capitalize'
+  try {
+    await api.patch(`/admin/community/vendors/${vendor.id}`, payload)
+    await fetchVendors()
+  } catch (err) {
+    error.value = err.response?.data?.message || 'Unable to update vendor.'
   }
-
-  if (statusClass === 'caution') {
-    return 'px-2 py-1 rounded-lg bg-amber-500/15 text-amber-300 text-xs capitalize'
-  }
-
-  return 'px-2 py-1 rounded-lg bg-emerald-500/15 text-emerald-300 text-xs capitalize'
 }
 
 function publishClass(status) {
-  return status === 'published'
-    ? 'px-2 py-1 rounded-lg bg-sky-500/15 text-sky-300 text-xs capitalize'
-    : 'px-2 py-1 rounded-lg bg-slate-500/20 text-slate-300 text-xs capitalize'
+  if (status === 'published') {
+    return 'px-2 py-1 rounded-lg bg-sky-500/15 text-sky-300 text-xs capitalize'
+  }
+  if (status === 'hidden') {
+    return 'px-2 py-1 rounded-lg bg-red-500/15 text-red-300 text-xs capitalize'
+  }
+  return 'px-2 py-1 rounded-lg bg-slate-500/20 text-slate-300 text-xs capitalize'
 }
 
-onMounted(refreshAll)
+onMounted(fetchVendors)
 </script>

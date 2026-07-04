@@ -5,6 +5,7 @@ namespace App\Core\Http\Controllers\Admin;
 use App\Core\Http\Controllers\Controller;
 use App\Core\Http\Resources\CommunityVendorResource;
 use App\Core\Models\CommunityVendor;
+use App\Core\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
@@ -19,7 +20,7 @@ class CommunityVendorAdminController extends Controller
             'limit' => ['nullable', 'integer', 'min:1', 'max:100'],
         ]);
 
-        $query = CommunityVendor::query();
+        $query = CommunityVendor::query()->with('owner');
 
         if (($validated['status'] ?? 'all') !== 'all') {
             $query->where('status', $validated['status']);
@@ -30,6 +31,7 @@ class CommunityVendorAdminController extends Controller
             $query->where(function ($inner) use ($search) {
                 $inner
                     ->where('name', 'like', "%{$search}%")
+                    ->orWhere('slug', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
@@ -44,9 +46,6 @@ class CommunityVendorAdminController extends Controller
                     'total' => CommunityVendor::count(),
                     'published' => CommunityVendor::where('status', 'published')->count(),
                     'hidden' => CommunityVendor::where('status', 'hidden')->count(),
-                    'trusted' => CommunityVendor::where('status_class', 'trusted')->count(),
-                    'caution' => CommunityVendor::where('status_class', 'caution')->count(),
-                    'avoid' => CommunityVendor::where('status_class', 'avoid')->count(),
                 ],
             ],
         ]);
@@ -55,42 +54,49 @@ class CommunityVendorAdminController extends Controller
     public function store(Request $request)
     {
         $validated = $this->validateVendor($request);
-        $name = $validated['name'];
+
+        $name = trim($validated['name']);
 
         $vendor = CommunityVendor::create([
             ...$validated,
+            'owner_user_id' => $validated['owner_user_id'] ?? $request->user()->id,
             'slug' => $this->uniqueSlug($validated['slug'] ?? $name),
-            'logo_initials' => $validated['logo_initials'] ?? $this->initials($name),
-            'logo_text' => $validated['logo_text'] ?? $this->initials($name),
-            'logo_class' => $validated['logo_class'] ?? 'purple',
-            'status_label' => $validated['status_label'] ?? 'Trusted',
-            'status_class' => $validated['status_class'] ?? 'trusted',
+            'logo_initials' => $this->initials($name),
+            'logo_text' => $this->initials($name),
+            'logo_class' => 'purple',
+            'claim_status' => 'verified',
+            'status_label' => 'Listed',
+            'status_class' => 'caution',
             'status' => $validated['status'] ?? 'published',
+            'member_since' => $validated['member_since'] ?? now()->toDateString(),
+            'last_active_at' => now(),
         ]);
 
-        return (new CommunityVendorResource($vendor))
+        return (new CommunityVendorResource($vendor->load('owner')))
             ->response()
             ->setStatusCode(201);
     }
 
     public function update(Request $request, string $vendor)
     {
-        $vendorModel = $this->findVendor($vendor);
-
+        $vendorModel = CommunityVendor::with('owner')->findOrFail($vendor);
         $validated = $this->validateVendor($request, true);
 
-        if (isset($validated['slug'])) {
-            $validated['slug'] = $this->uniqueSlug($validated['slug'], $vendorModel->id);
+        if (isset($validated['slug']) || isset($validated['name'])) {
+            $validated['slug'] = $this->uniqueSlug(
+                $validated['slug'] ?? $validated['name'] ?? $vendorModel->slug,
+                $vendorModel->id
+            );
         }
 
         $vendorModel->fill($validated)->save();
 
-        return new CommunityVendorResource($vendorModel);
+        return new CommunityVendorResource($vendorModel->fresh()->load('owner'));
     }
 
     public function destroy(string $vendor)
     {
-        $vendorModel = $this->findVendor($vendor);
+        $vendorModel = CommunityVendor::findOrFail($vendor);
         $vendorModel->forceFill(['status' => 'hidden'])->save();
 
         return response()->json([
@@ -99,43 +105,26 @@ class CommunityVendorAdminController extends Controller
         ]);
     }
 
-    private function findVendor(string $value): CommunityVendor
-    {
-        return CommunityVendor::query()
-            ->where(function ($query) use ($value) {
-                $query->where('slug', $value);
-
-                if (ctype_digit($value)) {
-                    $query->orWhere('id', (int) $value);
-                }
-            })
-            ->firstOrFail();
-    }
-
     private function validateVendor(Request $request, bool $partial = false): array
     {
         $required = $partial ? 'sometimes' : 'required';
 
         return $request->validate([
+            'owner_user_id' => ['nullable', 'integer', 'exists:users,id'],
             'name' => [$required, 'string', 'max:160'],
-            'slug' => ['nullable', 'string', 'max:180', 'regex:/^[a-z0-9-]+$/i'],
-            'logo_initials' => ['nullable', 'string', 'max:12'],
-            'logo_text' => ['nullable', 'string', 'max:80'],
-            'logo_class' => ['nullable', 'string', 'max:40'],
-            'status_label' => ['nullable', 'string', 'max:40'],
-            'status_class' => ['nullable', Rule::in(['trusted', 'caution', 'avoid'])],
-            'description' => ['nullable', 'string', 'max:4000'],
+            'slug' => ['nullable', 'string', 'max:180'],
+            'description' => ['nullable', 'string', 'max:50000'],
             'website_url' => ['nullable', 'url', 'max:255'],
-            'member_since' => ['nullable', 'date'],
-            'last_active_at' => ['nullable', 'date'],
-            'review_count' => ['nullable', 'integer', 'min:0'],
-            'average_rating' => ['nullable', 'numeric', 'min:0', 'max:5'],
-            'would_buy_again_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'response_rate_percent' => ['nullable', 'numeric', 'min:0', 'max:100'],
-            'avg_response_time' => ['nullable', 'string', 'max:80'],
-            'tags' => ['nullable', 'array', 'max:12'],
-            'tags.*' => ['string', 'max:60'],
-            'top_products' => ['nullable', 'array', 'max:20'],
+            'image_url' => ['nullable', 'string', 'max:2048'],
+            'contact_email' => ['nullable', 'email', 'max:255'],
+            'contact_telegram' => ['nullable', 'string', 'max:120'],
+            'contact_signal' => ['nullable', 'string', 'max:120'],
+            'contact_discord' => ['nullable', 'string', 'max:120'],
+            'support_url' => ['nullable', 'url', 'max:255'],
+            'response_policy' => ['nullable', 'string', 'max:5000'],
+            'public_contact_notes' => ['nullable', 'string', 'max:5000'],
+            'tags' => ['nullable', 'array'],
+            'top_products' => ['nullable', 'array'],
             'status' => ['nullable', Rule::in(['published', 'hidden'])],
         ]);
     }
@@ -158,19 +147,10 @@ class CommunityVendorAdminController extends Controller
         return $slug;
     }
 
-    private function initials(string $value): string
+    private function initials(string $name): string
     {
-        $words = Str::of($value)
-            ->replaceMatches('/[^A-Za-z0-9 ]+/', ' ')
-            ->squish()
-            ->explode(' ')
-            ->filter();
+        $parts = explode(' ', $name, 2);
 
-        $initials = $words
-            ->take(2)
-            ->map(fn (string $word) => Str::upper(Str::substr($word, 0, 1)))
-            ->implode('');
-
-        return $initials !== '' ? $initials : 'V';
+        return strtoupper(($parts[0][0] ?? '') . ($parts[1][0] ?? $parts[0][1] ?? ''));
     }
 }
