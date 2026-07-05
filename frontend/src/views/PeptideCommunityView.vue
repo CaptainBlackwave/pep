@@ -5383,6 +5383,9 @@ async function saveVendorProfile(): Promise<void> {
     hydrateVendorPortalForm(apiMyVendor.value)
     vendorPortalStatusMessage.value = creatingProfile ? 'Vendor profile published.' : 'Vendor profile saved.'
     await loadVendors()
+    if (detailVendor.value?.isOwnedByViewer) {
+      await loadVendorDetail()
+    }
   } catch (error) {
     vendorPortalFormError.value = vendorPortalError(error, 'Unable to save vendor profile.')
   } finally {
