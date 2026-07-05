@@ -290,8 +290,8 @@
               <aside class="topic-author">
                 <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
                 <span v-else class="avatar" :class="topic.color">{{ topic.initial }}</span>
-                <div class="author-name">{{ topic.title }}</div>
-                <small>{{ topic.author }}</small>
+                <div class="author-name">{{ topic.author }}</div>
+                <small class="author-posts">{{ topic.replies }} {{ topic.replies === 1 ? 'reply' : 'replies' }}</small>
               </aside>
               <main class="topic-main">
                 <div class="topic-header">
