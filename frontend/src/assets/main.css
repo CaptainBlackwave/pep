@@ -2943,9 +2943,9 @@ table {
   inset: 0;
   background-size: cover;
   background-position: center;
-  filter: blur(20px) saturate(1.2);
-  opacity: 0.15;
-  transform: scale(1.15);
+  filter: blur(12px) saturate(1.1);
+  opacity: 0.08;
+  transform: scale(1.1);
   z-index: 0;
 }
 
