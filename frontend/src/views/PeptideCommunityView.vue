@@ -36,7 +36,8 @@
       <label>
         Message
         <div class="pv-textarea-with-emoji">
-          <textarea v-model="newDiscussion.body" required rows="7" maxlength="10000" placeholder="Share the details, context, and what kind of help or feedback you want."></textarea>
+          <EditorToolbar target="newDiscussion" />
+          <textarea id="new-discussion-editor" v-model="newDiscussion.body" required rows="7" maxlength="10000" placeholder="Share the details, context, and what kind of help or feedback you want."></textarea>
           <EmojiPicker v-model="newDiscussion.body" />
         </div>
         <small>{{ newDiscussion.body.length }}/10000</small>
@@ -256,17 +257,26 @@
           <p v-if="discussionStatusMessage" class="pv-alert pv-alert--compact">{{ discussionStatusMessage }}</p>
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
-            <router-link v-for="topic in discussions" :key="topic.title" :to="topic.href" class="topic-card">
+            <article
+              v-for="topic in discussions"
+              :key="topic.title"
+              class="topic-card"
+              role="link"
+              tabindex="0"
+              @click="goToDiscussion(topic)"
+              @keydown.enter.prevent="goToDiscussion(topic)"
+              @keydown.space.prevent="goToDiscussion(topic)"
+            >
               <div class="topic-menu">
                 <span>{{ topic.time }}</span>
                 <button>⋮</button>
               </div>
               <aside class="author-panel">
-                <div class="avatar-wrap">
+                <router-link class="avatar-wrap pv-author-link" :to="memberHref(topic.authorUsername)" :aria-label="`View ${topic.author}'s profile`" @click.stop>
                   <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
                   <span v-else class="avatar" :class="topic.color">{{ topic.initial }}</span>
-                </div>
-                <h4>{{ topic.author }}</h4>
+                </router-link>
+                <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>{{ topic.author }}</h4></router-link>
                 <p>@{{ topic.authorUsername }}</p>
                 <div class="author-badge">🛡 Trusted Member</div>
                 <div class="level-badge">✪ Level 12</div>
@@ -299,18 +309,18 @@
                   </div>
                   <div v-if="topic.latestReply" class="last-reply">
                     <small>Last reply</small>
-                    <div class="reply-row">
+                    <router-link class="reply-row pv-author-link" :to="memberHref(topic.latestReply.username || topic.latestReply.author)" @click.stop>
                       <img v-if="topic.latestReply.avatar" :src="assetUrl(topic.latestReply.avatar)" :alt="topic.latestReply.author">
                       <span v-else class="avatar-sm">{{ topic.latestReply.initial }}</span>
                       <div>
                         <strong>{{ topic.latestReply.author }} <i></i></strong>
                         <span>{{ topic.latestReply.timeAgo }}</span>
                       </div>
-                    </div>
+                    </router-link>
                   </div>
                 </div>
               </main>
-            </router-link>
+            </article>
           </div>
           <PaginationBlock :meta="discussionPagination" @page="setDiscussionPage" />
         </article>
@@ -323,11 +333,13 @@
       <router-link to="/discussions" class="op-back">← Back to Discussions</router-link>
       <article class="op-card">
         <header class="op-header">
-          <span v-if="detailDiscussion.avatarUrl" class="op-avatar"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
-          <span v-else class="op-avatar op-avatar--letter">{{ detailDiscussion.initial }}</span>
-          <span v-if="detailDiscussion.authorOnline" class="online-indicator"></span>
+          <router-link class="op-avatar-link pv-author-link" :to="memberHref(detailDiscussion.authorUsername)" :aria-label="`View ${detailDiscussion.author}'s profile`">
+            <span v-if="detailDiscussion.avatarUrl" class="op-avatar"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
+            <span v-else class="op-avatar op-avatar--letter">{{ detailDiscussion.initial }}</span>
+            <span v-if="detailDiscussion.authorOnline" class="online-indicator"></span>
+          </router-link>
           <div class="op-user">
-            <strong>{{ detailDiscussion.author }}</strong>
+            <router-link class="pv-author-name-link" :to="memberHref(detailDiscussion.authorUsername)"><strong>{{ detailDiscussion.author }}</strong></router-link>
             <span class="verified">✓</span>
           </div>
           <div class="op-meta">
@@ -348,12 +360,13 @@
           <span v-if="detailDiscussion.isLocked" class="flag-locked">🔒 Locked</span>
         </div>
         <div v-if="!isEditingDiscussion" class="op-content">
-          <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>
+          <div class="pv-rich-text" v-html="renderFormattedText(detailDiscussion.body ?? detailDiscussion.excerpt)"></div>
         </div>
         <div v-else class="thread-edit-form">
           <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
           <input v-model="editDiscussionTitle" required maxlength="160">
-          <textarea v-model="editDiscussionBody" required rows="6" maxlength="10000"></textarea>
+          <EditorToolbar target="editDiscussion" />
+          <textarea id="edit-discussion-editor" v-model="editDiscussionBody" required rows="6" maxlength="10000"></textarea>
           <div class="pv-form-actions">
             <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
             <button type="button" class="pv-primary-button" :disabled="discussionEditSaving" @click="saveEditDiscussion">{{ discussionEditSaving ? 'Saving...' : 'Save Changes' }}</button>
@@ -374,12 +387,12 @@
 
       <article v-for="(reply, index) in replies" :key="reply.id ?? `${reply.author}-${reply.time}`" class="post-card reply-post">
         <div class="post-left reply-left">
-          <div class="avatar letter-avatar">
+          <router-link class="avatar letter-avatar pv-author-link" :to="memberHref(reply.authorUsername)" :aria-label="`View ${reply.author}'s profile`">
             <span v-if="reply.avatarUrl" class="img-wrap"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author"></span>
             <span v-else>{{ reply.initial }}</span>
             <span v-if="reply.authorOnline" class="online-indicator"></span>
-          </div>
-          <div class="reply-name">{{ reply.author }}</div>
+          </router-link>
+          <router-link class="reply-name pv-author-name-link" :to="memberHref(reply.authorUsername)">{{ reply.author }}</router-link>
         </div>
         <div class="post-main">
           <div class="reply-top">
@@ -390,7 +403,7 @@
               <span v-if="reply.authorId && reply.authorId === detailDiscussion.authorId" class="small-badge">OP</span>
             </div>
           </div>
-          <p class="reply-text" v-html="linkifyText(reply.text)"></p>
+          <div class="reply-text pv-rich-text" v-html="renderFormattedText(reply.text)"></div>
           <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
             <img :src="reply.attachmentUrl || ''" :alt="reply.file || 'Reply attachment'">
             <figcaption>{{ reply.file }} <span>{{ attachmentLabel(reply) }}</span></figcaption>
@@ -425,7 +438,8 @@
           <strong>Reply as {{ accountName() }}</strong>
           <small>{{ replyBody.length }}/8000</small>
         </div>
-        <textarea v-model="replyBody" maxlength="8000" placeholder="Write a reply..." rows="4"></textarea>
+        <EditorToolbar target="reply" />
+        <textarea id="reply-editor" v-model="replyBody" maxlength="8000" placeholder="Write a reply..." rows="4"></textarea>
         <div v-if="replyAttachmentFile || replyAttachmentGifUrl" class="pv-attachment-preview">
           <img v-if="replyAttachmentPreviewUrl || replyAttachmentGifUrl" :src="replyAttachmentPreviewUrl || replyAttachmentGifUrl" alt="Attachment preview">
           <span><strong>{{ replyAttachmentName() }}</strong><small>{{ replyAttachmentFile ? 'Image' : 'GIF' }}</small></span>
@@ -1595,6 +1609,7 @@ interface UiDiscussion {
   avatarUrl?: string | null
   latestReply?: {
     author: string
+    username?: string
     timeAgo: string
     avatar?: string | null
     initial: string
@@ -1625,6 +1640,7 @@ interface UiReply {
   attachmentMeta: Record<string, unknown>
   viewerVote: -1 | 0 | 1
   authorId?: number
+  authorUsername: string
   authorOnline: boolean
 }
 
@@ -1651,6 +1667,7 @@ interface ApiDiscussion {
   similar_discussions?: ApiDiscussion[]
   last_reply?: {
     author: string
+    username?: string | null
     time_ago: string
     avatar?: string | null
     initial: string
@@ -1675,7 +1692,7 @@ interface ApiReply {
   votes?: number
   viewer_vote?: number
   time_ago?: string | null
-  author?: { id?: number; name?: string | null; initial?: string | null; badge?: string | null; avatar?: string | null; is_online?: boolean } | null
+  author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; badge?: string | null; avatar?: string | null; is_online?: boolean } | null
 }
 
 interface DiscussionIndexResponse {
@@ -2486,6 +2503,9 @@ interface UserActionsResponse {
 interface BlockedUsersResponse {
   data: ApiMemberProfile[]
 }
+
+type EditorTarget = 'newDiscussion' | 'editDiscussion' | 'reply'
+type EditorAction = 'bold' | 'italic' | 'heading' | 'quote' | 'code' | 'codeBlock' | 'bulletList' | 'numberedList' | 'link' | 'image' | 'mention' | 'embed'
 
 const avatarColors = ['purple', 'blue', 'green', 'pink', 'orange', 'teal']
 
@@ -4402,6 +4422,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     latestReply: item.last_reply
       ? {
           author: item.last_reply.author,
+          username: item.last_reply.username ?? item.last_reply.author,
           timeAgo: item.last_reply.time_ago,
           avatar: item.last_reply.avatar ?? null,
           initial: item.last_reply.initial,
@@ -4418,6 +4439,7 @@ function mapReply(item: ApiReply): UiReply {
     id: item.id,
     author,
     authorId: item.author?.id,
+    authorUsername: item.author?.username ?? author,
     initial: item.author?.initial ?? author.charAt(0).toUpperCase(),
     color: colorForName(author),
     avatarUrl: replyAvatarUrl,
@@ -4588,6 +4610,80 @@ function closeNewDiscussion(): void {
   discussionFormError.value = ''
 }
 
+function editorElementId(target: EditorTarget): string {
+  if (target === 'newDiscussion') return 'new-discussion-editor'
+  if (target === 'editDiscussion') return 'edit-discussion-editor'
+  return 'reply-editor'
+}
+
+function editorValue(target: EditorTarget): string {
+  if (target === 'newDiscussion') return newDiscussion.value.body
+  if (target === 'editDiscussion') return editDiscussionBody.value
+  return replyBody.value
+}
+
+function setEditorValue(target: EditorTarget, value: string): void {
+  if (target === 'newDiscussion') {
+    newDiscussion.value.body = value
+    return
+  }
+
+  if (target === 'editDiscussion') {
+    editDiscussionBody.value = value
+    return
+  }
+
+  replyBody.value = value
+}
+
+function insertEditorText(target: EditorTarget, before: string, after = '', fallback = 'text'): void {
+  const textarea = document.getElementById(editorElementId(target)) as HTMLTextAreaElement | null
+  const current = editorValue(target)
+  const start = textarea?.selectionStart ?? current.length
+  const end = textarea?.selectionEnd ?? current.length
+  const selected = current.slice(start, end) || fallback
+  const next = `${current.slice(0, start)}${before}${selected}${after}${current.slice(end)}`
+  setEditorValue(target, next)
+
+  window.setTimeout(() => {
+    textarea?.focus()
+    const cursorStart = start + before.length
+    const cursorEnd = cursorStart + selected.length
+    textarea?.setSelectionRange(cursorStart, cursorEnd)
+  })
+}
+
+function insertEditorBlock(target: EditorTarget, block: string): void {
+  const textarea = document.getElementById(editorElementId(target)) as HTMLTextAreaElement | null
+  const current = editorValue(target)
+  const start = textarea?.selectionStart ?? current.length
+  const prefix = start > 0 && current[start - 1] !== '\n' ? '\n' : ''
+  const suffix = block.endsWith('\n') ? '' : '\n'
+  const next = `${current.slice(0, start)}${prefix}${block}${suffix}${current.slice(start)}`
+  setEditorValue(target, next)
+
+  window.setTimeout(() => {
+    textarea?.focus()
+    const cursor = start + prefix.length + block.length + suffix.length
+    textarea?.setSelectionRange(cursor, cursor)
+  })
+}
+
+function applyEditorAction(target: EditorTarget, action: EditorAction): void {
+  if (action === 'bold') return insertEditorText(target, '**', '**', 'bold text')
+  if (action === 'italic') return insertEditorText(target, '*', '*', 'italic text')
+  if (action === 'heading') return insertEditorBlock(target, '## Heading')
+  if (action === 'quote') return insertEditorBlock(target, '> Quoted text')
+  if (action === 'code') return insertEditorText(target, '`', '`', 'code')
+  if (action === 'codeBlock') return insertEditorBlock(target, '```\ncode block\n```')
+  if (action === 'bulletList') return insertEditorBlock(target, '- First item\n- Second item')
+  if (action === 'numberedList') return insertEditorBlock(target, '1. First item\n2. Second item')
+  if (action === 'link') return insertEditorText(target, '[', '](https://example.com)', 'link text')
+  if (action === 'image') return insertEditorBlock(target, '![Image description](https://example.com/image.png)')
+  if (action === 'mention') return insertEditorText(target, '@', '', 'username')
+  if (action === 'embed') return insertEditorBlock(target, 'https://www.youtube.com/watch?v=VIDEO_ID')
+}
+
 async function submitNewDiscussion(): Promise<void> {
   if (!ensureAuthenticated('post a discussion')) {
     return
@@ -4694,6 +4790,10 @@ function clearDiscussionFilters(): void {
 function setDiscussionPage(pageNumber: number): void {
   discussionPage.value = pageNumber
   void loadDiscussions()
+}
+
+function goToDiscussion(topic: UiDiscussion): void {
+  void router.push(topic.href)
 }
 
 onMounted(() => {
@@ -6446,23 +6546,158 @@ const currentNotificationSlug = computed(() => String(route.params.slug ?? ''))
 const primaryNotification = computed(() => apiDetailNotification.value ?? notifications.value.find(item => item.slug === currentNotificationSlug.value) ?? null)
 const currentNotificationIndex = computed(() => notifications.value.findIndex(item => item.slug === primaryNotification.value?.slug))
 const previousNotification = computed(() => currentNotificationIndex.value > 0 ? notifications.value[currentNotificationIndex.value - 1] : null)
-function linkifyText(text: string): string {
-  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
-  const withLinks = escaped.replace(
-    /(https?:\/\/[^\s<]+)/g,
-    (url) => {
-      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
-      if (ytMatch) {
-        return `<div class="pv-embed"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen></iframe></div>`
-      }
-      return `<a href="${url}" target="_blank" rel="noreferrer" class="pv-link">${url}</a>`
+function escapeHtml(value: string): string {
+  return value
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+}
+
+function memberHref(value?: string | null): string {
+  const slug = String(value || '').trim().replace(/^@/, '').toLowerCase().replace(/\s+/g, '-')
+  return slug ? `/members/${encodeURIComponent(slug)}` : '/members'
+}
+
+function safeExternalUrl(value: string): string {
+  const decoded = value.replace(/&amp;/g, '&')
+  return /^https?:\/\//i.test(decoded) ? decoded : '#'
+}
+
+function mediaEmbed(url: string): string | null {
+  const decoded = safeExternalUrl(url)
+  const youtube = decoded.match(/(?:youtube\.com\/(?:watch\?v=|shorts\/)|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+  if (youtube) {
+    return `<div class="pv-embed"><iframe src="https://www.youtube.com/embed/${youtube[1]}" frameborder="0" allowfullscreen></iframe></div>`
+  }
+
+  const vimeo = decoded.match(/vimeo\.com\/(\d+)/)
+  if (vimeo) {
+    return `<div class="pv-embed"><iframe src="https://player.vimeo.com/video/${vimeo[1]}" frameborder="0" allowfullscreen></iframe></div>`
+  }
+
+  if (/\.(png|jpe?g|webp|gif)(\?.*)?$/i.test(decoded)) {
+    return `<figure class="pv-inline-image"><img src="${escapeHtml(decoded)}" alt="Linked image"></figure>`
+  }
+
+  return null
+}
+
+function formatInlineText(value: string): string {
+  const replacements: string[] = []
+  const stash = (html: string) => {
+    const token = `\uE000${replacements.length}\uE000`
+    replacements.push(html)
+    return token
+  }
+
+  let output = escapeHtml(value)
+  output = output.replace(/`([^`]+)`/g, (_match, code: string) => stash(`<code>${code}</code>`))
+  output = output.replace(/!\[([^\]]*)\]\((https?:\/\/[^\s)]+)\)/gi, (_match, alt: string, url: string) => {
+    const safeUrl = safeExternalUrl(url)
+    return stash(`<figure class="pv-inline-image"><img src="${escapeHtml(safeUrl)}" alt="${escapeHtml(alt || 'Linked image')}"></figure>`)
+  })
+  output = output.replace(/\[([^\]]+)\]\((https?:\/\/[^\s)]+)\)/gi, (_match, label: string, url: string) => {
+    const safeUrl = safeExternalUrl(url)
+    return stash(`<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noreferrer" class="pv-link">${label}</a>`)
+  })
+  output = output.replace(/https?:\/\/[^\s<]+/g, (url: string) => {
+    const cleanUrl = url.replace(/[),.;!?]+$/, '')
+    const trailing = url.slice(cleanUrl.length)
+    const embed = mediaEmbed(cleanUrl)
+    if (embed) {
+      return stash(embed) + trailing
     }
+
+    const safeUrl = safeExternalUrl(cleanUrl)
+    return stash(`<a href="${escapeHtml(safeUrl)}" target="_blank" rel="noreferrer" class="pv-link">${cleanUrl}</a>`) + trailing
+  })
+  output = output.replace(/\*\*([^*]+)\*\*/g, '<strong>$1</strong>')
+  output = output.replace(/__([^_]+)__/g, '<strong>$1</strong>')
+  output = output.replace(/\*([^*\n]+)\*/g, '<em>$1</em>')
+  output = output.replace(/_([^_\n]+)_/g, '<em>$1</em>')
+  output = output.replace(
+    /(^|[^\w@])@([A-Za-z0-9_]{3,40})/g,
+    (_match, prefix: string, username: string) => `${prefix}<a href="${memberHref(username)}" class="pv-mention">@${username}</a>`
   )
 
-  return withLinks.replace(
-    /(^|[^\w@])@([A-Za-z0-9_]{3,40})/g,
-    (_match, prefix: string, username: string) => `${prefix}<a href="/members/${username}" class="pv-mention">@${username}</a>`
-  )
+  return replacements.reduce((html, replacement, index) => html.split(`\uE000${index}\uE000`).join(replacement), output)
+}
+
+function renderFormattedText(text?: string | null): string {
+  const lines = String(text || '').replace(/\r\n/g, '\n').split('\n')
+  const html: string[] = []
+  let index = 0
+
+  while (index < lines.length) {
+    const line = lines[index] ?? ''
+    if (!line.trim()) {
+      index += 1
+      continue
+    }
+
+    if (line.trim().startsWith('```')) {
+      const codeLines: string[] = []
+      index += 1
+      while (index < lines.length && !(lines[index] ?? '').trim().startsWith('```')) {
+        codeLines.push(lines[index] ?? '')
+        index += 1
+      }
+      index += 1
+      html.push(`<pre><code>${escapeHtml(codeLines.join('\n'))}</code></pre>`)
+      continue
+    }
+
+    const heading = line.match(/^(#{1,3})\s+(.+)$/)
+    if (heading) {
+      const marker = heading[1] ?? '##'
+      const headingText = heading[2] ?? ''
+      const level = marker.length + 2
+      html.push(`<h${level}>${formatInlineText(headingText)}</h${level}>`)
+      index += 1
+      continue
+    }
+
+    if (/^>\s?/.test(line)) {
+      const quoteLines: string[] = []
+      while (index < lines.length && /^>\s?/.test(lines[index] ?? '')) {
+        quoteLines.push((lines[index] ?? '').replace(/^>\s?/, ''))
+        index += 1
+      }
+      html.push(`<blockquote>${quoteLines.map(formatInlineText).join('<br>')}</blockquote>`)
+      continue
+    }
+
+    if (/^\s*[-*]\s+/.test(line)) {
+      const items: string[] = []
+      while (index < lines.length && /^\s*[-*]\s+/.test(lines[index] ?? '')) {
+        items.push((lines[index] ?? '').replace(/^\s*[-*]\s+/, ''))
+        index += 1
+      }
+      html.push(`<ul>${items.map(item => `<li>${formatInlineText(item)}</li>`).join('')}</ul>`)
+      continue
+    }
+
+    if (/^\s*\d+\.\s+/.test(line)) {
+      const items: string[] = []
+      while (index < lines.length && /^\s*\d+\.\s+/.test(lines[index] ?? '')) {
+        items.push((lines[index] ?? '').replace(/^\s*\d+\.\s+/, ''))
+        index += 1
+      }
+      html.push(`<ol>${items.map(item => `<li>${formatInlineText(item)}</li>`).join('')}</ol>`)
+      continue
+    }
+
+    const paragraph: string[] = []
+    while (index < lines.length && (lines[index] ?? '').trim()) {
+      if (/^(#{1,3})\s+|^>\s?|^\s*[-*]\s+|^\s*\d+\.\s+|^```/.test(lines[index] ?? '')) break
+      paragraph.push(lines[index] ?? '')
+      index += 1
+    }
+    html.push(`<p>${formatInlineText(paragraph.join(' '))}</p>`)
+  }
+
+  return html.join('')
 }
 
 const nextNotification = computed(() => currentNotificationIndex.value >= 0 && currentNotificationIndex.value < notifications.value.length - 1 ? notifications.value[currentNotificationIndex.value + 1] : null)
@@ -6498,6 +6733,35 @@ function thumbnailStyle(index: number, imageUrl?: string | null) {
 function contentThumbnailStyle(item: UiContentItem, fallbackIndex = 0) {
   return thumbnailStyle(item.imageIndex || fallbackIndex, item.imageUrl)
 }
+
+const EditorToolbar = defineComponent({
+  props: {
+    target: { type: String as PropType<EditorTarget>, required: true },
+  },
+  setup(props) {
+    const actions: Array<{ action: EditorAction; label: string; title: string }> = [
+      { action: 'bold', label: 'B', title: 'Bold' },
+      { action: 'italic', label: 'I', title: 'Italic' },
+      { action: 'heading', label: 'H', title: 'Heading' },
+      { action: 'quote', label: '“”', title: 'Quote' },
+      { action: 'code', label: '<>', title: 'Inline code' },
+      { action: 'codeBlock', label: '{ }', title: 'Code block' },
+      { action: 'bulletList', label: '•', title: 'Bullet list' },
+      { action: 'numberedList', label: '1.', title: 'Numbered list' },
+      { action: 'link', label: 'Link', title: 'Link' },
+      { action: 'image', label: 'Image', title: 'Image or GIF URL' },
+      { action: 'mention', label: '@', title: 'Mention member' },
+      { action: 'embed', label: 'Video', title: 'YouTube or Vimeo embed' },
+    ]
+
+    return () => h('div', { class: 'pv-editor-toolbar', 'aria-label': 'Text formatting toolbar' }, actions.map(item => h('button', {
+      type: 'button',
+      title: item.title,
+      'aria-label': item.title,
+      onClick: () => applyEditorAction(props.target, item.action),
+    }, item.label)))
+  },
+})
 
 const PaginationBlock = defineComponent({
   props: {

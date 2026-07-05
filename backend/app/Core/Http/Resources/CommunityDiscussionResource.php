@@ -70,6 +70,7 @@ class CommunityDiscussionResource extends JsonResource
             'similar_discussions' => $this->community_similar_discussions ?? [],
             'last_reply' => $this->last_reply_at && $this->relationLoaded('lastReplyUser') && $this->lastReplyUser ? [
                 'author' => $this->lastReplyUser->name ?? $this->lastReplyUser->username ?? 'Unknown',
+                'username' => $this->lastReplyUser->username,
                 'time_ago' => $this->last_reply_at->diffForHumans(),
                 'avatar' => $this->lastReplyUser->profile_picture ?? $this->lastReplyUser->profile_photo_path ?? null,
                 'initial' => Str::upper(Str::substr($this->lastReplyUser->name ?? $this->lastReplyUser->username ?? 'U', 0, 1)),
