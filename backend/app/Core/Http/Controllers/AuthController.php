@@ -3,11 +3,11 @@
 namespace App\Core\Http\Controllers;
 
 use App\Core\Http\Controllers\Controller;
-use App\Core\Http\Requests\ChangePasswordRequest;
-use App\Core\Http\Requests\LoginRequest;
 use App\Core\Http\Requests\RegisterRequest;
+use App\Core\Http\Requests\LoginRequest;
 use App\Core\Http\Resources\UserResource;
 use App\Core\Models\CommunityAccessCode;
+use App\Core\Models\Setting;
 use App\Core\Models\EmailSetting;
 use App\Core\Models\User;
 use App\Mail\DynamicEmail;

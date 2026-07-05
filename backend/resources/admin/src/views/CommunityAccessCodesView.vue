@@ -17,6 +17,25 @@
       </button>
     </div>
 
+    <div class="flex items-center gap-4 rounded-2xl border border-slate-700/50 bg-slate-800/50 p-5">
+      <div class="flex-1">
+        <h2 class="text-lg font-semibold text-white">Require Access Codes</h2>
+        <p class="text-sm text-slate-400">When enabled, new users must enter a valid access code to register.</p>
+      </div>
+      <button
+        class="relative inline-flex h-7 w-12 shrink-0 cursor-pointer items-center rounded-full border-2 border-transparent transition-colors duration-200 ease-in-out focus:outline-none"
+        :class="accessCodeRequired ? 'bg-violet-600' : 'bg-slate-600'"
+        role="switch"
+        :aria-checked="accessCodeRequired"
+        @click="toggleAccessCodeRequired"
+      >
+        <span
+          class="pointer-events-none inline-block h-5 w-5 rounded-full bg-white shadow transition duration-200 ease-in-out"
+          :class="accessCodeRequired ? 'translate-x-5' : 'translate-x-0'"
+        />
+      </button>
+    </div>
+
     <div class="grid grid-cols-2 gap-4 lg:grid-cols-5">
       <div
         v-for="card in statCards"
@@ -207,8 +226,10 @@ import api from '../services/api'
 const codes = ref([])
 const loading = ref(false)
 const saving = ref(false)
+const savingSettings = ref(false)
 const error = ref('')
 const generatedCode = ref('')
+const accessCodeRequired = ref(false)
 const stats = ref({
   total: 0,
   available: 0,
@@ -234,6 +255,29 @@ const statCards = computed(() => [
   { label: 'Revoked', value: stats.value.revoked },
   { label: 'Expired', value: stats.value.expired },
 ])
+
+async function fetchSettings() {
+  try {
+    const response = await api.get('/admin/settings')
+    accessCodeRequired.value = response.data.access_code_required === true
+  } catch {
+    // ignore
+  }
+}
+
+async function toggleAccessCodeRequired() {
+  savingSettings.value = true
+  try {
+    await api.patch('/admin/settings', {
+      settings: [{ key: 'access_code_required', value: accessCodeRequired.value ? '0' : '1' }],
+    })
+    accessCodeRequired.value = !accessCodeRequired.value
+  } catch {
+    error.value = 'Failed to update setting.'
+  } finally {
+    savingSettings.value = false
+  }
+}
 
 async function fetchCodes() {
   loading.value = true
@@ -315,5 +359,8 @@ function formatDate(value) {
   return new Date(value).toLocaleString()
 }
 
-onMounted(fetchCodes)
+onMounted(() => {
+  fetchCodes()
+  fetchSettings()
+})
 </script>

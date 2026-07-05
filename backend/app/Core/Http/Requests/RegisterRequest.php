@@ -3,6 +3,7 @@
 namespace App\Core\Http\Requests;
 
 use App\Core\Models\CommunityAccessCode;
+use App\Core\Models\Setting;
 use Illuminate\Foundation\Http\FormRequest;
 
 class RegisterRequest extends FormRequest
@@ -22,22 +23,30 @@ class RegisterRequest extends FormRequest
      */
     public function rules(): array
     {
-        return [
+        $accessCodeRequired = Setting::where('key', 'access_code_required')->value('value') === '1';
+
+        $rules = [
             'username' => 'required|string|max:255|unique:users',
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
-            'access_code' => [
-                'sometimes',
-                'nullable',
+        ];
+
+        if ($accessCodeRequired) {
+            $rules['access_code'] = [
+                'required',
                 'string',
                 'max:80',
                 function (string $attribute, mixed $value, \Closure $fail): void {
-                    if ($value && !CommunityAccessCode::isUsableCode((string) $value)) {
+                    if (!CommunityAccessCode::isUsableCode((string) $value)) {
                         $fail('The access code is invalid or has already been used.');
                     }
                 },
-            ],
-        ];
+            ];
+        } else {
+            $rules['access_code'] = 'nullable|string|max:80';
+        }
+
+        return $rules;
     }
 
     /**
