@@ -11,6 +11,9 @@ export interface User {
   name?: string
   email: string
   avatar?: string
+  profile_photo_path?: string
+  profile_picture?: string
+  is_approved_vendor?: boolean
   roles?: string[]
   permissions?: string[]
 }

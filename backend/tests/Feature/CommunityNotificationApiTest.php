@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Core\Middleware\VerifyLicense;
 use App\Core\Models\CommunityNotification;
 use App\Core\Models\CommunityNotificationRead;
+use App\Core\Models\Notification;
 use App\Core\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Laravel\Sanctum\Sanctum;
@@ -189,6 +190,57 @@ class CommunityNotificationApiTest extends TestCase
             ->assertJsonPath('read_count', 2);
 
         $this->assertSame(2, CommunityNotificationRead::where('user_id', $user->id)->count());
+    }
+
+    public function test_personal_reply_mention_and_message_notifications_behave_like_normal_notifications(): void
+    {
+        $user = User::factory()->create();
+
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'discussion_reply',
+            'title' => 'New reply',
+            'message' => 'Someone replied to a discussion you follow.',
+            'link' => '/discussions/reply-topic',
+        ]);
+        $mention = Notification::create([
+            'user_id' => $user->id,
+            'type' => 'discussion_mention',
+            'title' => 'You were mentioned',
+            'message' => 'A member mentioned you in a discussion.',
+            'link' => '/discussions/mention-topic',
+        ]);
+        Notification::create([
+            'user_id' => $user->id,
+            'type' => 'message',
+            'title' => 'New Message',
+            'message' => 'You have a new private message.',
+            'link' => '/messages?thread=10',
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/v1/community/notifications')
+            ->assertOk()
+            ->assertJsonPath('meta.stats.unread', 3)
+            ->assertJsonPath('meta.stats.replies_unread', 1)
+            ->assertJsonPath('meta.stats.mentions_unread', 1)
+            ->assertJsonPath('meta.stats.messages_unread', 1);
+
+        $this->getJson('/api/v1/community/notifications?category=mentions')
+            ->assertOk()
+            ->assertJsonPath('data.0.category_slug', 'mentions')
+            ->assertJsonPath('data.0.href', '/discussions/mention-topic');
+
+        $this->postJson("/api/v1/community/notifications/personal_{$mention->id}/read")
+            ->assertOk()
+            ->assertJsonPath('data.slug', "personal_{$mention->id}")
+            ->assertJsonPath('data.unread', false);
+
+        $this->assertDatabaseHas('notifications', [
+            'id' => $mention->id,
+        ]);
+        $this->assertNotNull($mention->fresh()->read_at);
     }
 
     public function test_admin_can_create_published_notification(): void

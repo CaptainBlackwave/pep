@@ -1,5 +1,5 @@
 /**
- * WebSocket Type Definitions for PBBG Vault
+ * WebSocket Type Definitions for Peptide Community
  */
 
 /**

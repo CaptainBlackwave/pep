@@ -1324,22 +1324,6 @@ table {
   font-weight: 800;
 }
 
-.pv-upvote {
-  align-self: start;
-  min-width: 46px;
-  padding: 8px 10px;
-  border: 1px solid rgba(160, 119, 255, 0.18);
-  border-radius: 999px;
-  background: rgba(124, 58, 237, 0.13);
-  color: #d8c4ff;
-  font-weight: 800;
-}
-
-.pv-upvote.active {
-  background: var(--pv-purple);
-  color: #fff;
-}
-
 .pv-file-card {
   max-width: 440px;
   display: grid;
@@ -1380,39 +1364,65 @@ table {
   font-size: 0.8rem;
 }
 
-.pv-reaction-bar {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 7px;
-  padding: 8px 24px 14px;
-}
-
-.pv-reaction-bar--reply {
-  padding: 4px 0 2px;
-}
-
-.pv-reaction-chip {
-  min-height: 32px;
-  display: inline-flex;
+.pv-vote-bar {
+  display: inline-grid;
+  grid-template-columns: auto minmax(32px, auto) auto;
   align-items: center;
   gap: 6px;
-  padding: 0 10px;
+  width: fit-content;
+  padding: 4px;
   border: 1px solid var(--pv-border);
   border-radius: 999px;
   background: rgba(255, 255, 255, 0.025);
-  color: #d8dbe5;
 }
 
-.pv-reaction-chip.active,
-.pv-reaction-chip:hover {
-  border-color: var(--pv-border-strong);
+.pv-vote-bar--topic {
+  margin: 8px 24px 12px;
+}
+
+.pv-vote-bar--inline {
+  margin: 4px 0 2px;
+}
+
+.pv-vote-bar > strong {
+  min-width: 32px;
+  text-align: center;
+  color: #fff;
+  font-weight: 900;
+}
+
+.pv-vote-button {
+  min-height: 32px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 6px;
+  padding: 0 10px;
+  border: 0;
+  border-radius: 999px;
+  background: transparent;
+  color: #d8dbe5;
+  font-weight: 800;
+}
+
+.pv-vote-button svg {
+  width: 16px;
+  height: 16px;
+}
+
+.pv-vote-button.active,
+.pv-vote-button:hover {
   background: var(--pv-purple-soft);
   color: #fff;
 }
 
-.pv-reaction-chip strong {
-  color: var(--pv-muted);
-  font-size: 0.78rem;
+.pv-vote-button--down svg {
+  transform: rotate(180deg);
+}
+
+.pv-vote-button--down.active {
+  background: rgba(239, 68, 68, 0.16);
+  color: #ffc2c2;
 }
 
 .pv-thread-bar {
@@ -2659,6 +2669,59 @@ summary {
 .pv-message-list header h1,
 .pv-chat-panel h2 {
   margin: 0;
+}
+
+.pv-new-message {
+  display: grid;
+  gap: 10px;
+  padding: 12px;
+  margin: 12px 0;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  background: rgba(10, 14, 24, 0.7);
+}
+
+.pv-recipient-list {
+  display: grid;
+  gap: 6px;
+}
+
+.pv-recipient-row {
+  display: grid;
+  grid-template-columns: 36px minmax(0, 1fr) 18px;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  padding: 8px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  color: #fff;
+  text-align: left;
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pv-recipient-row:hover,
+.pv-recipient-row:focus-visible {
+  border-color: rgba(167, 139, 250, 0.45);
+  background: rgba(124, 58, 237, 0.22);
+}
+
+.pv-recipient-row:disabled {
+  opacity: 0.6;
+  cursor: wait;
+}
+
+.pv-recipient-row .pv-avatar {
+  width: 36px;
+  height: 36px;
+}
+
+.pv-recipient-row strong,
+.pv-recipient-row small {
+  display: block;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .pv-chat-row {
@@ -4140,23 +4203,36 @@ summary {
     border-radius: 10px;
   }
 
+  .pv-topic-author-card small {
+    white-space: normal;
+  }
+
+  .pv-detail-actions {
+    display: grid;
+    grid-template-columns: repeat(3, 42px) minmax(0, 1fr);
+    align-items: center;
+    justify-content: stretch;
+  }
+
+  .pv-detail-actions .pv-icon-button {
+    width: 42px;
+    height: 42px;
+  }
+
+  .pv-detail-actions .pv-primary-button {
+    width: 100%;
+  }
+
   .pv-topic-body {
     padding: 16px;
   }
 
-  .pv-reaction-bar {
-    padding: 6px 16px 12px;
-    overflow-x: auto;
-    flex-wrap: nowrap;
-    scrollbar-width: none;
+  .pv-vote-bar--topic {
+    margin: 8px 16px 12px;
   }
 
-  .pv-reaction-bar::-webkit-scrollbar {
-    display: none;
-  }
-
-  .pv-reaction-chip {
-    flex: 0 0 auto;
+  .pv-vote-button {
+    padding-inline: 9px;
   }
 
   .pv-topic-actions {
@@ -4183,9 +4259,8 @@ summary {
     display: inline-grid;
   }
 
-  .pv-reply-card .pv-upvote {
-    grid-column: 1 / -1;
-    justify-self: start;
+  .pv-reply-card .pv-vote-bar--inline {
+    max-width: 100%;
   }
 
   .pv-reply-head {

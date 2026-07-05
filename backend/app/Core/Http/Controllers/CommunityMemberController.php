@@ -4,6 +4,7 @@ namespace App\Core\Http\Controllers;
 
 use App\Core\Http\Resources\CommunityMemberResource;
 use App\Core\Models\CommunityDiscussion;
+use App\Core\Models\CommunityDiscussionReply;
 use App\Core\Models\CommunityLabResult;
 use App\Core\Models\CommunityVendorReview;
 use App\Core\Models\User;
@@ -16,6 +17,7 @@ class CommunityMemberController extends Controller
         $validated = $request->validate([
             'online' => ['nullable', 'boolean'],
             'search' => ['nullable', 'string', 'max:120'],
+            'discussion' => ['nullable', 'string', 'max:180'],
             'limit' => ['nullable', 'integer', 'min:1', 'max:80'],
         ]);
 
@@ -36,17 +38,52 @@ class CommunityMemberController extends Controller
             });
         }
 
+        if (!empty($validated['discussion'])) {
+            $discussion = CommunityDiscussion::query()
+                ->where('status', 'published')
+                ->where(function ($inner) use ($validated) {
+                    $inner->where('slug', $validated['discussion']);
+
+                    if (ctype_digit($validated['discussion'])) {
+                        $inner->orWhere('id', (int) $validated['discussion']);
+                    }
+                })
+                ->first();
+
+            if ($discussion) {
+                $participantIds = collect([$discussion->user_id])
+                    ->merge(
+                        CommunityDiscussionReply::query()
+                            ->where('discussion_id', $discussion->id)
+                            ->pluck('user_id')
+                    )
+                    ->filter()
+                    ->unique()
+                    ->values();
+
+                $query->whereIn('id', $participantIds);
+            } else {
+                $query->whereRaw('0 = 1');
+            }
+        }
+
         $limit = (int) ($validated['limit'] ?? 40);
-        $statsQuery = $this->memberQuery();
+        $statsQuery = clone $query;
+        $onlineQuery = clone $query;
+        $this->applyOnlineFilter($onlineQuery, true);
+        $topContributors = $this->topContributors();
+        $onlineMembers = $this->onlineMembers();
 
         return CommunityMemberResource::collection(
-            $query->orderByDesc('last_active')->latest()->limit($limit)->get()
+            $query->orderByDesc('last_active')->latest()->paginate($limit)->withQueryString()
         )->additional([
             'meta' => [
                 'stats' => [
                     'total' => (clone $statsQuery)->count(),
-                    'online' => tap(clone $statsQuery, fn ($query) => $this->applyOnlineFilter($query, true))->count(),
+                    'online' => $onlineQuery->count(),
                 ],
+                'top_contributors' => CommunityMemberResource::collection($topContributors)->resolve($request),
+                'online_members' => CommunityMemberResource::collection($onlineMembers)->resolve($request),
             ],
         ]);
     }
@@ -64,6 +101,7 @@ class CommunityMemberController extends Controller
             ->firstOrFail();
 
         $user->setAttribute('community_activities', $this->activitiesFor($user));
+        $user->setAttribute('community_tab_data', $this->tabDataFor($user));
 
         return new CommunityMemberResource($user);
     }
@@ -157,6 +195,110 @@ class CommunityMemberController extends Controller
             ->take(10)
             ->values()
             ->all();
+    }
+
+    private function tabDataFor(User $user): array
+    {
+        $discussions = CommunityDiscussion::query()
+            ->where('user_id', $user->id)
+            ->where('status', 'published')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (CommunityDiscussion $discussion) => [
+                'type' => 'discussion',
+                'title' => $discussion->title,
+                'text' => $discussion->excerpt,
+                'href' => "/discussions/{$discussion->slug}",
+                'time' => $discussion->created_at?->diffForHumans(),
+            ])
+            ->values()
+            ->all();
+
+        $replies = CommunityDiscussionReply::query()
+            ->with('discussion')
+            ->where('user_id', $user->id)
+            ->whereHas('discussion', fn ($query) => $query->where('status', 'published'))
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (CommunityDiscussionReply $reply) => [
+                'type' => 'reply',
+                'title' => $reply->discussion?->title ?? 'Discussion reply',
+                'text' => $reply->body,
+                'href' => $reply->discussion ? "/discussions/{$reply->discussion->slug}" : '/discussions',
+                'time' => $reply->created_at?->diffForHumans(),
+            ])
+            ->values()
+            ->all();
+
+        $reviews = CommunityVendorReview::query()
+            ->with('vendor')
+            ->where('user_id', $user->id)
+            ->where('status', 'published')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (CommunityVendorReview $review) => [
+                'type' => 'review',
+                'title' => $review->title,
+                'text' => $review->body,
+                'href' => $review->vendor ? "/vendor-reviews/{$review->vendor->slug}" : '/vendor-reviews',
+                'time' => $review->created_at?->diffForHumans(),
+            ])
+            ->values()
+            ->all();
+
+        $labResults = CommunityLabResult::query()
+            ->where('submitted_by_user_id', $user->id)
+            ->where('status', 'published')
+            ->latest()
+            ->limit(10)
+            ->get()
+            ->map(fn (CommunityLabResult $result) => [
+                'type' => 'lab',
+                'title' => $result->compound_name,
+                'text' => trim("{$result->vendor_name} {$result->batch_code}"),
+                'href' => "/lab-results/{$result->slug}",
+                'time' => $result->created_at?->diffForHumans(),
+            ])
+            ->values()
+            ->all();
+
+        return [
+            'overview' => collect($discussions)
+                ->merge($replies)
+                ->merge($reviews)
+                ->merge($labResults)
+                ->take(12)
+                ->values()
+                ->all(),
+            'activity' => $this->activitiesFor($user),
+            'posts' => collect($discussions)->merge($replies)->values()->all(),
+            'reviews' => $reviews,
+            'guides' => [],
+            'badges' => $user->roles->pluck('name')->map(fn (string $role) => ucfirst($role))->values()->all(),
+        ];
+    }
+
+    private function topContributors()
+    {
+        return $this->memberQuery()
+            ->get()
+            ->sortByDesc(fn (User $user) => (int) ($user->community_discussions_count ?? 0)
+                + (int) ($user->community_discussion_replies_count ?? 0)
+                + (int) ($user->community_lab_results_count ?? 0)
+                + (int) ($user->community_vendor_reviews_count ?? 0))
+            ->take(5)
+            ->values();
+    }
+
+    private function onlineMembers()
+    {
+        $query = $this->memberQuery();
+        $this->applyOnlineFilter($query, true);
+
+        return $query->orderByDesc('last_active')->limit(6)->get();
     }
 
     private function activity(string $icon, string $tone, string $title, string $category, $occurredAt): array

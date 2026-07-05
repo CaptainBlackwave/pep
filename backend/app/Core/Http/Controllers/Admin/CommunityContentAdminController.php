@@ -139,6 +139,7 @@ class CommunityContentAdminController extends Controller
             'body' => ['nullable', 'string', 'max:50000'],
             'icon' => ['nullable', 'string', 'max:40'],
             'image_index' => ['nullable', 'integer', 'min:0', 'max:99'],
+            'image_url' => ['nullable', 'url', 'max:2048'],
             'read_minutes' => ['nullable', 'integer', 'min:1', 'max:240'],
             'views_count' => ['nullable', 'integer', 'min:0'],
             'downloads_count' => ['nullable', 'integer', 'min:0'],

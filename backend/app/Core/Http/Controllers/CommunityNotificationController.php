@@ -23,6 +23,9 @@ class CommunityNotificationController extends Controller
         $categoryFilter = $validated['category'] ?? null;
         $statusFilter = $validated['status'] ?? null;
 
+        $personalCategories = ['replies', 'mentions', 'messages', 'system'];
+        $isPersonalCategory = $categoryFilter && in_array($categoryFilter, $personalCategories, true);
+
         // Community content notifications (announcements, lab results, guides, vendor reviews)
         $communityQuery = CommunityNotification::query()
             ->with('author')
@@ -32,15 +35,15 @@ class CommunityNotificationController extends Controller
             $communityQuery->with(['reads' => fn ($q) => $q->where('user_id', $user->id)]);
         }
 
-        if ($categoryFilter && !in_array($categoryFilter, ['replies'])) {
+        if ($categoryFilter && !$isPersonalCategory) {
             $communityQuery->where('category_slug', $categoryFilter);
         }
 
-        if ($statusFilter === 'unread' && $user && !in_array($categoryFilter, ['replies'])) {
+        if ($statusFilter === 'unread' && $user && !$isPersonalCategory) {
             $communityQuery->whereDoesntHave('reads', fn ($q) => $q->where('user_id', $user->id));
         }
 
-        $communityNotifications = $communityQuery->get()->map(fn ($item) => [
+        $communityNotifications = $isPersonalCategory ? [] : $communityQuery->get()->map(fn ($item) => [
             '_source' => 'community',
             'id' => $item->id,
             'title' => $item->title,
@@ -52,40 +55,30 @@ class CommunityNotificationController extends Controller
             'published_at' => $item->published_at,
             'created_at' => $item->created_at,
             'is_pinned' => $item->is_pinned,
+            'views_count' => $item->views_count,
             'unread' => $user ? !$item->reads?->contains('user_id', $user->id) : false,
             'href' => $item->href(),
         ])->toArray();
 
-        // Discussion reply notifications (from notifications table, type != message)
-        $replyNotifications = [];
-        if ($user && (!$categoryFilter || in_array($categoryFilter, ['replies', 'all', 'unread']))) {
-            $replyQuery = Notification::query()
-                ->where('user_id', $user->id)
-                ->where('type', '!=', 'message');
+        $personalNotifications = [];
+        if ($user && (!$categoryFilter || $isPersonalCategory)) {
+            $personalQuery = Notification::query()
+                ->where('user_id', $user->id);
 
+            if ($categoryFilter) {
+                $this->applyPersonalCategoryFilter($personalQuery, $categoryFilter);
+            }
             if ($statusFilter === 'unread') {
-                $replyQuery->unread();
+                $personalQuery->unread();
             }
 
-            $replyNotifications = $replyQuery->latest()->limit(50)->get()->map(fn ($item) => [
-                '_source' => 'reply',
-                'id' => $item->id,
-                'title' => $item->title,
-                'slug' => (string) $item->id,
-                'body' => $item->message,
-                'icon' => $item->icon ?? 'bell',
-                'category' => 'Replies',
-                'category_slug' => 'replies',
-                'published_at' => $item->created_at,
-                'created_at' => $item->created_at,
-                'is_pinned' => false,
-                'unread' => $item->isUnread(),
-                'href' => $item->link ?? '/',
-            ])->toArray();
+            $personalNotifications = $personalQuery->latest()->limit(50)->get()
+                ->map(fn (Notification $item) => $this->personalNotificationPayload($item))
+                ->toArray();
         }
 
         // Merge and sort
-        $allNotifications = collect(array_merge($communityNotifications, $replyNotifications))
+        $allNotifications = collect(array_merge($communityNotifications, $personalNotifications))
             ->sortByDesc(fn ($n) => $n['published_at'] ?? $n['created_at'])
             ->values();
 
@@ -136,9 +129,15 @@ class CommunityNotificationController extends Controller
                 'published_at' => $communityItem->published_at,
                 'created_at' => $communityItem->created_at,
                 'is_pinned' => $communityItem->is_pinned,
+                'views_count' => $communityItem->views_count,
                 'unread' => $user ? !$communityItem->reads?->contains('user_id', $user->id) : false,
                 'href' => $communityItem->href(),
             ])]);
+        }
+
+        $personalItem = $this->findPersonalNotification($user, $notification);
+        if ($personalItem) {
+            return response()->json(['data' => $this->formatItem($this->personalNotificationPayload($personalItem))]);
         }
 
         abort(404, 'Notification not found.');
@@ -148,9 +147,7 @@ class CommunityNotificationController extends Controller
     {
         $user = $request->user();
 
-        $parts = explode('_', $notification, 2);
-        $source = $parts[0] ?? 'community';
-        $realId = $parts[1] ?? $notification;
+        [$source, $realId] = $this->parseNotificationIdentifier($notification);
 
         // Try community notification
         if ($source === 'community') {
@@ -167,22 +164,33 @@ class CommunityNotificationController extends Controller
                     ['notification_id' => $communityItem->id, 'user_id' => $user->id],
                     ['read_at' => now()]
                 );
-                return response()->json(['success' => true]);
+                $communityItem->setRelation('reads', collect([
+                    new CommunityNotificationRead(['user_id' => $user->id, 'read_at' => now()]),
+                ]));
+                return response()->json(['data' => $this->formatItem([
+                    '_source' => 'community',
+                    'id' => $communityItem->id,
+                    'title' => $communityItem->title,
+                    'slug' => $communityItem->slug,
+                    'body' => $communityItem->body,
+                    'icon' => $communityItem->icon,
+                    'category' => $communityItem->category,
+                    'category_slug' => $communityItem->category_slug,
+                    'published_at' => $communityItem->published_at,
+                    'created_at' => $communityItem->created_at,
+                    'is_pinned' => $communityItem->is_pinned,
+                    'views_count' => $communityItem->views_count,
+                    'unread' => false,
+                    'href' => $communityItem->href(),
+                ])]);
             }
         }
 
-        // Try reply notification
-        if (ctype_digit($realId)) {
-            $replyItem = Notification::query()
-                ->where('user_id', $user->id)
-                ->where('type', '!=', 'message')
-                ->whereKey((int) $realId)
-                ->first();
-
-            if ($replyItem) {
-                $replyItem->markAsRead();
-                return response()->json(['success' => true]);
-            }
+        $personalItem = $this->findPersonalNotification($user, $notification);
+        if ($personalItem) {
+            $personalItem->markAsRead();
+            $personalItem->refresh();
+            return response()->json(['data' => $this->formatItem($this->personalNotificationPayload($personalItem))]);
         }
 
         abort(404, 'Notification not found.');
@@ -205,14 +213,13 @@ class CommunityNotificationController extends Controller
             ]);
         }
 
-        Notification::where('user_id', $user->id)
-            ->where('type', '!=', 'message')
+        $personalReadCount = Notification::where('user_id', $user->id)
             ->unread()
             ->update(['read_at' => now()]);
 
         return response()->json([
             'success' => true,
-            'read_count' => $unreadCommunity->count(),
+            'read_count' => $unreadCommunity->count() + $personalReadCount,
         ]);
     }
 
@@ -220,7 +227,7 @@ class CommunityNotificationController extends Controller
     {
         $source = $item['_source'] ?? 'community';
         $body = $item['body'] ?? '';
-        $time = $source === 'reply'
+        $time = $source === 'personal'
             ? ($item['created_at'] ?? null)
             : ($item['published_at'] ?? $item['created_at'] ?? null);
 
@@ -230,17 +237,17 @@ class CommunityNotificationController extends Controller
             'title' => $item['title'] ?? '',
             'text' => $body,
             'body' => $body,
-            'icon' => $item['icon'] ?? ($source === 'reply' ? 'bell' : 'megaphone'),
+            'icon' => $item['icon'] ?? ($source === 'personal' ? 'bell' : 'megaphone'),
             'category' => $item['category'] ?? 'Update',
             'category_slug' => $item['category_slug'] ?? 'update',
             'unread' => $item['unread'] ?? false,
             'href' => $item['href'] ?? '/',
-            'detail_href' => $source === 'community' ? "/notifications/{$item['slug']}" : ($item['href'] ?? '/'),
-            'slug' => "{$source}_{$item['id']}",
+            'detail_href' => $source === 'community' ? "/notifications/{$item['slug']}" : ($item['href'] ?? "/notifications/personal_{$item['id']}"),
+            'slug' => $source === 'community' ? (string) ($item['slug'] ?? $item['id']) : "personal_{$item['id']}",
             'time' => $time ? \Carbon\Carbon::parse($time)->diffForHumans() : '',
             'date' => $time ? \Carbon\Carbon::parse($time)->toIso8601String() : '',
-            'tone' => 'info',
-            'views' => 0,
+            'tone' => $item['tone'] ?? 'info',
+            'views' => (int) ($item['views_count'] ?? 0),
         ];
     }
 
@@ -251,22 +258,25 @@ class CommunityNotificationController extends Controller
             ? (clone $base)->whereDoesntHave('reads', fn ($q) => $q->where('user_id', $userId))->count()
             : 0;
 
-        $replyUnread = $userId
-            ? Notification::where('user_id', $userId)->where('type', '!=', 'message')->unread()->count()
+        $personalUnread = $userId
+            ? Notification::where('user_id', $userId)->unread()->count()
             : 0;
 
-        $replyTotal = $userId
-            ? Notification::where('user_id', $userId)->where('type', '!=', 'message')->count()
+        $personalTotal = $userId
+            ? Notification::where('user_id', $userId)->count()
             : 0;
 
         return [
-            'total' => (clone $base)->count() + $replyTotal,
-            'unread' => $communityUnread + $replyUnread,
+            'total' => (clone $base)->count() + $personalTotal,
+            'unread' => $communityUnread + $personalUnread,
             'announcements' => (clone $base)->where('category_slug', 'announcements')->count(),
             'lab_results' => (clone $base)->where('category_slug', 'lab-results')->count(),
             'discussions' => (clone $base)->where('category_slug', 'discussions')->count(),
             'vendors' => (clone $base)->where('category_slug', 'vendor-reviews')->count(),
-            'replies_unread' => $replyUnread,
+            'replies_unread' => $userId ? $this->personalCategoryQuery($userId, 'replies')->unread()->count() : 0,
+            'mentions_unread' => $userId ? $this->personalCategoryQuery($userId, 'mentions')->unread()->count() : 0,
+            'messages_unread' => $userId ? $this->personalCategoryQuery($userId, 'messages')->unread()->count() : 0,
+            'system_unread' => $userId ? $this->personalCategoryQuery($userId, 'system')->unread()->count() : 0,
         ];
     }
 
@@ -295,12 +305,118 @@ class CommunityNotificationController extends Controller
             })->values()->all();
 
         if ($userId) {
-            $replyUnread = Notification::where('user_id', $userId)->where('type', '!=', 'message')->unread()->count();
-            if ($replyUnread > 0) {
-                $cats[] = ['name' => 'Replies', 'slug' => 'replies', 'icon' => 'message', 'count' => $replyUnread, 'unread' => $replyUnread, 'latest' => now()];
+            foreach (['replies', 'mentions', 'messages', 'system'] as $slug) {
+                $query = $this->personalCategoryQuery($userId, $slug);
+                $count = (clone $query)->count();
+                if ($count === 0) {
+                    continue;
+                }
+                $meta = $this->personalCategoryMeta($slug);
+                $cats[] = [
+                    'name' => $meta['category'],
+                    'slug' => $slug,
+                    'icon' => $meta['icon'],
+                    'count' => $count,
+                    'unread' => (clone $query)->unread()->count(),
+                    'latest' => (clone $query)->max('created_at'),
+                ];
             }
         }
 
         return $cats;
+    }
+
+    private function applyPersonalCategoryFilter($query, string $category): void
+    {
+        match ($category) {
+            'replies' => $query->where('type', 'discussion_reply'),
+            'mentions' => $query->where('type', 'discussion_mention'),
+            'messages' => $query->where('type', 'message'),
+            'system' => $query->whereNotIn('type', ['discussion_reply', 'discussion_mention', 'message']),
+            default => null,
+        };
+    }
+
+    private function personalCategoryQuery(int $userId, string $category)
+    {
+        $query = Notification::query()->where('user_id', $userId);
+        $this->applyPersonalCategoryFilter($query, $category);
+
+        return $query;
+    }
+
+    private function personalNotificationPayload(Notification $item): array
+    {
+        $meta = $this->personalCategoryMetaForType($item->type);
+
+        return [
+            '_source' => 'personal',
+            'id' => $item->id,
+            'title' => $item->title,
+            'slug' => (string) $item->id,
+            'body' => $item->message,
+            'icon' => $meta['icon'],
+            'tone' => $meta['tone'],
+            'category' => $meta['category'],
+            'category_slug' => $meta['slug'],
+            'published_at' => $item->created_at,
+            'created_at' => $item->created_at,
+            'is_pinned' => false,
+            'unread' => $item->isUnread(),
+            'href' => $item->link ?? '/',
+        ];
+    }
+
+    private function personalCategoryMetaForType(string $type): array
+    {
+        return match ($type) {
+            'discussion_reply' => $this->personalCategoryMeta('replies'),
+            'discussion_mention' => $this->personalCategoryMeta('mentions'),
+            'message' => $this->personalCategoryMeta('messages'),
+            default => $this->personalCategoryMeta('system'),
+        };
+    }
+
+    private function personalCategoryMeta(string $slug): array
+    {
+        return match ($slug) {
+            'replies' => ['category' => 'Replies', 'slug' => 'replies', 'icon' => 'message', 'tone' => 'purple'],
+            'mentions' => ['category' => 'Mentions', 'slug' => 'mentions', 'icon' => 'users', 'tone' => 'blue'],
+            'messages' => ['category' => 'Messages', 'slug' => 'messages', 'icon' => 'mail', 'tone' => 'green'],
+            default => ['category' => 'System', 'slug' => 'system', 'icon' => 'bell', 'tone' => 'info'],
+        };
+    }
+
+    private function findPersonalNotification($user, string $value): ?Notification
+    {
+        if (!$user) {
+            return null;
+        }
+
+        [$source, $realId] = $this->parseNotificationIdentifier($value);
+        if ($source !== 'personal') {
+            return null;
+        }
+
+        if (!ctype_digit($realId)) {
+            return null;
+        }
+
+        return Notification::query()
+            ->where('user_id', $user->id)
+            ->whereKey((int) $realId)
+            ->first();
+    }
+
+    private function parseNotificationIdentifier(string $value): array
+    {
+        $parts = explode('_', $value, 2);
+        $prefix = $parts[0] ?? '';
+
+        if (in_array($prefix, ['community', 'personal'], true)) {
+            return [$prefix, $parts[1] ?? ''];
+        }
+
+        return ['community', $value];
     }
 }

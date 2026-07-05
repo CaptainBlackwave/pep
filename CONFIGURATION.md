@@ -718,7 +718,7 @@ Laravel Sail-based stack with additional services:
 
 Environment variables use `${VAR:-default}` interpolation — values fall back to defaults if not set.
 
-**VERIFY**: The Sail compose file references a database named `gangster_legends` in its defaults, which may diverge from the root compose file's `laravelcp` database name. Ensure your `.env` values match the intended stack.
+**VERIFY**: The Sail compose file references a database named `peptide_community` in its defaults, which may diverge from the root compose file's `laravelcp` database name. Ensure your `.env` values match the intended stack.
 
 ---
 

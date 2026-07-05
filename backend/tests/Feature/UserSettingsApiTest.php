@@ -4,6 +4,9 @@ namespace Tests\Feature;
 
 use App\Core\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Http\UploadedFile;
+use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Str;
 use Laravel\Sanctum\Sanctum;
 use Tests\TestCase;
 
@@ -85,6 +88,28 @@ class UserSettingsApiTest extends TestCase
             ->assertJsonPath('allow_analytics', true);
     }
 
+    public function test_authenticated_user_can_upload_avatar(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'username' => 'tester',
+        ]);
+        Sanctum::actingAs($user);
+
+        $response = $this->post('/api/v1/user/avatar', [
+            'avatar' => UploadedFile::fake()->image('avatar.jpg', 300, 300),
+        ], ['Accept' => 'application/json']);
+
+        $response->assertOk();
+
+        $avatarUrl = $response->json('avatar');
+        $this->assertStringStartsWith('http://localhost/storage/avatars/', $avatarUrl);
+        $this->assertSame($avatarUrl, $response->json('user.profile_photo_path'));
+        $this->assertSame($avatarUrl, $user->fresh()->profile_photo_path);
+        Storage::disk('public')->assertExists(Str::after($avatarUrl, '/storage/'));
+    }
+
     public function test_user_can_manage_personal_api_tokens(): void
     {
         $user = User::factory()->create();
@@ -113,6 +138,74 @@ class UserSettingsApiTest extends TestCase
 
         $this->assertDatabaseMissing('personal_access_tokens', [
             'id' => $tokenId,
+        ]);
+    }
+
+    public function test_user_can_block_and_unblock_members(): void
+    {
+        $user = User::factory()->create(['username' => 'viewer']);
+        $blocked = User::factory()->create(['username' => 'blocked-member']);
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/v1/user/blocked-users', [
+            'user_id' => $blocked->id,
+        ])->assertOk()
+            ->assertJsonPath('data.0.username', 'blocked-member');
+
+        $this->assertDatabaseHas('community_user_blocks', [
+            'user_id' => $user->id,
+            'blocked_user_id' => $blocked->id,
+        ]);
+
+        $this->deleteJson("/api/v1/user/blocked-users/{$blocked->id}")
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+
+        $this->assertDatabaseMissing('community_user_blocks', [
+            'user_id' => $user->id,
+            'blocked_user_id' => $blocked->id,
+        ]);
+    }
+
+    public function test_user_can_sync_and_toggle_community_actions(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/v1/community/user-actions/toggle', [
+            'action' => 'follow',
+            'target_type' => 'discussion',
+            'target_key' => 'introduce-yourself',
+        ])->assertOk()
+            ->assertJsonPath('active', true)
+            ->assertJsonPath('data.followed_discussions.0', 'introduce-yourself');
+
+        $this->postJson('/api/v1/community/user-actions/toggle', [
+            'action' => 'bookmark',
+            'target_type' => 'content',
+            'target_key' => 'storage-guide',
+        ])->assertOk()
+            ->assertJsonPath('active', true)
+            ->assertJsonPath('data.bookmarked_content.0', 'storage-guide');
+
+        $this->getJson('/api/v1/community/user-actions')
+            ->assertOk()
+            ->assertJsonPath('data.followed_discussions.0', 'introduce-yourself')
+            ->assertJsonPath('data.bookmarked_content.0', 'storage-guide');
+
+        $this->postJson('/api/v1/community/user-actions/toggle', [
+            'action' => 'follow',
+            'target_type' => 'discussion',
+            'target_key' => 'introduce-yourself',
+        ])->assertOk()
+            ->assertJsonPath('active', false)
+            ->assertJsonMissingPath('data.followed_discussions.0');
+
+        $this->assertDatabaseMissing('community_user_actions', [
+            'user_id' => $user->id,
+            'action' => 'follow',
+            'target_type' => 'discussion',
+            'target_key' => 'introduce-yourself',
         ]);
     }
 }

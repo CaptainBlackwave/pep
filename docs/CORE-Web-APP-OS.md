@@ -2,7 +2,7 @@
 
 ## Overview
 
-Core Web APP OS is the foundation that powers **PBBG Vault** - a SaaS platform and marketplace for Persistent Browser-Based Game (PBBG) developers. It provides essential functionality for user management, authentication, plugin system, and administrative tools.
+Core Web APP OS is the foundation that powers **Peptide Community** - a SaaS platform and marketplace for Persistent Browser-Based Game (PBBG) developers. It provides essential functionality for user management, authentication, plugin system, and administrative tools.
 
 ## Architecture
 

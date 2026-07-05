@@ -46,6 +46,6 @@ class SettingsTableSeeder extends Seeder
         
         // Email Settings
         $settings->set('email_notifications', true, 'Enable email notifications', 'email');
-        $settings->set('admin_email', 'admin@gangsterlegends.com', 'Admin email address', 'email');
+        $settings->set('admin_email', 'admin@peptidecommunity.com', 'Admin email address', 'email');
     }
 }

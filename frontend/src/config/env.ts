@@ -102,7 +102,7 @@ export const config = {
     cluster: getEnvVar('VITE_WS_CLUSTER')
   },
   app: {
-    name: 'PBBG Vault',
+    name: 'Peptide Community',
     version: '1.0.0'
   }
 }

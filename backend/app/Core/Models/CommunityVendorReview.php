@@ -19,6 +19,7 @@ class CommunityVendorReview extends Model
         'would_buy_again',
         'is_verified_buyer',
         'tags',
+        'photo_urls',
         'reviewed_at',
         'status',
     ];
@@ -31,6 +32,7 @@ class CommunityVendorReview extends Model
             'would_buy_again' => 'boolean',
             'is_verified_buyer' => 'boolean',
             'tags' => 'array',
+            'photo_urls' => 'array',
             'reviewed_at' => 'date',
         ];
     }

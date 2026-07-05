@@ -12,6 +12,8 @@ class CommunityMessageThread extends Model
         'user_id',
         'participant_user_id',
         'unread_count',
+        'owner_unread_count',
+        'participant_unread_count',
         'status',
         'last_message_at',
     ];
@@ -20,6 +22,8 @@ class CommunityMessageThread extends Model
     {
         return [
             'unread_count' => 'integer',
+            'owner_unread_count' => 'integer',
+            'participant_unread_count' => 'integer',
             'last_message_at' => 'datetime',
         ];
     }

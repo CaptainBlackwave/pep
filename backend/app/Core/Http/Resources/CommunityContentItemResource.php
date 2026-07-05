@@ -24,6 +24,7 @@ class CommunityContentItemResource extends JsonResource
             'body' => $this->body,
             'icon' => $this->icon,
             'image_index' => $this->image_index,
+            'image_url' => $this->image_url,
             'read_minutes' => $this->read_minutes,
             'read_label' => "{$this->read_minutes} min",
             'views' => $this->views_count,

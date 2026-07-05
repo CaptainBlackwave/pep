@@ -29,9 +29,12 @@ class CommunityMessageController extends Controller
         return CommunityMessageThreadResource::collection(
             CommunityMessageThread::query()
                 ->with([
+                    'owner.roles',
+                    'owner.settings',
                     'participant.roles',
                     'participant.settings',
                     'messages.sender.roles',
+                    'messages.sender.settings',
                 ])
                 ->where('status', 'active')
                 ->where(function ($query) use ($userId) {
@@ -46,11 +49,16 @@ class CommunityMessageController extends Controller
 
     public function show(Request $request, string $thread)
     {
-        $threadModel = $this->findThread($request, $thread)->load(['participant.roles', 'participant.settings', 'messages.sender.roles']);
+        $threadModel = $this->findThread($request, $thread)->load([
+            'owner.roles',
+            'owner.settings',
+            'participant.roles',
+            'participant.settings',
+            'messages.sender.roles',
+            'messages.sender.settings',
+        ]);
 
-        if ($threadModel->unread_count > 0) {
-            $threadModel->forceFill(['unread_count' => 0])->save();
-        }
+        $this->clearUnreadFor($threadModel, $request->user()->id);
 
         return new CommunityMessageThreadResource($threadModel);
     }
@@ -88,6 +96,8 @@ class CommunityMessageController extends Controller
         }
 
         if (!empty($validated['body'])) {
+            $senderName = $this->notificationNameFor($user);
+
             $thread->messages()->create([
                 'sender_user_id' => $user->id,
                 'body' => trim($validated['body']),
@@ -96,19 +106,26 @@ class CommunityMessageController extends Controller
 
             $thread->forceFill([
                 'last_message_at' => now(),
-                'unread_count' => $thread->unread_count + 1,
             ])->save();
+            $this->incrementUnreadFor($thread, $participant->id);
 
-            $this->notifications->message($participant, $user->username, $thread->id);
+            $this->notifications->message($participant, $senderName, $thread->id);
             $this->websocket->toUser($participant, 'notification', [
                 'type' => 'message',
                 'title' => 'New Message',
-                'message' => "New message from {$user->username}",
+                'message' => "New message from {$senderName}",
             ]);
-            $this->push->send($participant, "New message from {$user->username}", substr(trim($validated['body']), 0, 120), "/messages/{$thread->id}");
+            $this->push->send($participant, "New message from {$senderName}", substr(trim($validated['body']), 0, 120), "/messages?thread={$thread->id}");
         }
 
-        return (new CommunityMessageThreadResource($thread->load(['participant.roles', 'participant.settings', 'messages.sender.roles'])))
+        return (new CommunityMessageThreadResource($thread->load([
+            'owner.roles',
+            'owner.settings',
+            'participant.roles',
+            'participant.settings',
+            'messages.sender.roles',
+            'messages.sender.settings',
+        ])))
             ->response()
             ->setStatusCode(201);
     }
@@ -132,18 +149,20 @@ class CommunityMessageController extends Controller
 
         $threadModel->forceFill([
             'last_message_at' => now(),
-            'unread_count' => $threadModel->unread_count + 1,
         ])->save();
+        $this->incrementUnreadFor($threadModel, $recipientId);
 
         $recipient = User::find($recipientId);
         if ($recipient) {
-            $this->notifications->message($recipient, $request->user()->username, $threadModel->id);
+            $senderName = $this->notificationNameFor($request->user());
+
+            $this->notifications->message($recipient, $senderName, $threadModel->id);
             $this->websocket->toUser($recipient, 'notification', [
                 'type' => 'message',
                 'title' => 'New Message',
-                'message' => "New message from {$request->user()->username}",
+                'message' => "New message from {$senderName}",
             ]);
-            $this->push->send($recipient, "New message from {$request->user()->username}", substr($validated['body'], 0, 120), "/messages/{$threadModel->id}");
+            $this->push->send($recipient, "New message from {$senderName}", substr($validated['body'], 0, 120), "/messages?thread={$threadModel->id}");
         }
 
         return (new CommunityMessageResource($message))
@@ -163,6 +182,51 @@ class CommunityMessageController extends Controller
             })
             ->whereKey($value)
             ->firstOrFail();
+    }
+
+    private function incrementUnreadFor(CommunityMessageThread $thread, int $userId): void
+    {
+        $ownerUnread = (int) ($thread->owner_unread_count ?? 0);
+        $participantUnread = (int) ($thread->participant_unread_count ?? 0);
+
+        if ((int) $thread->user_id === $userId) {
+            $ownerUnread++;
+        } elseif ((int) $thread->participant_user_id === $userId) {
+            $participantUnread++;
+        }
+
+        $thread->forceFill([
+            'owner_unread_count' => $ownerUnread,
+            'participant_unread_count' => $participantUnread,
+            'unread_count' => $ownerUnread + $participantUnread,
+        ])->save();
+    }
+
+    private function clearUnreadFor(CommunityMessageThread $thread, int $userId): void
+    {
+        $ownerUnread = (int) ($thread->owner_unread_count ?? 0);
+        $participantUnread = (int) ($thread->participant_unread_count ?? 0);
+
+        if ((int) $thread->user_id === $userId) {
+            $ownerUnread = 0;
+        } elseif ((int) $thread->participant_user_id === $userId) {
+            $participantUnread = 0;
+        }
+
+        $thread->forceFill([
+            'owner_unread_count' => $ownerUnread,
+            'participant_unread_count' => $participantUnread,
+            'unread_count' => $ownerUnread + $participantUnread,
+        ])->save();
+    }
+
+    private function notificationNameFor(User $user): string
+    {
+        $freshUser = User::query()
+            ->whereKey($user->id)
+            ->first(['username', 'name']);
+
+        return $freshUser?->username ?: $freshUser?->name ?: 'member';
     }
 
     /**

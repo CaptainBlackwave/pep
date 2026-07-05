@@ -99,6 +99,9 @@
                 Roles
               </th>
               <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">
+                Vendor
+              </th>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">
                 Last Active
               </th>
               <th class="px-6 py-4 text-center text-sm font-semibold text-slate-300">
@@ -137,11 +140,33 @@
                   class="text-slate-500"
                 >-</span>
               </td>
+              <td class="px-6 py-4 text-sm">
+                <span
+                  :class="[
+                    'inline-flex items-center px-2.5 py-1 rounded text-xs font-medium',
+                    item.is_approved_vendor ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700/60 text-slate-400'
+                  ]"
+                >
+                  {{ item.is_approved_vendor ? 'Approved' : 'Not approved' }}
+                </span>
+              </td>
               <td class="px-6 py-4 text-sm text-slate-300">
                 {{ item.last_active ? new Date(item.last_active).toLocaleString() : '-' }}
               </td>
               <td class="px-6 py-4">
                 <div class="flex items-center justify-center gap-2">
+                  <button
+                    :class="[
+                      'inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium transition-colors disabled:cursor-not-allowed disabled:opacity-60',
+                      item.is_approved_vendor
+                        ? 'bg-red-500/20 text-red-300 hover:bg-red-500/30'
+                        : 'bg-emerald-500/20 text-emerald-300 hover:bg-emerald-500/30'
+                    ]"
+                    :disabled="vendorAccessUpdatingId === item.id"
+                    @click="toggleVendorAccess(item)"
+                  >
+                    {{ vendorAccessUpdatingId === item.id ? 'Saving...' : item.is_approved_vendor ? 'Revoke Vendor' : 'Approve Vendor' }}
+                  </button>
                   <button
                     class="inline-flex items-center px-3 py-1.5 rounded-lg text-xs font-medium bg-amber-500/20 text-amber-400 hover:bg-amber-500/30 transition-colors"
                     @click="openEdit(item)"
@@ -279,6 +304,7 @@
         </div>
       </div>
     </div>
+
   </div>
 </template>
 
@@ -300,6 +326,7 @@ const showModal = ref(false)
 const editingItem = ref(null)
 const formData = ref({})
 const pagination = ref(null)
+const vendorAccessUpdatingId = ref(null)
 
 const defaultItem = {
     'username': '',
@@ -357,6 +384,27 @@ const deleteItem = async (item) => {
     fetchItems()
   } catch (err) {
     toast.error(err.response?.data?.message || 'Failed to delete User')
+  }
+}
+
+const toggleVendorAccess = async (item) => {
+  const approved = !item.is_approved_vendor
+
+  if (!approved) {
+    const confirmed = await confirm.confirm('Revoke vendor access for this user? Their vendor profile will be hidden until access is approved again.', 'Revoke Vendor Access')
+    if (!confirmed) return
+  }
+
+  vendorAccessUpdatingId.value = item.id
+
+  try {
+    await api.patch(`/admin/users/${item.id}/vendor-access`, { approved })
+    toast.success(approved ? 'Vendor access approved.' : 'Vendor access revoked.')
+    fetchItems(pagination.value?.current_page || 1)
+  } catch (err) {
+    toast.error(err.response?.data?.message || 'Failed to update vendor access')
+  } finally {
+    vendorAccessUpdatingId.value = null
   }
 }
 

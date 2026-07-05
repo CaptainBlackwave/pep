@@ -52,4 +52,9 @@ class CommunityNotification extends Model
     {
         return $this->author_name ?: ($this->author?->username ?: $this->author?->name ?: '');
     }
+
+    public function href(): string
+    {
+        return $this->source_url ?: "/notifications/{$this->slug}";
+    }
 }

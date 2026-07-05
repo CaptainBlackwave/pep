@@ -54,7 +54,7 @@ class CommunityLabResultController extends Controller
         $limit = (int) ($validated['limit'] ?? 25);
 
         return CommunityLabResultResource::collection(
-            $query->orderByDesc('tested_at')->orderByDesc('created_at')->limit($limit)->get()
+            $query->orderByDesc('tested_at')->orderByDesc('created_at')->paginate($limit)->withQueryString()
         )->additional([
             'meta' => $this->meta(),
         ]);

@@ -36,6 +36,7 @@ class UserResource extends JsonResource
             'timezone' => $attrs['timezone'] ?? null,
             'locale'   => $attrs['locale'] ?? null,
             'website_url' => $attrs['website_url'] ?? null,
+            'is_approved_vendor' => (bool) ($attrs['is_approved_vendor'] ?? false),
 
             // Game/plugin stats (Progression-owned) — only if profile eager-loaded
             'level'        => $profileLoaded ? ($profile?->level ?? null) : null,

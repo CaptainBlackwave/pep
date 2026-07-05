@@ -26,6 +26,7 @@ class CommunityVendorReviewResource extends JsonResource
             'would_buy_again' => $this->would_buy_again,
             'is_verified_buyer' => $this->is_verified_buyer,
             'tags' => $this->tags ?? [],
+            'photo_urls' => $this->photo_urls ?? [],
             'status' => $this->status,
             'vendor' => $this->whenLoaded('vendor', fn () => [
                 'id' => $this->vendor->id,

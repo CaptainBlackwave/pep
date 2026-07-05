@@ -4,6 +4,8 @@ namespace Tests\Feature;
 
 use App\Core\Models\CommunityDiscussion;
 use App\Core\Models\CommunityDiscussionCategory;
+use App\Core\Models\CommunityDiscussionReport;
+use App\Core\Models\CommunityDiscussionVote;
 use App\Core\Models\User;
 use App\Core\Middleware\VerifyLicense;
 use Illuminate\Foundation\Testing\RefreshDatabase;
@@ -116,6 +118,103 @@ class CommunityDiscussionApiTest extends TestCase
             'slug' => 'new-community-question',
             'replies_count' => 1,
         ]);
+    }
+
+    public function test_authenticated_user_can_reply_with_gif_attachment_metadata(): void
+    {
+        $discussion = CommunityDiscussion::create([
+            'author_name' => 'AlexM',
+            'title' => 'Attachment topic',
+            'slug' => 'attachment-topic',
+            'body' => 'Testing attachments.',
+            'status' => 'published',
+            'last_reply_at' => now(),
+        ]);
+
+        $response = $this->postJson("/api/v1/community/discussions/{$discussion->slug}/replies", [
+            'body' => 'Here is the chart GIF.',
+            'attachment_name' => 'chart.gif',
+            'attachment_url' => 'https://example.com/chart.gif',
+            'attachment_type' => 'gif',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.attachment_name', 'chart.gif')
+            ->assertJsonPath('data.attachment_url', 'https://example.com/chart.gif')
+            ->assertJsonPath('data.attachment_meta.type', 'gif');
+
+        $this->assertDatabaseHas('community_discussion_replies', [
+            'discussion_id' => $discussion->id,
+            'attachment_name' => 'chart.gif',
+            'attachment_url' => 'https://example.com/chart.gif',
+        ]);
+    }
+
+    public function test_authenticated_user_can_vote_on_discussions_and_replies(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $discussion = CommunityDiscussion::create([
+            'author_name' => 'AlexM',
+            'title' => 'Vote topic',
+            'slug' => 'vote-topic',
+            'body' => 'Testing votes.',
+            'status' => 'published',
+            'last_reply_at' => now(),
+        ]);
+        $reply = $discussion->replies()->create([
+            'author_name' => 'Jason93',
+            'body' => 'Useful context.',
+        ]);
+
+        $discussionVote = $this->postJson("/api/v1/community/discussions/{$discussion->slug}/vote", [
+            'value' => 1,
+        ]);
+        $replyVote = $this->postJson("/api/v1/community/discussion-replies/{$reply->id}/vote", [
+            'value' => -1,
+        ]);
+        $replyToggle = $this->postJson("/api/v1/community/discussion-replies/{$reply->id}/vote", [
+            'value' => -1,
+        ]);
+
+        $discussionVote->assertOk()
+            ->assertJsonPath('data.vote_score', 1)
+            ->assertJsonPath('data.viewer_vote', 1);
+        $replyVote->assertOk()
+            ->assertJsonPath('data.votes', -1)
+            ->assertJsonPath('data.viewer_vote', -1);
+        $replyToggle->assertOk()
+            ->assertJsonPath('data.votes', 0)
+            ->assertJsonPath('data.viewer_vote', 0);
+
+        $this->assertSame(1, CommunityDiscussionVote::count());
+    }
+
+    public function test_authenticated_user_can_report_discussion_content(): void
+    {
+        $discussion = CommunityDiscussion::create([
+            'author_name' => 'AlexM',
+            'title' => 'Report topic',
+            'slug' => 'report-topic',
+            'body' => 'Testing reports.',
+            'status' => 'published',
+            'last_reply_at' => now(),
+        ]);
+        $reply = $discussion->replies()->create([
+            'author_name' => 'Jason93',
+            'body' => 'Useful context.',
+        ]);
+
+        $reportResponse = $this->postJson("/api/v1/community/discussion-replies/{$reply->id}/report", [
+            'reason' => 'source-discussion',
+            'details' => 'Mentions a source directly.',
+        ]);
+
+        $reportResponse->assertCreated()
+            ->assertJsonPath('message', 'Report submitted for moderator review.');
+
+        $this->assertSame(1, CommunityDiscussionReport::count());
     }
 
     public function test_admin_can_moderate_community_discussion(): void

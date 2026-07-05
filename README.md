@@ -1,4 +1,4 @@
-# 🔐 PBBG Vault - The PBBG Development Platform
+# 🔐 Peptide Community - The PBBG Development Platform
 
 A comprehensive SaaS platform and marketplace for Persistent Browser-Based Game (PBBG) developers. Build, share, and monetize plugins, themes, and games using the Core Web APP OS.
 
@@ -9,9 +9,9 @@ A comprehensive SaaS platform and marketplace for Persistent Browser-Based Game 
 
 ---
 
-## What is PBBG Vault?
+## What is Peptide Community?
 
-PBBG Vault is a **developer platform** that provides:
+Peptide Community is a **developer platform** that provides:
 
 - 🧩 **Plugin System** - Modular architecture to extend functionality
 - 🎨 **Theme Engine** - Customize the look and feel of your games

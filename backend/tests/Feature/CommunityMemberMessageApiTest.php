@@ -111,4 +111,45 @@ class CommunityMemberMessageApiTest extends TestCase
             'participant_user_id' => $participant->id,
         ]);
     }
+
+    public function test_message_thread_shows_the_other_member_for_either_participant(): void
+    {
+        $owner = User::factory()->create(['username' => 'OwnerUser']);
+        $participant = User::factory()->create(['username' => 'ParticipantUser']);
+
+        $thread = CommunityMessageThread::create([
+            'user_id' => $owner->id,
+            'participant_user_id' => $participant->id,
+            'owner_unread_count' => 2,
+            'participant_unread_count' => 3,
+            'unread_count' => 5,
+            'last_message_at' => now(),
+            'status' => 'active',
+        ]);
+
+        Sanctum::actingAs($participant);
+
+        $this->getJson("/api/v1/community/messages/{$thread->id}")
+            ->assertOk()
+            ->assertJsonPath('data.participant.slug', 'OwnerUser')
+            ->assertJsonPath('data.unread_count', 0);
+
+        $this->assertDatabaseHas('community_message_threads', [
+            'id' => $thread->id,
+            'owner_unread_count' => 2,
+            'participant_unread_count' => 0,
+            'unread_count' => 2,
+        ]);
+    }
+
+    public function test_authenticated_user_cannot_start_message_thread_with_self(): void
+    {
+        $user = User::factory()->create(['username' => 'SelfUser']);
+
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/v1/community/messages', [
+            'participant_user_id' => $user->id,
+        ])->assertStatus(422);
+    }
 }

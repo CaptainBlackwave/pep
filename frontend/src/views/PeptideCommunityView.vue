@@ -337,7 +337,7 @@
   <section v-else-if="page === 'discussionDetail'" class="pv-page">
     <div v-if="detailDiscussion" class="pv-content-grid pv-discussion-grid">
       <main class="pv-stack">
-        <nav class="pv-breadcrumbs"><router-link to="/discussions">All Discussions</router-link> <PvIcon name="chevron" /> {{ detailCategoryLabel }} <PvIcon name="chevron" /> Topic</nav>
+        <nav class="pv-breadcrumbs"><router-link to="/discussions">All Discussions</router-link> <PvIcon name="chevron" /> <router-link v-if="detailDiscussion?.categorySlug" :to="'/discussions?category=' + detailDiscussion.categorySlug">{{ detailCategoryLabel }}</router-link><template v-else>{{ detailCategoryLabel }}</template> <PvIcon name="chevron" /> Topic</nav>
         <article class="pv-topic-detail pv-topic-detail--enhanced">
           <header class="pv-topic-hero-head">
             <div class="pv-topic-title-block">
@@ -1144,6 +1144,27 @@
         <header><h1>Messages</h1><span class="pv-icon-button active pv-mode-indicator" aria-label="Primary messages"><PvIcon name="document" /></span></header>
         <label class="pv-input-search"><input v-model="messageSearch" placeholder="Search messages..."><PvIcon name="search" /></label>
         <div class="pv-tabs pv-tabs--line"><span class="pv-tab-label active">Primary</span></div>
+        <form class="pv-new-message" @submit.prevent="startMessageFromSearch">
+          <label class="pv-input-search">
+            <input v-model="messageRecipientSearch" placeholder="Message a member...">
+            <PvIcon name="users" />
+          </label>
+          <div v-if="messageRecipientOptions.length > 0" class="pv-recipient-list">
+            <button
+              v-for="member in messageRecipientOptions"
+              :key="member.id ?? member.slug"
+              type="button"
+              class="pv-recipient-row"
+              :disabled="startingMessageUserId === member.id"
+              @click="startMessage(member)"
+            >
+              <span class="pv-avatar" :class="member.color">{{ member.initial }}</span>
+              <span><strong>{{ member.name }}</strong><small>@{{ member.username }}</small></span>
+              <PvIcon name="message" />
+            </button>
+          </div>
+          <p v-else-if="messageRecipientSearch.trim()" class="pv-muted">No members match that search.</p>
+        </form>
         <p v-if="messagesStatusMessage" class="pv-muted">{{ messagesStatusMessage }}</p>
         <p v-if="messagesLoaded && chats.length === 0" class="pv-muted">No message threads yet.</p>
         <button v-for="chat in chats" :key="chat.id" class="pv-chat-row" :class="{ active: currentThread?.id === chat.id }" @click="loadMessageThread(chat.id)"><span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span><span><strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag">{{ chat.participant.role }}</em></strong><small>{{ chat.preview }}</small></span><time>{{ chat.time }}</time></button>
@@ -1237,8 +1258,41 @@
 
   <section v-else-if="page === 'notifications'" class="pv-page">
     <div class="pv-content-grid">
-      <main class="pv-stack"><header class="pv-page-header"><div><h1>Notifications</h1></div><button v-if="authStore.isAuthenticated" class="pv-small-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead">Mark all as read</button><router-link to="/settings/notifications" class="pv-icon-button"><PvIcon name="settings" /></router-link></header><div class="pv-tabs pv-tabs--line"><button :class="{ active: activeNotificationFilter === 'all' }" @click="setNotificationFilter('all')">All</button><button :class="{ active: activeNotificationFilter === 'unread' }" @click="setNotificationFilter('unread')">Unread <span>{{ notificationCounts.unread }}</span></button><button :class="{ active: activeNotificationFilter === 'replies' }" @click="setNotificationFilter('replies')">Replies <span>{{ notificationCounts.repliesUnread }}</span></button><button :class="{ active: activeNotificationFilter === 'announcements' }" @click="setNotificationFilter('announcements')">Announcements <span>{{ notificationCounts.announcements }}</span></button><button :class="{ active: activeNotificationFilter === 'lab-results' }" @click="setNotificationFilter('lab-results')">Lab Results <span>{{ notificationCounts.labResults }}</span></button><button :class="{ active: activeNotificationFilter === 'discussions' }" @click="setNotificationFilter('discussions')">Discussions <span>{{ notificationCounts.discussions }}</span></button><button :class="{ active: activeNotificationFilter === 'vendor-reviews' }" @click="setNotificationFilter('vendor-reviews')">Vendors <span>{{ notificationCounts.vendors }}</span></button></div><article class="pv-panel pv-notification-list"><p v-if="notificationStatusMessage" class="pv-muted">{{ notificationStatusMessage }}</p><p v-if="notificationsLoaded && notifications.length === 0" class="pv-muted">No notifications yet.</p><router-link v-for="item in notifications" :key="item.slug" :to="item.detailHref" class="pv-notification-row" @click="markNotificationRead(item.slug)"><span class="pv-large-icon" :class="item.tone"><PvIcon :name="item.icon" /></span><span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em class="pv-tag" :class="item.tone">{{ item.category }}</em></span><time>{{ item.time }}</time><b v-if="item.unread"></b></router-link></article><PaginationBlock :meta="notificationPagination" :label="notificationPaginationLabel" @page="setNotificationPage" /></main>
-      <aside class="pv-stack"><article class="pv-panel"><h2>Filter Notifications</h2><div class="pv-filter-list"><button :class="{ active: activeNotificationFilter === 'all' }" @click="setNotificationFilter('all')"><PvIcon name="bell" /> All Notifications <strong>{{ notificationCounts.total }}</strong></button><button :class="{ active: activeNotificationFilter === 'unread' }" @click="setNotificationFilter('unread')"><PvIcon name="clock" /> Unread <strong>{{ notificationCounts.unread }}</strong></button><button :class="{ active: activeNotificationFilter === 'announcements' }" @click="setNotificationFilter('announcements')"><PvIcon name="megaphone" /> Announcements <strong>{{ notificationCounts.announcements }}</strong></button><button :class="{ active: activeNotificationFilter === 'lab-results' }" @click="setNotificationFilter('lab-results')"><PvIcon name="flask" /> Lab Results <strong>{{ notificationCounts.labResults }}</strong></button><button :class="{ active: activeNotificationFilter === 'discussions' }" @click="setNotificationFilter('discussions')"><PvIcon name="message" /> Discussions <strong>{{ notificationCounts.discussions }}</strong></button><button :class="{ active: activeNotificationFilter === 'vendor-reviews' }" @click="setNotificationFilter('vendor-reviews')"><PvIcon name="star" /> Vendors <strong>{{ notificationCounts.vendors }}</strong></button><button :class="{ active: activeNotificationFilter === 'replies' }" @click="setNotificationFilter('replies')"><PvIcon name="message" /> Replies <strong>{{ notificationCounts.repliesUnread }}</strong></button></div></article><article class="pv-panel"><h2>Notification Summary</h2><div class="pv-mini-list"><span v-for="item in notificationSummary" :key="item.label" class="pv-mini-row"><PvIcon :name="item.icon" /><span><strong>{{ item.label }}</strong><small>{{ item.latest }}</small></span><strong>{{ item.count }}</strong></span></div></article><router-link to="/settings/notifications" class="pv-panel pv-settings-link"><PvIcon name="settings" /> View Notification Settings <PvIcon name="chevron" /></router-link></aside>
+      <main class="pv-stack">
+        <header class="pv-page-header">
+          <div><h1>Notifications</h1></div>
+          <button v-if="authStore.isAuthenticated" class="pv-small-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead">Mark all as read</button>
+          <router-link to="/settings/notifications" class="pv-icon-button"><PvIcon name="settings" /></router-link>
+        </header>
+        <div class="pv-tabs pv-tabs--line">
+          <button v-for="filter in notificationFilterTabs" :key="filter.slug" :class="{ active: activeNotificationFilter === filter.slug }" @click="setNotificationFilter(filter.slug)">
+            {{ filter.label }} <span v-if="filter.count !== undefined">{{ filter.count }}</span>
+          </button>
+        </div>
+        <article class="pv-panel pv-notification-list">
+          <p v-if="notificationStatusMessage" class="pv-muted">{{ notificationStatusMessage }}</p>
+          <p v-if="notificationsLoaded && notifications.length === 0" class="pv-muted">No notifications yet.</p>
+          <router-link v-for="item in notifications" :key="item.slug" :to="item.detailHref" class="pv-notification-row" @click="markNotificationRead(item.slug)">
+            <span class="pv-large-icon" :class="item.tone"><PvIcon :name="item.icon" /></span>
+            <span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em class="pv-tag" :class="item.tone">{{ item.category }}</em></span>
+            <time>{{ item.time }}</time>
+            <b v-if="item.unread"></b>
+          </router-link>
+        </article>
+        <PaginationBlock :meta="notificationPagination" :label="notificationPaginationLabel" @page="setNotificationPage" />
+      </main>
+      <aside class="pv-stack">
+        <article class="pv-panel">
+          <h2>Filter Notifications</h2>
+          <div class="pv-filter-list">
+            <button v-for="filter in notificationFilterItems" :key="filter.slug" :class="{ active: activeNotificationFilter === filter.slug }" @click="setNotificationFilter(filter.slug)">
+              <PvIcon :name="filter.icon" /> {{ filter.label }} <strong>{{ filter.count }}</strong>
+            </button>
+          </div>
+        </article>
+        <article class="pv-panel"><h2>Notification Summary</h2><div class="pv-mini-list"><span v-for="item in notificationSummary" :key="item.label" class="pv-mini-row"><PvIcon :name="item.icon" /><span><strong>{{ item.label }}</strong><small>{{ item.latest }}</small></span><strong>{{ item.count }}</strong></span></div></article>
+        <router-link to="/settings/notifications" class="pv-panel pv-settings-link"><PvIcon name="settings" /> View Notification Settings <PvIcon name="chevron" /></router-link>
+      </aside>
     </div>
   </section>
 
@@ -1347,6 +1401,7 @@ interface UiDiscussion {
   slug?: string
   body?: string
   category?: string
+  categorySlug?: string
   lastActivity?: string
   isPinned: boolean
   isLocked: boolean
@@ -2054,6 +2109,9 @@ interface NotificationStats {
   lab_results: number
   discussions: number
   vendors: number
+  replies_unread?: number
+  mentions_unread?: number
+  messages_unread?: number
   message_unread?: number
   system_unread?: number
 }
@@ -2368,8 +2426,10 @@ const apiCurrentMessageThread = ref<UiMessageThread | null>(null)
 const messagesLoaded = ref(false)
 const messagesStatusMessage = ref('')
 const messageSearch = ref('')
+const messageRecipientSearch = ref('')
 const messageBody = ref('')
 const sendingMessage = ref(false)
+const startingMessageUserId = ref<number | null>(null)
 const showMessageSafetyNotice = ref(true)
 const apiNotifications = ref<UiNotification[]>([])
 const apiDetailNotification = ref<UiNotification | null>(null)
@@ -2584,6 +2644,22 @@ const chats = computed(() => {
     thread.participant.username,
     thread.preview,
   ].some(value => value.toLowerCase().includes(search)))
+})
+const messageRecipientOptions = computed(() => {
+  const search = messageRecipientSearch.value.trim().toLowerCase()
+  if (!search) {
+    return []
+  }
+
+  return apiMembers.value
+    .filter(member => Boolean(member.id) && member.id !== authStore.user?.id)
+    .filter(member => [
+      member.name,
+      member.username,
+      member.role,
+      member.bio,
+    ].some(value => (value ?? '').toLowerCase().includes(search)))
+    .slice(0, 6)
 })
 const currentThread = computed(() => apiCurrentMessageThread.value ?? apiMessageThreads.value[0] ?? null)
 const categoryFilters = computed<ApiCategory[]>(() => [
@@ -3821,6 +3897,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
   const author = item.author?.name ?? ''
   const initial = item.author?.initial ?? author.charAt(0).toUpperCase()
   const category = item.category?.name ?? undefined
+  const categorySlug = item.category?.slug ?? undefined
   const color = item.category?.color && avatarColors.includes(item.category.color)
     ? item.category.color
     : colorForName(author)
@@ -3843,6 +3920,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     slug: item.slug,
     body: item.body ?? undefined,
     category,
+    categorySlug,
     lastActivity: item.last_activity ?? undefined,
     isPinned: Boolean(item.is_pinned),
     isLocked: Boolean(item.is_locked),
@@ -3978,7 +4056,7 @@ async function syncCommunityContent(): Promise<void> {
       await Promise.all([loadMemberDetail(), loadMembers()])
       return
     case 'messages':
-      await loadMessages()
+      await Promise.all([loadMessages(), loadMembers()])
       return
     case 'announcements':
       await loadAnnouncements()
@@ -5267,11 +5345,16 @@ async function loadMessages(): Promise<void> {
     apiMessageThreads.value = response.data.data.map(mapMessageThread)
     messagesLoaded.value = true
 
-    if (!apiCurrentMessageThread.value) {
-      const firstThread = apiMessageThreads.value[0]
-      if (firstThread) {
-        await loadMessageThread(firstThread.id)
-      }
+    const requestedThread = Number(route.query.thread ?? 0)
+    const selectedThread = requestedThread
+      ? apiMessageThreads.value.find(thread => thread.id === requestedThread)
+      : null
+    const firstThread = apiMessageThreads.value[0]
+
+    if (selectedThread) {
+      await loadMessageThread(selectedThread.id)
+    } else if (!apiCurrentMessageThread.value && firstThread) {
+      await loadMessageThread(firstThread.id)
     }
   } catch {
     apiMessageThreads.value = []
@@ -5297,8 +5380,16 @@ async function startMessage(profile: UiMemberProfile): Promise<void> {
   if (!profile.id) {
     return
   }
+  if (!ensureAuthenticated('send messages')) {
+    return
+  }
+  if (authStore.user?.id === profile.id) {
+    messagesStatusMessage.value = 'You cannot message yourself.'
+    return
+  }
 
   messagesStatusMessage.value = ''
+  startingMessageUserId.value = profile.id
 
   try {
     const response = await api.post<MessageDetailResponse>('/api/v1/community/messages', {
@@ -5307,9 +5398,19 @@ async function startMessage(profile: UiMemberProfile): Promise<void> {
     const thread = mapMessageThread(response.data.data)
     apiCurrentMessageThread.value = thread
     apiMessageThreads.value = [thread, ...apiMessageThreads.value.filter(item => item.id !== thread.id)]
-    await router.push('/messages')
+    messageRecipientSearch.value = ''
+    await router.push({ path: '/messages', query: { thread: thread.id } })
   } catch {
     messagesStatusMessage.value = 'Unable to start a message thread with this member.'
+  } finally {
+    startingMessageUserId.value = null
+  }
+}
+
+async function startMessageFromSearch(): Promise<void> {
+  const [member] = messageRecipientOptions.value
+  if (member) {
+    await startMessage(member)
   }
 }
 
@@ -5482,7 +5583,31 @@ const notificationCounts = computed(() => ({
   discussions: notificationStats.value.discussions,
   vendors: notificationStats.value.vendors,
   repliesUnread: notificationStats.value.replies_unread ?? 0,
+  mentionsUnread: notificationStats.value.mentions_unread ?? 0,
+  messagesUnread: notificationStats.value.messages_unread ?? notificationStats.value.message_unread ?? 0,
+  systemUnread: notificationStats.value.system_unread ?? 0,
 }))
+const notificationFilterTabs = computed(() => [
+  { slug: 'all', label: 'All' },
+  { slug: 'unread', label: 'Unread', count: notificationCounts.value.unread },
+  { slug: 'replies', label: 'Replies', count: notificationCounts.value.repliesUnread },
+  { slug: 'mentions', label: 'Mentions', count: notificationCounts.value.mentionsUnread },
+  { slug: 'messages', label: 'Messages', count: notificationCounts.value.messagesUnread },
+  { slug: 'announcements', label: 'Announcements', count: notificationCounts.value.announcements },
+  { slug: 'lab-results', label: 'Lab Results', count: notificationCounts.value.labResults },
+  { slug: 'vendor-reviews', label: 'Vendors', count: notificationCounts.value.vendors },
+])
+const notificationFilterItems = computed(() => [
+  { slug: 'all', label: 'All Notifications', icon: 'bell', count: notificationCounts.value.total },
+  { slug: 'unread', label: 'Unread', icon: 'clock', count: notificationCounts.value.unread },
+  { slug: 'replies', label: 'Replies', icon: 'message', count: notificationCounts.value.repliesUnread },
+  { slug: 'mentions', label: 'Mentions', icon: 'users', count: notificationCounts.value.mentionsUnread },
+  { slug: 'messages', label: 'Messages', icon: 'mail', count: notificationCounts.value.messagesUnread },
+  { slug: 'announcements', label: 'Announcements', icon: 'megaphone', count: notificationCounts.value.announcements },
+  { slug: 'lab-results', label: 'Lab Results', icon: 'flask', count: notificationCounts.value.labResults },
+  { slug: 'discussions', label: 'Discussions', icon: 'message', count: notificationCounts.value.discussions },
+  { slug: 'vendor-reviews', label: 'Vendors', icon: 'star', count: notificationCounts.value.vendors },
+])
 const notificationSummary = computed(() => notificationCategories.value.map(category => ({
   label: category.name,
   icon: category.icon,
@@ -5597,6 +5722,7 @@ const MemberProfile = defineComponent({
     return () => {
       const profile = props.profile
       const stats = profile.stats
+      const isSelf = Boolean(profile.id && authStore.user?.id === profile.id)
       const tabs: Array<{ key: MemberTabKey; label: string }> = [
         { key: 'overview', label: 'Overview' },
         { key: 'activity', label: 'Activity' },
@@ -5621,11 +5747,13 @@ const MemberProfile = defineComponent({
               ? h('span', { class: ['pv-avatar', 'pv-avatar--xl', profile.color] }, [h('img', { src: assetUrl(profile.avatarUrl), alt: profile.name, class: 'pv-avatar-img' })])
               : h('span', { class: ['pv-avatar', 'pv-avatar--xl', profile.color] }, profile.initial),
             h('div', { class: 'pv-topic-main' }, [h('h1', [profile.name, ' ', h('span', { class: 'pv-tag trusted' }, profile.role)]), h('p', `${profile.badge ?? profile.group} · Joined ${profile.joined} · Last seen ${profile.lastActive}`), h('p', profile.bio), h('span', { class: 'pv-chip-row' }, profile.interests.map(interest => h('span', interest)))]),
-            h('div', { class: 'pv-member-actions' }, [
-              h('button', { class: 'pv-primary-button', onClick: () => void startMessage(profile) }, [h(PvIcon, { name: 'message' }), ' Message']),
-              h('button', { class: 'pv-small-button', onClick: () => void toggleMemberFollow(profile) }, [h(PvIcon, { name: 'users' }), isFollowingMember(profile) ? ' Following' : ' Follow']),
-              h('button', { class: 'pv-small-button', disabled: blockingUserId.value === profile.id, onClick: () => void blockMember(profile) }, [h(PvIcon, { name: 'close' }), blockingUserId.value === profile.id ? ' Blocking...' : ' Block']),
-            ]),
+            h('div', { class: 'pv-member-actions' }, isSelf
+              ? [h(RouterLink, { to: '/settings', class: 'pv-primary-button' }, () => [h(PvIcon, { name: 'settings' }), ' Edit Profile'])]
+              : [
+                  h('button', { class: 'pv-primary-button', onClick: () => void startMessage(profile) }, [h(PvIcon, { name: 'message' }), ' Message']),
+                  h('button', { class: 'pv-small-button', onClick: () => void toggleMemberFollow(profile) }, [h(PvIcon, { name: 'users' }), isFollowingMember(profile) ? ' Following' : ' Follow']),
+                  h('button', { class: 'pv-small-button', disabled: blockingUserId.value === profile.id, onClick: () => void blockMember(profile) }, [h(PvIcon, { name: 'close' }), blockingUserId.value === profile.id ? ' Blocking...' : ' Block']),
+                ]),
           ]),
           h('div', { class: 'pv-metrics pv-metrics--member' }, statCards.map(stat => h('span', [h(PvIcon, { name: stat[2] }), h('strong', stat[1]), h('small', stat[0])]))),
           h('div', { class: 'pv-tabs pv-tabs--line' }, tabs.map(tab => h('button', { class: activeTab.value === tab.key ? 'active' : '', onClick: () => { activeTab.value = tab.key } }, tab.label))),

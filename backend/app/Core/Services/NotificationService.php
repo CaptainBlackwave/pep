@@ -199,7 +199,7 @@ class NotificationService
             message: "You have a new message from {$from}",
             data: ['message_id' => $messageId, 'from' => $from],
             icon: '✉️',
-            link: "/messages/{$messageId}"
+            link: "/messages?thread={$messageId}"
         );
     }
 

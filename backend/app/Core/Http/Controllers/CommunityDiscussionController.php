@@ -7,9 +7,9 @@ use App\Core\Http\Resources\CommunityDiscussionResource;
 use App\Core\Http\Resources\CommunityMemberResource;
 use App\Core\Models\CommunityDiscussion;
 use App\Core\Models\CommunityDiscussionCategory;
-use App\Core\Models\CommunityDiscussionReaction;
 use App\Core\Models\CommunityDiscussionReport;
 use App\Core\Models\CommunityDiscussionReply;
+use App\Core\Models\CommunityDiscussionVote;
 use App\Core\Models\DiscussionSubscription;
 use App\Core\Services\NotificationService;
 use App\Core\Services\PushNotificationService;
@@ -241,6 +241,7 @@ class CommunityDiscussionController extends Controller
             ->where('user_id', '!=', $user->id)
             ->with('user')
             ->get();
+        $senderName = $this->displayNameForUser($user);
 
         foreach ($subscribers as $sub) {
             $this->notifications->create(
@@ -255,12 +256,12 @@ class CommunityDiscussionController extends Controller
             $this->websocket->toUser($sub->user, 'notification', [
                 'type' => 'discussion_reply',
                 'title' => $discussionModel->title,
-                'message' => "New reply from {$user->username}",
+                'message' => "New reply from {$senderName}",
             ]);
             $this->push->send(
                 $sub->user,
                 "New reply in {$discussionModel->title}",
-                "{$user->username}: " . Str::limit($validated['body'], 100),
+                "{$senderName}: " . Str::limit($validated['body'], 100),
                 "/discussions/{$discussionModel->slug}",
             );
         }
@@ -274,20 +275,20 @@ class CommunityDiscussionController extends Controller
             ->setStatusCode(201);
     }
 
-    public function reactToDiscussion(Request $request, string $discussion)
+    public function voteOnDiscussion(Request $request, string $discussion)
     {
         $discussionModel = $this->findPublishedDiscussion($discussion);
-        $this->toggleReaction($request, 'discussion', $discussionModel->id);
+        $this->toggleVote($request, 'discussion', $discussionModel->id);
 
-        $discussionModel->load(['category', 'user']);
+        $discussionModel->load(['category', 'user.roles', 'user.settings']);
 
         return new CommunityDiscussionResource($discussionModel);
     }
 
-    public function reactToReply(Request $request, string $reply)
+    public function voteOnReply(Request $request, string $reply)
     {
         $replyModel = $this->findPublishedReply($reply);
-        $this->toggleReaction($request, 'reply', $replyModel->id);
+        $this->toggleVote($request, 'reply', $replyModel->id);
 
         $replyModel->load('user.roles');
 
@@ -437,30 +438,35 @@ class CommunityDiscussionController extends Controller
         ];
     }
 
-    private function toggleReaction(Request $request, string $targetType, int $targetId): void
+    private function toggleVote(Request $request, string $targetType, int $targetId): void
     {
         $validated = $request->validate([
-            'emoji' => ['required', 'string', Rule::in(['👍', '❤️', '😂', '👀', '✅', '🔥'])],
+            'value' => ['required', 'integer', Rule::in([-1, 1])],
         ]);
 
-        $reaction = CommunityDiscussionReaction::query()
+        $user = $request->user();
+        abort_unless($user, 401);
+
+        $value = (int) $validated['value'];
+        $vote = CommunityDiscussionVote::query()
             ->where('target_type', $targetType)
             ->where('target_id', $targetId)
-            ->where('user_id', $request->user()->id)
-            ->where('emoji', $validated['emoji'])
+            ->where('user_id', $user->id)
             ->first();
 
-        if ($reaction) {
-            $reaction->delete();
+        if ($vote && (int) $vote->value === $value) {
+            $vote->delete();
             return;
         }
 
-        CommunityDiscussionReaction::create([
-            'target_type' => $targetType,
-            'target_id' => $targetId,
-            'user_id' => $request->user()->id,
-            'emoji' => $validated['emoji'],
-        ]);
+        CommunityDiscussionVote::updateOrCreate(
+            [
+                'target_type' => $targetType,
+                'target_id' => $targetId,
+                'user_id' => $user->id,
+            ],
+            ['value' => $value],
+        );
     }
 
     private function createReport(Request $request, string $targetType, int $targetId): void
@@ -493,6 +499,7 @@ class CommunityDiscussionController extends Controller
             ->whereIn('username', $usernames)
             ->where('id', '!=', $sender->id)
             ->get();
+        $senderName = $this->displayNameForUser($sender);
 
         foreach ($mentioned as $user) {
             $this->notifications->create(
@@ -507,10 +514,23 @@ class CommunityDiscussionController extends Controller
             $this->websocket->toUser($user, 'notification', [
                 'type' => 'discussion_mention',
                 'title' => $discussion->title,
-                'message' => "You were mentioned by {$sender->username}",
+                'message' => "You were mentioned by {$senderName}",
             ]);
-            $this->push->send($user, "Mentioned by {$sender->username}", Str::limit($body, 100), "/discussions/{$discussion->slug}");
+            $this->push->send($user, "Mentioned by {$senderName}", Str::limit($body, 100), "/discussions/{$discussion->slug}");
         }
+    }
+
+    private function displayNameForUser($user): string
+    {
+        if (!$user?->id) {
+            return 'member';
+        }
+
+        $freshUser = \App\Core\Models\User::query()
+            ->whereKey($user->id)
+            ->first(['username', 'name']);
+
+        return $freshUser?->username ?: $freshUser?->name ?: 'member';
     }
 
     private function uniqueSlug(string $title): string

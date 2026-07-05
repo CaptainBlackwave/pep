@@ -3,11 +3,14 @@
 namespace App\Core\Models;
 
 use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 
 class CommunityVendor extends Model
 {
     protected $fillable = [
+        'owner_user_id',
+        'claim_status',
         'name',
         'slug',
         'logo_initials',
@@ -17,6 +20,15 @@ class CommunityVendor extends Model
         'status_class',
         'description',
         'website_url',
+        'image_url',
+        'contact_email',
+        'contact_telegram',
+        'contact_signal',
+        'contact_discord',
+        'support_url',
+        'response_policy',
+        'public_contact_notes',
+        'profile_submitted_at',
         'member_since',
         'last_active_at',
         'review_count',
@@ -34,6 +46,7 @@ class CommunityVendor extends Model
         return [
             'member_since' => 'date',
             'last_active_at' => 'datetime',
+            'profile_submitted_at' => 'datetime',
             'review_count' => 'integer',
             'average_rating' => 'decimal:2',
             'would_buy_again_percent' => 'decimal:2',
@@ -41,6 +54,11 @@ class CommunityVendor extends Model
             'tags' => 'array',
             'top_products' => 'array',
         ];
+    }
+
+    public function owner(): BelongsTo
+    {
+        return $this->belongsTo(User::class, 'owner_user_id');
     }
 
     public function reviews(): HasMany

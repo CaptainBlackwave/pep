@@ -1,8 +1,8 @@
-# PBBG Vault Marketplace Development Guide
+# Peptide Community Marketplace Development Guide
 
 ## Overview
 
-This document outlines the complete development plan for the PBBG Vault Marketplace - a platform for selling Web APP OS licenses, plugins, and bundled packages. The marketplace will be built using the Core Web APP OS as its foundation.
+This document outlines the complete development plan for the Peptide Community Marketplace - a platform for selling Web APP OS licenses, plugins, and bundled packages. The marketplace will be built using the Core Web APP OS as its foundation.
 
 ---
 
@@ -128,7 +128,7 @@ CREATE TABLE marketplace_products (
     
     -- Author/Vendor
     author_id           BIGINT UNSIGNED,  -- NULL for official products
-    is_official         BOOLEAN DEFAULT TRUE,  -- PBBG Vault official vs third-party
+    is_official         BOOLEAN DEFAULT TRUE,  -- Peptide Community official vs third-party
     
     -- Download Info
     download_path       VARCHAR(500),  -- Path to downloadable file
@@ -347,7 +347,7 @@ CREATE TABLE marketplace_vendors (
     verified_at         TIMESTAMP NULL,
     
     -- Revenue
-    commission_rate     DECIMAL(5, 2) DEFAULT 30.00,  -- PBBG Vault takes 30%
+    commission_rate     DECIMAL(5, 2) DEFAULT 30.00,  -- Peptide Community takes 30%
     total_earnings      DECIMAL(10, 2) DEFAULT 0.00,
     pending_payout      DECIMAL(10, 2) DEFAULT 0.00,
     paid_out            DECIMAL(10, 2) DEFAULT 0.00,
@@ -1015,7 +1015,7 @@ Product catalog with search, filters, and categories.
   <div class="marketplace">
     <!-- Hero Section -->
     <section class="hero">
-      <h1>PBBG Vault Marketplace</h1>
+      <h1>Peptide Community Marketplace</h1>
       <p>Plugins, bundles, and themes for your Web APP OS</p>
     </section>
 

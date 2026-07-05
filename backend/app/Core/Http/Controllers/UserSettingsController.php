@@ -2,7 +2,9 @@
 
 namespace App\Core\Http\Controllers;
 
+use App\Core\Http\Resources\CommunityMemberResource;
 use App\Core\Http\Resources\UserResource;
+use App\Core\Models\CommunityUserBlock;
 use App\Core\Models\User;
 use App\Core\Models\UserSetting;
 use Carbon\Carbon;
@@ -217,6 +219,53 @@ class UserSettingsController extends Controller
         ]);
     }
 
+    public function blockedUsers(Request $request)
+    {
+        $blockedIds = CommunityUserBlock::query()
+            ->where('user_id', $request->user()->id)
+            ->pluck('blocked_user_id');
+
+        $users = User::query()
+            ->with(['roles', 'settings'])
+            ->withCount([
+                'communityDiscussions',
+                'communityDiscussionReplies',
+                'communityLabResults',
+                'communityVendorReviews',
+            ])
+            ->whereIn('id', $blockedIds)
+            ->orderBy('username')
+            ->get();
+
+        return CommunityMemberResource::collection($users);
+    }
+
+    public function blockUser(Request $request)
+    {
+        $validated = $request->validate([
+            'user_id' => ['required', 'integer', 'exists:users,id'],
+        ]);
+
+        abort_if((int) $validated['user_id'] === (int) $request->user()->id, 422, 'You cannot block yourself.');
+
+        CommunityUserBlock::firstOrCreate([
+            'user_id' => $request->user()->id,
+            'blocked_user_id' => (int) $validated['user_id'],
+        ]);
+
+        return $this->blockedUsers($request);
+    }
+
+    public function unblockUser(Request $request, int $user)
+    {
+        CommunityUserBlock::query()
+            ->where('user_id', $request->user()->id)
+            ->where('blocked_user_id', $user)
+            ->delete();
+
+        return $this->blockedUsers($request);
+    }
+
     public function avatar(Request $request)
     {
         $validated = $request->validate([
@@ -224,15 +273,27 @@ class UserSettingsController extends Controller
         ]);
 
         $path = $validated['avatar']->store('avatars', 'public');
+        $url = $this->publicStorageUrl($request, $path);
         $user = $request->user();
         $user->forceFill([
-            'profile_photo_path' => Storage::url($path),
+            'profile_photo_path' => $url,
         ])->save();
 
         return response()->json([
             'avatar' => $user->profile_photo_path,
             'user' => new UserResource($user->fresh()->load(['profile', 'roles', 'settings'])),
         ]);
+    }
+
+    private function publicStorageUrl(Request $request, string $path): string
+    {
+        $url = Storage::disk('public')->url($path);
+
+        if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            return $url;
+        }
+
+        return rtrim($request->getSchemeAndHttpHost(), '/') . '/' . ltrim($url, '/');
     }
 
     private function validateProfileAndSettings(Request $request, User $user): array

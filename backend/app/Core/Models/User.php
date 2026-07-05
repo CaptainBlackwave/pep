@@ -78,6 +78,7 @@ class User extends Authenticatable
         'timezone',
         'locale',
         'website_url',
+        'is_approved_vendor',
         'profile_picture',
         'profile_photo_path',
         'force_password_change',
@@ -117,6 +118,7 @@ class User extends Authenticatable
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
             'last_active'       => 'datetime',
+            'is_approved_vendor' => 'boolean',
         ];
     }
 
@@ -177,6 +179,21 @@ class User extends Authenticatable
     public function communityVendorReviews(): HasMany
     {
         return $this->hasMany(CommunityVendorReview::class);
+    }
+
+    public function ownedCommunityVendors(): HasMany
+    {
+        return $this->hasMany(CommunityVendor::class, 'owner_user_id');
+    }
+
+    public function communityUserActions(): HasMany
+    {
+        return $this->hasMany(CommunityUserAction::class);
+    }
+
+    public function blockedCommunityUsers(): HasMany
+    {
+        return $this->hasMany(CommunityUserBlock::class);
     }
 
     public function oauthProviders()

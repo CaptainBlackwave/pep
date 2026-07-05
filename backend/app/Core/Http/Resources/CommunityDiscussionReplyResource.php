@@ -2,7 +2,7 @@
 
 namespace App\Core\Http\Resources;
 
-use App\Core\Models\CommunityDiscussionReaction;
+use App\Core\Models\CommunityDiscussionVote;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 use Illuminate\Support\Str;
@@ -18,11 +18,13 @@ class CommunityDiscussionReplyResource extends JsonResource
         $roleName = $this->user?->relationLoaded('roles')
             ? $this->user?->roles?->pluck('name')->first()
             : null;
-        $reactions = CommunityDiscussionReaction::query()
-            ->where('target_type', 'reply')
-            ->where('target_id', $this->id)
-            ->get();
         $userId = $request->user()?->id;
+        $votes = CommunityDiscussionVote::query()
+            ->where('target_type', 'reply')
+            ->where('target_id', $this->id);
+        $viewerVote = $userId
+            ? (clone $votes)->where('user_id', $userId)->value('value')
+            : null;
 
         return [
             'id' => $this->id,
@@ -30,15 +32,9 @@ class CommunityDiscussionReplyResource extends JsonResource
             'attachment_name' => $this->attachment_name,
             'attachment_url' => $this->attachment_url,
             'attachment_meta' => $this->attachment_meta ?? [],
-            'votes' => $this->votes_count,
+            'votes' => (int) (clone $votes)->sum('value'),
+            'viewer_vote' => (int) ($viewerVote ?? 0),
             'is_solution' => $this->is_solution,
-            'reactions' => $reactions
-                ->groupBy('emoji')
-                ->map(fn ($items) => $items->count())
-                ->all(),
-            'viewer_reactions' => $userId
-                ? $reactions->where('user_id', $userId)->pluck('emoji')->values()->all()
-                : [],
             'author' => [
                 'id' => $this->user_id,
                 'name' => $authorName,

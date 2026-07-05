@@ -69,6 +69,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'vendor-reviews/:slug', name: 'vendor-detail', component: peptidePage, meta: { title: 'Vendor Reviews', page: 'vendorDetail' } satisfies RouteMeta },
       { path: 'vendor-reviews/:slug/reviews', redirect: to => `/vendor-reviews/${String(to.params.slug)}` },
       { path: 'vendor-reviews/:slug/review', name: 'vendor-review-modal', component: peptidePage, meta: { title: 'Write a Review', page: 'reviewModal' } satisfies RouteMeta },
+      { path: 'vendor-portal', name: 'vendor-portal', component: peptidePage, meta: { title: 'Vendor Portal', page: 'vendorPortal' } satisfies RouteMeta },
       { path: 'research-library', name: 'research-library', component: peptidePage, meta: { title: 'Research Library', page: 'researchLibrary' } satisfies RouteMeta },
       { path: 'research-library/:slug', name: 'research-article', component: peptidePage, meta: { title: 'Research Article', page: 'researchArticle' } satisfies RouteMeta },
       { path: 'guides', name: 'guides', component: peptidePage, meta: { title: 'Guides & FAQ', page: 'guides' } satisfies RouteMeta },

@@ -1,0 +1,23 @@
+<?php
+
+namespace App\Core\Models;
+
+use Illuminate\Database\Eloquent\Model;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
+
+class CommunityDiscussionReport extends Model
+{
+    protected $fillable = [
+        'target_type',
+        'target_id',
+        'user_id',
+        'reason',
+        'details',
+        'status',
+    ];
+
+    public function user(): BelongsTo
+    {
+        return $this->belongsTo(User::class);
+    }
+}

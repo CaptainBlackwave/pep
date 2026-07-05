@@ -1,5 +1,5 @@
 /**
- * PBBG Vault Frontend Application Entry Point
+ * Peptide Community Frontend Application Entry Point
  */
 
 // Global styles

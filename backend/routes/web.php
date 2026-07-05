@@ -44,3 +44,8 @@ Route::prefix('admin')->group(function () {
         return file_get_contents(public_path('admin/index.html'));
     })->where('any', '.*');
 });
+
+// Community Frontend SPA — catch all non-API non-admin routes
+Route::get('/{any?}', function () {
+    return file_get_contents(public_path('index.html'));
+})->where('any', '^(?!api|admin|install|storage).*$');

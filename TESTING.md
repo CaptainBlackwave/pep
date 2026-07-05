@@ -44,11 +44,11 @@ Two test suites are defined in `phpunit.xml`:
 Configured in `phpunit.xml`:
 
 ```xml
-<env name="DB_DATABASE" value="gangster_legends_testing" force="true"/>
+<env name="DB_DATABASE" value="peptide_community_testing" force="true"/>
 <env name="DB_CONNECTION" value="mysql"/>
 ```
 
-Tests run against a dedicated MySQL database `gangster_legends_testing`. Feature tests use the `RefreshDatabase` trait, which migrates and rolls back between each test.
+Tests run against a dedicated MySQL database `peptide_community_testing`. Feature tests use the `RefreshDatabase` trait, which migrates and rolls back between each test.
 
 ### Test Base Class
 
@@ -504,16 +504,16 @@ docker compose exec backend php artisan test -vvv
 docker compose exec backend php artisan test --filter=PluginIntegrationTest
 ```
 
-The MySQL container (`laravelcp_db`) must be running and healthy before tests execute. The test database `gangster_legends_testing` is used per the `phpunit.xml` config — create it if missing:
+The MySQL container (`laravelcp_db`) must be running and healthy before tests execute. The test database `peptide_community_testing` is used per the `phpunit.xml` config — create it if missing:
 
 ```bash
-docker compose exec mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS gangster_legends_testing"
+docker compose exec mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS peptide_community_testing"
 ```
 
 ### Handling Database State
 
 - The `RefreshDatabase` trait migrates the schema before each test and rolls back after. No manual cleanup needed.
-- Test data does **not** persist to the development database — a separate `gangster_legends_testing` database is used.
+- Test data does **not** persist to the development database — a separate `peptide_community_testing` database is used.
 - `RefreshDatabase` is used in all feature tests and in unit tests that depend on the database.
 
 ---

@@ -74,8 +74,8 @@ class CommunityVendorReviewAdminController extends Controller
 
         $reviewModel->save();
 
-        if (!$wasPublished && $reviewModel->status === 'published') {
-            $this->addReviewToVendorSnapshot($reviewModel);
+        if ($reviewModel->vendor && ($wasPublished !== ($reviewModel->status === 'published'))) {
+            $this->refreshVendorSnapshot($reviewModel->vendor);
         }
 
         $this->notifications->syncVendorReview($reviewModel);
@@ -85,8 +85,14 @@ class CommunityVendorReviewAdminController extends Controller
 
     public function destroy(string $review)
     {
-        $reviewModel = CommunityVendorReview::findOrFail($review);
+        $reviewModel = CommunityVendorReview::with('vendor')->findOrFail($review);
+        $wasPublished = $reviewModel->status === 'published';
         $reviewModel->forceFill(['status' => 'hidden'])->save();
+
+        if ($wasPublished && $reviewModel->vendor) {
+            $this->refreshVendorSnapshot($reviewModel->vendor);
+        }
+
         $this->notifications->syncVendorReview($reviewModel);
 
         return response()->json([
@@ -95,16 +101,17 @@ class CommunityVendorReviewAdminController extends Controller
         ]);
     }
 
-    private function addReviewToVendorSnapshot(CommunityVendorReview $review): void
+    private function refreshVendorSnapshot($vendor): void
     {
-        $vendor = $review->vendor;
-        $count = max(0, (int) $vendor->review_count);
-        $newCount = $count + 1;
-        $newAverage = (((float) $vendor->average_rating * $count) + $review->rating) / $newCount;
+        $reviews = $vendor->publishedReviews()->get(['rating', 'would_buy_again']);
+        $count = $reviews->count();
 
         $vendor->forceFill([
-            'review_count' => $newCount,
-            'average_rating' => round($newAverage, 2),
+            'review_count' => $count,
+            'average_rating' => $count > 0 ? round((float) $reviews->avg('rating'), 2) : 0,
+            'would_buy_again_percent' => $count > 0
+                ? round(($reviews->where('would_buy_again', true)->count() / $count) * 100, 2)
+                : 0,
         ])->save();
     }
 }

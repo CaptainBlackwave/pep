@@ -135,6 +135,17 @@
         </div>
 
         <label class="block">
+          <span class="text-sm font-medium text-slate-300">Image URL</span>
+          <input
+            v-model="form.image_url"
+            type="url"
+            maxlength="2048"
+            class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+            placeholder="https://example.com/article-image.jpg"
+          >
+        </label>
+
+        <label class="block">
           <span class="text-sm font-medium text-slate-300">Excerpt</span>
           <textarea
             v-model="form.excerpt"
@@ -330,6 +341,7 @@ const emptyForm = () => ({
   body: '',
   read_minutes: 8,
   image_index: 0,
+  image_url: '',
   status: 'draft',
 })
 
@@ -377,6 +389,7 @@ async function saveContent() {
     body: form.body || null,
     read_minutes: form.read_minutes,
     image_index: form.image_index,
+    image_url: form.image_url || null,
     status: form.status,
   }
 
@@ -408,6 +421,7 @@ function editItem(item) {
     body: item.body || '',
     read_minutes: item.read_minutes || 8,
     image_index: item.image_index || 0,
+    image_url: item.image_url || '',
     status: item.status,
   })
 }

@@ -13,6 +13,8 @@ class CommunityDiscussionReply extends Model
         'author_name',
         'body',
         'attachment_name',
+        'attachment_url',
+        'attachment_meta',
         'votes_count',
         'is_solution',
     ];
@@ -20,6 +22,7 @@ class CommunityDiscussionReply extends Model
     protected function casts(): array
     {
         return [
+            'attachment_meta' => 'array',
             'is_solution' => 'boolean',
         ];
     }

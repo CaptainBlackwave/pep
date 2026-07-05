@@ -1,5 +1,5 @@
 /**
- * WebSocket Service for PBBG Vault
+ * WebSocket Service for Peptide Community
  * Manages WebSocket connections for real-time features
  */
 

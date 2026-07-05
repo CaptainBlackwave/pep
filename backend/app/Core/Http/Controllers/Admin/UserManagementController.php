@@ -3,6 +3,8 @@
 namespace App\Core\Http\Controllers\Admin;
 
 use App\Core\Http\Controllers\Controller;
+use App\Core\Models\CommunityVendor;
+use App\Core\Models\CommunityVendorClaim;
 use App\Core\Models\User;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
@@ -187,6 +189,79 @@ class UserManagementController extends Controller
             'success' => true,
             'message' => 'User updated successfully',
             'user'    => $user->fresh()->load(['profile']),
+        ]);
+    }
+
+    public function grantVendorProfile(Request $request, User $user): JsonResponse
+    {
+        return $this->updateVendorAccess($request, $user);
+    }
+
+    public function updateVendorAccess(Request $request, User $user): JsonResponse
+    {
+        $actor = $request->user();
+        abort_unless(
+            $actor->hasRole('admin') || ($actor->hasRole('moderator') && !$user->hasRole('admin')),
+            403,
+            'You are not allowed to update vendor access for this user.'
+        );
+
+        $validated = $request->validate([
+            'approved' => ['required', 'boolean'],
+        ]);
+
+        $approved = (bool) $validated['approved'];
+
+        $user->forceFill([
+            'is_approved_vendor' => $approved,
+        ])->save();
+
+        $vendors = CommunityVendor::query()
+            ->where('owner_user_id', $user->id)
+            ->get();
+
+        if ($approved) {
+            foreach ($vendors as $vendor) {
+                $vendor->forceFill([
+                    'claim_status' => 'verified',
+                    'status_label' => $vendor->status_label === 'Pending Verification'
+                        ? 'Listed'
+                        : ($vendor->status_label ?: 'Listed'),
+                    'status_class' => $vendor->status_class ?: 'caution',
+                    'status' => 'published',
+                    'last_active_at' => now(),
+                ])->save();
+
+                CommunityVendorClaim::query()
+                    ->where('vendor_id', $vendor->id)
+                    ->where('user_id', $user->id)
+                    ->where('status', 'pending')
+                    ->update([
+                        'status' => 'approved',
+                        'reviewed_at' => now(),
+                    ]);
+            }
+        } else {
+            foreach ($vendors as $vendor) {
+                $vendor->forceFill([
+                    'claim_status' => 'unclaimed',
+                    'status' => 'hidden',
+                    'last_active_at' => now(),
+                ])->save();
+            }
+        }
+
+        Log::info('Admin updated vendor access', [
+            'actor' => $request->user()->username,
+            'target' => $user->username,
+            'approved' => $approved,
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => $approved ? 'Vendor access approved.' : 'Vendor access revoked.',
+            'user' => $user->fresh(['profile', 'roles']),
+            'vendors' => $vendors->map->fresh()->values(),
         ]);
     }
 

@@ -88,7 +88,7 @@ class CommunityContentController extends Controller
         $this->applySort($query, $validated['sort'] ?? 'latest');
 
         return CommunityContentItemResource::collection(
-            $query->limit($limit)->get()
+            $query->paginate($limit)->withQueryString()
         )->additional([
             'meta' => [
                 'categories' => $this->categories($type),

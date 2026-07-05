@@ -131,9 +131,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/discussions/{discussion}/replies', [CommunityDiscussionController::class, 'reply']);
             Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe']);
             Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe']);
-            Route::post('/discussions/{discussion}/reactions', [CommunityDiscussionController::class, 'reactToDiscussion']);
+            Route::post('/discussions/{discussion}/vote', [CommunityDiscussionController::class, 'voteOnDiscussion']);
             Route::post('/discussions/{discussion}/report', [CommunityDiscussionController::class, 'reportDiscussion']);
-            Route::post('/discussion-replies/{reply}/reactions', [CommunityDiscussionController::class, 'reactToReply']);
+            Route::post('/discussion-replies/{reply}/vote', [CommunityDiscussionController::class, 'voteOnReply']);
             Route::post('/discussion-replies/{reply}/report', [CommunityDiscussionController::class, 'reportReply']);
             Route::delete('/discussion-replies/{reply}', [CommunityDiscussionController::class, 'destroyReply']);
             Route::post('/lab-results', [CommunityLabResultController::class, 'store']);

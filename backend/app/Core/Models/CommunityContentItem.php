@@ -19,6 +19,7 @@ class CommunityContentItem extends Model
         'body',
         'icon',
         'image_index',
+        'image_url',
         'read_minutes',
         'views_count',
         'downloads_count',

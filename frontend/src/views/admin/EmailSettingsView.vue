@@ -178,7 +178,7 @@
               v-model="settings.from_name"
               type="text"
               required
-              placeholder="PBBG Vault"
+              placeholder="Peptide Community"
               class="w-full bg-gray-700 border border-gray-600 rounded-md px-3 py-2 text-white placeholder-gray-400 focus:ring-amber-500 focus:border-amber-500"
             />
           </div>

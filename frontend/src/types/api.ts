@@ -1,5 +1,5 @@
 /**
- * API Type Definitions for PBBG Vault
+ * API Type Definitions for Peptide Community
  * Central location for all API-related types
  */
 
