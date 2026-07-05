@@ -335,12 +335,12 @@
           </div>
           <div class="op-meta">
             <span>{{ detailDiscussion.time }}</span>
-            <div class="dots-corner" style="position:static">
-              <button class="dots" @click.stop="togglePostMenu">⋯</button>
-              <div v-if="showPostMenu" class="dots-dropdown" @click.stop>
-                <button @click="openDiscussionReport">Report</button>
-                <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="startEditDiscussion">Edit</button>
-                <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="deleteDiscussion">Delete</button>
+            <div class="op-dots">
+              <button class="dots" @click="togglePostMenu">⋯</button>
+              <div v-if="showPostMenu" class="dots-dropdown" @click.self="showPostMenu = false">
+                <button @click="openDiscussionReport(); showPostMenu = false">Report</button>
+                <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="startEditDiscussion(); showPostMenu = false">Edit</button>
+                <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="deleteDiscussion(); showPostMenu = false">Delete</button>
               </div>
             </div>
           </div>
@@ -3584,9 +3584,12 @@ function toggleReplyMenu(index: number) {
 
 // Close menus on click outside
 if (typeof document !== 'undefined') {
-  document.addEventListener('click', () => {
-    showPostMenu.value = false
-    activeReplyMenu.value = null
+  document.addEventListener('click', (e) => {
+    const target = e.target as HTMLElement
+    if (!target.closest('.dots-dropdown') && !target.closest('.dots') && !target.closest('.op-dots')) {
+      showPostMenu.value = false
+      activeReplyMenu.value = null
+    }
   })
 }
 

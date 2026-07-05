@@ -1448,10 +1448,16 @@ table {
   opacity: 1;
 }
 
-.dots-corner .dots-dropdown {
+.dots-corner .dots-dropdown,
+.op-dots .dots-dropdown {
   right: 0;
   top: 100%;
   margin-top: 4px;
+}
+
+.op-dots {
+  position: relative;
+  display: inline-flex;
 }
 
 .dots-dropdown {
