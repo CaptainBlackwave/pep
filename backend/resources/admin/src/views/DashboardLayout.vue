@@ -196,6 +196,14 @@
                       <UserCircleIcon class="w-5 h-5" />
                       Edit Profile
                     </button>
+                    <a
+                      href="/"
+                      target="_blank"
+                      class="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-slate-300 hover:bg-slate-700/50 hover:text-white transition-colors"
+                    >
+                      <ArrowTopRightOnSquareIcon class="w-5 h-5" />
+                      View Site
+                    </a>
                     <div class="my-2 border-t border-slate-700/50"></div>
                     <button
                       @click="logout"
