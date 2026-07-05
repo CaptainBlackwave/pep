@@ -41,6 +41,14 @@ return Application::configure(basePath: dirname(__DIR__))
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {
+        // Return JSON for API errors
+        $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
+            if ($request->is('api/*') || $request->expectsJson()) {
+                $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException ? $e->getStatusCode() : 500;
+                return response()->json(['message' => $e->getMessage() ?: 'Error'], $status);
+            }
+        });
+
         // Log all exceptions to database for admin review
         $exceptions->report(function (\Throwable $e) {
             // Skip logging for certain exception types
