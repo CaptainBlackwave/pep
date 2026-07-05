@@ -587,6 +587,7 @@
               <div class="vendor-info">
                 <h3>{{ vendor.name }}</h3>
                 <span class="trusted">✓ {{ vendor.status }}</span>
+                <span v-if="vendor.country" class="country-badge">{{ vendor.country }}</span>
                 <p class="vendor-meta">☆ {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} · Member since {{ vendor.since }}</p>
               </div>
             </div>
@@ -915,6 +916,7 @@
             <div class="vendor-info">
               <h3>{{ detailVendor.name }}</h3>
               <span class="trusted">✓ {{ detailVendor.status }}</span>
+              <span v-if="detailVendor.country" class="country-badge">{{ detailVendor.country }}</span>
               <p class="vendor-meta">☆ {{ detailVendor.rating }} / 5 · {{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }} · Member since {{ detailVendor.since }}</p>
               <div class="vendor-tags" style="margin-top:8px">
                 <span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span>
@@ -1794,6 +1796,7 @@ interface UiVendor {
   status: string
   publishStatus: string
   statusClass: string
+  country: string
   rating: string
   reviews: number
   since: string
@@ -1856,6 +1859,7 @@ interface ApiVendor {
   logo_class?: string | null
   status_label?: string | null
   status_class?: string | null
+  country?: string | null
   status?: string | null
   tone?: string | null
   description?: string | null
@@ -2342,6 +2346,7 @@ type BooleanUserSettingKey = {
 
 interface UserSessionSummary {
   id: string
+  kind?: 'browser' | 'token'
   ipAddress?: string | null
   userAgent?: string | null
   lastActivity?: string | null
@@ -2723,7 +2728,10 @@ const publicLegalPages = ref<Record<'terms' | 'privacy' | 'rules', LegalPageCont
 const blockedUsers = ref<UiMemberProfile[]>([])
 const blockedUsersLoaded = ref(false)
 const blockingUserId = ref<number | null>(null)
+const blockingUsername = ref(false)
 const blockUserSearch = ref('')
+const blockUsername = ref('')
+const revokingSessionId = ref('')
 const discussionTags = ['Discussion', 'Question', 'Guide', 'Review', 'Showcase', 'Tutorial', 'News', 'Tip']
 const newDiscussion = ref({
   title: '',
@@ -3202,8 +3210,8 @@ async function loadUserSessions(): Promise<void> {
       skipDeduplication: true,
     })
     userSessions.value = [
-      ...(response.data.sessions ?? []),
-      ...(response.data.tokens ?? []),
+      ...(response.data.sessions ?? []).map(session => ({ ...session, kind: (session.kind ?? 'browser') as UserSessionSummary['kind'] })),
+      ...(response.data.tokens ?? []).map(session => ({ ...session, kind: (session.kind ?? 'token') as UserSessionSummary['kind'] })),
     ]
   } catch {
     userSessions.value = []
@@ -3242,8 +3250,8 @@ async function saveUserSettings(payload: Partial<UserSettingsPayload> = userSett
       hydrateSettingsFromUser(response.data.user)
     }
     settingsStatusMessage.value = 'Settings saved.'
-  } catch {
-    settingsStatusMessage.value = 'Unable to save settings.'
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to save settings.')
   } finally {
     savingSettings.value = false
   }
@@ -3272,8 +3280,8 @@ async function saveAccountProfile(): Promise<void> {
       hydrateSettingsFromUser(response.data.user)
     }
     settingsStatusMessage.value = 'Profile saved.'
-  } catch {
-    settingsStatusMessage.value = 'Unable to save profile.'
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to save profile.')
   } finally {
     savingSettings.value = false
   }
@@ -3301,8 +3309,8 @@ async function changeSettingsPassword(): Promise<void> {
       new_password_confirmation: '',
     }
     settingsStatusMessage.value = 'Password updated.'
-  } catch {
-    settingsStatusMessage.value = 'Unable to update password.'
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to update password.')
   } finally {
     changingSettingsPassword.value = false
   }
@@ -3343,8 +3351,8 @@ async function createApiToken(): Promise<void> {
     settingsStatusMessage.value = 'API token created.'
     await loadUserApiTokens()
     await loadUserSessions()
-  } catch {
-    settingsStatusMessage.value = 'Unable to create API token.'
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to create API token.')
   }
 }
 
@@ -3358,8 +3366,51 @@ async function deleteApiToken(tokenId: number): Promise<void> {
     await loadUserApiTokens()
     await loadUserSessions()
     settingsStatusMessage.value = 'API token revoked.'
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to revoke API token.')
+  }
+}
+
+async function revokeUserSession(session: UserSessionSummary): Promise<void> {
+  if (!authStore.isAuthenticated || !session.id) {
+    return
+  }
+
+  revokingSessionId.value = session.id
+  settingsStatusMessage.value = ''
+
+  try {
+    await api.delete(`/api/v1/user/sessions/${encodeURIComponent(session.id)}`, {
+      skipDeduplication: true,
+    })
+
+    if (session.isCurrent) {
+      authStore.user = null as any
+      localStorage.removeItem('user')
+      localStorage.removeItem('auth_token')
+      await router.push('/login')
+      return
+    }
+
+    await Promise.all([loadUserSessions(), loadUserApiTokens()])
+    settingsStatusMessage.value = session.kind === 'browser' ? 'Session revoked.' : 'Token revoked.'
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to revoke session.')
+  } finally {
+    revokingSessionId.value = ''
+  }
+}
+
+async function copyPlainApiToken(): Promise<void> {
+  if (!newPlainApiToken.value) {
+    return
+  }
+
+  try {
+    await navigator.clipboard.writeText(newPlainApiToken.value)
+    settingsStatusMessage.value = 'API token copied.'
   } catch {
-    settingsStatusMessage.value = 'Unable to revoke API token.'
+    settingsStatusMessage.value = 'Copy failed. Select the token text manually.'
   }
 }
 
@@ -3392,8 +3443,8 @@ async function uploadProfileAvatar(event: Event): Promise<void> {
       hydrateSettingsFromUser(response.data.user)
     }
     settingsStatusMessage.value = 'Profile photo updated.'
-  } catch {
-    settingsStatusMessage.value = 'Unable to upload profile photo.'
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, 'Unable to upload profile photo.')
   } finally {
     uploadingAvatar.value = false
     input.value = ''
@@ -4815,6 +4866,7 @@ function mapVendor(item: ApiVendor): UiVendor {
     status: item.status_label ?? '',
     publishStatus: item.status ?? 'published',
     statusClass: item.status_class ?? '',
+    country: item.country ?? '',
     rating: item.rating_label ?? (item.average_rating !== undefined ? String(item.average_rating) : ''),
     reviews: item.review_count ?? 0,
     since: item.member_since_label ?? '',
@@ -5811,10 +5863,37 @@ async function blockMember(member: UiMemberProfile): Promise<void> {
     })
     blockedUsers.value = response.data.data.map(mapMember)
     settingsStatusMessage.value = `${member.name} has been blocked.`
-  } catch {
-    settingsStatusMessage.value = `Unable to block ${member.name}.`
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, `Unable to block ${member.name}.`)
   } finally {
     blockingUserId.value = null
+  }
+}
+
+async function blockMemberByUsername(): Promise<void> {
+  const username = blockUsername.value.trim().replace(/^@/, '')
+
+  if (!username || !authStore.isAuthenticated) {
+    settingsStatusMessage.value = username ? 'Please log in to block members.' : 'Enter a username to block.'
+    return
+  }
+
+  blockingUsername.value = true
+  settingsStatusMessage.value = ''
+
+  try {
+    const response = await api.post<BlockedUsersResponse>('/api/v1/user/blocked-users', {
+      username,
+    }, {
+      skipDeduplication: true,
+    })
+    blockedUsers.value = response.data.data.map(mapMember)
+    blockUsername.value = ''
+    settingsStatusMessage.value = `@${username} has been blocked.`
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, `Unable to block @${username}.`)
+  } finally {
+    blockingUsername.value = false
   }
 }
 
@@ -5832,8 +5911,8 @@ async function unblockMember(member: UiMemberProfile): Promise<void> {
     })
     blockedUsers.value = response.data.data.map(mapMember)
     settingsStatusMessage.value = `${member.name} has been unblocked.`
-  } catch {
-    settingsStatusMessage.value = `Unable to unblock ${member.name}.`
+  } catch (error) {
+    settingsStatusMessage.value = settingsApiError(error, `Unable to unblock ${member.name}.`)
   } finally {
     blockingUserId.value = null
   }
@@ -6409,11 +6488,45 @@ const SettingsScreens = defineComponent({
      const tabs: Array<[string, string, string, string]> = [['settingsProfile', '/settings', 'Profile', 'user'], ['settingsAccount', '/settings/account', 'Account', 'users'], ['settingsSecurity', '/settings/security', 'Security', 'shield'], ['settingsPrivacy', '/settings/privacy', 'Privacy', 'lock'], ['settingsNotifications', '/settings/notifications', 'Notifications', 'bell'], ['settingsPreferences', '/settings/preferences', 'Preferences', 'settings'], ['settingsBlocked', '/settings/blocked-users', 'Blocked Users', 'close'], ['settingsApi', '/settings/api-tokens', 'API Tokens', 'share'], ['settingsSessions', '/settings/sessions', 'Sessions', 'document'], ['settingsDanger', '/settings/danger-zone', 'Danger Zone', 'shield']]
      return () => h('div', { class: 'pv-settings-grid' }, [
       h('aside', { class: 'pv-settings-nav' }, [h('small', 'ACCOUNT SETTINGS'), ...tabs.map(tab => h(RouterLink, { to: tab[1], class: props.page === tab[0] ? 'active' : '' }, () => [h(PvIcon, { name: tab[3] }), tab[2]]))]),
-      h('main', { class: 'pv-stack' }, [h('header', { class: 'pv-page-header' }, [h('div', [h('h1', props.page === 'settingsSecurity' ? 'Security' : props.page === 'settingsPrivacy' ? 'Privacy' : 'Account Settings'), h('p', props.page === 'settingsSecurity' ? 'Manage your password, login security and active sessions.' : props.page === 'settingsPrivacy' ? 'Manage your privacy settings and control how your information is shared.' : props.page === 'settingsAccount' ? 'Manage your account information and login preferences.' : 'Manage your account preferences and security settings.')])]), settingsMain(props.page)]),
+      h('main', { class: 'pv-stack' }, [h('header', { class: 'pv-page-header' }, [h('div', [h('h1', settingsPageTitle(props.page)), h('p', settingsPageDescription(props.page))])]), settingsMain(props.page)]),
       h('aside', { class: 'pv-stack' }, [settingsSummary(), props.page === 'settingsSecurity' ? tipsPanel('Security Tips', ['Use a strong password', 'Enable 2FA', 'Keep your email secure']) : props.page === 'settingsPrivacy' ? tipsPanel('Privacy Tips', ['Review your privacy settings', 'Be careful with shared info', 'Keep your account secure']) : quickActions(), h('article', { class: 'pv-panel' }, [h('h2', 'Need Help?'), h('p', 'Visit our Guides & FAQ section or contact the support team if you need assistance.'), h(RouterLink, { to: '/guides', class: 'pv-primary-button' }, () => 'Visit Guides & FAQ')])]),
     ])
   },
 })
+
+function settingsPageTitle(pageName: string): string {
+  const titles: Record<string, string> = {
+    settingsProfile: 'Profile',
+    settingsAccount: 'Account',
+    settingsSecurity: 'Security',
+    settingsPrivacy: 'Privacy',
+    settingsNotifications: 'Notifications',
+    settingsPreferences: 'Preferences',
+    settingsBlocked: 'Blocked Users',
+    settingsApi: 'API Tokens',
+    settingsSessions: 'Sessions',
+    settingsDanger: 'Danger Zone',
+  }
+
+  return titles[pageName] ?? 'Account Settings'
+}
+
+function settingsPageDescription(pageName: string): string {
+  const descriptions: Record<string, string> = {
+    settingsProfile: 'Manage your public profile, bio, website and avatar.',
+    settingsAccount: 'Manage your username, email status, timezone and language.',
+    settingsSecurity: 'Manage your password, two-factor authentication and active sessions.',
+    settingsPrivacy: 'Control profile visibility, direct messages and activity signals.',
+    settingsNotifications: 'Choose how community alerts reach you.',
+    settingsPreferences: 'Tune display, language and browsing preferences.',
+    settingsBlocked: 'Manage members you do not want to interact with.',
+    settingsApi: 'Create and revoke personal API tokens.',
+    settingsSessions: 'Review and revoke active browser sessions and auth tokens.',
+    settingsDanger: 'Export your account data or sign out everywhere.',
+  }
+
+  return descriptions[pageName] ?? 'Manage your account preferences and security settings.'
+}
 
 function settingsMain(pageName: string) {
   if (!authStore.isAuthenticated) {
@@ -6424,8 +6537,15 @@ function settingsMain(pageName: string) {
     ])
   }
 
+  if (!settingsLoaded.value) {
+    return h('article', { class: 'pv-panel' }, [
+      h('h2', 'Loading settings'),
+      h('p', { class: 'pv-muted' }, 'Fetching your account settings...'),
+    ])
+  }
+
   const status = settingsStatusMessage.value
-    ? h('p', { class: 'pv-muted' }, settingsStatusMessage.value)
+    ? h('p', { class: 'pv-settings-status' }, settingsStatusMessage.value)
     : null
 
   if (pageName === 'settingsSecurity') {
@@ -6444,9 +6564,12 @@ function settingsMain(pageName: string) {
     return h('div', { class: 'pv-stack' }, [
       status,
       h('article', { class: 'pv-panel pv-settings-card' }, [h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'user' })]), h('div', [h('h2', 'Profile Visibility'), h('p', 'Choose who can view your profile.'), settingsRadioGroup('profile_visibility', [['everyone', 'Everyone'], ['members_only', 'Members Only'], ['nobody', 'Nobody']])])]),
+      settingsSwitchCard('Public Profile', 'Allow your member profile to appear in community member lists.', 'eye', 'public_profile'),
       settingsSwitchCard('Show Online Status', 'Allow other members to see when you are online.', 'users', 'show_online'),
       h('article', { class: 'pv-panel pv-settings-card' }, [h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'message' })]), h('div', [h('h2', 'Direct Messages'), h('p', 'Control who can send you direct messages.'), settingsRadioGroup('direct_messages', [['everyone', 'Everyone'], ['members_only', 'Members Only'], ['nobody', 'Nobody']])])]),
       settingsSwitchCard('Activity Visibility', 'Display recent activity in community surfaces.', 'eye', 'show_recent_activity'),
+      settingsSwitchCard('Read Topics', 'Allow read-topic signals to improve your community experience.', 'document', 'show_read_topics'),
+      settingsSwitchCard('Typing Indicators', 'Show typing indicators when message features support them.', 'message', 'show_typing'),
       settingsSwitchCard('Data & Personalization', 'Personalize content and recommendations.', 'shield', 'personalize_experience'),
       settingsSwitchCard('Allow Analytics', 'Share anonymous usage data to improve the platform.', 'settings', 'allow_analytics'),
     ])

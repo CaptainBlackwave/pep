@@ -18,6 +18,7 @@ class CommunityVendor extends Model
         'logo_class',
         'status_label',
         'status_class',
+        'country',
         'description',
         'website_url',
         'image_url',

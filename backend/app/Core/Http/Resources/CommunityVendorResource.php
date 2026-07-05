@@ -26,6 +26,7 @@ class CommunityVendorResource extends JsonResource
             'logo_class' => $this->logo_class,
             'status_label' => $this->status_label,
             'status_class' => $this->status_class,
+            'country' => $this->country,
             'tone' => $this->tone(),
             'description' => $this->description,
             'website_url' => $this->website_url,

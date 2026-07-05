@@ -3028,6 +3028,17 @@ table {
   font-size: 11px;
 }
 
+.country-badge {
+  display: inline-flex;
+  padding: 3px 8px;
+  border-radius: 6px;
+  background: rgba(59, 130, 246, .15);
+  color: #93bbfc;
+  font-weight: 600;
+  font-size: 11px;
+  margin-left: 4px;
+}
+
 .vendor-meta {
   margin: 6px 0 0;
   color: #aeb4c8;
