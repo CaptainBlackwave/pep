@@ -2938,6 +2938,17 @@ table {
   overflow: hidden;
 }
 
+.vendor-card--hero .vendor-logo {
+  width: 100px;
+  height: 100px;
+  border-radius: 20px;
+  font-size: 2rem;
+}
+
+.vendor-card--hero .vendor-info h3 {
+  font-size: 26px;
+}
+
 .vendor-hero-bg {
   position: absolute;
   inset: 0;
