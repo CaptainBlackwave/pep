@@ -1077,11 +1077,11 @@ table {
 
 .post-card {
   display: grid;
-  grid-template-columns: 110px 1fr;
-  gap: 18px;
-  padding: 22px 26px;
-  margin-bottom: 18px;
-  border-radius: 18px;
+  grid-template-columns: 80px 1fr;
+  gap: 14px;
+  padding: 16px 20px;
+  margin-bottom: 12px;
+  border-radius: 14px;
   background:
     radial-gradient(circle at top left, rgba(126, 67, 255, 0.13), transparent 35%),
     linear-gradient(145deg, #101522, #090d18);
@@ -1105,17 +1105,17 @@ table {
 
 .avatar {
   position: relative;
-  width: 56px;
-  height: 56px;
+  width: 40px;
+  height: 40px;
   border-radius: 50%;
   background: linear-gradient(145deg, #a855f7, #5b21b6);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 26px;
+  font-size: 18px;
   font-weight: 800;
   color: white;
-  box-shadow: 0 0 0 3px rgba(141, 70, 255, 0.25);
+  box-shadow: 0 0 0 2px rgba(141, 70, 255, 0.25);
 }
 
 .avatar .img-wrap {
@@ -1136,12 +1136,12 @@ table {
 
 .online-dot {
   position: absolute;
-  right: 1px;
-  bottom: 6px;
-  width: 13px;
-  height: 13px;
+  right: 0;
+  bottom: 4px;
+  width: 10px;
+  height: 10px;
   background: #00d68f;
-  border: 3px solid #090d18;
+  border: 2px solid #090d18;
   border-radius: 50%;
 }
 
@@ -1163,43 +1163,39 @@ table {
 }
 
 .username {
-  font-size: 17px;
-  font-weight: 800;
+  font-size: 14px;
+  font-weight: 700;
   color: #fff;
 }
 
 .verified {
   color: #9b5cff;
   font-weight: 900;
-  font-size: 15px;
+  font-size: 12px;
 }
 
 .post-meta-row {
   display: flex;
   align-items: center;
-  gap: 10px;
-  margin-top: 4px;
+  gap: 8px;
+  margin-top: 2px;
 }
 
 .post-tag {
   display: inline-flex;
-  padding: 5px 12px;
-  border-radius: 8px;
+  padding: 3px 10px;
+  border-radius: 6px;
   background: rgba(141, 70, 255, 0.22);
   color: #c99cff;
-  font-weight: 700;
-  font-size: 12px;
+  font-weight: 600;
+  font-size: 11px;
 }
 
 .post-edit,
 .post-delete {
-  font-size: 12px;
+  font-size: 11px;
   color: #aeb4c8;
   cursor: pointer;
-}
-
-.post-edit:hover {
-  color: #a855f7;
 }
 
 .post-delete {
@@ -1209,20 +1205,20 @@ table {
 .meta-row {
   display: flex;
   align-items: flex-start;
-  gap: 14px;
+  gap: 10px;
   color: #b7bed2;
-  font-size: 13px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 
 .badge,
 .small-badge {
-  padding: 5px 12px;
-  border-radius: 9px;
+  padding: 3px 10px;
+  border-radius: 7px;
   background: rgba(141, 70, 255, 0.2);
   color: #c9a3ff;
-  font-weight: 700;
-  font-size: 12px;
+  font-weight: 600;
+  font-size: 11px;
 }
 
 .dots {
@@ -1238,9 +1234,9 @@ table {
 }
 
 .post-card h1 {
-  margin: 24px 0 12px;
-  font-size: 26px;
-  line-height: 1.15;
+  margin: 16px 0 8px;
+  font-size: 20px;
+  line-height: 1.2;
   color: #fff;
 }
 
@@ -1248,22 +1244,22 @@ table {
 .reply-text {
   margin: 0;
   color: #c3c8da;
-  font-size: 16px;
-  line-height: 1.55;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .body-text p {
-  margin: 0 0 10px;
+  margin: 0 0 8px;
 }
 
 .reply-text {
-  margin-top: 24px;
+  margin-top: 16px;
   color: #ffffff;
 }
 
 .divider {
   height: 1px;
-  margin: 18px 0 14px;
+  margin: 14px 0 10px;
   background: rgba(255, 255, 255, 0.09);
 }
 
@@ -1271,32 +1267,32 @@ table {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 18px;
+  gap: 12px;
 }
 
 .vote-box {
   display: inline-flex;
   align-items: center;
   overflow: hidden;
-  border-radius: 9px;
+  border-radius: 7px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.025);
 }
 
 .vote-box span {
-  padding: 0 14px;
+  padding: 0 10px;
   color: #a855f7;
-  font-size: 17px;
+  font-size: 14px;
   font-weight: 800;
 }
 
 .vote {
-  width: 38px;
-  height: 38px;
+  width: 30px;
+  height: 30px;
   border: 0;
   background: transparent;
   color: #cbd1e3;
-  font-size: 18px;
+  font-size: 14px;
   cursor: pointer;
 }
 
@@ -1308,14 +1304,14 @@ table {
 .action-links {
   display: flex;
   align-items: center;
-  gap: 14px;
+  gap: 10px;
 }
 
 .action-links button {
   border: 0;
   background: transparent;
   color: #c3c8da;
-  font-size: 14px;
+  font-size: 12px;
   cursor: pointer;
 }
 
@@ -1324,8 +1320,8 @@ table {
 }
 
 .reply-post {
-  grid-template-columns: 110px 1fr;
-  padding: 20px 24px;
+  grid-template-columns: 80px 1fr;
+  padding: 14px 18px;
 }
 
 .reply-left {
@@ -1335,36 +1331,36 @@ table {
 }
 
 .reply-name {
-  margin-top: 8px;
-  font-size: 15px;
-  font-weight: 800;
+  margin-top: 6px;
+  font-size: 12px;
+  font-weight: 700;
   color: #fff;
 }
 
 .reply-meta {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
   color: #aeb4c8;
-  font-size: 13px;
+  font-size: 11px;
 }
 
 .small-badge {
-  font-size: 11px;
-  padding: 4px 10px;
+  font-size: 10px;
+  padding: 2px 8px;
   color: #c8cad7;
   background: rgba(255, 255, 255, 0.07);
 }
 
 .vote-box.small .vote {
-  width: 34px;
-  height: 34px;
-  font-size: 16px;
+  width: 28px;
+  height: 28px;
+  font-size: 13px;
 }
 
 .vote-box.small span {
-  font-size: 15px;
-  padding: 0 12px;
+  font-size: 13px;
+  padding: 0 8px;
 }
 
 .thread-edit-form input,
@@ -5341,37 +5337,34 @@ a[target="_blank"] {
   .post-card,
   .reply-post {
     grid-template-columns: 1fr;
-    padding: 24px;
-    gap: 16px;
+    padding: 14px 16px;
+    gap: 10px;
   }
 
   .post-left,
   .reply-left {
-    align-items: flex-start;
+    flex-direction: row;
+    align-items: center;
+    gap: 10px;
     border-right: 0;
   }
 
-  .reply-left {
-    flex-direction: row;
-    gap: 12px;
-  }
-
   .post-card .avatar {
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
   }
 
   .online-dot {
-    width: 10px;
-    height: 10px;
+    width: 8px;
+    height: 8px;
     border-width: 2px;
-    bottom: 4px;
+    bottom: 3px;
   }
 
   .reply-name {
     margin-top: 0;
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .post-top,
@@ -5383,51 +5376,51 @@ a[target="_blank"] {
 
   .meta-row {
     flex-wrap: wrap;
-    gap: 10px;
+    gap: 8px;
   }
 
   .post-card h1 {
-    font-size: 24px;
-    margin-top: 18px;
+    font-size: 18px;
+    margin-top: 12px;
   }
 
   .body-text,
   .reply-text {
-    font-size: 15px;
+    font-size: 13px;
   }
 
   .reply-text {
-    margin-top: 18px;
+    margin-top: 12px;
   }
 
   .action-links {
-    gap: 12px;
+    gap: 10px;
     flex-wrap: wrap;
   }
 
   .action-links button {
-    font-size: 14px;
+    font-size: 12px;
   }
 
   .vote {
-    width: 36px;
-    height: 36px;
-    font-size: 16px;
+    width: 28px;
+    height: 28px;
+    font-size: 12px;
   }
 
   .vote-box span {
-    font-size: 16px;
-    padding: 0 12px;
+    font-size: 13px;
+    padding: 0 8px;
   }
 
   .vote-box.small .vote {
-    width: 32px;
-    height: 32px;
-    font-size: 14px;
+    width: 26px;
+    height: 26px;
+    font-size: 12px;
   }
 
   .vote-box.small span {
-    font-size: 14px;
-    padding: 0 10px;
+    font-size: 12px;
+    padding: 0 6px;
   }
 }
