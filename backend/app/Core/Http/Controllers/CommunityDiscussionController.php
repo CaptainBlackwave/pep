@@ -607,7 +607,7 @@ class CommunityDiscussionController extends Controller
     private function trendingDiscussions(?int $userId = null)
     {
         $discussions = CommunityDiscussion::query()
-            ->with(['category', 'user'])
+            ->with(['category', 'user', 'lastReplyUser'])
             ->where('status', 'published')
             ->orderByDesc('replies_count')
             ->orderByDesc('views_count')

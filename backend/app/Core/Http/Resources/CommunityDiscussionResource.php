@@ -67,7 +67,7 @@ class CommunityDiscussionResource extends JsonResource
             'reply_items' => CommunityDiscussionReplyResource::collection($this->whenLoaded('replies')),
             'participants' => $this->community_participants ?? [],
             'similar_discussions' => $this->community_similar_discussions ?? [],
-            'last_reply' => $this->last_reply_at && $this->lastReplyUser ? [
+            'last_reply' => $this->last_reply_at && $this->relationLoaded('lastReplyUser') && $this->lastReplyUser ? [
                 'author' => $this->lastReplyUser->name ?? $this->lastReplyUser->username ?? 'Unknown',
                 'time_ago' => $this->last_reply_at->diffForHumans(),
                 'avatar' => $this->lastReplyUser->profile_picture ?? $this->lastReplyUser->profile_photo_path ?? null,
