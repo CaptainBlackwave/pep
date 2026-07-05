@@ -343,27 +343,37 @@
             <div class="pv-topic-title-block">
               <div class="pv-topic-label-row">
                 <span class="pv-tag">{{ detailCategoryLabel }}</span>
+                <span v-if="detailDiscussion.isPinned" class="pv-tag trusted">Pinned</span>
+                <span v-if="detailDiscussion.isLocked" class="pv-tag caution">Locked</span>
                 <span><PvIcon name="message" /> {{ detailDiscussion.replies }} replies</span>
                 <span><PvIcon name="eye" /> {{ detailDiscussion.views }} views</span>
               </div>
               <h1>{{ detailDiscussion.title }}</h1>
-              <div class="pv-author-line">
+              <div class="pv-topic-stat-strip">
+                <span><strong>{{ detailDiscussion.replies }}</strong><small>Replies</small></span>
+                <span><strong>{{ detailDiscussion.views }}</strong><small>Views</small></span>
+                <span><strong>{{ detailReactionCount }}</strong><small>Reactions</small></span>
+                <span><strong>{{ discussionParticipants.length }}</strong><small>Participants</small></span>
+              </div>
+              <div class="pv-topic-author-card">
                 <span v-if="detailDiscussion.avatarUrl" class="pv-avatar" :class="detailDiscussion.color"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author" class="pv-avatar-img"></span>
                 <span v-else class="pv-avatar" :class="detailDiscussion.color">{{ detailDiscussion.initial }}</span>
-                <strong>{{ detailDiscussion.author }}</strong>
+                <span>
+                  <strong>{{ detailDiscussion.author }}</strong>
+                  <small>Started {{ detailDiscussion.time }} · Last activity {{ detailDiscussion.lastActivity ?? detailDiscussion.time }}</small>
+                </span>
                 <span class="pv-tag">OP</span>
-                <span>{{ detailDiscussion.time }}</span>
               </div>
             </div>
             <div class="pv-detail-actions">
               <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-icon-button pv-icon-button--static" aria-label="Edit topic" @click="startEditDiscussion"><PvIcon name="settings" /></button>
-
+              <button class="pv-icon-button pv-icon-button--static" aria-label="Share topic" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /></button>
               <button class="pv-icon-button pv-icon-button--static" aria-label="Report topic" @click="openDiscussionReport"><PvIcon name="shield" /></button>
-              <button class="pv-primary-button" @click="toggleDiscussionFollow"><PvIcon name="shield" /> {{ isFollowingDiscussion ? 'Following' : 'Follow' }}</button>
+              <button class="pv-primary-button" @click="toggleDiscussionFollow"><PvIcon name="star" /> {{ isFollowingDiscussion ? 'Following' : 'Follow' }}</button>
             </div>
           </header>
           <div v-if="!isEditingDiscussion" class="pv-topic-body">
-            <p v-for="paragraph in detailParagraphs" :key="paragraph">{{ paragraph }}</p>
+            <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>
           </div>
           <div v-else class="pv-edit-discussion-form">
             <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
@@ -401,16 +411,20 @@
             <button class="pv-small-button" @click="toggleDiscussionFollow"><PvIcon name="star" /> {{ isFollowingDiscussion ? 'Unfollow' : 'Follow' }}</button>
             <span class="pv-flex-spacer"></span>
             <button class="pv-small-button" @click="toggleDiscussionSave"><PvIcon name="bookmark" /> {{ isSavedDiscussion ? 'Saved' : 'Save' }}</button>
+            <button class="pv-small-button" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /> Share</button>
           </div>
         </article>
         <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
-        <div class="pv-thread-bar"><span>{{ replies.length }} replies · Sort by <strong>Latest activity</strong></span><a href="#reply-composer">Jump to reply</a></div>
-        <article v-for="reply in replies" :key="`${reply.author}-${reply.time}`" class="pv-reply-card">
+        <div class="pv-thread-bar"><span>{{ replies.length }} replies · {{ replyAttachmentCount }} attachments · Sort by <strong>Latest activity</strong></span><a href="#reply-composer">Jump to reply</a></div>
+        <article v-for="(reply, index) in replies" :key="reply.id ?? `${reply.author}-${reply.time}`" class="pv-reply-card" :class="{ 'pv-reply-card--op': reply.authorId && reply.authorId === detailDiscussion.authorId }">
             <span v-if="reply.avatarUrl" class="pv-avatar" :class="reply.color"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author" class="pv-avatar-img"></span>
             <span v-else class="pv-avatar" :class="reply.color">{{ reply.initial }}</span>
           <div class="pv-reply-main">
-            <div class="pv-reply-head"><strong>{{ reply.author }}</strong><span class="pv-tag" v-if="reply.badge">{{ reply.badge }}</span><span>{{ reply.time }}</span></div>
-            <p>{{ reply.text }}</p>
+            <div class="pv-reply-head">
+              <span class="pv-reply-author-line"><strong>{{ reply.author }}</strong><span class="pv-tag" v-if="reply.authorId && reply.authorId === detailDiscussion.authorId">OP</span><span class="pv-tag" v-if="reply.badge">{{ reply.badge }}</span><span>{{ reply.time }}</span></span>
+              <span class="pv-reply-index">#{{ index + 1 }}</span>
+            </div>
+            <p v-html="linkifyText(reply.text)"></p>
             <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
               <img :src="reply.attachmentUrl || ''" :alt="reply.file || 'Reply attachment'">
               <figcaption>{{ reply.file }} <span>{{ attachmentLabel(reply) }}</span></figcaption>
@@ -436,21 +450,28 @@
         </article>
         <p v-if="replyStatusMessage" class="pv-alert pv-alert--compact">{{ replyStatusMessage }}</p>
         <form id="reply-composer" class="pv-composer pv-composer--expanded" @submit.prevent="submitReply">
-          <span class="pv-avatar purple">U</span>
+          <span v-if="accountAvatar()" class="pv-avatar purple"><img :src="accountAvatar()" :alt="accountName()" class="pv-avatar-img"></span>
+          <span v-else class="pv-avatar purple">{{ accountInitial() }}</span>
           <div class="pv-composer-field">
-            <textarea v-model="replyBody" placeholder="Write a reply..."></textarea>
+            <header class="pv-composer-head">
+              <span><strong>Reply as {{ accountName() }}</strong><small>Emoji, images, GIFs, quotes, and @mentions are supported.</small></span>
+              <small>{{ replyBody.length }}/8000</small>
+            </header>
+            <textarea v-model="replyBody" maxlength="8000" placeholder="Write a thoughtful reply. Add context, quote another member, or attach an image/GIF."></textarea>
             <div v-if="replyAttachmentFile || replyAttachmentGifUrl" class="pv-attachment-preview">
               <img v-if="replyAttachmentPreviewUrl || replyAttachmentGifUrl" :src="replyAttachmentPreviewUrl || replyAttachmentGifUrl" alt="Attachment preview">
               <span><strong>{{ replyAttachmentName() }}</strong><small>{{ replyAttachmentFile ? 'Image attachment' : 'Linked GIF' }}</small></span>
               <button type="button" class="pv-icon-button" aria-label="Remove attachment" @click="clearReplyAttachment"><PvIcon name="close" /></button>
             </div>
             <div class="pv-composer-tools">
-              <EmojiPicker v-model="replyBody" />
-              <label class="pv-icon-button" for="reply-image-upload" aria-label="Attach image"><PvIcon name="image" /></label>
-              <input id="reply-image-upload" class="pv-sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" @change="handleReplyAttachment">
-              <GiphyPicker @select="onGifSelect" />
+              <div class="pv-tool-cluster">
+                <EmojiPicker v-model="replyBody" />
+                <label class="pv-icon-button" for="reply-image-upload" aria-label="Attach image"><PvIcon name="image" /></label>
+                <input id="reply-image-upload" class="pv-sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" @change="handleReplyAttachment">
+                <GiphyPicker @select="onGifSelect" />
+              </div>
               <button type="submit" class="pv-primary-button" :disabled="submittingReply">
-                {{ submittingReply ? 'Posting...' : 'Post Reply' }}
+                <PvIcon name="send" /> {{ submittingReply ? 'Posting...' : 'Post Reply' }}
               </button>
             </div>
           </div>
@@ -463,6 +484,8 @@
             <div><dt>Category</dt><dd><span class="pv-tag">{{ detailCategoryLabel }}</span></dd></div>
             <div><dt>Replies</dt><dd>{{ detailDiscussion.replies }}</dd></div>
             <div><dt>Views</dt><dd>{{ detailDiscussion.views }}</dd></div>
+            <div><dt>Reactions</dt><dd>{{ detailReactionCount }}</dd></div>
+            <div><dt>Attachments</dt><dd>{{ replyAttachmentCount }}</dd></div>
             <div><dt>Created</dt><dd>{{ detailDiscussion.time }}</dd></div>
             <div><dt>Last activity</dt><dd>{{ detailDiscussion.lastActivity ?? detailDiscussion.time }}</dd></div>
           </dl>
@@ -1312,6 +1335,8 @@ interface UiDiscussion {
   body?: string
   category?: string
   lastActivity?: string
+  isPinned: boolean
+  isLocked: boolean
   reactions: Record<string, number>
   viewerReactions: string[]
   avatarUrl?: string | null
@@ -1356,8 +1381,10 @@ interface ApiDiscussion {
   href?: string
   time_ago?: string | null
   last_activity?: string | null
+  is_pinned?: boolean
+  is_locked?: boolean
   category?: { name?: string | null; color?: string | null } | null
-  author?: { id?: number; name?: string | null; initial?: string | null } | null
+  author?: { id?: number; name?: string | null; initial?: string | null; avatar?: string | null } | null
   reactions?: Record<string, number>
   viewer_reactions?: string[]
   reply_items?: ApiReply[]
@@ -1384,7 +1411,7 @@ interface ApiReply {
   time_ago?: string | null
   reactions?: Record<string, number>
   viewer_reactions?: string[]
-  author?: { name?: string | null; initial?: string | null; badge?: string | null } | null
+  author?: { id?: number; name?: string | null; initial?: string | null; badge?: string | null; avatar?: string | null } | null
 }
 
 interface DiscussionIndexResponse {
@@ -2580,6 +2607,8 @@ const detailParagraphs = computed(() => {
   return body.split(/\n+/).map(paragraph => paragraph.trim()).filter(Boolean)
 })
 const detailCategoryLabel = computed(() => detailDiscussion.value?.category || detailDiscussion.value?.tag || 'Discussion')
+const detailReactionCount = computed(() => Object.values(detailDiscussion.value?.reactions ?? {}).reduce((total, count) => total + Number(count || 0), 0))
+const replyAttachmentCount = computed(() => replies.value.filter(reply => Boolean(reply.file || reply.attachmentUrl)).length)
 const discussionParticipants = computed<UiMemberProfile[]>(() => {
   if (apiDiscussionParticipants.value.length > 0) {
     return apiDiscussionParticipants.value
@@ -3834,6 +3863,8 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     body: item.body ?? undefined,
     category,
     lastActivity: item.last_activity ?? undefined,
+    isPinned: Boolean(item.is_pinned),
+    isLocked: Boolean(item.is_locked),
     reactions: mapReactionSummary(item.reactions),
     viewerReactions: item.viewer_reactions ?? [],
   }
@@ -5481,6 +5512,21 @@ const currentNotificationSlug = computed(() => String(route.params.slug ?? ''))
 const primaryNotification = computed(() => apiDetailNotification.value ?? notifications.value.find(item => item.slug === currentNotificationSlug.value) ?? null)
 const currentNotificationIndex = computed(() => notifications.value.findIndex(item => item.slug === primaryNotification.value?.slug))
 const previousNotification = computed(() => currentNotificationIndex.value > 0 ? notifications.value[currentNotificationIndex.value - 1] : null)
+function linkifyText(text: string): string {
+  const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+  const withLinks = escaped.replace(
+    /(https?:\/\/[^\s<]+)/g,
+    (url) => {
+      const ytMatch = url.match(/(?:youtube\.com\/watch\?v=|youtu\.be\/)([a-zA-Z0-9_-]{11})/)
+      if (ytMatch) {
+        return `<div class="pv-embed"><iframe src="https://www.youtube.com/embed/${ytMatch[1]}" frameborder="0" allowfullscreen></iframe></div>`
+      }
+      return `<a href="${url}" target="_blank" rel="noreferrer" class="pv-link">${url}</a>`
+    }
+  )
+  return withLinks
+}
+
 const nextNotification = computed(() => currentNotificationIndex.value >= 0 && currentNotificationIndex.value < notifications.value.length - 1 ? notifications.value[currentNotificationIndex.value + 1] : null)
 const legalPage = computed(() => {
   if (page.value === 'legalPrivacy') {
