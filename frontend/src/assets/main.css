@@ -2939,14 +2939,14 @@ table {
 }
 
 .vendor-card--hero .vendor-logo {
-  width: 100px;
-  height: 100px;
-  border-radius: 20px;
-  font-size: 2rem;
+  width: 160px;
+  height: 160px;
+  border-radius: 28px;
+  font-size: 3rem;
 }
 
 .vendor-card--hero .vendor-info h3 {
-  font-size: 26px;
+  font-size: 28px;
 }
 
 .vendor-hero-bg {
