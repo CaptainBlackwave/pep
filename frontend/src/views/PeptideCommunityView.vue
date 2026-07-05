@@ -188,9 +188,8 @@
           <div class="pv-mini-list">
             <p v-if="announcementsLoaded && announcementPreview.length === 0" class="pv-muted">No announcements published yet.</p>
             <router-link v-for="item in announcementPreview" :key="item.slug" :to="item.href" class="pv-mini-row">
-              <span class="pv-icon-tile"><PvIcon :name="item.icon" /></span>
               <span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em>{{ item.time }}</em></span>
-              <PvIcon name="chevron" />
+              <small class="pv-read-more">Read more</small>
             </router-link>
           </div>
         </article>
