@@ -334,7 +334,7 @@ describe('Plugin Store', () => {
 
       expect(api.get).toHaveBeenCalledWith('/api/v1/plugins/enabled')
       expect(store.plugins).toHaveLength(1)
-      expect(store.plugins[0].slug).toBe('combat')
+      expect(store.plugins[0]?.slug).toBe('combat')
       expect(store.loaded).toBe(true)
     })
 

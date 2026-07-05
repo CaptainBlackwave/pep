@@ -160,6 +160,7 @@ describe('RegisterView', () => {
       expect(authStore.register).toHaveBeenCalledWith({
         username: 'newuser',
         email: 'new@example.com',
+        access_code: '',
         password: 'password123',
         password_confirmation: 'password123',
       })

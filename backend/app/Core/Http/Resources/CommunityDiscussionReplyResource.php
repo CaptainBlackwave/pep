@@ -19,12 +19,18 @@ class CommunityDiscussionReplyResource extends JsonResource
             ? $this->user?->roles?->pluck('name')->first()
             : null;
         $userId = $request->user()?->id;
-        $votes = CommunityDiscussionVote::query()
-            ->where('target_type', 'reply')
-            ->where('target_id', $this->id);
-        $viewerVote = $userId
-            ? (clone $votes)->where('user_id', $userId)->value('value')
-            : null;
+        $voteScore = $this->getAttribute('community_vote_score');
+        $viewerVote = $this->getAttribute('community_viewer_vote');
+
+        if ($voteScore === null || ($userId && $viewerVote === null)) {
+            $votes = CommunityDiscussionVote::query()
+                ->where('target_type', 'reply')
+                ->where('target_id', $this->id);
+            $voteScore ??= (int) (clone $votes)->sum('value');
+            $viewerVote ??= $userId
+                ? (clone $votes)->where('user_id', $userId)->value('value')
+                : 0;
+        }
 
         return [
             'id' => $this->id,
@@ -32,7 +38,7 @@ class CommunityDiscussionReplyResource extends JsonResource
             'attachment_name' => $this->attachment_name,
             'attachment_url' => $this->attachment_url,
             'attachment_meta' => $this->attachment_meta ?? [],
-            'votes' => (int) (clone $votes)->sum('value'),
+            'votes' => (int) $voteScore,
             'viewer_vote' => (int) ($viewerVote ?? 0),
             'is_solution' => $this->is_solution,
             'author' => [

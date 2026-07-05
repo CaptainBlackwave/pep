@@ -16,12 +16,18 @@ class CommunityDiscussionResource extends JsonResource
     {
         $authorName = $this->displayAuthorName();
         $userId = $request->user()?->id;
-        $votes = CommunityDiscussionVote::query()
-            ->where('target_type', 'discussion')
-            ->where('target_id', $this->id);
-        $viewerVote = $userId
-            ? (clone $votes)->where('user_id', $userId)->value('value')
-            : null;
+        $voteScore = $this->getAttribute('community_vote_score');
+        $viewerVote = $this->getAttribute('community_viewer_vote');
+
+        if ($voteScore === null || ($userId && $viewerVote === null)) {
+            $votes = CommunityDiscussionVote::query()
+                ->where('target_type', 'discussion')
+                ->where('target_id', $this->id);
+            $voteScore ??= (int) (clone $votes)->sum('value');
+            $viewerVote ??= $userId
+                ? (clone $votes)->where('user_id', $userId)->value('value')
+                : 0;
+        }
 
         return [
             'id' => $this->id,
@@ -35,7 +41,7 @@ class CommunityDiscussionResource extends JsonResource
             'is_locked' => $this->is_locked,
             'replies' => $this->replies_count,
             'views' => $this->views_count,
-            'vote_score' => (int) (clone $votes)->sum('value'),
+            'vote_score' => (int) $voteScore,
             'viewer_vote' => (int) ($viewerVote ?? 0),
             'href' => "/discussions/{$this->slug}",
             'category' => $this->category ? [

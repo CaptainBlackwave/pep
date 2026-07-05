@@ -75,6 +75,11 @@ class CommunityVendorResource extends JsonResource
      */
     private function ratingDistribution(): array
     {
+        $hydratedDistribution = $this->getAttribute('community_rating_distribution');
+        if (is_array($hydratedDistribution)) {
+            return $hydratedDistribution;
+        }
+
         $counts = $this->publishedReviews()
             ->selectRaw('rating, count(*) as aggregate')
             ->groupBy('rating')

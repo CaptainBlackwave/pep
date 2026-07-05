@@ -55,9 +55,10 @@ class CommunityVendorController extends Controller
 
         $limit = (int) ($validated['limit'] ?? 25);
 
-        return CommunityVendorResource::collection(
-            $query->orderByDesc('average_rating')->orderByDesc('review_count')->paginate($limit)->withQueryString()
-        )->additional([
+        $vendors = $query->orderByDesc('average_rating')->orderByDesc('review_count')->paginate($limit)->withQueryString();
+        $this->hydrateRatingDistributions($vendors->getCollection());
+
+        return CommunityVendorResource::collection($vendors)->additional([
             'meta' => [
                 'stats' => $this->stats(),
                 'top_vendors' => CommunityVendorResource::collection($this->topVendors()),
@@ -70,6 +71,7 @@ class CommunityVendorController extends Controller
     {
         $vendorModel = $this->findPublishedVendor($vendor)
             ->load(['publishedReviews' => fn ($query) => $query->with('user')->latest('reviewed_at')->latest()]);
+        $this->hydrateRatingDistributions(collect([$vendorModel]));
 
         return new CommunityVendorResource($vendorModel);
     }
@@ -427,12 +429,48 @@ class CommunityVendorController extends Controller
 
     private function topVendors()
     {
-        return CommunityVendor::query()
+        $vendors = CommunityVendor::query()
             ->where('status', 'published')
             ->orderByDesc('average_rating')
             ->orderByDesc('review_count')
             ->limit(5)
             ->get();
+        $this->hydrateRatingDistributions($vendors);
+
+        return $vendors;
+    }
+
+    private function hydrateRatingDistributions($vendors): void
+    {
+        $vendors = collect($vendors);
+        $ids = $vendors->pluck('id')->filter()->values();
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $countsByVendor = CommunityVendorReview::query()
+            ->where('status', 'published')
+            ->whereIn('vendor_id', $ids)
+            ->selectRaw('vendor_id, rating, count(*) as aggregate')
+            ->groupBy('vendor_id', 'rating')
+            ->get()
+            ->groupBy('vendor_id');
+
+        foreach ($vendors as $vendor) {
+            $ratingCounts = $countsByVendor
+                ->get($vendor->id, collect())
+                ->pluck('aggregate', 'rating');
+            $total = max(1, (int) $ratingCounts->sum());
+
+            $vendor->setAttribute('community_rating_distribution', collect([5, 4, 3, 2, 1])
+                ->map(fn (int $rating) => [
+                    'rating' => $rating,
+                    'count' => (int) ($ratingCounts[$rating] ?? 0),
+                    'percent' => round(((int) ($ratingCounts[$rating] ?? 0) / $total) * 100),
+                ])
+                ->all());
+        }
     }
 
     private function stats(): array

@@ -286,17 +286,16 @@
           <p v-if="discussionStatusMessage" class="pv-alert pv-alert--compact">{{ discussionStatusMessage }}</p>
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
-            <router-link v-for="topic in discussions" :key="topic.title" :to="topic.href" class="pv-topic-row pv-topic-row--large">
+            <router-link v-for="topic in discussions" :key="topic.title" :to="topic.href" class="pv-topic-row">
               <span v-if="topic.avatarUrl" class="pv-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author" class="pv-avatar-img"></span>
               <span v-else class="pv-avatar" :class="topic.color">{{ topic.initial }}</span>
-              <span class="pv-topic-main">
-                <strong>{{ topic.title }} <em class="pv-tag">{{ topic.tag }}</em></strong>
-                <small>{{ topic.excerpt }}</small>
-                <em>{{ topic.author }} · {{ topic.time }}</em>
+              <span class="pv-topic-main pv-topic-main--row">
+                <strong class="pv-topic-title">{{ topic.title }}</strong>
+                <em v-if="topic.tag" class="pv-tag">{{ topic.tag }}</em>
+                <span class="pv-topic-meta">{{ topic.author }} · {{ topic.time }}</span>
               </span>
-              <span class="pv-stat"><strong>{{ topic.replies }}</strong><small>Replies</small></span>
-              <span class="pv-stat"><strong>{{ topic.views }}</strong><small>Views</small></span>
-              <PvIcon name="bookmark" />
+              <span class="pv-stat"><strong>{{ topic.replies }}</strong><small>{{ topic.replies === 1 ? 'reply' : 'replies' }}</small></span>
+              <span class="pv-stat pv-stat--views"><strong>{{ formatCount(topic.views) }}</strong><small>views</small></span>
             </router-link>
           </div>
           <PaginationBlock :meta="discussionPagination" @page="setDiscussionPage" />
@@ -999,7 +998,7 @@
       <aside class="pv-stack">
         <article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Category</dt><dd>{{ detailArticle.category }}</dd></div><div><dt>Compound</dt><dd>{{ detailArticle.metadata.compound ?? detailArticle.title }}</dd></div><div v-if="detailArticle.metadata.fda_approved !== undefined"><dt>FDA Status</dt><dd>{{ detailArticle.metadata.fda_approved ? 'FDA Approved' : 'Research Only' }}</dd></div><div><dt>Views</dt><dd>{{ detailArticle.views }}</dd></div><div><dt>Read Time</dt><dd>{{ detailArticle.timeLabel }}</dd></div></dl></article>
         <article class="pv-panel"><h2>Table of Contents</h2><ol class="pv-toc"><li v-for="heading in articleHeadings" :key="heading" :class="{ active: heading === articleHeadings[0] }" @click="scrollToHeading(heading)">{{ heading }}</li></ol></article>
-        <article class="pv-panel"><h2>Related Articles</h2><div class="pv-mini-list"><router-link v-for="(article, index) in articles.filter(item => item.slug !== detailArticle.slug).slice(0, 3)" :key="article.title" :to="article.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(article, index + 1)"></span><span><strong>{{ article.title }}</strong><small>{{ article.date }}</small></span></router-link></div><router-link to="/research-library" class="pv-primary-button pv-full">View all related articles</router-link></article>
+        <article class="pv-panel"><h2>Related Articles</h2><div class="pv-mini-list"><router-link v-for="(article, index) in relatedArticles" :key="article.title" :to="article.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(article, index + 1)"></span><span><strong>{{ article.title }}</strong><small>{{ article.date }}</small></span></router-link></div><router-link to="/research-library" class="pv-primary-button pv-full">View all related articles</router-link></article>
       </aside>
     </div>
     <div v-else class="pv-empty-route"><h1>Research article not found</h1><p>This article has not been published or does not exist.</p></div>
@@ -1041,7 +1040,7 @@
           <div class="pv-pass-box"><PvIcon name="shield" /> <span><strong>Safety First</strong><br>When in doubt, do not use the product. Your health and safety come first.</span></div>
         </article>
       </main>
-      <aside class="pv-stack"><article class="pv-panel"><h2>On This Page</h2><ol class="pv-toc"><li v-for="heading in guideHeadings" :key="heading" :class="{ active: heading === guideHeadings[0] }">{{ heading }}</li></ol></article><article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Difficulty</dt><dd><span class="pv-green-dot"></span> {{ detailGuide.metadata.difficulty ?? 'Beginner' }}</dd></div><div><dt>Time to Complete</dt><dd>{{ detailGuide.timeLabel }}</dd></div><div><dt>Category</dt><dd>{{ detailGuide.category }}</dd></div><div><dt>Last Updated</dt><dd>{{ detailGuide.date }}</dd></div></dl></article><article class="pv-panel"><h2>Related Guides</h2><div class="pv-mini-list"><router-link v-for="(guide, index) in guides.filter(item => item.slug !== detailGuide.slug).slice(0, 3)" :key="guide.title" :to="guide.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(guide, index + 1)"></span><span><strong>{{ guide.title }}</strong><small>{{ guide.timeLabel }} read</small></span></router-link></div></article><article class="pv-panel pv-help-card"><h2>Still Need Help?</h2><p>Ask the community or submit a question.</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article></aside>
+      <aside class="pv-stack"><article class="pv-panel"><h2>On This Page</h2><ol class="pv-toc"><li v-for="heading in guideHeadings" :key="heading" :class="{ active: heading === guideHeadings[0] }">{{ heading }}</li></ol></article><article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Difficulty</dt><dd><span class="pv-green-dot"></span> {{ detailGuide.metadata.difficulty ?? 'Beginner' }}</dd></div><div><dt>Time to Complete</dt><dd>{{ detailGuide.timeLabel }}</dd></div><div><dt>Category</dt><dd>{{ detailGuide.category }}</dd></div><div><dt>Last Updated</dt><dd>{{ detailGuide.date }}</dd></div></dl></article><article class="pv-panel"><h2>Related Guides</h2><div class="pv-mini-list"><router-link v-for="(guide, index) in relatedGuides" :key="guide.title" :to="guide.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(guide, index + 1)"></span><span><strong>{{ guide.title }}</strong><small>{{ guide.timeLabel }} read</small></span></router-link></div></article><article class="pv-panel pv-help-card"><h2>Still Need Help?</h2><p>Ask the community or submit a question.</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article></aside>
     </div>
     <div v-else class="pv-empty-route"><h1>Guide not found</h1><p>This guide has not been published or does not exist.</p></div>
   </section>
@@ -2744,6 +2743,20 @@ const detailGuide = computed(() => {
   return apiDetailGuide.value
     ?? guides.value.find(guide => guide.slug === currentContentSlug.value || guide.href.endsWith(`/${currentContentSlug.value}`))
     ?? null
+})
+const relatedArticles = computed(() => {
+  const currentSlug = detailArticle.value?.slug
+
+  return articles.value
+    .filter(item => item.slug !== currentSlug)
+    .slice(0, 3)
+})
+const relatedGuides = computed(() => {
+  const currentSlug = detailGuide.value?.slug
+
+  return guides.value
+    .filter(item => item.slug !== currentSlug)
+    .slice(0, 3)
 })
 const detailGuideSteps = computed(() => {
   const steps = detailGuide.value?.metadata?.steps

@@ -62,12 +62,13 @@ class CommunityDiscussionController extends Controller
             ->orderByDesc('created_at')
             ->paginate($limit)
             ->withQueryString();
+        $this->hydrateVoteAttributes($discussions->getCollection(), 'discussion', $request->user()?->id);
 
         return CommunityDiscussionResource::collection($discussions)
             ->additional([
                 'meta' => [
                     'categories' => $this->categorySummary(),
-                    'trending' => CommunityDiscussionResource::collection($this->trendingDiscussions()),
+                    'trending' => CommunityDiscussionResource::collection($this->trendingDiscussions($request->user()?->id)),
                     'stats' => [
                         'total_discussions' => CommunityDiscussion::where('status', 'published')->count(),
                         'total_replies' => \App\Core\Models\CommunityDiscussionReply::count(),
@@ -90,6 +91,8 @@ class CommunityDiscussionController extends Controller
 
         $discussionModel->increment('views_count');
         $discussionModel->refresh()->load(['category', 'user.roles', 'user.settings', 'replies.user.roles', 'replies.user.settings']);
+        $this->hydrateVoteAttributes(collect([$discussionModel]), 'discussion', request()->user()?->id);
+        $this->hydrateVoteAttributes($discussionModel->replies, 'reply', request()->user()?->id);
 
         $participants = collect([$discussionModel->user])
             ->merge($discussionModel->replies->pluck('user'))
@@ -102,22 +105,23 @@ class CommunityDiscussionController extends Controller
             CommunityMemberResource::collection($participants)->resolve(request())
         );
 
+        $similarDiscussions = CommunityDiscussion::query()
+            ->with(['category', 'user'])
+            ->where('status', 'published')
+            ->whereKeyNot($discussionModel->id)
+            ->when(
+                $discussionModel->category_id,
+                fn ($query) => $query->where('category_id', $discussionModel->category_id)
+            )
+            ->orderByDesc('last_reply_at')
+            ->orderByDesc('created_at')
+            ->limit(3)
+            ->get();
+        $this->hydrateVoteAttributes($similarDiscussions, 'discussion', request()->user()?->id);
+
         $discussionModel->setAttribute(
             'community_similar_discussions',
-            CommunityDiscussionResource::collection(
-                CommunityDiscussion::query()
-                    ->with(['category', 'user'])
-                    ->where('status', 'published')
-                    ->whereKeyNot($discussionModel->id)
-                    ->when(
-                        $discussionModel->category_id,
-                        fn ($query) => $query->where('category_id', $discussionModel->category_id)
-                    )
-                    ->orderByDesc('last_reply_at')
-                    ->orderByDesc('created_at')
-                    ->limit(3)
-                    ->get()
-            )->resolve(request())
+            CommunityDiscussionResource::collection($similarDiscussions)->resolve(request())
         );
 
         return new CommunityDiscussionResource($discussionModel);
@@ -570,14 +574,47 @@ class CommunityDiscussionController extends Controller
             ->all();
     }
 
-    private function trendingDiscussions()
+    private function hydrateVoteAttributes($items, string $targetType, ?int $userId): void
     {
-        return CommunityDiscussion::query()
+        $items = collect($items);
+        $ids = $items->pluck('id')->filter()->values();
+
+        if ($ids->isEmpty()) {
+            return;
+        }
+
+        $scores = CommunityDiscussionVote::query()
+            ->where('target_type', $targetType)
+            ->whereIn('target_id', $ids)
+            ->selectRaw('target_id, COALESCE(SUM(value), 0) as score')
+            ->groupBy('target_id')
+            ->pluck('score', 'target_id');
+
+        $viewerVotes = $userId
+            ? CommunityDiscussionVote::query()
+                ->where('target_type', $targetType)
+                ->whereIn('target_id', $ids)
+                ->where('user_id', $userId)
+                ->pluck('value', 'target_id')
+            : collect();
+
+        foreach ($items as $item) {
+            $item->setAttribute('community_vote_score', (int) ($scores[$item->id] ?? 0));
+            $item->setAttribute('community_viewer_vote', (int) ($viewerVotes[$item->id] ?? 0));
+        }
+    }
+
+    private function trendingDiscussions(?int $userId = null)
+    {
+        $discussions = CommunityDiscussion::query()
             ->with(['category', 'user'])
             ->where('status', 'published')
             ->orderByDesc('replies_count')
             ->orderByDesc('views_count')
             ->limit(5)
             ->get();
+        $this->hydrateVoteAttributes($discussions, 'discussion', $userId);
+
+        return $discussions;
     }
 }
