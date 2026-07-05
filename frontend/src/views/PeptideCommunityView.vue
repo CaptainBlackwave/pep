@@ -177,25 +177,6 @@
           </div>
         </article>
 
-        <article class="pv-panel">
-          <header class="pv-panel-header">
-            <h2><PvIcon name="flask" /> Latest Lab Results</h2>
-            <router-link to="/lab-results" class="pv-small-button">View all</router-link>
-          </header>
-          <div class="pv-lab-compact">
-            <p v-if="labResultsLoaded && labResults.length === 0" class="pv-muted">No lab results published yet.</p>
-            <router-link v-for="result in labResults.slice(0, 3)" :key="result.name" :to="result.href" class="pv-lab-row">
-              <span class="pv-coa-thumb"></span>
-              <span>
-                <strong>{{ result.name }}</strong>
-                <small>{{ result.type }} · {{ result.vendor }}</small>
-                <em>Batch: {{ result.batch }} · {{ result.date }}</em>
-              </span>
-              <span class="pv-purity">{{ result.purity }}<small>Purity</small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-          </div>
-        </article>
       </div>
 
       <aside class="pv-stack pv-right-rail">
