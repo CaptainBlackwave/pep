@@ -327,11 +327,8 @@
           <span v-if="detailDiscussion.avatarUrl" class="op-avatar"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
           <span v-else class="op-avatar op-avatar--letter">{{ detailDiscussion.initial }}</span>
           <div class="op-user">
-            <div>
-              <strong>{{ detailDiscussion.author }}</strong>
-              <span class="verified">✓</span>
-            </div>
-            <span>{{ detailDiscussion.authorUsername ? '@' + detailDiscussion.authorUsername : 'Member' }}</span>
+            <strong>{{ detailDiscussion.author }}</strong>
+            <span class="verified">✓</span>
           </div>
           <div class="op-meta">
             <span>{{ detailDiscussion.time }}</span>
