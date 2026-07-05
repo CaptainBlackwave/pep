@@ -1230,10 +1230,48 @@ table {
   color: #d4d8e7;
   font-size: 16px;
   cursor: pointer;
+  padding: 4px;
+  line-height: 1;
 }
 
 .dots:hover {
   color: #a855f7;
+}
+
+.dots-wrap {
+  position: relative;
+  display: inline-flex;
+}
+
+.dots-dropdown {
+  position: absolute;
+  right: 0;
+  top: 100%;
+  min-width: 120px;
+  padding: 4px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: #1a1f2e;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+.dots-dropdown button {
+  display: block;
+  width: 100%;
+  padding: 8px 12px;
+  border: 0;
+  border-radius: 6px;
+  background: transparent;
+  color: #c3c8da;
+  font-size: 13px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.dots-dropdown button:hover {
+  background: rgba(255,255,255,0.06);
+  color: #fff;
 }
 
 .post-card h1 {

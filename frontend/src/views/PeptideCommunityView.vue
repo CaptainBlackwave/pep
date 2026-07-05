@@ -370,7 +370,14 @@
             <div class="action-links">
               <button @click="jumpToReplyComposer">↩ Reply</button>
               <button @click="prepareReply(null, true)">❞ Quote</button>
-              <button class="dots" @click="openDiscussionReport">⋯</button>
+              <div class="dots-wrap">
+                <button class="dots" @click.stop="togglePostMenu">⋯</button>
+                <div v-if="showPostMenu" class="dots-dropdown" @click.stop>
+                  <button @click="openDiscussionReport">Report</button>
+                  <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="startEditDiscussion">Edit</button>
+                  <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="deleteDiscussion">Delete</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -412,7 +419,13 @@
             <div class="action-links">
               <button @click="prepareReply(reply)">↩ Reply</button>
               <button @click="prepareReply(reply, true)">❞ Quote</button>
-              <button class="dots" @click="openReplyReport(reply)">⋯</button>
+              <div class="dots-wrap">
+                <button class="dots" @click.stop="toggleReplyMenu(index)">⋯</button>
+                <div v-if="activeReplyMenu === index" class="dots-dropdown" @click.stop>
+                  <button @click="openReplyReport(reply)">Report</button>
+                  <button v-if="authStore.user?.id === reply.authorId" @click="deleteReply(reply)">Delete</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -3566,6 +3579,25 @@ async function toggleDiscussionFollow(): Promise<void> {
     'You are following this discussion.',
     'You are no longer following this discussion.',
   )
+}
+
+const showPostMenu = ref(false)
+const activeReplyMenu = ref<number | null>(null)
+
+function togglePostMenu() {
+  showPostMenu.value = !showPostMenu.value
+}
+
+function toggleReplyMenu(index: number) {
+  activeReplyMenu.value = activeReplyMenu.value === index ? null : index
+}
+
+// Close menus on click outside
+if (typeof document !== 'undefined') {
+  document.addEventListener('click', () => {
+    showPostMenu.value = false
+    activeReplyMenu.value = null
+  })
 }
 
 const deletingDiscussion = ref(false)
