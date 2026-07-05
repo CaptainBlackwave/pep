@@ -6254,6 +6254,10 @@ a[target="_blank"] {
     display: none;
   }
 
+  .pv-content-grid--vendor-detail .pv-compact-select {
+    display: none;
+  }
+
   .pv-content-grid > aside.pv-stack {
     display: none;
   }
