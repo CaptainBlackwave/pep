@@ -4762,6 +4762,157 @@ function vendorPortalError(error: unknown, fallback: string): string {
   return errors ? Object.values(errors)[0]?.[0] ?? fallback : apiError.response?.data?.message ?? fallback
 }
 
+function resetVendorProductForm(): void {
+  if (vendorProductImagePreview.value) {
+    URL.revokeObjectURL(vendorProductImagePreview.value)
+  }
+
+  editingVendorProductId.value = null
+  vendorProductImageFile.value = null
+  vendorProductImagePreview.value = ''
+  vendorProductForm.value = {
+    name: '',
+    slug: '',
+    category: '',
+    strength: '',
+    package_size: '',
+    purity_label: '',
+    description: '',
+    price: '',
+    currency_code: 'USD',
+    availability: 'in_stock',
+    image_url: '',
+    tags: '',
+    sort_order: String((apiMyVendor.value?.products.length ?? 0) + 1),
+    status: 'published',
+  }
+}
+
+function editVendorProduct(product: VendorProduct): void {
+  if (vendorProductImagePreview.value) {
+    URL.revokeObjectURL(vendorProductImagePreview.value)
+  }
+
+  editingVendorProductId.value = product.id ?? null
+  vendorProductImageFile.value = null
+  vendorProductImagePreview.value = product.imageUrl ?? ''
+  vendorProductForm.value = {
+    name: product.name,
+    slug: product.slug,
+    category: product.category,
+    strength: product.strength,
+    package_size: product.packageSize,
+    purity_label: product.purityLabel,
+    description: product.description,
+    price: product.price !== null ? String(product.price) : '',
+    currency_code: product.currencyCode,
+    availability: product.availability,
+    image_url: product.imageUrl ?? '',
+    tags: product.tags.join(', '),
+    sort_order: String(product.sortOrder),
+    status: product.status,
+  }
+  vendorProductFormError.value = ''
+}
+
+function selectVendorProductImage(event: Event): void {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+
+  if (!file) {
+    return
+  }
+
+  if (vendorProductImagePreview.value && vendorProductImagePreview.value.startsWith('blob:')) {
+    URL.revokeObjectURL(vendorProductImagePreview.value)
+  }
+
+  vendorProductImageFile.value = file
+  vendorProductImagePreview.value = URL.createObjectURL(file)
+  input.value = ''
+}
+
+function vendorProductPayload(): FormData {
+  const form = vendorProductForm.value
+  const payload = new FormData()
+
+  payload.append('name', form.name.trim())
+  if (form.slug.trim()) payload.append('slug', form.slug.trim())
+  if (form.category.trim()) payload.append('category', form.category.trim())
+  if (form.strength.trim()) payload.append('strength', form.strength.trim())
+  if (form.package_size.trim()) payload.append('package_size', form.package_size.trim())
+  if (form.purity_label.trim()) payload.append('purity_label', form.purity_label.trim())
+  if (form.description.trim()) payload.append('description', form.description.trim())
+  if (form.price !== '') payload.append('price', form.price)
+  payload.append('currency_code', form.currency_code.trim().toUpperCase() || 'USD')
+  payload.append('availability', form.availability)
+  if (form.image_url.trim() && !vendorProductImageFile.value) payload.append('image_url', form.image_url.trim())
+  form.tags.split(',').map(tag => tag.trim()).filter(Boolean).forEach(tag => payload.append('tags[]', tag))
+  payload.append('sort_order', form.sort_order || '0')
+  payload.append('status', form.status)
+  if (vendorProductImageFile.value) payload.append('image', vendorProductImageFile.value)
+
+  return payload
+}
+
+async function saveVendorProduct(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    vendorProductFormError.value = 'Please log in to manage products.'
+    return
+  }
+
+  if (!vendorPortalAccessApproved.value || !apiMyVendor.value) {
+    vendorProductFormError.value = 'Create an approved vendor profile before adding products.'
+    return
+  }
+
+  savingVendorProduct.value = true
+  vendorProductFormError.value = ''
+  vendorProductStatusMessage.value = ''
+
+  try {
+    const requestConfig = {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      skipDeduplication: true,
+    }
+    const payload = vendorProductPayload()
+    const request = editingVendorProductId.value
+      ? api.post<{ data: ApiVendorProduct }>(`/api/v1/community/vendor-profile/products/${editingVendorProductId.value}?_method=PATCH`, payload, requestConfig)
+      : api.post<{ data: ApiVendorProduct }>('/api/v1/community/vendor-profile/products', payload, requestConfig)
+    await request
+    vendorProductStatusMessage.value = editingVendorProductId.value ? 'Product updated.' : 'Product added.'
+    resetVendorProductForm()
+    await loadVendorProfile()
+    if (detailVendor.value?.isOwnedByViewer) {
+      await loadVendorDetail()
+    }
+  } catch (error) {
+    vendorProductFormError.value = vendorPortalError(error, 'Unable to save product.')
+  } finally {
+    savingVendorProduct.value = false
+  }
+}
+
+async function deleteVendorProduct(product: VendorProduct): Promise<void> {
+  if (!product.id || !window.confirm(`Remove ${product.name} from the public catalog?`)) {
+    return
+  }
+
+  vendorProductStatusMessage.value = ''
+  vendorProductFormError.value = ''
+
+  try {
+    await api.delete(`/api/v1/community/vendor-profile/products/${product.id}`)
+    vendorProductStatusMessage.value = 'Product removed.'
+    if (editingVendorProductId.value === product.id) {
+      resetVendorProductForm()
+    }
+    await loadVendorProfile()
+  } catch (error) {
+    vendorProductFormError.value = vendorPortalError(error, 'Unable to remove product.')
+  }
+}
+
 function mapVendorReview(item: ApiVendorReview): UiVendorReview {
   const author = item.author?.name ?? ''
 
