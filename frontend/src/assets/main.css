@@ -2182,6 +2182,12 @@ button.pv-upload-box {
 .pv-toc li {
   padding: 6px 10px;
   border-radius: 5px;
+  cursor: pointer;
+  transition: color 0.15s;
+}
+
+.pv-toc li:hover {
+  color: #8b5cf6;
 }
 
 .pv-toc li.active {

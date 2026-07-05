@@ -928,11 +928,12 @@
         <p v-if="contentStatusMessage" class="pv-form-error">{{ contentStatusMessage }}</p>
         <p v-if="contentLoaded && articles.length === 0" class="pv-muted">No research articles published yet.</p>
         <div class="pv-article-grid">
-          <router-link v-for="(article, index) in articles" :key="article.title" :to="article.href" class="pv-article-card">
-            <span class="pv-thumb" :style="contentThumbnailStyle(article, index)"></span>
-            <span class="pv-tag">{{ article.tag }}</span>
-            <h2>{{ article.title }}</h2>
-            <p>{{ article.excerpt }}</p>
+           <router-link v-for="(article, index) in articles" :key="article.title" :to="article.href" class="pv-article-card">
+              <span class="pv-thumb" :style="contentThumbnailStyle(article, index)"></span>
+              <span class="pv-tag">{{ article.category }}</span>
+              <span class="pv-tag" :class="{ trusted: article.authorBadge === 'FDA Approved' }">{{ article.authorBadge }}</span>
+             <h2>{{ article.title }}</h2>
+             <p>{{ article.excerpt }}</p>
             <footer><span><PvIcon name="calendar" /> {{ article.date }}</span><span><PvIcon name="eye" /> {{ article.views }}</span></footer>
             <PvIcon name="bookmark" class="pv-bookmark" :class="{ active: isBookmarkedContent(article.slug) }" />
           </router-link>
@@ -981,8 +982,8 @@
         <article v-else class="pv-panel"><h2>Comments</h2><p class="pv-muted">Discussion comments are not attached to this article yet. Start a related topic in the community discussions.</p><router-link to="/discussions" class="pv-primary-button">Open Discussions</router-link></article>
       </main>
       <aside class="pv-stack">
-        <article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Category</dt><dd>{{ detailArticle.category }}</dd></div><div><dt>Compound</dt><dd>{{ detailArticle.metadata.compound ?? detailArticle.title }}</dd></div><div><dt>Also Known As</dt><dd>{{ detailArticle.metadata.also_known_as ?? '' }}</dd></div><div><dt>Research Phase</dt><dd>{{ detailArticle.metadata.research_phase ?? '' }}</dd></div><div><dt>Last Updated</dt><dd>{{ detailArticle.date }}</dd></div><div><dt>Views</dt><dd>{{ detailArticle.views }}</dd></div><div><dt>Downloads</dt><dd>{{ detailArticle.downloads }}</dd></div></dl></article>
-        <article class="pv-panel"><h2>Table of Contents</h2><ol class="pv-toc"><li v-for="heading in articleHeadings" :key="heading" :class="{ active: heading === articleHeadings[0] }">{{ heading }}</li></ol></article>
+        <article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Category</dt><dd>{{ detailArticle.category }}</dd></div><div><dt>Compound</dt><dd>{{ detailArticle.metadata.compound ?? detailArticle.title }}</dd></div><div v-if="detailArticle.metadata.fda_approved !== undefined"><dt>FDA Status</dt><dd>{{ detailArticle.metadata.fda_approved ? 'FDA Approved' : 'Research Only' }}</dd></div><div><dt>Views</dt><dd>{{ detailArticle.views }}</dd></div><div><dt>Read Time</dt><dd>{{ detailArticle.timeLabel }}</dd></div></dl></article>
+        <article class="pv-panel"><h2>Table of Contents</h2><ol class="pv-toc"><li v-for="heading in articleHeadings" :key="heading" :class="{ active: heading === articleHeadings[0] }" @click="scrollToHeading(heading)">{{ heading }}</li></ol></article>
         <article class="pv-panel"><h2>Related Articles</h2><div class="pv-mini-list"><router-link v-for="(article, index) in articles.filter(item => item.slug !== detailArticle.slug).slice(0, 3)" :key="article.title" :to="article.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(article, index + 1)"></span><span><strong>{{ article.title }}</strong><small>{{ article.date }}</small></span></router-link></div><router-link to="/research-library" class="pv-primary-button pv-full">View all related articles</router-link></article>
       </aside>
     </div>
@@ -5394,6 +5395,18 @@ async function loadNotificationDetail(): Promise<void> {
     apiDetailNotification.value = mapNotification(response.data.data)
   } catch {
     apiDetailNotification.value = null
+  }
+}
+
+function scrollToHeading(heading: string): void {
+  const el = document.querySelector('.pv-prose')
+  if (!el) return
+  const headings = el.querySelectorAll('h2')
+  for (const h of headings) {
+    if (h.textContent?.trim() === heading) {
+      h.scrollIntoView({ behavior: 'smooth', block: 'start' })
+      break
+    }
   }
 }
 
