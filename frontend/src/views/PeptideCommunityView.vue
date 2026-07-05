@@ -565,7 +565,7 @@
     <div class="pv-content-grid pv-content-grid--vendor-index">
       <main class="pv-stack">
         <header class="pv-page-header">
-          <div><h1>Vendor Reviews</h1><p>Browse vendor profiles, compare community feedback, and write a review from the vendor row.</p></div>
+          <div><h1>Vendors</h1><p>Browse vendor profiles, compare community feedback, and write a review from the vendor row.</p></div>
         </header>
         <article class="pv-panel">
           <div class="pv-toolbar"><div class="pv-tabs"><button :class="{ active: vendorStatusFilter === '' }" @click="setVendorStatusFilter('')">All Vendors</button><button v-for="status in vendorFilterOptions.statuses" :key="status.slug" :class="{ active: vendorStatusFilter === status.slug }" @click="setVendorStatusFilter(status.slug)">{{ status.name }}</button></div><button class="pv-small-button" type="button" @click="cycleVendorSort">{{ vendorSortLabel }} <PvIcon name="chevron" /></button><button class="pv-icon-button" @click="loadVendors"><PvIcon name="filter" /></button></div>
@@ -604,7 +604,7 @@
               </div>
             </div>
             <div class="vendor-actions">
-              <router-link :to="vendor.href" class="secondary">☷ View Reviews</router-link>
+              <router-link :to="vendor.href" class="secondary">☷ View Vendor</router-link>
               <router-link :to="`${vendor.href}/review`" class="primary">✎ Write Review</router-link>
             </div>
           </article>
@@ -890,7 +890,7 @@
   <section v-else-if="page === 'vendorDetail' || page === 'reviewModal'" class="pv-page">
     <div v-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
       <main class="pv-stack">
-        <router-link to="/vendor-reviews" class="op-back">← Back to Vendor Reviews</router-link>
+        <router-link to="/vendor-reviews" class="op-back">← Back to Vendors</router-link>
         <article class="vendor-card">
           <div class="vendor-top">
             <span v-if="detailVendor.imageUrl" class="vendor-logo"><img :src="detailVendor.imageUrl" :alt="detailVendor.name"></span>
