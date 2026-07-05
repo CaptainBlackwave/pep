@@ -4936,7 +4936,7 @@ function mapVendorProduct(item: ApiVendorProduct): VendorProduct {
 }
 
 function variantPrice(variant: ProductVariant): string {
-  if (variant.price === null || variant.price === undefined) return 'Contact for price'
+  if (variant.price === null || variant.price === undefined || variant.price === '') return 'Contact for price'
   return '$' + Number(variant.price).toFixed(2)
 }
 
