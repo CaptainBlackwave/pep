@@ -190,6 +190,7 @@
             <router-link v-for="item in announcementPreview" :key="item.slug" :to="item.href" class="pv-mini-row">
               <span class="pv-icon-tile"><PvIcon :name="item.icon" /></span>
               <span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em>{{ item.time }}</em></span>
+              <PvIcon name="chevron" />
             </router-link>
           </div>
         </article>
