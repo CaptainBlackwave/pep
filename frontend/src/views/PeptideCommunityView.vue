@@ -392,6 +392,7 @@
             </div>
             <div class="pv-detail-actions">
               <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-icon-button pv-icon-button--static" aria-label="Edit topic" @click="startEditDiscussion"><PvIcon name="settings" /></button>
+              <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-icon-button pv-icon-button--static pv-icon-button--danger" aria-label="Delete topic" @click="deleteDiscussion"><PvIcon name="close" /></button>
               <button class="pv-icon-button pv-icon-button--static" aria-label="Share topic" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /></button>
               <button class="pv-icon-button pv-icon-button--static" aria-label="Report topic" @click="openDiscussionReport"><PvIcon name="shield" /></button>
               <button class="pv-primary-button" @click="toggleDiscussionFollow"><PvIcon name="star" /> {{ isFollowingDiscussion ? 'Following' : 'Follow' }}</button>
@@ -3674,6 +3675,22 @@ async function toggleDiscussionFollow(): Promise<void> {
     'You are following this discussion.',
     'You are no longer following this discussion.',
   )
+}
+
+const deletingDiscussion = ref(false)
+async function deleteDiscussion(): Promise<void> {
+  if (!detailDiscussion.value?.id) return
+  if (!confirm('Delete this discussion? This cannot be undone.')) return
+  deletingDiscussion.value = true
+  try {
+    await api.delete(`/api/v1/community/discussions/${detailDiscussion.value.id}`)
+    apiDiscussions.value = apiDiscussions.value.filter(t => t.slug !== detailDiscussion.value?.slug)
+    await router.push('/discussions')
+  } catch {
+    alert('Failed to delete discussion.')
+  } finally {
+    deletingDiscussion.value = false
+  }
 }
 
 async function toggleDiscussionSave(): Promise<void> {
