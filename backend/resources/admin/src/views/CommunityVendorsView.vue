@@ -748,20 +748,28 @@ async function fetchProducts() {
  function openProductForm(product) {
    productEditing.value = product || null
    if (product) {
-     Object.assign(productForm, {
-       name: product.name || '',
-       category: product.category || '',
-       strength: product.strength || '',
-       price: product.price ?? null,
-       availability: product.availability || 'in_stock',
-       variants: (product.variants || []).map(v => ({ ...v })),
-       status: product.status || 'published',
-       purity_label: product.purity_label || '',
-       package_size: product.package_size || '',
-       description: product.description || '',
-     })
+     productForm.name = product.name || ''
+     productForm.category = product.category || ''
+     productForm.strength = product.strength || ''
+     productForm.price = product.price ?? null
+     productForm.availability = product.availability || 'in_stock'
+     productForm.variants.splice(0, productForm.variants.length)
+     ;(product.variants || []).forEach(v => productForm.variants.push({ ...v }))
+     productForm.status = product.status || 'published'
+     productForm.purity_label = product.purity_label || ''
+     productForm.package_size = product.package_size || ''
+     productForm.description = product.description || ''
    } else {
-     Object.assign(productForm, emptyProductForm())
+     productForm.name = ''
+     productForm.category = ''
+     productForm.strength = ''
+     productForm.price = null
+     productForm.availability = 'in_stock'
+     productForm.variants.splice(0, productForm.variants.length)
+     productForm.status = 'published'
+     productForm.purity_label = ''
+     productForm.package_size = ''
+     productForm.description = ''
    }
    showProductForm.value = true
    productError.value = ''
