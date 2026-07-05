@@ -891,7 +891,8 @@
     <div v-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
       <main class="pv-stack">
         <router-link to="/vendor-reviews" class="op-back">← Back to Vendors</router-link>
-        <article class="vendor-card">
+        <article class="vendor-card vendor-card--hero">
+          <div v-if="detailVendor.imageUrl" class="vendor-hero-bg" :style="{ backgroundImage: `url(${detailVendor.imageUrl})` }"></div>
           <div class="vendor-top">
             <span v-if="detailVendor.imageUrl" class="vendor-logo"><img :src="detailVendor.imageUrl" :alt="detailVendor.name"></span>
             <span v-else class="vendor-logo vendor-logo--letter">{{ detailVendor.logoText }}</span>
