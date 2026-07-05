@@ -871,6 +871,7 @@
             <div><dt>Status</dt><dd>{{ vendorPortalAccessApproved ? 'Approved' : 'Not approved' }}</dd></div>
             <div><dt>Profile</dt><dd>{{ apiMyVendor ? apiMyVendor.publishStatus : 'Not created' }}</dd></div>
           </dl>
+          <button v-if="authStore.user?.roles?.includes('admin') && !vendorPortalAccessApproved" class="pv-primary-button pv-full" style="margin-top:12px" @click="approveVendorAccess">Approve Vendor Access</button>
         </article>
 
         <article class="pv-panel">
@@ -5200,6 +5201,17 @@ async function saveVendorProfile(): Promise<void> {
     vendorPortalFormError.value = vendorPortalError(error, 'Unable to save vendor profile.')
   } finally {
     savingVendorProfile.value = false
+  }
+}
+
+async function approveVendorAccess(): Promise<void> {
+  const userId = authStore.user?.id
+  if (!userId) return
+  try {
+    await api.patch(`/admin/users/${userId}/vendor-access`, { approved: true })
+    vendorPortalAccessApproved.value = true
+  } catch {
+    alert('Failed to approve vendor access.')
   }
 }
 
