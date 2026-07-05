@@ -345,7 +345,6 @@
             <div class="meta-row">
               <span class="badge">★ Original Post</span>
               <span class="time">{{ detailDiscussion.time }}</span>
-              <button class="dots" @click="openDiscussionReport">•••</button>
             </div>
           </div>
           <h1>{{ detailDiscussion.title }}</h1>
@@ -370,8 +369,8 @@
             </div>
             <div class="action-links">
               <button @click="jumpToReplyComposer">↩ Reply</button>
-              <button @click="toggleDiscussionFollow">{{ isFollowingDiscussion ? 'Unfollow' : 'Follow' }}</button>
-              <button @click="shareCurrentPage(detailDiscussion.title)">⇧ Share</button>
+              <button @click="prepareReply(null, true)">❞ Quote</button>
+              <button class="dots" @click="openDiscussionReport">⋯</button>
             </div>
           </div>
         </div>
@@ -396,7 +395,6 @@
               <span>{{ reply.time }}</span>
               <span v-if="reply.authorId && reply.authorId === detailDiscussion.authorId" class="small-badge">OP</span>
             </div>
-            <button class="dots" @click="openReplyReport(reply)">•••</button>
           </div>
           <p class="reply-text" v-html="linkifyText(reply.text)"></p>
           <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
@@ -414,8 +412,7 @@
             <div class="action-links">
               <button @click="prepareReply(reply)">↩ Reply</button>
               <button @click="prepareReply(reply, true)">❞ Quote</button>
-              <button @click="shareCurrentPage(reply.text)">⇧ Share</button>
-              <button v-if="authStore.user?.id === reply.authorId || authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')" @click="deleteReply(reply)" style="color:#ef4444">Delete</button>
+              <button class="dots" @click="openReplyReport(reply)">⋯</button>
             </div>
           </div>
         </div>

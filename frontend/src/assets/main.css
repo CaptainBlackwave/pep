@@ -5339,86 +5339,127 @@ a[target="_blank"] {
 
 @media (max-width: 700px) {
   .thread-wrap {
-    padding: 0 12px;
+    padding: 0 16px;
   }
 
-  .post-card,
-  .reply-post {
-    grid-template-columns: 60px 1fr;
-    gap: 10px;
-    padding: 14px 14px;
-    border-radius: 14px;
+  .post-card {
+    grid-template-columns: 86px minmax(0, 1fr);
+    gap: 14px;
+    padding: 22px 18px;
+    overflow: hidden;
+  }
+
+  .post-main {
+    min-width: 0;
   }
 
   .avatar {
-    width: 44px;
-    height: 44px;
-    font-size: 20px;
-  }
-
-  .post-left,
-  .reply-left {
-    align-items: flex-start;
-    border-right: 1px solid rgba(255,255,255,.1);
+    width: 64px;
+    height: 64px;
+    font-size: 32px;
   }
 
   .post-top,
   .reply-top {
-    flex-direction: row;
+    display: flex;
     align-items: flex-start;
+    justify-content: space-between;
+    gap: 10px;
   }
 
   .meta-row {
-    gap: 6px;
-    font-size: 11px;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    min-width: 0;
+    font-size: 13px;
   }
 
   .badge {
-    font-size: 10px;
-    padding: 3px 8px;
+    font-size: 13px;
+    padding: 7px 10px;
+    white-space: nowrap;
   }
 
-  .username {
-    font-size: 15px;
+  .time {
+    white-space: nowrap;
   }
 
   .post-card h1 {
-    font-size: 20px;
-    margin: 16px 0 8px;
+    font-size: 28px;
+    line-height: 1.15;
+    margin: 30px 0 12px;
   }
 
   .body-text,
   .reply-text {
-    font-size: 14px;
+    font-size: 18px;
+    line-height: 1.45;
   }
 
-  .reply-text {
-    margin-top: 16px;
+  .divider {
+    margin: 22px 0 16px;
   }
 
   .actions {
-    flex-direction: row;
+    display: flex;
     align-items: center;
-    gap: 8px;
+    justify-content: space-between;
+    gap: 10px;
   }
 
-  .vote-box .vote {
-    width: 30px;
-    height: 30px;
-    font-size: 14px;
+  .vote-box {
+    flex: 0 0 auto;
+  }
+
+  .vote {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
   }
 
   .vote-box span {
-    padding: 0 8px;
-    font-size: 13px;
+    padding: 0 12px;
+    font-size: 18px;
   }
 
   .action-links {
-    gap: 8px;
-    flex-wrap: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    min-width: 0;
   }
 
   .action-links button {
-    font-size: 12px;
+    font-size: 0;
+    padding: 0;
+  }
+
+  .action-links button::first-letter {
+    font-size: 22px;
+  }
+
+  .reply-post {
+    grid-template-columns: 86px minmax(0, 1fr);
+  }
+
+  .reply-left {
+    align-items: center;
+    border-right: 1px solid rgba(255,255,255,.1);
+  }
+
+  .reply-name {
+    font-size: 15px;
+    text-align: center;
+  }
+
+  .reply-text {
+    margin-top: 34px;
+  }
+
+  .tag,
+  .role,
+  .small-badge {
+    display: none;
   }
 }
