@@ -220,7 +220,7 @@
   </section>
 
   <section v-else-if="page === 'discussions'" class="pv-page">
-    <div class="pv-content-grid">
+    <div class="pv-content-grid pv-content-grid--wide">
       <main class="pv-stack">
         <header class="pv-page-header">
           <div>
@@ -314,8 +314,6 @@
           <PaginationBlock :meta="discussionPagination" @page="setDiscussionPage" />
         </article>
       </main>
-      <aside class="pv-stack">
-      </aside>
     </div>
   </section>
 
@@ -564,7 +562,7 @@
   </section>
 
   <section v-else-if="page === 'vendorReviews'" class="pv-page">
-    <div class="pv-content-grid">
+    <div class="pv-content-grid pv-content-grid--vendor-index">
       <main class="pv-stack">
         <header class="pv-page-header">
           <div><h1>Vendor Reviews</h1><p>Browse vendor profiles, compare community feedback, and write a review from the vendor row.</p></div>
@@ -582,10 +580,21 @@
           <p v-if="vendorStatusMessage" class="pv-alert pv-alert--compact">{{ vendorStatusMessage }}</p>
           <p v-if="vendorsLoaded && vendors.length === 0" class="pv-muted">No vendors found.</p>
           <article v-for="vendor in vendors" :key="vendor.slug" class="pv-vendor-row">
-            <router-link :to="vendor.href" class="pv-logo-card" :class="vendor.class"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logoText }}</template></router-link>
-            <router-link :to="vendor.href" class="pv-topic-main"><strong>{{ vendor.name }} <em class="pv-tag" :class="vendor.statusClass">{{ vendor.status }}</em></strong><small><PvIcon name="star" /> {{ vendor.reviews }} reviews · Member since {{ vendor.since }}</small><span class="pv-chip-row"><span v-for="chip in vendor.chips" :key="chip">{{ chip }}</span></span></router-link>
-            <span class="pv-rating" :class="vendor.tone"><PvIcon name="star" /> {{ vendor.rating }} / 5<small>Would buy again {{ vendor.buyAgain }}</small></span>
-            <span class="pv-vendor-row-actions"><router-link :to="vendor.href" class="pv-small-button">View Reviews</router-link><router-link :to="`${vendor.href}/review`" class="pv-primary-button">Write Review</router-link></span>
+            <router-link :to="vendor.href" class="pv-logo-card pv-vendor-card-logo" :class="vendor.class"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logoText }}</template></router-link>
+            <div class="pv-vendor-card-main">
+              <router-link :to="vendor.href" class="pv-vendor-card-title">
+                <strong>{{ vendor.name }}</strong>
+                <em class="pv-tag" :class="vendor.statusClass">{{ vendor.status }}</em>
+                <PvIcon name="chevron" />
+              </router-link>
+              <small class="pv-vendor-card-meta"><PvIcon name="star" /> {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} <span>·</span> Member since {{ vendor.since }}</small>
+              <span class="pv-chip-row pv-vendor-chip-row"><span v-for="chip in vendor.chips" :key="chip"><PvIcon :name="vendorChipIcon(chip)" /> {{ chip }}</span></span>
+              <div class="pv-vendor-score-strip">
+                <span class="pv-vendor-rating" :class="vendor.tone"><PvIcon name="star" /><strong>{{ vendor.rating || '0.0' }} <small>/ 5</small></strong></span>
+                <span class="pv-vendor-buy-again"><small>Would buy again</small><strong>{{ vendor.buyAgain || '0%' }}</strong></span>
+              </div>
+            </div>
+            <span class="pv-vendor-row-actions"><router-link :to="vendor.href" class="pv-small-button"><PvIcon name="list" /> View Reviews</router-link><router-link :to="`${vendor.href}/review`" class="pv-primary-button"><PvIcon name="edit" /> Write Review</router-link></span>
           </article>
           <PaginationBlock :meta="vendorPagination" @page="setVendorPage" />
         </article>
@@ -751,7 +760,7 @@
   </section>
 
   <section v-else-if="page === 'vendorDetail' || page === 'reviewModal'" class="pv-page">
-    <div v-if="detailVendor" class="pv-content-grid">
+    <div v-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
       <main class="pv-stack">
         <nav class="pv-breadcrumbs">Vendor Reviews <PvIcon name="chevron" /> {{ detailVendor.name }} <PvIcon name="chevron" /> Reviews</nav>
         <article class="pv-vendor-hero">
@@ -763,8 +772,13 @@
           ></span>
           <div class="pv-vendor-hero-overlay">
             <span class="pv-logo-card" :class="detailVendor.class"><img v-if="detailVendor.imageUrl" :src="detailVendor.imageUrl" :alt="detailVendor.name"><template v-else>{{ detailVendor.logoText }}</template></span>
-            <div class="pv-topic-main"><h1>{{ detailVendor.name }} <span class="pv-tag" :class="detailVendor.statusClass">{{ detailVendor.status }}</span></h1><p><PvIcon name="star" /> {{ detailVendor.rating }} / 5 · {{ detailVendor.reviews }} reviews</p><span class="pv-chip-row"><span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span></span></div>
-            <div class="pv-vendor-actions"><router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="pv-small-button">Manage Profile <PvIcon name="settings" /></router-link><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a><small>Member since {{ detailVendor.since }}<br>Last active {{ detailVendor.lastActive }}</small></div>
+            <div class="pv-topic-main">
+              <h1>{{ detailVendor.name }} <span class="pv-tag" :class="detailVendor.statusClass">{{ detailVendor.status }}</span></h1>
+              <p class="pv-vendor-stars-line"><span class="pv-stars">★★★★★</span> <strong>{{ detailVendor.rating }} / 5</strong><span>·</span>{{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }}</p>
+              <p class="pv-vendor-meta-line">Member since {{ detailVendor.since }} <span>·</span> Last active {{ detailVendor.lastActive }}</p>
+              <span class="pv-chip-row"><span v-for="chip in detailVendor.chips" :key="chip"><PvIcon :name="vendorChipIcon(chip)" /> {{ chip }}</span></span>
+            </div>
+            <div class="pv-vendor-actions"><router-link :to="`${detailVendor.href}/review`" class="pv-primary-button"><PvIcon name="edit" /> Write Review</router-link><router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="pv-small-button">Manage Profile <PvIcon name="settings" /></router-link><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a></div>
           </div>
         </article>
         <div class="pv-tabs pv-tabs--line"><button :class="{ active: vendorDetailTab === 'overview' }" @click="vendorDetailTab = 'overview'">Overview</button><button :class="{ active: vendorDetailTab === 'reviews' }" @click="vendorDetailTab = 'reviews'">Reviews ({{ detailVendor.reviews }})</button><button :class="{ active: vendorDetailTab === 'about' }" @click="vendorDetailTab = 'about'">About</button></div>
@@ -4514,6 +4528,17 @@ function mapVendor(item: ApiVendor): UiVendor {
     topProducts: item.top_products ?? [],
     ratingDistribution: item.rating_distribution ?? [],
   }
+}
+
+function vendorChipIcon(chip: string): string {
+  const value = chip.toLowerCase()
+
+  if (value.includes('pep') || value.includes('lab') || value.includes('research')) return 'flask'
+  if (value.includes('sale') || value.includes('deal')) return 'tag'
+  if (value.includes('support') || value.includes('contact')) return 'message'
+  if (value.includes('vendor') || value.includes('member') || value.includes('nick')) return 'user'
+
+  return 'tag'
 }
 
 function normalizeHandle(value?: string | null): string {
