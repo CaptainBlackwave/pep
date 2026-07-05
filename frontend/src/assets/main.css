@@ -1253,7 +1253,21 @@ table {
 }
 
 @media (max-width: 600px) {
-  .op-card {
+.op-back {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #8e95a8;
+  font-size: 13px;
+  margin-bottom: 12px;
+  text-decoration: none;
+}
+
+.op-back:hover {
+  color: #a855f7;
+}
+
+.op-card {
     padding: 22px;
     border-radius: 22px;
   }

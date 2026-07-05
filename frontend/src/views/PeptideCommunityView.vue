@@ -321,6 +321,7 @@
 
   <section v-else-if="page === 'discussionDetail'" class="pv-page">
     <div v-if="detailDiscussion" class="thread-wrap">
+      <router-link to="/discussions" class="op-back">← Back to Discussions</router-link>
       <article class="op-card">
         <header class="op-header">
           <span v-if="detailDiscussion.avatarUrl" class="op-avatar"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
