@@ -242,12 +242,14 @@
               </div>
               <div class="flex gap-1 shrink-0">
                 <button
+                  type="button"
                   class="px-2 py-1 rounded text-xs font-medium bg-slate-500/15 text-slate-300 hover:bg-slate-500/25"
                   @click="openProductForm(product)"
                 >
                   Edit
                 </button>
                 <button
+                  type="button"
                   class="px-2 py-1 rounded text-xs font-medium bg-red-500/15 text-red-300 hover:bg-red-500/25"
                   @click="deleteProduct(product)"
                 >
