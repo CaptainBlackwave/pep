@@ -115,4 +115,23 @@ class CommunityVendorProductAdminController extends Controller
             'message' => 'Product hidden.',
         ]);
     }
+
+    private function uniqueSlug(int $vendorId, string $value, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($value) ?: 'product';
+        $slug = $base;
+        $suffix = 2;
+
+        while (CommunityVendorProduct::query()
+            ->where('vendor_id', $vendorId)
+            ->when($ignoreId, fn ($q) => $q->whereKeyNot($ignoreId))
+            ->where('slug', $slug)
+            ->exists()
+        ) {
+            $slug = "{$base}-{$suffix}";
+            $suffix++;
+        }
+
+        return $slug;
+    }
 }
