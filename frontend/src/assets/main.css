@@ -2348,6 +2348,12 @@ table {
 
 .pv-modal input,
 .pv-modal textarea,
+.pv-form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 16px;
+}
+
 .pv-modal select,
 .pv-form-card input,
 .pv-form-card textarea,

@@ -15,14 +15,23 @@
         Title
         <input v-model="newDiscussion.title" required maxlength="160" placeholder="What would you like to discuss?">
       </label>
-      <label>
-        Category
-        <select v-model="newDiscussion.category_slug">
-          <option v-for="category in discussionCategories" :key="category.slug" :value="category.slug">
-            {{ category.name }}
-          </option>
-        </select>
-      </label>
+      <div class="pv-form-row">
+        <label>
+          Category
+          <select v-model="newDiscussion.category_slug">
+            <option value="">None</option>
+            <option v-for="category in discussionCategories" :key="category.slug" :value="category.slug">
+              {{ category.name }}
+            </option>
+          </select>
+        </label>
+        <label>
+          Type
+          <select v-model="newDiscussion.tag">
+            <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
+          </select>
+        </label>
+      </div>
       <label>
         Message
         <div class="pv-textarea-with-emoji">
@@ -2552,10 +2561,12 @@ const blockedUsers = ref<UiMemberProfile[]>([])
 const blockedUsersLoaded = ref(false)
 const blockingUserId = ref<number | null>(null)
 const blockUserSearch = ref('')
+const discussionTags = ['Discussion', 'Question', 'Guide', 'Review', 'Showcase', 'Tutorial', 'News', 'Tip']
 const newDiscussion = ref({
   title: '',
   body: '',
   category_slug: '',
+  tag: 'Discussion',
 })
 const newLabResult = ref({
   compound_name: '',
@@ -4192,10 +4203,11 @@ async function submitNewDiscussion(): Promise<void> {
       title: newDiscussion.value.title,
       body: newDiscussion.value.body,
       category_slug: newDiscussion.value.category_slug || undefined,
+      tag: newDiscussion.value.tag,
     })
     const created = mapDiscussion(response.data.data)
     apiDiscussions.value = [created, ...apiDiscussions.value.filter(topic => topic.slug !== created.slug)]
-    newDiscussion.value = { title: '', body: '', category_slug: discussionCategories.value[0]?.slug ?? '' }
+    newDiscussion.value = { title: '', body: '', category_slug: '', tag: 'Discussion' }
     showNewDiscussion.value = false
     discussionStatusMessage.value = 'Discussion posted.'
     await router.push(created.href)
