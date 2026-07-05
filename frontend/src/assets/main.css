@@ -1057,6 +1057,87 @@ table {
   font-size: 12px;
 }
 
+.topic-card--mini {
+  grid-template-columns: 100px 1fr;
+  gap: 16px;
+  padding: 14px 18px;
+  margin-bottom: 8px;
+  min-height: auto;
+  border-radius: 12px;
+}
+
+.topic-card--mini .author-panel {
+  padding-right: 14px;
+  gap: 4px;
+}
+
+.topic-card--mini .avatar {
+  width: 40px;
+  height: 40px;
+  font-size: 18px;
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25), 0 0 20px rgba(139, 92, 246, 0.3);
+}
+
+.topic-card--mini .avatar-wrap {
+  margin-bottom: 4px;
+}
+
+.topic-card--mini h4 {
+  font-size: 12px;
+}
+
+.topic-card--mini .topic-body {
+  padding: 0;
+}
+
+.topic-card--mini .topic-head-compact {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+}
+
+.topic-card--mini .topic-title-compact {
+  font-size: 15px;
+  font-weight: 700;
+  margin: 0;
+  line-height: 1.2;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  flex-wrap: wrap;
+}
+
+.topic-card--mini .topic-type-compact {
+  font-size: 10px;
+  background: rgba(124,58,237,0.2);
+  color: #c084fc;
+  padding: 1px 8px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.topic-card--mini .topic-time-compact {
+  font-size: 11px;
+  color: #8e95a8;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+.topic-card--mini .topic-stats-compact {
+  display: flex;
+  gap: 14px;
+  margin-top: 8px;
+  font-size: 12px;
+  color: #8e95a8;
+}
+
+.topic-card--mini .topic-stats-compact span {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
 .pv-topic-list {
   display: grid;
 }
