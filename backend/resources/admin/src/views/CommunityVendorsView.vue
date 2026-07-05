@@ -386,6 +386,22 @@
               </select>
             </label>
 
+            <div class="grid grid-cols-2 gap-3">
+              <label class="block">
+                <span class="text-xs text-slate-300">Purity Label</span>
+                <input v-model="productForm.purity_label" maxlength="80" class="mt-1 w-full px-3 py-2 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-sm" placeholder=">98%">
+              </label>
+              <label class="block">
+                <span class="text-xs text-slate-300">Package Size</span>
+                <input v-model="productForm.package_size" maxlength="80" class="mt-1 w-full px-3 py-2 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-sm" placeholder="1 vial">
+              </label>
+            </div>
+
+            <label class="block">
+              <span class="text-xs text-slate-300">Description</span>
+              <textarea v-model="productForm.description" rows="3" maxlength="50000" class="mt-1 w-full px-3 py-2 bg-slate-900/60 border border-slate-700 rounded-lg text-white text-sm" placeholder="Product description"></textarea>
+            </label>
+
             <div v-if="productError" class="rounded-lg bg-red-500/10 border border-red-500/30 p-3 text-xs text-red-300">
               {{ productError }}
             </div>
@@ -699,6 +715,9 @@ const emptyProductForm = () => ({
   availability: 'in_stock',
   variants: [],
   status: 'published',
+  purity_label: '',
+  package_size: '',
+  description: '',
 })
 
 function addVariant() {
@@ -726,24 +745,27 @@ async function fetchProducts() {
   }
 }
 
-function openProductForm(product) {
-  productEditing.value = product || null
-  if (product) {
-    Object.assign(productForm, {
-      name: product.name || '',
-      category: product.category || '',
-      strength: product.strength || '',
-      price: product.price ?? null,
-      availability: product.availability || 'in_stock',
-      variants: (product.variants || []).map(v => ({ ...v })),
-      status: product.status || 'published',
-    })
-  } else {
-    Object.assign(productForm, emptyProductForm())
-  }
-  showProductForm.value = true
-  productError.value = ''
-}
+ function openProductForm(product) {
+   productEditing.value = product || null
+   if (product) {
+     Object.assign(productForm, {
+       name: product.name || '',
+       category: product.category || '',
+       strength: product.strength || '',
+       price: product.price ?? null,
+       availability: product.availability || 'in_stock',
+       variants: (product.variants || []).map(v => ({ ...v })),
+       status: product.status || 'published',
+       purity_label: product.purity_label || '',
+       package_size: product.package_size || '',
+       description: product.description || '',
+     })
+   } else {
+     Object.assign(productForm, emptyProductForm())
+   }
+   showProductForm.value = true
+   productError.value = ''
+ }
 
 function closeProductForm() {
   showProductForm.value = false
@@ -765,6 +787,9 @@ async function saveProduct() {
     availability: productForm.availability,
     variants: productForm.variants.length ? productForm.variants : null,
     status: productForm.status,
+    purity_label: productForm.purity_label || null,
+    package_size: productForm.package_size || null,
+    description: productForm.description || null,
   }
 
   try {
