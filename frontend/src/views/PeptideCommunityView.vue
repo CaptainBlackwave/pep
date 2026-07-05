@@ -1411,7 +1411,7 @@ interface UiReply {
   votes: number
   file?: string
   attachmentUrl?: string | null
-  attachmentMeta: Record<string, any>
+  attachmentMeta: Record<string, unknown>
   viewerVote: -1 | 0 | 1
   authorId?: number
 }
@@ -1430,7 +1430,7 @@ interface ApiDiscussion {
   last_activity?: string | null
   is_pinned?: boolean
   is_locked?: boolean
-  category?: { name?: string | null; color?: string | null } | null
+  category?: { name?: string | null; slug?: string | null; color?: string | null } | null
   author?: { id?: number; name?: string | null; initial?: string | null; avatar?: string | null } | null
   vote_score?: number
   viewer_vote?: number
@@ -1957,7 +1957,8 @@ interface ApiMemberProfile {
   joined_label?: string | null
   last_active_label?: string | null
   interests?: string[]
-  stats?: Record<string, any>
+  stats?: Record<string, unknown>
+  avatar?: string | null
   badges?: string[]
   href?: string
   activities?: ApiMemberActivity[]
@@ -2028,7 +2029,7 @@ interface ApiMessage {
   side: 'in' | 'out'
   body: string
   attachment_name?: string | null
-  attachment_meta?: Record<string, any> | null
+  attachment_meta?: Record<string, unknown> | null
   sender?: ApiMemberProfile | null
   sent_label?: string | null
   time_ago?: string | null
@@ -2641,15 +2642,7 @@ const messageRecipientOptions = computed(() => {
     .slice(0, 6)
 })
 const currentThread = computed(() => apiCurrentMessageThread.value)
-const categoryFilters = computed<ApiCategory[]>(() => [
-  {
-    name: 'All Discussions',
-    slug: '',
-    icon: 'discussions',
-    count: discussionCategories.value.reduce((total, category) => total + Number(category.count || 0), 0),
-  },
-  ...discussionCategories.value,
-])
+const categoryFilters = computed<ApiCategory[]>(() => discussionCategories.value)
 const discussionSortLabel = computed(() => {
   if (discussionSort.value === 'replies') return 'Most Replies'
   if (discussionSort.value === 'views') return 'Most Viewed'
@@ -4174,7 +4167,7 @@ async function submitReply(): Promise<void> {
 }
 
 function setDiscussionCategory(slug: string): void {
-  activeCategory.value = slug
+  activeCategory.value = activeCategory.value === slug ? '' : slug
   discussionPage.value = 1
   void loadDiscussions()
 }
