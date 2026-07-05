@@ -12,6 +12,7 @@ class PublicSettingsController extends Controller
             'telegram_url' => Setting::where('key', 'telegram_url')->value('value')
                 ?? config('app.telegram_url')
                 ?? 'https://t.me/peptidevendors',
+            'access_code_required' => Setting::where('key', 'access_code_required')->value('value') === '1',
             'legal_pages' => $this->legalPages(),
         ]);
     }
