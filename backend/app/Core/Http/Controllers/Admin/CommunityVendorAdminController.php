@@ -114,6 +114,7 @@ class CommunityVendorAdminController extends Controller
             'name' => [$required, 'string', 'max:160'],
             'slug' => ['nullable', 'string', 'max:180'],
             'description' => ['nullable', 'string', 'max:50000'],
+            'country' => ['nullable', 'string', 'max:100'],
             'website_url' => ['nullable', 'url', 'max:255'],
             'image_url' => ['nullable', 'string', 'max:2048'],
             'contact_email' => ['nullable', 'email', 'max:255'],
