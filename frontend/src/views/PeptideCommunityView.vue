@@ -352,7 +352,7 @@
               <div class="pv-topic-stat-strip">
                 <span><strong>{{ detailDiscussion.replies }}</strong><small>Replies</small></span>
                 <span><strong>{{ detailDiscussion.views }}</strong><small>Views</small></span>
-                <span><strong>{{ detailReactionCount }}</strong><small>Reactions</small></span>
+                <span><strong>{{ detailDiscussion.voteScore }}</strong><small>Score</small></span>
                 <span><strong>{{ discussionParticipants.length }}</strong><small>Participants</small></span>
               </div>
               <div class="pv-topic-author-card">
@@ -392,18 +392,25 @@
               </button>
             </div>
           </div>
-          <div class="pv-reaction-bar" aria-label="Topic reactions">
+          <div class="pv-vote-bar pv-vote-bar--topic" aria-label="Topic voting">
             <button
-              v-for="emoji in quickReactionEmojis"
-              :key="emoji"
               type="button"
-              class="pv-reaction-chip"
-              :class="{ active: hasViewerReaction(detailDiscussion, emoji) }"
-              :disabled="discussionReactionLoading === emoji"
-              @click="toggleDiscussionReaction(emoji)"
+              class="pv-vote-button"
+              :class="{ active: detailDiscussion.viewerVote === 1 }"
+              :disabled="discussionVoteLoading"
+              @click="voteOnDiscussion(1)"
             >
-              <span>{{ emoji }}</span>
-              <strong>{{ reactionCount(detailDiscussion, emoji) }}</strong>
+              <PvIcon name="thumbs" /> Upvote
+            </button>
+            <strong>{{ detailDiscussion.voteScore }}</strong>
+            <button
+              type="button"
+              class="pv-vote-button pv-vote-button--down"
+              :class="{ active: detailDiscussion.viewerVote === -1 }"
+              :disabled="discussionVoteLoading"
+              @click="voteOnDiscussion(-1)"
+            >
+              <PvIcon name="thumbs" /> Downvote
             </button>
           </div>
           <div class="pv-action-row pv-topic-actions">
@@ -430,23 +437,29 @@
               <figcaption>{{ reply.file }} <span>{{ attachmentLabel(reply) }}</span></figcaption>
             </figure>
             <div v-else-if="reply.file" class="pv-file-card"><PvIcon name="document" /><span><strong>{{ reply.file }}</strong><small>{{ attachmentLabel(reply) || 'Attachment' }}</small></span><PvIcon name="download" /></div>
-            <div class="pv-reaction-bar pv-reaction-bar--reply">
+            <div class="pv-vote-bar pv-vote-bar--inline" aria-label="Reply voting">
               <button
-                v-for="emoji in quickReactionEmojis"
-                :key="emoji"
                 type="button"
-                class="pv-reaction-chip"
-                :class="{ active: hasViewerReaction(reply, emoji) }"
-                :disabled="replyReactionLoading === `${reply.id}:${emoji}`"
-                @click="toggleReplyReaction(reply, emoji)"
+                class="pv-vote-button"
+                :class="{ active: reply.viewerVote === 1 }"
+                :disabled="replyVoteLoading === `${reply.id}:1`"
+                @click="voteOnReply(reply, 1)"
               >
-                <span>{{ emoji }}</span>
-                <strong>{{ reactionCount(reply, emoji) }}</strong>
+                <PvIcon name="thumbs" /> Upvote
+              </button>
+              <strong>{{ reply.votes }}</strong>
+              <button
+                type="button"
+                class="pv-vote-button pv-vote-button--down"
+                :class="{ active: reply.viewerVote === -1 }"
+                :disabled="replyVoteLoading === `${reply.id}:-1`"
+                @click="voteOnReply(reply, -1)"
+              >
+                <PvIcon name="thumbs" /> Downvote
               </button>
             </div>
             <div class="pv-reply-actions"><button @click="prepareReply(reply)">Reply</button><button @click="prepareReply(reply, true)">Quote</button><button @click="openReplyReport(reply)">Report</button><button v-if="authStore.user?.id === reply.authorId || authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')" class="pv-reply-delete" @click="deleteReply(reply)">Delete</button></div>
           </div>
-          <button class="pv-upvote" :class="{ active: hasVotedReply(reply) }" @click="toggleReplyVote(reply)">↑ {{ replyVoteCount(reply) }}</button>
         </article>
         <p v-if="replyStatusMessage" class="pv-alert pv-alert--compact">{{ replyStatusMessage }}</p>
         <form id="reply-composer" class="pv-composer pv-composer--expanded" @submit.prevent="submitReply">
@@ -484,7 +497,7 @@
             <div><dt>Category</dt><dd><span class="pv-tag">{{ detailCategoryLabel }}</span></dd></div>
             <div><dt>Replies</dt><dd>{{ detailDiscussion.replies }}</dd></div>
             <div><dt>Views</dt><dd>{{ detailDiscussion.views }}</dd></div>
-            <div><dt>Reactions</dt><dd>{{ detailReactionCount }}</dd></div>
+            <div><dt>Score</dt><dd>{{ detailDiscussion.voteScore }}</dd></div>
             <div><dt>Attachments</dt><dd>{{ replyAttachmentCount }}</dd></div>
             <div><dt>Created</dt><dd>{{ detailDiscussion.time }}</dd></div>
             <div><dt>Last activity</dt><dd>{{ detailDiscussion.lastActivity ?? detailDiscussion.time }}</dd></div>
@@ -1337,8 +1350,8 @@ interface UiDiscussion {
   lastActivity?: string
   isPinned: boolean
   isLocked: boolean
-  reactions: Record<string, number>
-  viewerReactions: string[]
+  voteScore: number
+  viewerVote: -1 | 0 | 1
   avatarUrl?: string | null
 }
 
@@ -1364,8 +1377,7 @@ interface UiReply {
   file?: string
   attachmentUrl?: string | null
   attachmentMeta: Record<string, any>
-  reactions: Record<string, number>
-  viewerReactions: string[]
+  viewerVote: -1 | 0 | 1
   authorId?: number
 }
 
@@ -1385,8 +1397,8 @@ interface ApiDiscussion {
   is_locked?: boolean
   category?: { name?: string | null; color?: string | null } | null
   author?: { id?: number; name?: string | null; initial?: string | null; avatar?: string | null } | null
-  reactions?: Record<string, number>
-  viewer_reactions?: string[]
+  vote_score?: number
+  viewer_vote?: number
   reply_items?: ApiReply[]
   participants?: ApiMemberProfile[]
   similar_discussions?: ApiDiscussion[]
@@ -1408,9 +1420,8 @@ interface ApiReply {
   attachment_url?: string | null
   attachment_meta?: Record<string, any> | null
   votes?: number
+  viewer_vote?: number
   time_ago?: string | null
-  reactions?: Record<string, number>
-  viewer_reactions?: string[]
   author?: { id?: number; name?: string | null; initial?: string | null; badge?: string | null; avatar?: string | null } | null
 }
 
@@ -2179,14 +2190,13 @@ const discussionFormError = ref('')
 const replyBody = ref('')
 const submittingReply = ref(false)
 const replyStatusMessage = ref('')
-const quickReactionEmojis = ['👍', '❤️', '😂', '👀', '✅', '🔥']
-const discussionReactionLoading = ref('')
+const discussionVoteLoading = ref(false)
 const isEditingDiscussion = ref(false)
 const editDiscussionTitle = ref('')
 const editDiscussionBody = ref('')
 const discussionEditError = ref('')
 const discussionEditSaving = ref(false)
-const replyReactionLoading = ref('')
+const replyVoteLoading = ref('')
 const showReportModal = ref(false)
 const reportTarget = ref<{ type: 'discussion' } | { type: 'reply'; reply: UiReply } | null>(null)
 const reportReason = ref('source-discussion')
@@ -2200,7 +2210,6 @@ const discussionSort = ref<'latest' | 'replies' | 'views'>('latest')
 const actionStatusMessage = ref('')
 const followedDiscussionSlugs = ref<string[]>([])
 const savedDiscussionSlugs = ref<string[]>([])
-const votedReplyKeys = ref<string[]>([])
 const followedMemberSlugs = ref<string[]>([])
 const userActionsLoaded = ref(false)
 const apiLabResults = ref<UiLabResult[]>([])
@@ -2607,7 +2616,6 @@ const detailParagraphs = computed(() => {
   return body.split(/\n+/).map(paragraph => paragraph.trim()).filter(Boolean)
 })
 const detailCategoryLabel = computed(() => detailDiscussion.value?.category || detailDiscussion.value?.tag || 'Discussion')
-const detailReactionCount = computed(() => Object.values(detailDiscussion.value?.reactions ?? {}).reduce((total, count) => total + Number(count || 0), 0))
 const replyAttachmentCount = computed(() => replies.value.filter(reply => Boolean(reply.file || reply.attachmentUrl)).length)
 const discussionParticipants = computed<UiMemberProfile[]>(() => {
   if (apiDiscussionParticipants.value.length > 0) {
@@ -3356,7 +3364,6 @@ function toggleLocalValue(list: typeof followedDiscussionSlugs, key: string, val
 function loadLocalActionState(): void {
   followedDiscussionSlugs.value = readLocalList('pv.followedDiscussions')
   savedDiscussionSlugs.value = readLocalList('pv.savedDiscussions')
-  votedReplyKeys.value = readLocalList('pv.votedReplies')
   followedMemberSlugs.value = readLocalList('pv.followedMembers')
   bookmarkedContentSlugs.value = readLocalList('pv.bookmarkedContent')
 }
@@ -3633,67 +3640,40 @@ function jumpToReplyComposer(): void {
   document.getElementById('reply-composer')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
-function replyKey(reply: UiReply): string {
-  return `${currentDiscussionSlug.value}:${reply.author}:${reply.time}:${reply.text.slice(0, 32)}`
-}
-
-function hasVotedReply(reply: UiReply): boolean {
-  return votedReplyKeys.value.includes(replyKey(reply))
-}
-
-function replyVoteCount(reply: UiReply): number {
-  return reply.votes + (hasVotedReply(reply) ? 1 : 0)
-}
-
-function toggleReplyVote(reply: UiReply): void {
-  const key = replyKey(reply)
-  votedReplyKeys.value = votedReplyKeys.value.includes(key)
-    ? votedReplyKeys.value.filter(item => item !== key)
-    : [...votedReplyKeys.value, key]
-  writeLocalList('pv.votedReplies', votedReplyKeys.value)
-}
-
 function prepareReply(reply: UiReply, quote = false): void {
   replyBody.value = quote ? `> ${reply.text}\n\n` : `@${reply.author} `
   jumpToReplyComposer()
 }
 
-function reactionCount(target: { reactions: Record<string, number> }, emoji: string): number {
-  return Number(target.reactions?.[emoji] ?? 0)
-}
+async function voteOnDiscussion(value: 1 | -1): Promise<void> {
+  if (!detailDiscussion.value?.slug || !ensureAuthenticated('vote')) return
 
-function hasViewerReaction(target: { viewerReactions: string[] }, emoji: string): boolean {
-  return target.viewerReactions.includes(emoji)
-}
-
-async function toggleDiscussionReaction(emoji: string): Promise<void> {
-  if (!detailDiscussion.value?.slug || !ensureAuthenticated('react')) return
-
-  discussionReactionLoading.value = emoji
+  discussionVoteLoading.value = true
   try {
-    const response = await api.post<DiscussionDetailResponse>(`/api/v1/community/discussions/${detailDiscussion.value.slug}/reactions`, { emoji })
+    const response = await api.post<DiscussionDetailResponse>(`/api/v1/community/discussions/${detailDiscussion.value.slug}/vote`, { value })
     const updated = mapDiscussion(response.data.data)
     apiDetailDiscussion.value = updated
-    actionStatusMessage.value = hasViewerReaction(updated, emoji) ? 'Reaction added.' : 'Reaction removed.'
+    actionStatusMessage.value = updated.viewerVote === value ? 'Vote recorded.' : 'Vote removed.'
   } catch {
-    actionStatusMessage.value = 'Unable to update reaction.'
+    actionStatusMessage.value = 'Unable to update vote.'
   } finally {
-    discussionReactionLoading.value = ''
+    discussionVoteLoading.value = false
   }
 }
 
-async function toggleReplyReaction(reply: UiReply, emoji: string): Promise<void> {
-  if (!reply.id || !ensureAuthenticated('react')) return
+async function voteOnReply(reply: UiReply, value: 1 | -1): Promise<void> {
+  if (!reply.id || !ensureAuthenticated('vote')) return
 
-  replyReactionLoading.value = `${reply.id}:${emoji}`
+  replyVoteLoading.value = `${reply.id}:${value}`
   try {
-    const response = await api.post<{ data: ApiReply }>(`/api/v1/community/discussion-replies/${reply.id}/reactions`, { emoji })
+    const response = await api.post<{ data: ApiReply }>(`/api/v1/community/discussion-replies/${reply.id}/vote`, { value })
     const updated = mapReply(response.data.data)
     apiReplies.value = apiReplies.value.map(item => item.id === updated.id ? updated : item)
+    replyStatusMessage.value = updated.viewerVote === value ? 'Vote recorded.' : 'Vote removed.'
   } catch {
-    replyStatusMessage.value = 'Unable to update reaction.'
+    replyStatusMessage.value = 'Unable to update vote.'
   } finally {
-    replyReactionLoading.value = ''
+    replyVoteLoading.value = ''
   }
 }
 
@@ -3824,11 +3804,12 @@ function formatMetadataValue(value: unknown): string {
   return String(value ?? '')
 }
 
-function mapReactionSummary(value?: Record<string, number> | null): Record<string, number> {
-  return Object.entries(value ?? {}).reduce<Record<string, number>>((summary, [emoji, count]) => {
-    summary[emoji] = Number(count || 0)
-    return summary
-  }, {})
+function normalizedVote(value?: number | null): -1 | 0 | 1 {
+  if (value === 1 || value === -1) {
+    return value
+  }
+
+  return 0
 }
 
 function colorForName(value: string): string {
@@ -3865,8 +3846,8 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     lastActivity: item.last_activity ?? undefined,
     isPinned: Boolean(item.is_pinned),
     isLocked: Boolean(item.is_locked),
-    reactions: mapReactionSummary(item.reactions),
-    viewerReactions: item.viewer_reactions ?? [],
+    voteScore: Number(item.vote_score ?? 0),
+    viewerVote: normalizedVote(item.viewer_vote),
   }
 }
 
@@ -3887,9 +3868,8 @@ function mapReply(item: ApiReply): UiReply {
     file: item.attachment_name ?? undefined,
     attachmentUrl: item.attachment_url ?? null,
     attachmentMeta: item.attachment_meta ?? {},
-    reactions: mapReactionSummary(item.reactions),
-    viewerReactions: item.viewer_reactions ?? [],
-    votes: item.votes ?? 0,
+    votes: Number(item.votes ?? 0),
+    viewerVote: normalizedVote(item.viewer_vote),
   }
 }
 
@@ -5287,9 +5267,11 @@ async function loadMessages(): Promise<void> {
     apiMessageThreads.value = response.data.data.map(mapMessageThread)
     messagesLoaded.value = true
 
-    const firstThread = apiMessageThreads.value[0]
-    if (firstThread) {
-      await loadMessageThread(firstThread.id)
+    if (!apiCurrentMessageThread.value) {
+      const firstThread = apiMessageThreads.value[0]
+      if (firstThread) {
+        await loadMessageThread(firstThread.id)
+      }
     }
   } catch {
     apiMessageThreads.value = []
