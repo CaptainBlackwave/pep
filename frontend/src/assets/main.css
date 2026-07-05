@@ -2923,9 +2923,9 @@ table {
 
 .vendor-card {
   position: relative;
-  padding: 28px;
-  border-radius: 28px;
-  margin-bottom: 20px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  margin-bottom: 12px;
   color: #f8fafc;
   background:
     radial-gradient(circle at top right, rgba(126, 34, 206, .22), transparent 38%),
@@ -2936,15 +2936,15 @@ table {
 
 .vendor-arrow {
   position: absolute;
-  top: 26px;
-  right: 24px;
-  width: 44px;
-  height: 44px;
+  top: 14px;
+  right: 14px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   border: 1px solid rgba(255,255,255,.12);
   background: rgba(255,255,255,.035);
   color: #cbd5e1;
-  font-size: 34px;
+  font-size: 20px;
   line-height: 1;
   display: grid;
   place-items: center;
@@ -2954,14 +2954,14 @@ table {
 
 .vendor-top {
   display: flex;
-  gap: 22px;
+  gap: 14px;
   align-items: center;
 }
 
 .vendor-logo {
-  width: 120px;
-  height: 120px;
-  border-radius: 22px;
+  width: 60px;
+  height: 60px;
+  border-radius: 14px;
   object-fit: cover;
   flex-shrink: 0;
   display: grid;
@@ -2969,7 +2969,7 @@ table {
   background: rgba(255,255,255,.04);
   border: 1px solid rgba(168, 85, 247, 0.42);
   color: #a78bfa;
-  font-size: 1.5rem;
+  font-size: 1rem;
   font-weight: 900;
   overflow: hidden;
 }
@@ -2981,48 +2981,49 @@ table {
 }
 
 .vendor-info h3 {
-  margin: 0 0 10px;
-  font-size: 34px;
+  margin: 0 0 4px;
+  font-size: 18px;
   line-height: 1;
 }
 
 .trusted {
   display: inline-flex;
-  padding: 8px 13px;
-  border-radius: 10px;
+  padding: 3px 8px;
+  border-radius: 6px;
   background: rgba(34, 197, 94, .18);
   color: #4ade80;
-  font-weight: 800;
-  font-size: 15px;
+  font-weight: 700;
+  font-size: 11px;
 }
 
 .vendor-meta {
-  margin: 14px 0 0;
+  margin: 6px 0 0;
   color: #aeb4c8;
-  font-size: 18px;
+  font-size: 13px;
 }
 
 .vendor-tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 12px;
-  margin-top: 26px;
+  gap: 6px;
+  margin-top: 12px;
 }
 
 .vendor-tags span {
-  padding: 10px 16px;
-  border-radius: 10px;
+  padding: 5px 10px;
+  border-radius: 6px;
   background: rgba(255,255,255,.045);
   border: 1px solid rgba(255,255,255,.09);
   color: #d6d9e6;
+  font-size: 12px;
 }
 
 .vendor-stats {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  margin-top: 26px;
+  margin-top: 12px;
   border: 1px solid rgba(255,255,255,.09);
-  border-radius: 18px;
+  border-radius: 10px;
   overflow: hidden;
   background: rgba(255,255,255,.025);
 }
@@ -3114,7 +3115,7 @@ table {
 }
 
 .vendor-stats div {
-  padding: 22px;
+  padding: 10px 12px;
 }
 
 .vendor-stats div + div {
@@ -3124,33 +3125,33 @@ table {
 .vendor-stats strong {
   display: block;
   color: #4ade80;
-  font-size: 34px;
+  font-size: 18px;
 }
 
 .vendor-stats small {
   color: #cbd5e1;
-  font-size: 22px;
+  font-size: 13px;
 }
 
 .vendor-stats span {
   color: #aeb4c8;
-  font-size: 17px;
+  font-size: 12px;
 }
 
 .vendor-actions {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 18px;
-  margin-top: 26px;
+  gap: 8px;
+  margin-top: 12px;
 }
 
 .vendor-actions a {
   display: grid;
   place-items: center;
-  height: 58px;
-  border-radius: 13px;
-  font-size: 18px;
-  font-weight: 800;
+  height: 34px;
+  border-radius: 8px;
+  font-size: 13px;
+  font-weight: 700;
   text-decoration: none;
 }
 

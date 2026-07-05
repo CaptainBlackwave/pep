@@ -738,7 +738,122 @@
             <router-link v-if="apiMyVendor?.publishStatus === 'published'" :to="apiMyVendor.href" class="pv-small-button">Preview</router-link>
           </footer>
         </form>
-        <article v-else class="pv-panel">
+
+        <article v-if="vendorPortalAccessApproved && apiMyVendor" class="pv-form-card pv-vendor-product-manager">
+          <header class="pv-panel-header">
+            <div>
+              <h2>Product Catalog</h2>
+              <p class="pv-muted">Add public product listings with prices. Members must contact you outside this site to purchase.</p>
+            </div>
+            <span class="pv-count">{{ apiMyVendor.productCount }} listed</span>
+          </header>
+          <p v-if="vendorProductStatusMessage" class="pv-alert pv-alert--compact">{{ vendorProductStatusMessage }}</p>
+          <p v-if="vendorProductFormError" class="pv-alert pv-alert--compact">{{ vendorProductFormError }}</p>
+          <form class="pv-product-form" @submit.prevent="saveVendorProduct">
+            <div class="pv-two-col">
+              <label>
+                Product Name *
+                <input v-model="vendorProductForm.name" required maxlength="160" placeholder="Retatrutide">
+              </label>
+              <label>
+                Product Slug
+                <input v-model="vendorProductForm.slug" maxlength="180" pattern="[a-zA-Z0-9-]+" placeholder="retatrutide">
+              </label>
+            </div>
+            <div class="pv-two-col">
+              <label>
+                Category
+                <input v-model="vendorProductForm.category" maxlength="80" placeholder="Peptide">
+              </label>
+              <label>
+                Strength
+                <input v-model="vendorProductForm.strength" maxlength="80" placeholder="10mg">
+              </label>
+            </div>
+            <div class="pv-two-col">
+              <label>
+                Package Size
+                <input v-model="vendorProductForm.package_size" maxlength="80" placeholder="1 vial">
+              </label>
+              <label>
+                Purity / Notes
+                <input v-model="vendorProductForm.purity_label" maxlength="80" placeholder=">98%">
+              </label>
+            </div>
+            <label>
+              Description
+              <textarea v-model="vendorProductForm.description" maxlength="2000" rows="3" placeholder="Short public product description and research-use notes."></textarea>
+            </label>
+            <div class="pv-two-col">
+              <label>
+                Price
+                <input v-model="vendorProductForm.price" inputmode="decimal" placeholder="85.00">
+              </label>
+              <label>
+                Currency
+                <input v-model="vendorProductForm.currency_code" maxlength="3" placeholder="USD">
+              </label>
+            </div>
+            <div class="pv-two-col">
+              <label>
+                Availability
+                <select v-model="vendorProductForm.availability">
+                  <option value="in_stock">In stock</option>
+                  <option value="limited">Limited</option>
+                  <option value="out_of_stock">Out of stock</option>
+                </select>
+              </label>
+              <label>
+                Visibility
+                <select v-model="vendorProductForm.status">
+                  <option value="published">Published</option>
+                  <option value="hidden">Hidden</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Tags
+              <input v-model="vendorProductForm.tags" placeholder="Comma-separated tags, e.g. GLP-1, Research">
+            </label>
+            <div class="pv-two-col">
+              <label>
+                Sort Order
+                <input v-model="vendorProductForm.sort_order" inputmode="numeric" placeholder="0">
+              </label>
+              <div class="pv-upload-control">
+                <strong>Product Image</strong>
+                <div class="pv-image-upload-row">
+                  <span class="pv-product-image-preview">
+                    <img v-if="vendorProductImagePreview" :src="vendorProductImagePreview" alt="Product image preview">
+                    <PvIcon v-else name="flask" />
+                  </span>
+                  <span>
+                    <small>Upload a product-safe image up to 5 MB.</small>
+                    <input ref="vendorProductImageInput" type="file" accept="image/*" class="pv-sr-only" @change="selectVendorProductImage">
+                    <button class="pv-small-button" type="button" @click="vendorProductImageInput?.click()"><PvIcon name="upload" /> Choose Image</button>
+                  </span>
+                </div>
+              </div>
+            </div>
+            <footer class="pv-form-actions">
+              <button class="pv-primary-button" type="submit" :disabled="savingVendorProduct">{{ savingVendorProduct ? 'Saving...' : editingVendorProductId ? 'Update Product' : 'Add Product' }}</button>
+              <button class="pv-small-button" type="button" @click="resetVendorProductForm">Clear</button>
+            </footer>
+          </form>
+          <div class="pv-product-manage-list">
+            <p v-if="vendorProductManageList.length === 0" class="pv-muted">No products listed yet.</p>
+            <article v-for="product in vendorProductManageList" :key="product.id ?? product.slug" class="pv-product-manage-row">
+              <span class="pv-product-thumb"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span>
+              <span>
+                <strong>{{ product.name }}</strong>
+                <small>{{ product.category || 'Uncategorised' }} · {{ product.priceLabel || 'No price' }} · {{ product.availabilityLabel }} · {{ product.status }}</small>
+              </span>
+              <button class="pv-small-button" type="button" @click="editVendorProduct(product)">Edit</button>
+              <button class="pv-small-button pv-small-button--danger" type="button" @click="deleteVendorProduct(product)">Delete</button>
+            </article>
+          </div>
+        </article>
+        <article v-else-if="!vendorPortalAccessApproved" class="pv-panel">
           <h2>Vendor Access Required</h2>
           <p class="pv-muted">An admin needs to approve this account as a vendor before you can create or edit a vendor profile.</p>
           <dl class="pv-data-list">
@@ -4877,7 +4992,7 @@ async function saveVendorProduct(): Promise<void> {
     }
     const payload = vendorProductPayload()
     const request = editingVendorProductId.value
-      ? api.post<{ data: ApiVendorProduct }>(`/api/v1/community/vendor-profile/products/${editingVendorProductId.value}?_method=PATCH`, payload, requestConfig)
+      ? api.post<{ data: ApiVendorProduct }>(`/api/v1/community/vendor-profile/products/${editingVendorProductId.value}`, payload, requestConfig)
       : api.post<{ data: ApiVendorProduct }>('/api/v1/community/vendor-profile/products', payload, requestConfig)
     await request
     vendorProductStatusMessage.value = editingVendorProductId.value ? 'Product updated.' : 'Product added.'
@@ -5003,6 +5118,9 @@ async function loadVendorProfile(): Promise<void> {
     apiMyVendor.value = response.data.data ? mapVendor(response.data.data) : null
     vendorPortalAccessApproved.value = Boolean(response.data.is_approved_vendor)
     hydrateVendorPortalForm(apiMyVendor.value)
+    if (!editingVendorProductId.value) {
+      resetVendorProductForm()
+    }
     vendorPortalLoaded.value = true
   } catch {
     apiMyVendor.value = null
