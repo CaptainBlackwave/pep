@@ -1493,7 +1493,6 @@
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, onUnmounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
-import { marked } from 'marked'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import GiphyPicker from '@/components/ui/GiphyPicker.vue'
@@ -6271,7 +6270,21 @@ const currentNotificationIndex = computed(() => notifications.value.findIndex(it
 const previousNotification = computed(() => currentNotificationIndex.value > 0 ? notifications.value[currentNotificationIndex.value - 1] : null)
 function formatText(text: string): string {
   if (!text) return ''
-  const html = marked.parse(text, { async: false }) as string
+  let html = text
+    .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+    .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/### (.+)/g, '<h3>$1</h3>')
+    .replace(/## (.+)/g, '<h2>$1</h2>')
+    .replace(/# (.+)/g, '<h1>$1</h1>')
+    .split(/\n\n+/).map(p => p.trim()).filter(Boolean).map(p => {
+      if (p.startsWith('<h')) return p
+      if (p.startsWith('- ')) {
+        const items = p.split('\n').map(l => l.replace(/^- /, '')).filter(Boolean)
+        return '<ul>' + items.map(i => `<li>${i}</li>`).join('') + '</ul>'
+      }
+      return `<p>${p.replace(/\n/g, '<br>')}</p>`
+    }).join('\n')
   return linkifyText(html)
 }
 
