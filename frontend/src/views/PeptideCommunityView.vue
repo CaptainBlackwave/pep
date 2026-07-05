@@ -398,6 +398,7 @@
               class="pv-vote-button"
               :class="{ active: detailDiscussion.viewerVote === 1 }"
               :disabled="discussionVoteLoading"
+              :aria-pressed="detailDiscussion.viewerVote === 1"
               @click="voteOnDiscussion(1)"
             >
               <PvIcon name="thumbs" /> Upvote
@@ -408,6 +409,7 @@
               class="pv-vote-button pv-vote-button--down"
               :class="{ active: detailDiscussion.viewerVote === -1 }"
               :disabled="discussionVoteLoading"
+              :aria-pressed="detailDiscussion.viewerVote === -1"
               @click="voteOnDiscussion(-1)"
             >
               <PvIcon name="thumbs" /> Downvote
@@ -443,6 +445,7 @@
                 class="pv-vote-button"
                 :class="{ active: reply.viewerVote === 1 }"
                 :disabled="replyVoteLoading === `${reply.id}:1`"
+                :aria-pressed="reply.viewerVote === 1"
                 @click="voteOnReply(reply, 1)"
               >
                 <PvIcon name="thumbs" /> Upvote
@@ -453,6 +456,7 @@
                 class="pv-vote-button pv-vote-button--down"
                 :class="{ active: reply.viewerVote === -1 }"
                 :disabled="replyVoteLoading === `${reply.id}:-1`"
+                :aria-pressed="reply.viewerVote === -1"
                 @click="voteOnReply(reply, -1)"
               >
                 <PvIcon name="thumbs" /> Downvote
@@ -2661,7 +2665,7 @@ const messageRecipientOptions = computed(() => {
     ].some(value => (value ?? '').toLowerCase().includes(search)))
     .slice(0, 6)
 })
-const currentThread = computed(() => apiCurrentMessageThread.value ?? apiMessageThreads.value[0] ?? null)
+const currentThread = computed(() => apiCurrentMessageThread.value)
 const categoryFilters = computed<ApiCategory[]>(() => [
   {
     name: 'All Discussions',
@@ -3729,7 +3733,9 @@ async function voteOnDiscussion(value: 1 | -1): Promise<void> {
     const response = await api.post<DiscussionDetailResponse>(`/api/v1/community/discussions/${detailDiscussion.value.slug}/vote`, { value })
     const updated = mapDiscussion(response.data.data)
     apiDetailDiscussion.value = updated
-    actionStatusMessage.value = updated.viewerVote === value ? 'Vote recorded.' : 'Vote removed.'
+    actionStatusMessage.value = updated.viewerVote === value
+      ? (value === 1 ? 'Upvote recorded.' : 'Downvote recorded.')
+      : 'Vote cleared.'
   } catch {
     actionStatusMessage.value = 'Unable to update vote.'
   } finally {
@@ -3745,7 +3751,9 @@ async function voteOnReply(reply: UiReply, value: 1 | -1): Promise<void> {
     const response = await api.post<{ data: ApiReply }>(`/api/v1/community/discussion-replies/${reply.id}/vote`, { value })
     const updated = mapReply(response.data.data)
     apiReplies.value = apiReplies.value.map(item => item.id === updated.id ? updated : item)
-    replyStatusMessage.value = updated.viewerVote === value ? 'Vote recorded.' : 'Vote removed.'
+    replyStatusMessage.value = updated.viewerVote === value
+      ? (value === 1 ? 'Upvote recorded.' : 'Downvote recorded.')
+      : 'Vote cleared.'
   } catch {
     replyStatusMessage.value = 'Unable to update vote.'
   } finally {
@@ -5349,12 +5357,11 @@ async function loadMessages(): Promise<void> {
     const selectedThread = requestedThread
       ? apiMessageThreads.value.find(thread => thread.id === requestedThread)
       : null
-    const firstThread = apiMessageThreads.value[0]
 
     if (selectedThread) {
       await loadMessageThread(selectedThread.id)
-    } else if (!apiCurrentMessageThread.value && firstThread) {
-      await loadMessageThread(firstThread.id)
+    } else if (apiCurrentMessageThread.value && !apiMessageThreads.value.some(thread => thread.id === apiCurrentMessageThread.value?.id)) {
+      apiCurrentMessageThread.value = null
     }
   } catch {
     apiMessageThreads.value = []

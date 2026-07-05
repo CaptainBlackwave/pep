@@ -41,6 +41,7 @@ class CommunityMessageController extends Controller
                     $query->where('user_id', $userId)
                         ->orWhere('participant_user_id', $userId);
                 })
+                ->whereColumn('user_id', '!=', 'participant_user_id')
                 ->orderByDesc('last_message_at')
                 ->limit(50)
                 ->get()
@@ -180,6 +181,7 @@ class CommunityMessageController extends Controller
                 $query->where('user_id', $userId)
                     ->orWhere('participant_user_id', $userId);
             })
+            ->whereColumn('user_id', '!=', 'participant_user_id')
             ->whereKey($value)
             ->firstOrFail();
     }

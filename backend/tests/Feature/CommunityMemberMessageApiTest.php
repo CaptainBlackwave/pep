@@ -152,4 +152,22 @@ class CommunityMemberMessageApiTest extends TestCase
             'participant_user_id' => $user->id,
         ])->assertStatus(422);
     }
+
+    public function test_self_message_threads_are_not_returned(): void
+    {
+        $user = User::factory()->create(['username' => 'SelfUser']);
+
+        CommunityMessageThread::create([
+            'user_id' => $user->id,
+            'participant_user_id' => $user->id,
+            'last_message_at' => now(),
+            'status' => 'active',
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $this->getJson('/api/v1/community/messages')
+            ->assertOk()
+            ->assertJsonCount(0, 'data');
+    }
 }
