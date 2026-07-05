@@ -967,6 +967,12 @@ table {
   vertical-align: middle;
 }
 
+.topic-type--pinned {
+  background: rgba(59, 130, 246, .2);
+  color: #93bbfc;
+  margin-left: 8px;
+}
+
 .divider {
   height: 1px;
   margin: 18px 0 14px;
