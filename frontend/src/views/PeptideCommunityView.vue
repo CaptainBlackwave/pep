@@ -891,22 +891,24 @@
     <div v-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
       <main class="pv-stack">
         <router-link to="/vendor-reviews" class="op-back">← Back to Vendor Reviews</router-link>
-        <article class="pv-vendor-hero">
-          <span
-            v-if="detailVendor.imageUrl"
-            class="pv-vendor-hero-bg"
-            :style="{ backgroundImage: `url(${detailVendor.imageUrl})` }"
-            aria-hidden="true"
-          ></span>
-          <div class="pv-vendor-hero-overlay">
-            <span class="pv-logo-card" :class="detailVendor.class"><img v-if="detailVendor.imageUrl" :src="detailVendor.imageUrl" :alt="detailVendor.name"><template v-else>{{ detailVendor.logoText }}</template></span>
-            <div class="pv-topic-main">
-              <h1>{{ detailVendor.name }} <span class="pv-tag" :class="detailVendor.statusClass">{{ detailVendor.status }}</span></h1>
-              <p class="pv-vendor-stars-line"><span class="pv-stars">★★★★★</span> <strong>{{ detailVendor.rating }} / 5</strong><span>·</span>{{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }}</p>
-              <p class="pv-vendor-meta-line">Member since {{ detailVendor.since }} <span>·</span> Last active {{ detailVendor.lastActive }}</p>
-              <span class="pv-chip-row"><span v-for="chip in detailVendor.chips" :key="chip"><PvIcon :name="vendorChipIcon(chip)" /> {{ chip }}</span></span>
+        <article class="vendor-card">
+          <div class="vendor-top">
+            <span v-if="detailVendor.imageUrl" class="vendor-logo"><img :src="detailVendor.imageUrl" :alt="detailVendor.name"></span>
+            <span v-else class="vendor-logo vendor-logo--letter">{{ detailVendor.logoText }}</span>
+            <div class="vendor-info">
+              <h3>{{ detailVendor.name }}</h3>
+              <span class="trusted">✓ {{ detailVendor.status }}</span>
+              <p class="vendor-meta">☆ {{ detailVendor.rating }} / 5 · {{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }} · Member since {{ detailVendor.since }}</p>
+              <div class="vendor-tags" style="margin-top:8px">
+                <span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span>
+              </div>
             </div>
-            <div class="pv-vendor-actions"><router-link :to="`${detailVendor.href}/review`" class="pv-primary-button"><PvIcon name="edit" /> Write Review</router-link><button v-if="hasVendorContact(detailVendor)" class="pv-small-button" type="button" @click="vendorDetailTab = 'about'"><PvIcon name="mail" /> Contact Vendor</button><router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="pv-small-button">Manage Profile <PvIcon name="settings" /></router-link><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a></div>
+          </div>
+          <div class="vendor-actions" style="margin-top:16px">
+            <router-link :to="`${detailVendor.href}/review`" class="primary">✎ Write Review</router-link>
+            <button v-if="hasVendorContact(detailVendor)" class="secondary" @click="vendorDetailTab = 'about'">Contact</button>
+            <router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="secondary">Manage</router-link>
+            <a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="secondary">Website</a>
           </div>
         </article>
         <div class="pv-tabs pv-tabs--line"><button :class="{ active: vendorDetailTab === 'overview' }" @click="vendorDetailTab = 'overview'">Overview</button><button :class="{ active: vendorDetailTab === 'reviews' }" @click="vendorDetailTab = 'reviews'">Reviews ({{ detailVendor.reviews }})</button><button :class="{ active: vendorDetailTab === 'products' }" @click="vendorDetailTab = 'products'">Products ({{ detailVendor.productCount }})</button><button :class="{ active: vendorDetailTab === 'about' }" @click="vendorDetailTab = 'about'">About</button></div>
