@@ -327,7 +327,6 @@
         <div class="topic-card topic-card--thread">
           <div class="topic-menu">
             <span>{{ detailDiscussion.time }}</span>
-            <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-icon-button pv-icon-button--static pv-icon-button--danger" aria-label="Delete topic" @click="deleteDiscussion">✕</button>
           </div>
           <aside class="author-panel">
             <div class="avatar-wrap">
@@ -343,7 +342,6 @@
             <div class="thread-actions">
               <button class="pv-icon-button pv-icon-button--static" aria-label="Share" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /></button>
               <button class="pv-icon-button pv-icon-button--static" aria-label="Report" @click="openDiscussionReport"><PvIcon name="shield" /></button>
-              <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-icon-button pv-icon-button--static" aria-label="Edit" @click="startEditDiscussion"><PvIcon name="settings" /></button>
             </div>
             <h2>{{ detailDiscussion.title }}</h2>
             <div v-if="!isEditingDiscussion" class="thread-body">
@@ -368,6 +366,8 @@
               <button class="pv-small-button" @click="jumpToReplyComposer"><PvIcon name="message" /> Reply</button>
               <button class="pv-small-button" @click="toggleDiscussionFollow">{{ isFollowingDiscussion ? 'Following' : 'Follow' }}</button>
               <button class="pv-small-button" @click="toggleDiscussionSave">{{ isSavedDiscussion ? 'Saved' : 'Save' }}</button>
+              <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-small-button" @click="startEditDiscussion"><PvIcon name="settings" /> Edit</button>
+              <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-small-button pv-small-button--danger" @click="deleteDiscussion">Delete</button>
             </div>
           </div>
         </div>
