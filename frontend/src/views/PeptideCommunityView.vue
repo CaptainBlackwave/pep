@@ -345,10 +345,6 @@
             </div>
           </div>
         </header>
-        <div class="op-badges">
-          <span v-if="detailDiscussion.tag">▰ {{ detailDiscussion.tag }}</span>
-          <span>★ Original Post</span>
-        </div>
         <h1>{{ detailDiscussion.title }}</h1>
         <div v-if="!isEditingDiscussion" class="op-content">
           <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>

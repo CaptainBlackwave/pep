@@ -1166,22 +1166,6 @@ table {
   flex-shrink: 0;
 }
 
-.op-badges {
-  display: flex;
-  gap: 8px;
-  margin-top: 18px;
-  flex-wrap: wrap;
-}
-
-.op-badges span {
-  padding: 7px 12px;
-  border-radius: 10px;
-  background: rgba(145, 92, 255, .22);
-  color: #d8b4fe;
-  font-size: 13px;
-  font-weight: 700;
-}
-
 .op-card h1 {
   margin: 28px 0 16px;
   font-size: 30px;
