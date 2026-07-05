@@ -28,6 +28,7 @@
         <label>
           Tag
           <select v-model="newDiscussion.tag">
+            <option value="">None</option>
             <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
           </select>
         </label>
@@ -313,7 +314,7 @@
                 <div class="author-posts">💬 {{ topic.replies }} posts</div>
               </aside>
               <main class="topic-body">
-                <span class="topic-type">▱ {{ topic.tag || 'Discussion' }}</span>
+                <span v-if="topic.tag" class="topic-type">▱ {{ topic.tag }}</span>
                 <h2>{{ topic.title }}</h2>
                 <p class="topic-excerpt">{{ topic.excerpt }}</p>
                 <div class="divider"></div>
@@ -2566,7 +2567,7 @@ const newDiscussion = ref({
   title: '',
   body: '',
   category_slug: '',
-  tag: 'Discussion',
+  tag: '',
 })
 const newLabResult = ref({
   compound_name: '',
@@ -4203,11 +4204,11 @@ async function submitNewDiscussion(): Promise<void> {
       title: newDiscussion.value.title,
       body: newDiscussion.value.body,
       category_slug: newDiscussion.value.category_slug || undefined,
-      tag: newDiscussion.value.tag,
+      tag: newDiscussion.value.tag || undefined,
     })
     const created = mapDiscussion(response.data.data)
     apiDiscussions.value = [created, ...apiDiscussions.value.filter(topic => topic.slug !== created.slug)]
-    newDiscussion.value = { title: '', body: '', category_slug: '', tag: 'Discussion' }
+    newDiscussion.value = { title: '', body: '', category_slug: '', tag: '' }
     showNewDiscussion.value = false
     discussionStatusMessage.value = 'Discussion posted.'
     await router.push(created.href)
