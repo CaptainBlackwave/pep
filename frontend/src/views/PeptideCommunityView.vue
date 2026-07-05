@@ -375,7 +375,7 @@
           </aside>
           <div class="reply-body">
             <div class="reply-head">
-              <span class="reply-time">#{{ index + 1 }} · {{ reply.time }}</span>
+              <span class="reply-time">{{ reply.time }}</span>
               <span v-if="reply.authorId && reply.authorId === detailDiscussion.authorId" class="reply-op">OP</span>
               <span v-if="reply.badge" class="reply-badge">{{ reply.badge }}</span>
             </div>
