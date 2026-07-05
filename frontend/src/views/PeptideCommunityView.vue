@@ -272,10 +272,6 @@
           </button>
         </div>
         <article class="pv-panel">
-          <div class="pv-toolbar">
-            <button class="pv-small-button" type="button" @click="cycleDiscussionSort">{{ discussionSortLabel }} <PvIcon name="chevron" /></button>
-            <button class="pv-icon-button" @click="applyDiscussionFilters"><PvIcon name="filter" /></button>
-          </div>
           <form class="pv-inline-search" @submit.prevent="applyDiscussionFilters">
             <label class="pv-input-search">
               <input v-model="discussionSearch" placeholder="Search discussions..." type="search">
@@ -2353,12 +2349,14 @@ const apiDetailGuide = ref<UiContentItem | null>(null)
 const apiFaqs = ref<UiContentItem[]>([])
 const researchPagination = ref<PaginationMeta | null>(null)
 const guidePagination = ref<PaginationMeta | null>(null)
-const contentCategories = ref<Record<string, ContentCategory[]>>({
+type ContentKind = 'research' | 'guide' | 'faq'
+
+const contentCategories = ref<Record<ContentKind, ContentCategory[]>>({
   research: [],
   guide: [],
   faq: [],
 })
-const contentTopics = ref<Record<string, ContentTopic[]>>({
+const contentTopics = ref<Record<ContentKind, ContentTopic[]>>({
   research: [],
   guide: [],
   faq: [],
@@ -2370,7 +2368,7 @@ const emptyContentFilterOptions = (): ContentFilterOptions => ({
   sorts: [{ value: 'latest', label: 'Latest Added' }],
   date_bounds: {},
 })
-const contentFilterOptions = ref<Record<string, ContentFilterOptions>>({
+const contentFilterOptions = ref<Record<ContentKind, ContentFilterOptions>>({
   research: emptyContentFilterOptions(),
   guide: emptyContentFilterOptions(),
   faq: emptyContentFilterOptions(),
@@ -2643,11 +2641,6 @@ const messageRecipientOptions = computed(() => {
 })
 const currentThread = computed(() => apiCurrentMessageThread.value)
 const categoryFilters = computed<ApiCategory[]>(() => discussionCategories.value)
-const discussionSortLabel = computed(() => {
-  if (discussionSort.value === 'replies') return 'Most Replies'
-  if (discussionSort.value === 'views') return 'Most Viewed'
-  return 'Latest Activity'
-})
 const isFollowingDiscussion = computed(() => Boolean(detailDiscussion.value?.slug && followedDiscussionSlugs.value.includes(detailDiscussion.value.slug)))
 const isSavedDiscussion = computed(() => Boolean(detailDiscussion.value?.slug && savedDiscussionSlugs.value.includes(detailDiscussion.value.slug)))
 const currentDiscussionSlug = computed(() => {
@@ -3378,6 +3371,24 @@ function formatCount(value: number | undefined): string {
   return String(count)
 }
 
+function formatDate(value: string): string {
+  if (!value) {
+    return 'Unknown'
+  }
+
+  const date = new Date(value)
+
+  if (Number.isNaN(date.getTime())) {
+    return value
+  }
+
+  return date.toLocaleDateString(undefined, {
+    year: 'numeric',
+    month: 'short',
+    day: 'numeric',
+  })
+}
+
 function parseCount(value: string | number | undefined): number {
   if (typeof value === 'number') {
     return value
@@ -3497,10 +3508,6 @@ function syncFiltersFromRouteQuery(): void {
   if (page.value === 'guides') guideSearch.value = query
   if (page.value === 'members') memberSearch.value = query
   if (page.value === 'messages') messageSearch.value = query
-}
-
-function cycleDiscussionSort(): void {
-  discussionSort.value = discussionSort.value === 'latest' ? 'replies' : discussionSort.value === 'replies' ? 'views' : 'latest'
 }
 
 function cycleLabSort(): void {
