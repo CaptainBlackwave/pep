@@ -587,7 +587,7 @@
               <div class="vendor-info">
                 <h3>{{ vendor.name }}</h3>
                 <span class="trusted">✓ {{ vendor.status }}</span>
-                <span v-if="vendor.country" class="country-badge">{{ vendor.country }}</span>
+                <span v-if="vendor.country" class="country-badge">{{ countryFlag(vendor.country) }} {{ vendor.country }}</span>
                 <p class="vendor-meta">☆ {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} · Member since {{ vendor.since }}</p>
               </div>
             </div>
@@ -916,7 +916,7 @@
             <div class="vendor-info">
               <h3>{{ detailVendor.name }}</h3>
               <span class="trusted">✓ {{ detailVendor.status }}</span>
-              <span v-if="detailVendor.country" class="country-badge">{{ detailVendor.country }}</span>
+              <span v-if="detailVendor.country" class="country-badge">{{ countryFlag(detailVendor.country) }} {{ detailVendor.country }}</span>
               <p class="vendor-meta">☆ {{ detailVendor.rating }} / 5 · {{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }} · Member since {{ detailVendor.since }}</p>
               <div class="vendor-tags" style="margin-top:8px">
                 <span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span>
@@ -3062,6 +3062,18 @@ function backendAssetOrigin(): string {
   }
 
   return window.location.origin
+}
+
+const countryFlags: Record<string, string> = {
+  china: '🇨🇳', usa: '🇺🇸', 'united states': '🇺🇸', uk: '🇬🇧', 'united kingdom': '🇬🇧',
+  canada: '🇨🇦', australia: '🇦🇺', germany: '🇩🇪', france: '🇫🇷', netherlands: '🇳🇱',
+  india: '🇮🇳', japan: '🇯🇵', 'south korea': '🇰🇷', singapore: '🇸🇬', switzerland: '🇨🇭',
+  spain: '🇪🇸', italy: '🇮🇹', mexico: '🇲🇽', brazil: '🇧🇷', thailand: '🇹🇭',
+  poland: '🇵🇱', sweden: '🇸🇪', norway: '🇳🇴', denmark: '🇩🇰', finland: '🇫🇮',
+}
+
+function countryFlag(country: string): string {
+  return countryFlags[country.trim().toLowerCase()] ?? ''
 }
 
 function assetUrl(value?: string | null): string {
@@ -6782,7 +6794,7 @@ function settingsSwitchCard(title: string, text: string, icon: string, key: Bool
   return h('article', { class: 'pv-panel pv-settings-card' }, [
     h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: icon })]),
     h('div', [h('h2', title), h('p', text)]),
-    h('button', { class: 'pv-toggle-button', onClick: () => toggleUserSetting(key) }, [
+    h('button', { class: 'pv-toggle-button', disabled: savingSettings.value, onClick: () => toggleUserSetting(key) }, [
       h('span', { class: userSettings.value[key] ? 'pv-switch active' : 'pv-switch' }),
     ]),
   ])
@@ -6790,7 +6802,7 @@ function settingsSwitchCard(title: string, text: string, icon: string, key: Bool
 
 function settingsRadioGroup(key: 'profile_visibility' | 'direct_messages', options: Array<[UserSettingsPayload[typeof key], string]>) {
   return h('div', { class: 'pv-radio-list' }, options.map(([value, label]) => h('label', [
-    h('input', { type: 'radio', checked: userSettings.value[key] === value, onChange: () => setUserSetting(key, value) }),
+    h('input', { type: 'radio', checked: userSettings.value[key] === value, disabled: savingSettings.value, onChange: () => { void setUserSetting(key, value) } }),
     label,
   ])))
 }
@@ -6889,7 +6901,7 @@ function accountAvatarNode(sizeClass = '') {
   const avatar = accountAvatar()
 
   return h('span', { class: ['pv-avatar', sizeClass, 'purple'] }, avatar
-    ? [h('img', { src: avatar, alt: accountName() })]
+    ? [h('img', { src: avatar, alt: accountName(), class: 'pv-avatar-img' })]
     : accountInitial())
 }
 
