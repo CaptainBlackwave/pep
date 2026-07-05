@@ -1078,11 +1078,11 @@ table {
 .post-card {
   position: relative;
   display: grid;
-  grid-template-columns: 44px 1fr;
-  gap: 10px;
-  padding: 10px 12px;
-  margin-bottom: 8px;
-  border-radius: 10px;
+  grid-template-columns: 36px 1fr;
+  gap: 8px;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: 8px;
   background:
     radial-gradient(circle at top left, rgba(126, 67, 255, 0.13), transparent 35%),
     linear-gradient(145deg, #101522, #090d18);
@@ -1093,9 +1093,9 @@ table {
 
 .op-card {
   width: 100%;
-  padding: 24px;
-  border-radius: 24px;
-  margin-bottom: 18px;
+  padding: 16px 18px;
+  border-radius: 16px;
+  margin-bottom: 12px;
   background:
     radial-gradient(circle at top left, rgba(139, 92, 246, .18), transparent 36%),
     linear-gradient(145deg, #111827, #070b14);
@@ -1111,18 +1111,18 @@ table {
 }
 
 .op-avatar {
-  width: 52px;
-  height: 52px;
+  width: 38px;
+  height: 38px;
   border-radius: 50%;
   object-fit: cover;
   border: 2px solid rgba(145, 92, 255, .8);
-  box-shadow: 0 0 18px rgba(145, 92, 255, .35);
+  box-shadow: 0 0 12px rgba(145, 92, 255, .3);
   flex-shrink: 0;
   display: grid;
   place-items: center;
   background: linear-gradient(145deg, #a855f7, #5b21b6);
   color: #fff;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 800;
 }
 
@@ -1242,8 +1242,8 @@ table {
   align-items: center;
   gap: 4px;
   color: #8e95a8;
-  font-size: 13px;
-  margin-bottom: 12px;
+  font-size: 12px;
+  margin-bottom: 8px;
   text-decoration: none;
 }
 
@@ -1252,21 +1252,72 @@ table {
 }
 
 .op-card {
-    padding: 22px;
-    border-radius: 22px;
+    padding: 12px;
+    border-radius: 14px;
+    margin-bottom: 10px;
   }
 
   .op-avatar {
-    width: 48px;
-    height: 48px;
+    width: 34px;
+    height: 34px;
+    font-size: 14px;
+  }
+
+  .op-header {
+    gap: 10px;
+  }
+
+  .op-user strong {
+    font-size: 15px;
+  }
+
+  .op-user > span,
+  .op-meta {
+    font-size: 12px;
+  }
+
+  .op-meta {
+    gap: 8px;
   }
 
   .op-card h1 {
-    font-size: 28px;
+    margin: 14px 0 8px;
+    font-size: 21px;
+    letter-spacing: 0;
   }
 
   .op-content {
-    font-size: 16px;
+    font-size: 14px;
+    line-height: 1.45;
+  }
+
+  .op-content p {
+    margin-bottom: 6px;
+  }
+
+  .op-actions {
+    gap: 10px;
+    margin-top: 12px;
+    padding-top: 10px;
+  }
+
+  .op-actions > button {
+    font-size: 13px;
+  }
+
+  .vote-pill {
+    border-radius: 9px;
+  }
+
+  .vote-pill button {
+    width: 30px;
+    height: 28px;
+    font-size: 12px;
+  }
+
+  .vote-pill strong {
+    min-width: 30px;
+    font-size: 13px;
   }
 }
 
@@ -1278,14 +1329,14 @@ table {
 
 .avatar {
   position: relative;
-  width: 28px;
-  height: 28px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
   background: linear-gradient(145deg, #a855f7, #5b21b6);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 12px;
+  font-size: 10px;
   font-weight: 800;
   color: white;
   flex-shrink: 0;
@@ -1311,11 +1362,11 @@ table {
 .online-dot {
   position: absolute;
   right: -1px;
-  bottom: 1px;
-  width: 7px;
-  height: 7px;
+  bottom: 0;
+  width: 6px;
+  height: 6px;
   background: #00d68f;
-  border: 2px solid #090d18;
+  border: 1.5px solid #090d18;
   border-radius: 50%;
 }
 
@@ -1476,8 +1527,8 @@ table {
 }
 
 .post-card h1 {
-  margin: 8px 0 4px;
-  font-size: 14px;
+  margin: 6px 0 3px;
+  font-size: 13px;
   line-height: 1.2;
   color: #fff;
 }
@@ -1486,22 +1537,22 @@ table {
 .reply-text {
   margin: 0;
   color: #c3c8da;
-  font-size: 12px;
-  line-height: 1.45;
+  font-size: 11px;
+  line-height: 1.4;
 }
 
 .body-text p {
-  margin: 0 0 4px;
+  margin: 0 0 3px;
 }
 
 .reply-text {
-  margin-top: 8px;
+  margin-top: 6px;
   color: #ffffff;
 }
 
 .divider {
   height: 1px;
-  margin: 8px 0 6px;
+  margin: 6px 0 4px;
   background: rgba(255, 255, 255, 0.09);
 }
 
@@ -1509,32 +1560,32 @@ table {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 8px;
+  gap: 6px;
 }
 
 .vote-box {
   display: inline-flex;
   align-items: center;
   overflow: hidden;
-  border-radius: 5px;
+  border-radius: 4px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.025);
 }
 
 .vote-box span {
-  padding: 0 6px;
+  padding: 0 5px;
   color: #a855f7;
-  font-size: 11px;
+  font-size: 10px;
   font-weight: 800;
 }
 
 .vote {
-  width: 22px;
-  height: 22px;
+  width: 18px;
+  height: 18px;
   border: 0;
   background: transparent;
   color: #cbd1e3;
-  font-size: 10px;
+  font-size: 9px;
   cursor: pointer;
 }
 
@@ -1546,14 +1597,14 @@ table {
 .action-links {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
 }
 
 .action-links button {
   border: 0;
   background: transparent;
   color: #c3c8da;
-  font-size: 10px;
+  font-size: 9px;
   cursor: pointer;
 }
 
@@ -1562,8 +1613,8 @@ table {
 }
 
 .reply-post {
-  grid-template-columns: 44px 1fr;
-  padding: 8px 10px;
+  grid-template-columns: 36px 1fr;
+  padding: 6px 8px;
 }
 
 .reply-left {
@@ -1573,37 +1624,37 @@ table {
 }
 
 .reply-name {
-  margin-top: 3px;
-  font-size: 9px;
+  margin-top: 2px;
+  font-size: 8px;
   font-weight: 600;
   color: #fff;
-  line-height: 1.1;
+  line-height: 1;
 }
 
 .reply-meta {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 3px;
   color: #aeb4c8;
-  font-size: 9px;
+  font-size: 8px;
 }
 
 .small-badge {
-  font-size: 8px;
-  padding: 1px 5px;
+  font-size: 7px;
+  padding: 1px 4px;
   color: #c8cad7;
   background: rgba(255, 255, 255, 0.07);
 }
 
 .vote-box.small .vote {
-  width: 20px;
-  height: 20px;
-  font-size: 9px;
+  width: 16px;
+  height: 16px;
+  font-size: 7px;
 }
 
 .vote-box.small span {
-  font-size: 10px;
-  padding: 0 5px;
+  font-size: 8px;
+  padding: 0 4px;
 }
 
 .thread-edit-form input,
@@ -5578,13 +5629,15 @@ a[target="_blank"] {
 
 @media (max-width: 700px) {
   .thread-wrap {
-    padding: 0 16px;
+    padding: 0 10px;
   }
 
   .post-card {
-    grid-template-columns: 86px minmax(0, 1fr);
-    gap: 14px;
-    padding: 22px 18px;
+    grid-template-columns: 50px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+    margin-bottom: 8px;
+    border-radius: 12px;
     overflow: hidden;
   }
 
@@ -5593,9 +5646,9 @@ a[target="_blank"] {
   }
 
   .avatar {
-    width: 64px;
-    height: 64px;
-    font-size: 32px;
+    width: 38px;
+    height: 38px;
+    font-size: 18px;
   }
 
   .post-top,
@@ -5603,20 +5656,20 @@ a[target="_blank"] {
     display: flex;
     align-items: flex-start;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
   }
 
   .meta-row {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 6px;
     min-width: 0;
-    font-size: 13px;
+    font-size: 11px;
   }
 
   .badge {
-    font-size: 13px;
-    padding: 7px 10px;
+    font-size: 11px;
+    padding: 4px 7px;
     white-space: nowrap;
   }
 
@@ -5625,26 +5678,26 @@ a[target="_blank"] {
   }
 
   .post-card h1 {
-    font-size: 28px;
+    font-size: 18px;
     line-height: 1.15;
-    margin: 30px 0 12px;
+    margin: 12px 0 6px;
   }
 
   .body-text,
   .reply-text {
-    font-size: 18px;
-    line-height: 1.45;
+    font-size: 14px;
+    line-height: 1.35;
   }
 
   .divider {
-    margin: 22px 0 16px;
+    margin: 10px 0 8px;
   }
 
   .actions {
     display: flex;
     align-items: center;
     justify-content: space-between;
-    gap: 10px;
+    gap: 8px;
   }
 
   .vote-box {
@@ -5652,20 +5705,20 @@ a[target="_blank"] {
   }
 
   .vote {
-    width: 42px;
-    height: 42px;
-    font-size: 18px;
+    width: 26px;
+    height: 26px;
+    font-size: 11px;
   }
 
   .vote-box span {
-    padding: 0 12px;
-    font-size: 18px;
+    padding: 0 8px;
+    font-size: 13px;
   }
 
   .action-links {
     display: flex;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
     min-width: 0;
   }
 
@@ -5675,11 +5728,11 @@ a[target="_blank"] {
   }
 
   .action-links button::first-letter {
-    font-size: 22px;
+    font-size: 18px;
   }
 
   .reply-post {
-    grid-template-columns: 86px minmax(0, 1fr);
+    grid-template-columns: 50px minmax(0, 1fr);
   }
 
   .reply-left {
@@ -5688,12 +5741,12 @@ a[target="_blank"] {
   }
 
   .reply-name {
-    font-size: 15px;
+    font-size: 11px;
     text-align: center;
   }
 
   .reply-text {
-    margin-top: 34px;
+    margin-top: 12px;
   }
 
   .tag,
