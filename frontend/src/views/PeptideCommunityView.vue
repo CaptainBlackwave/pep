@@ -26,7 +26,7 @@
           </select>
         </label>
         <label>
-          Type
+          Tag
           <select v-model="newDiscussion.tag">
             <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
           </select>
