@@ -5932,6 +5932,11 @@ a[target="_blank"] {
 }
 
 @media (max-width: 700px) {
+  .pv-content-grid--vendor-index .pv-toolbar,
+  .pv-content-grid--vendor-index .pv-inline-search {
+    display: none;
+  }
+
   .thread-wrap {
     padding: 0 10px;
   }
