@@ -53,6 +53,20 @@
           </span>
         </label>
 
+        <label v-if="showAccessCode" for="access-code">
+          Access Code
+          <span class="pv-input-shell">
+            <PvIcon name="lock" />
+            <input
+              id="access-code"
+              v-model="form.access_code"
+              type="text"
+              :required="showAccessCode"
+              placeholder="Enter your access code"
+            >
+          </span>
+        </label>
+
         <label for="password">
           Password
           <span class="pv-input-shell">
@@ -108,10 +122,11 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { useAuthStore } from '@/stores/auth'
 import { useUserStore } from '@/stores/user'
+import api from '@/services/api'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 import loginBackdrop from '@/assets/peptide/login-backdrop.png'
 
@@ -120,12 +135,23 @@ const route = useRoute()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 const currentYear = new Date().getFullYear()
+const showAccessCode = ref(false)
 
 const form = ref({
   username: '',
   email: '',
   password: '',
   password_confirmation: '',
+  access_code: '',
+})
+
+onMounted(async () => {
+  try {
+    const res = await api.get('/api/v1/settings/public')
+    showAccessCode.value = res.data.access_code_required === true
+  } catch {
+    // ignore
+  }
 })
 
 async function handleRegister() {
