@@ -582,10 +582,9 @@
           <article v-for="vendor in vendors" :key="vendor.slug" class="pv-vendor-row">
             <router-link :to="vendor.href" class="pv-logo-card pv-vendor-card-logo" :class="vendor.class"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logoText }}</template></router-link>
             <div class="pv-vendor-card-main">
-              <router-link :to="vendor.href" class="pv-vendor-card-title">
+              <router-link :to="vendor.href" class="pv-vendor-name-row">
                 <strong>{{ vendor.name }}</strong>
                 <em class="pv-tag" :class="vendor.statusClass">{{ vendor.status }}</em>
-                <PvIcon name="chevron" />
               </router-link>
               <small class="pv-vendor-card-meta"><PvIcon name="star" /> {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} <span>·</span> Member since {{ vendor.since }}</small>
               <span class="pv-chip-row pv-vendor-chip-row"><span v-for="chip in vendor.chips" :key="chip"><PvIcon :name="vendorChipIcon(chip)" /> {{ chip }}</span></span>

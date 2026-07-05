@@ -70,4 +70,14 @@ class CommunityVendor extends Model
     {
         return $this->reviews()->where('status', 'published');
     }
+
+    public function products(): HasMany
+    {
+        return $this->hasMany(CommunityVendorProduct::class, 'vendor_id');
+    }
+
+    public function publishedProducts(): HasMany
+    {
+        return $this->products()->where('status', 'published');
+    }
 }
