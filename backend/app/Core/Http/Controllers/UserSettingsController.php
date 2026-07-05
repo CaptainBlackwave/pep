@@ -335,6 +335,7 @@ class UserSettingsController extends Controller
         return $request->validate([
             'name' => ['sometimes', 'required', 'string', 'max:255'],
             'username' => ['sometimes', 'required', 'string', 'max:100', Rule::unique('users', 'username')->ignore($user->id)],
+            'email' => ['sometimes', 'required', 'email', 'max:255', Rule::unique('users', 'email')->ignore($user->id)],
             'bio' => ['sometimes', 'nullable', 'string', 'max:2000'],
             'timezone' => ['sometimes', 'nullable', 'string', 'max:100'],
             'locale' => ['sometimes', 'nullable', 'string', 'max:20'],
@@ -361,8 +362,12 @@ class UserSettingsController extends Controller
 
     private function updateProfileFields(User $user, array $validated): void
     {
-        $fields = ['name', 'username', 'bio', 'timezone', 'locale', 'website_url'];
+        $fields = ['name', 'username', 'email', 'bio', 'timezone', 'locale', 'website_url'];
         $updates = array_intersect_key($validated, array_flip($fields));
+
+        if (array_key_exists('email', $updates) && $updates['email'] !== $user->email) {
+            $updates['email_verified_at'] = null;
+        }
 
         if ($updates !== []) {
             $user->fill($updates)->save();

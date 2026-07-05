@@ -25,12 +25,14 @@ class UserSettingsApiTest extends TestCase
         $this->patchJson('/api/v1/user/profile', [
             'username' => 'researcher',
             'name' => 'Researcher',
+            'email' => 'researcher@example.com',
             'bio' => 'Community researcher',
             'timezone' => 'Europe/London',
             'locale' => 'en-GB',
             'website_url' => 'https://example.com',
         ])->assertOk()
             ->assertJsonPath('user.username', 'researcher')
+            ->assertJsonPath('user.email', 'researcher@example.com')
             ->assertJsonPath('user.bio', 'Community researcher');
 
         $this->patchJson('/api/v1/user', [
@@ -46,6 +48,7 @@ class UserSettingsApiTest extends TestCase
         $this->assertDatabaseHas('users', [
             'id' => $user->id,
             'username' => 'researcher',
+            'email' => 'researcher@example.com',
             'bio' => 'Community researcher',
         ]);
         $this->assertDatabaseHas('user_settings', [

@@ -3282,6 +3282,7 @@ async function saveAccountProfile(): Promise<void> {
     const response = await api.patch<{ user?: Record<string, any> }>('/api/v1/user/profile', {
       username: accountForm.value.username,
       name: accountForm.value.name,
+      email: accountForm.value.email,
       bio: accountForm.value.bio,
       timezone: accountForm.value.timezone,
       locale: accountForm.value.locale,
@@ -6604,7 +6605,7 @@ function settingsMain(pageName: string) {
       h('div', { class: 'pv-input-group' }, [
         settingsInput('Username', accountForm.value.username, value => { accountForm.value.username = value }),
         settingsInput('Display Name', accountForm.value.name, value => { accountForm.value.name = value }),
-        settingsInput('Email Address', accountForm.value.email, () => {}, 'email', true),
+        settingsInput('Email Address', accountForm.value.email, value => { accountForm.value.email = value }, 'email'),
       ]),
       h('div', { class: 'pv-settings-meta-grid' }, [
         h('span', [h('small', 'Email Status'), h('strong', authUserValue('email_verified_at') ? 'Verified' : 'Unverified')]),
