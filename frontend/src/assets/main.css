@@ -3647,12 +3647,10 @@ table {
 }
 
 .pv-variant-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  padding: 8px 0;
-  border-top: 1px solid var(--pv-border);
-  margin-top: 8px;
+  display: grid;
+  gap: 3px;
+  padding: 6px 0;
+  margin-top: 6px;
 }
 
 .pv-variant-row {
@@ -3660,7 +3658,10 @@ table {
   grid-template-columns: 1fr auto auto;
   gap: 8px;
   align-items: center;
-  font-size: 13px;
+  font-size: 12px;
+  padding: 3px 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.015);
 }
 
 .pv-variant-label {
@@ -3670,12 +3671,12 @@ table {
 
 .pv-variant-price {
   color: #a78bfa;
-  font-weight: 600;
+  font-weight: 700;
 }
 
-.pv-tag--sm {
-  font-size: 11px;
-  padding: 1px 8px;
+.pv-variant-row .pv-tag--sm {
+  font-size: 10px;
+  padding: 1px 7px;
 }
 
 .pv-vendor-fieldset {
