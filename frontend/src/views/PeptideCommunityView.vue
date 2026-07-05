@@ -346,9 +346,7 @@
           <span v-if="detailDiscussion.isPinned" class="flag-pinned">📌 Pinned</span>
           <span v-if="detailDiscussion.isLocked" class="flag-locked">🔒 Locked</span>
         </div>
-        <div v-if="!isEditingDiscussion" class="op-content">
-          <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>
-        </div>
+          <div v-if="!isEditingDiscussion" class="op-content" v-html="formatText(detailDiscussion.body ?? '')"></div>
         <div v-else class="thread-edit-form">
           <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
           <input v-model="editDiscussionTitle" required maxlength="160">
@@ -389,7 +387,7 @@
               <span v-if="reply.authorId && reply.authorId === detailDiscussion.authorId" class="small-badge">OP</span>
             </div>
           </div>
-          <p class="reply-text" v-html="linkifyText(reply.text)"></p>
+          <p class="reply-text" v-html="formatText(reply.text)"></p>
           <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
             <img :src="reply.attachmentUrl || ''" :alt="reply.file || 'Reply attachment'">
             <figcaption>{{ reply.file }} <span>{{ attachmentLabel(reply) }}</span></figcaption>
@@ -1495,6 +1493,7 @@
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, onUnmounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { marked } from 'marked'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import GiphyPicker from '@/components/ui/GiphyPicker.vue'
@@ -6270,6 +6269,12 @@ const currentNotificationSlug = computed(() => String(route.params.slug ?? ''))
 const primaryNotification = computed(() => apiDetailNotification.value ?? notifications.value.find(item => item.slug === currentNotificationSlug.value) ?? null)
 const currentNotificationIndex = computed(() => notifications.value.findIndex(item => item.slug === primaryNotification.value?.slug))
 const previousNotification = computed(() => currentNotificationIndex.value > 0 ? notifications.value[currentNotificationIndex.value - 1] : null)
+function formatText(text: string): string {
+  if (!text) return ''
+  const html = marked.parse(text, { async: false }) as string
+  return linkifyText(html)
+}
+
 function linkifyText(text: string): string {
   const escaped = text.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
   const withLinks = escaped.replace(
