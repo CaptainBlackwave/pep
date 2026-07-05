@@ -537,9 +537,6 @@
           <div><h1>Lab Results</h1><p>Independent lab testing and analysis from community members.</p></div>
           <button class="pv-primary-button" @click="openSubmitLabResult"><PvIcon name="flask" /> Submit Lab Result</button>
         </header>
-        <div class="pv-metrics">
-          <span v-for="metric in labMetricCards" :key="metric.label"><PvIcon :name="metric.icon" /><strong>{{ metric.value }}</strong><small>{{ metric.label }}</small></span>
-        </div>
         <article class="pv-panel">
           <div class="pv-toolbar">
             <div class="pv-tabs">
@@ -659,7 +656,6 @@
         <header class="pv-page-header">
           <div><h1>Vendor Reviews</h1><p>Browse vendor profiles, compare community feedback, and write a review from the vendor row.</p></div>
         </header>
-        <div class="pv-metrics"><span v-for="metric in vendorMetricCards" :key="metric.label"><PvIcon :name="metric.icon" /><strong>{{ metric.value }}</strong><small>{{ metric.label }}</small></span></div>
         <article class="pv-panel">
           <div class="pv-toolbar"><div class="pv-tabs"><button :class="{ active: vendorStatusFilter === '' }" @click="setVendorStatusFilter('')">All Vendors</button><button v-for="status in vendorFilterOptions.statuses" :key="status.slug" :class="{ active: vendorStatusFilter === status.slug }" @click="setVendorStatusFilter(status.slug)">{{ status.name }}</button></div><button class="pv-small-button" type="button" @click="cycleVendorSort">{{ vendorSortLabel }} <PvIcon name="chevron" /></button><button class="pv-icon-button" @click="loadVendors"><PvIcon name="filter" /></button></div>
           <form class="pv-inline-search" @submit.prevent="loadVendors">
@@ -4274,12 +4270,6 @@ const detailLabResult = computed(() => {
     ?? labResults.value.find(result => result.slug === currentLabSlug.value || result.href.endsWith(`/${currentLabSlug.value}`))
     ?? null
 })
-const labMetricCards = computed(() => [
-  { label: 'Total Results', value: formatCount(labStats.value?.total), icon: 'document' },
-  { label: 'Batches Tested', value: formatCount(labStats.value?.batches), icon: 'box' },
-  { label: 'Avg. Purity', value: labStats.value?.avg_purity !== undefined ? `${labStats.value.avg_purity}%` : '0%', icon: 'shield' },
-  { label: 'Labs Used', value: formatCount(labStats.value?.labs), icon: 'library' },
-])
 const labSortLabel = computed(() => {
   if (labSort.value === 'purity') return 'Highest Purity'
   if (labSort.value === 'compound') return 'Compound A-Z'
@@ -4467,12 +4457,6 @@ const detailVendor = computed(() => {
     ?? vendors.value.find(vendor => vendor.slug === currentVendorSlug.value || vendor.href.endsWith(`/${currentVendorSlug.value}`))
     ?? null
 })
-const vendorMetricCards = computed(() => [
-  { label: 'Vendors Reviewed', value: formatCount(vendorStats.value.vendors_reviewed), icon: 'shield' },
-  { label: 'Total Reviews', value: formatCount(vendorStats.value.total_reviews), icon: 'document' },
-  { label: 'Average Rating', value: `${vendorStats.value.average_rating} / 5`, icon: 'star' },
-  { label: 'Would Buy Again', value: `${vendorStats.value.would_buy_again}%`, icon: 'heart' },
-])
 const topVendors = computed(() => apiTopVendors.value.length > 0 ? apiTopVendors.value : vendors.value.slice(0, 5))
 const vendorHasActiveFilters = computed(() => Boolean(vendorSearch.value || vendorStatusFilter.value || vendorRatingFilter.value || vendorTagFilter.value))
 const vendorSortLabel = computed(() => {
