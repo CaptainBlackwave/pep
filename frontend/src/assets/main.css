@@ -6254,7 +6254,8 @@ a[target="_blank"] {
     display: none;
   }
 
-  .pv-content-grid--vendor-detail .pv-compact-select {
+  .pv-content-grid--vendor-detail .pv-compact-select,
+  .pv-content-grid--vendor-detail .pv-product-toolbar {
     display: none;
   }
 
