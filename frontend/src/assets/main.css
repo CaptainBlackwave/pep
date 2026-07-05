@@ -768,253 +768,220 @@ table {
 }
 
 .topic-card {
-  width: 100%;
-  max-width: 1280px;
-  min-height: 210px;
   display: grid;
-  grid-template-columns: 260px 1fr;
-  gap: 36px;
-  padding: 34px;
-  margin-bottom: 18px;
-  border-radius: 14px;
-  background:
-    radial-gradient(circle at top left, rgba(139, 92, 246, 0.16), transparent 35%),
-    linear-gradient(180deg, #111528 0%, #0b0f1e 100%);
-  border: 1px solid rgba(139, 92, 246, 0.72);
-  box-shadow:
-    inset 0 1px 0 rgba(255, 255, 255, 0.04),
-    0 20px 60px rgba(0, 0, 0, 0.45);
+  grid-template-columns: 220px 1fr;
+  gap: 0;
+  min-height: 200px;
+  margin-bottom: 20px;
+  border-radius: 16px;
+  background: linear-gradient(180deg, #111528 0%, #0b0f1e 100%);
+  border: 1px solid rgba(139, 92, 246, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.03), 0 20px 60px rgba(0,0,0,0.4);
   color: #fff;
+  overflow: hidden;
   transition: border-color .2s;
 }
-
 .topic-card:hover {
-  border-color: rgba(139, 92, 246, 0.9);
+  border-color: rgba(139, 92, 246, 0.85);
 }
 
-.topic-author {
+.tc-author {
   display: flex;
   flex-direction: column;
   align-items: center;
-  text-align: center;
-  padding-right: 34px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  padding: 30px 20px;
+  border-right: 1px solid rgba(255,255,255,0.07);
+  gap: 10px;
 }
 
-.avatar {
-  width: 92px;
-  height: 92px;
+.tc-avatar {
+  width: 80px;
+  height: 80px;
   border-radius: 50%;
   display: grid;
   place-items: center;
-  margin-bottom: 18px;
-  background: linear-gradient(145deg, #a45cff 0%, #6425cf 100%);
-  color: #ffffff;
-  font-size: 40px;
+  background: linear-gradient(145deg, #a45cff, #6425cf);
+  font-size: 34px;
   font-weight: 800;
-  box-shadow: 0 12px 35px rgba(111, 45, 210, 0.35);
-  flex-shrink: 0;
+  color: #fff;
+  box-shadow: 0 10px 30px rgba(111,45,210,0.3);
 }
-
-.avatar img {
+.tc-avatar img {
   width: 100%;
   height: 100%;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.author-name {
+.tc-name {
   font-size: 18px;
-  font-weight: 800;
+  font-weight: 700;
   color: #fff;
-  line-height: 1.2;
   text-align: center;
+}
+
+.tc-posts {
+  font-size: 13px;
+  color: #8e95a8;
+}
+
+.tc-body {
+  padding: 28px 30px;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  min-width: 0;
+}
+
+.tc-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 20px;
+}
+
+.tc-title {
+  font-size: 28px;
+  font-weight: 850;
+  letter-spacing: -0.02em;
+  margin: 0 0 14px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.tc-tag {
+  font-size: 13px;
+  font-style: normal;
+  background: rgba(124,58,237,0.25);
+  color: #c8a7ff;
+  padding: 3px 12px;
+  border-radius: 999px;
+  font-weight: 600;
+}
+
+.tc-desc {
+  margin: 0;
+  color: #a8aec0;
+  font-size: 16px;
+  line-height: 1.45;
+  max-width: 620px;
   overflow: hidden;
   text-overflow: ellipsis;
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
-  max-width: 200px;
 }
 
-.topic-author small {
-  display: block;
-  color: #a0a6b8;
+.tc-time {
   font-size: 13px;
-  margin-top: 6px;
+  color: #8e95a8;
+  white-space: nowrap;
+  flex-shrink: 0;
+  margin-top: 4px;
 }
 
-.topic-main {
-  min-width: 0;
+.tc-divider {
+  height: 1px;
+  background: rgba(255,255,255,0.07);
+  margin: 22px 0 20px;
 }
 
-.topic-header {
+.tc-foot {
   display: flex;
+  align-items: center;
   justify-content: space-between;
   gap: 24px;
 }
 
-.topic-header h3 {
+.tc-stats {
   display: flex;
-  align-items: center;
-  gap: 12px;
-  margin: 0 0 18px;
-  font-size: 32px;
-  line-height: 1;
-  font-weight: 850;
-  letter-spacing: -0.03em;
-  color: #fff;
-}
-
-.topic-header h3 span {
-  display: inline-flex;
-  align-items: center;
-  height: 28px;
-  padding: 0 13px;
-  border-radius: 999px;
-  background: rgba(124, 58, 237, 0.25);
-  color: #c8a7ff;
-  font-size: 14px;
-  font-weight: 750;
-  letter-spacing: 0;
-}
-
-.topic-header p {
-  max-width: 640px;
-  margin: 0;
-  color: #b0b6c7;
-  font-size: 18px;
-  line-height: 1.45;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: -webkit-box;
-  -webkit-line-clamp: 2;
-  -webkit-box-orient: vertical;
-}
-
-.topic-actions {
-  display: flex;
-  align-items: flex-start;
-  gap: 22px;
-  color: #b3b8c7;
-  font-size: 14px;
-  white-space: nowrap;
-  flex-shrink: 0;
-}
-
-.topic-divider {
-  height: 1px;
-  margin: 28px 0 24px;
-  background: rgba(255, 255, 255, 0.08);
-}
-
-.topic-footer {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
   gap: 28px;
 }
 
-.topic-stats {
-  display: grid;
-  grid-template-columns: repeat(3, 160px);
-}
-
-.stat {
-  display: grid;
-  grid-template-columns: 36px auto;
-  grid-template-rows: auto auto;
+.tc-stat {
+  display: flex;
   align-items: center;
-  column-gap: 12px;
-  min-height: 46px;
-  padding-right: 28px;
-  border-right: 1px solid rgba(255, 255, 255, 0.08);
+  gap: 8px;
+  color: #b8bdcb;
 }
 
-.stat:last-child {
-  border-right: 0;
-}
-
-.stat .icon {
-  grid-row: 1 / 3;
-  color: #c3c8d6;
-  font-size: 31px;
+.tc-stat i {
+  font-size: 22px;
+  font-style: normal;
   line-height: 1;
 }
 
-.stat strong {
-  color: #ffffff;
-  font-size: 19px;
-  line-height: 1;
-  font-weight: 850;
+.tc-stat strong {
+  color: #fff;
+  font-size: 17px;
+  font-weight: 800;
 }
 
-.stat small {
-  color: #a7adbd;
-  font-size: 14px;
-  line-height: 1.2;
-}
-
-.latest-reply {
-  min-width: 220px;
-  padding-left: 34px;
-  border-left: 1px solid rgba(255, 255, 255, 0.08);
-}
-
-.latest-reply > span {
-  display: block;
-  margin-bottom: 8px;
-  color: #a8aebe;
+.tc-stat small {
+  color: #8e95a8;
   font-size: 13px;
 }
 
-.reply-user {
-  display: flex;
-  align-items: center;
-  gap: 11px;
+.tc-latest {
+  padding-left: 24px;
+  border-left: 1px solid rgba(255,255,255,0.07);
+  min-width: 170px;
 }
 
-.reply-user img {
-  width: 42px;
-  height: 42px;
+.tc-latest > span {
+  display: block;
+  font-size: 12px;
+  color: #8e95a8;
+  margin-bottom: 6px;
+}
+
+.tc-user {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.tc-user img {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   object-fit: cover;
 }
 
-.reply-user .avatar-sm {
-  width: 42px;
-  height: 42px;
+.tc-user-avatar {
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  background: linear-gradient(145deg, #a45cff 0%, #6425cf 100%);
   display: grid;
   place-items: center;
-  font-size: 16px;
-  font-weight: 800;
+  background: linear-gradient(145deg, #a45cff, #6425cf);
+  font-size: 14px;
+  font-weight: 700;
   color: #fff;
   flex-shrink: 0;
 }
 
-.reply-user strong {
+.tc-user strong {
   display: block;
-  color: #ffffff;
-  font-size: 16px;
+  font-size: 15px;
+  font-weight: 600;
   line-height: 1.1;
-  font-weight: 700;
 }
 
-.reply-user small {
+.tc-user span {
   display: block;
-  color: #a8aebe;
-  font-size: 14px;
-  margin-top: 3px;
+  font-size: 13px;
+  color: #8e95a8;
+  margin-top: 2px;
 }
 
-.reply-user i {
-  width: 7px;
-  height: 7px;
+.tc-dot {
+  width: 6px;
+  height: 6px;
   border-radius: 50%;
   background: #9b5cff;
-  box-shadow: 0 0 12px rgba(155, 92, 255, 0.8);
+  box-shadow: 0 0 10px rgba(155,92,255,0.7);
   flex-shrink: 0;
 }
 
@@ -3886,61 +3853,57 @@ summary {
 
   .topic-card {
     grid-template-columns: 1fr;
-    gap: 22px;
-    padding: 24px;
   }
 
-  .topic-author {
+  .tc-author {
     flex-direction: row;
-    justify-content: flex-start;
-    gap: 14px;
-    padding-right: 0;
-    padding-bottom: 20px;
+    padding: 16px 20px;
     border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    gap: 12px;
   }
 
-  .avatar {
-    width: 58px;
-    height: 58px;
-    font-size: 25px;
-    margin-bottom: 0;
+  .tc-avatar {
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
+    box-shadow: 0 6px 20px rgba(111,45,210,0.25);
   }
 
-  .author-name {
-    margin-bottom: 0;
-    font-size: 18px;
+  .tc-name {
+    font-size: 15px;
   }
 
-  .topic-header h3 {
-    font-size: 24px;
-    flex-wrap: wrap;
+  .tc-posts {
+    margin-left: auto;
   }
 
-  .topic-header p {
-    font-size: 16px;
+  .tc-body {
+    padding: 20px 22px;
   }
 
-  .topic-footer {
+  .tc-title {
+    font-size: 22px;
+  }
+
+  .tc-desc {
+    font-size: 15px;
+  }
+
+  .tc-foot {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .topic-stats {
-    grid-template-columns: repeat(3, 1fr);
+  .tc-stats {
+    gap: 20px;
   }
 
-  .stat {
-    grid-template-columns: 28px auto;
-    padding-right: 16px;
-  }
-
-  .latest-reply {
+  .tc-latest {
     padding-left: 0;
-    padding-top: 18px;
+    padding-top: 16px;
     border-left: 0;
-    border-top: 1px solid rgba(255, 255, 255, 0.08);
+    border-top: 1px solid rgba(255,255,255,0.07);
   }
 
   .pv-topic-hero-head,
@@ -4021,71 +3984,74 @@ summary {
 
   .topic-card {
     grid-template-columns: 1fr;
-    gap: 18px;
-    padding: 20px;
   }
 
-  .topic-author {
+  .tc-author {
     flex-direction: row;
-    justify-content: flex-start;
-    gap: 12px;
-    padding-right: 0;
-    padding-bottom: 16px;
+    padding: 14px 16px;
     border-right: 0;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
-    text-align: left;
+    border-bottom: 1px solid rgba(255,255,255,0.07);
+    gap: 10px;
   }
 
-  .avatar {
-    width: 46px;
-    height: 46px;
-    font-size: 20px;
-    margin-bottom: 0;
+  .tc-avatar {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+    box-shadow: 0 4px 15px rgba(111,45,210,0.2);
   }
 
-  .author-name {
-    margin-bottom: 0;
-    font-size: 15px;
+  .tc-name {
+    font-size: 13px;
   }
 
-  .topic-header h3 {
-    font-size: 20px;
-    flex-wrap: wrap;
-    gap: 8px;
-  }
-
-  .topic-header p {
+  .tc-posts {
     display: none;
   }
 
-  .topic-divider {
-    margin: 18px 0 16px;
+  .tc-body {
+    padding: 16px 18px;
   }
 
-  .topic-footer {
+  .tc-title {
+    font-size: 18px;
+  }
+
+  .tc-tag {
+    font-size: 11px;
+    padding: 2px 9px;
+  }
+
+  .tc-desc {
+    display: none;
+  }
+
+  .tc-time {
+    font-size: 12px;
+  }
+
+  .tc-divider {
+    margin: 14px 0 12px;
+  }
+
+  .tc-foot {
     flex-direction: column;
     align-items: stretch;
   }
 
-  .topic-stats {
-    grid-template-columns: repeat(3, 1fr);
+  .tc-stats {
+    gap: 14px;
   }
 
-  .stat {
-    grid-template-columns: 24px auto;
-    padding-right: 12px;
-    min-height: 38px;
+  .tc-stat i {
+    font-size: 18px;
   }
 
-  .stat .icon {
-    font-size: 24px;
+  .tc-stat strong {
+    font-size: 15px;
   }
 
-  .stat strong {
-    font-size: 16px;
-  }
-
-  .latest-reply {
+  .tc-latest {
     display: none;
   }
 

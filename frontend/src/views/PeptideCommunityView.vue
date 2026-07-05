@@ -287,55 +287,41 @@
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
             <router-link v-for="topic in discussions" :key="topic.title" :to="topic.href" class="topic-card">
-              <aside class="topic-author">
-                <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
-                <span v-else class="avatar" :class="topic.color">{{ topic.initial }}</span>
-                <div class="author-name">{{ topic.author }}</div>
-                <small class="author-posts">{{ topic.replies }} {{ topic.replies === 1 ? 'reply' : 'replies' }}</small>
+              <aside class="tc-author">
+                <span v-if="topic.avatarUrl" class="tc-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
+                <span v-else class="tc-avatar" :class="topic.color">{{ topic.initial }}</span>
+                <div class="tc-name">{{ topic.author }}</div>
+                <span class="tc-posts">{{ topic.replies }} replies</span>
               </aside>
-              <main class="topic-main">
-                <div class="topic-header">
+              <div class="tc-body">
+                <div class="tc-head">
                   <div>
-                    <h3>{{ topic.title }} <span v-if="topic.tag">{{ topic.tag }}</span></h3>
-                    <p>{{ topic.excerpt }}</p>
+                    <h3 class="tc-title">{{ topic.title }} <em v-if="topic.tag" class="tc-tag">{{ topic.tag }}</em></h3>
+                    <p class="tc-desc">{{ topic.excerpt }}</p>
                   </div>
-                  <div class="topic-actions">
-                    <span>{{ topic.time }}</span>
-                  </div>
+                  <span class="tc-time">{{ topic.time }}</span>
                 </div>
-                <div class="topic-divider"></div>
-                <div class="topic-footer">
-                  <div class="topic-stats">
-                    <div class="stat">
-                      <span class="icon">▱</span>
-                      <strong>{{ topic.replies }}</strong>
-                      <small>replies</small>
-                    </div>
-                    <div class="stat">
-                      <span class="icon">⊙</span>
-                      <strong>{{ topic.views }}</strong>
-                      <small>views</small>
-                    </div>
-                    <div class="stat">
-                      <span class="icon">♡</span>
-                      <strong>{{ topic.voteScore }}</strong>
-                      <small>likes</small>
-                    </div>
+                <div class="tc-divider"></div>
+                <div class="tc-foot">
+                  <div class="tc-stats">
+                    <span class="tc-stat"><i>💬</i><strong>{{ topic.replies }}</strong><small>replies</small></span>
+                    <span class="tc-stat"><i>👁</i><strong>{{ topic.views }}</strong><small>views</small></span>
+                    <span class="tc-stat"><i>♡</i><strong>{{ topic.voteScore }}</strong><small>likes</small></span>
                   </div>
-                  <div v-if="topic.latestReply" class="latest-reply">
+                  <div v-if="topic.latestReply" class="tc-latest">
                     <span>Latest reply</span>
-                    <div class="reply-user">
+                    <div class="tc-user">
                       <img v-if="topic.latestReply.avatar" :src="assetUrl(topic.latestReply.avatar)" :alt="topic.latestReply.author">
-                      <span v-else class="avatar-sm">{{ topic.latestReply.initial }}</span>
+                      <span v-else class="tc-user-avatar">{{ topic.latestReply.initial }}</span>
                       <div>
                         <strong>{{ topic.latestReply.author }}</strong>
-                        <small>{{ topic.latestReply.timeAgo }}</small>
+                        <span>{{ topic.latestReply.timeAgo }}</span>
                       </div>
-                      <i></i>
+                      <i class="tc-dot"></i>
                     </div>
                   </div>
                 </div>
-              </main>
+              </div>
             </router-link>
           </div>
           <PaginationBlock :meta="discussionPagination" @page="setDiscussionPage" />
