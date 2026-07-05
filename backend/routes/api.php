@@ -316,6 +316,13 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{vendor}', 'destroy');
             });
 
+            Route::prefix('community/vendor-products')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorProductAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store');
+                Route::patch('/{product}', 'update');
+                Route::delete('/{product}', 'destroy');
+            });
+
             Route::prefix('community/vendor-claims')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorClaimAdminController::class)->group(function () {
                 Route::get('/', 'index');
                 Route::patch('/{claim}', 'update');

@@ -6557,7 +6557,7 @@ function settingsMain(pageName: string) {
         settingsInput('Confirm New Password', passwordSettingsForm.value.new_password_confirmation, value => { passwordSettingsForm.value.new_password_confirmation = value }, 'password'),
       ]), h('button', { class: 'pv-primary-button', disabled: changingSettingsPassword.value, onClick: changeSettingsPassword }, changingSettingsPassword.value ? 'Updating...' : 'Update Password')])]),
       twoFactorSecurityPanel(),
-      h('article', { class: 'pv-panel pv-settings-card' }, [h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'document' })]), h('div', [h('h2', 'Login Sessions'), h('p', 'Manage your active sessions across different devices.'), sessionList()]), h(RouterLink, { to: '/settings/sessions', class: 'pv-small-button' }, () => 'View Sessions')]),
+      h('article', { class: 'pv-panel pv-settings-card' }, [h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'document' })]), h('div', [h('h2', 'Login Sessions'), h('p', 'Manage your active sessions across different devices.'), sessionList(4, false)]), h(RouterLink, { to: '/settings/sessions', class: 'pv-small-button' }, () => 'View Sessions')]),
     ])
   }
   if (pageName === 'settingsPrivacy') {
@@ -6583,20 +6583,16 @@ function settingsMain(pageName: string) {
         settingsInput('Display Name', accountForm.value.name, value => { accountForm.value.name = value }),
         settingsInput('Email Address', accountForm.value.email, () => {}, 'email', true),
       ]),
-      h('p', [h('span', { class: authUserValue('email_verified_at') ? 'pv-tag trusted' : 'pv-tag' }, authUserValue('email_verified_at') ? 'Verified' : 'Unverified')]),
-      h('h2', 'Preferences'),
+      h('div', { class: 'pv-settings-meta-grid' }, [
+        h('span', [h('small', 'Email Status'), h('strong', authUserValue('email_verified_at') ? 'Verified' : 'Unverified')]),
+        h('span', [h('small', 'Member Since'), h('strong', authUserDate('created_at') || 'Unknown')]),
+        h('span', [h('small', 'Last Active'), h('strong', authUserDate('last_active') || 'Unknown')]),
+      ]),
       h('div', { class: 'pv-two-col' }, [
         settingsInput('Timezone', accountForm.value.timezone, value => { accountForm.value.timezone = value }),
-        settingsInput('Language', userSettings.value.language, value => { userSettings.value.language = value }),
+        settingsSelect('Language', userSettings.value.language, value => { userSettings.value.language = value }, [['en', 'English'], ['en-GB', 'English (UK)'], ['en-US', 'English (US)']]),
       ]),
       h('button', { class: 'pv-primary-button', disabled: savingSettings.value, onClick: async () => { await saveAccountProfile(); await saveUserSettings({ language: userSettings.value.language }) } }, savingSettings.value ? 'Saving...' : 'Save Account'),
-      h('h2', 'Password'),
-      h('div', { class: 'pv-input-group' }, [
-        settingsInput('Current Password', passwordSettingsForm.value.current_password, value => { passwordSettingsForm.value.current_password = value }, 'password'),
-        settingsInput('New Password', passwordSettingsForm.value.new_password, value => { passwordSettingsForm.value.new_password = value }, 'password'),
-        settingsInput('Confirm New Password', passwordSettingsForm.value.new_password_confirmation, value => { passwordSettingsForm.value.new_password_confirmation = value }, 'password'),
-      ]),
-      h('button', { class: 'pv-primary-button', disabled: changingSettingsPassword.value, onClick: changeSettingsPassword }, changingSettingsPassword.value ? 'Updating...' : 'Update Password'),
     ])
   }
   if (pageName === 'settingsNotifications') {
@@ -6607,10 +6603,20 @@ function settingsMain(pageName: string) {
     ])
   }
   if (pageName === 'settingsPreferences') {
-    return settingsOptionPanel('Preferences', [
-      ['Compact discussion lists', 'compact_discussions'],
-      ['Show online members', 'show_online_members'],
-      ['Remember content filters', 'remember_content_filters'],
+    return h('div', { class: 'pv-stack' }, [
+      status,
+      h('article', { class: 'pv-panel pv-form-card' }, [
+        h('h2', 'Display'),
+        h('div', { class: 'pv-two-col' }, [
+          settingsSelect('Theme', userSettings.value.theme, value => { void setUserSetting('theme', value as UserSettingsPayload['theme']) }, [['dark', 'Dark'], ['light', 'Light'], ['system', 'System']]),
+          settingsSelect('Language', userSettings.value.language, value => { void setUserSetting('language', value) }, [['en', 'English'], ['en-GB', 'English (UK)'], ['en-US', 'English (US)']]),
+        ]),
+      ]),
+      settingsOptionPanel('Browsing', [
+        ['Compact discussion lists', 'compact_discussions'],
+        ['Show online members', 'show_online_members'],
+        ['Remember content filters', 'remember_content_filters'],
+      ]),
     ])
   }
   if (pageName === 'settingsBlocked') {
@@ -6630,7 +6636,14 @@ function settingsMain(pageName: string) {
           : [h('p', { class: 'pv-muted' }, blockedUsersLoaded.value ? 'No blocked users.' : 'Loading blocked users...')]),
       ]),
       h('article', { class: 'pv-panel' }, [
-        h('h2', 'Block a Member'),
+        h('h2', 'Block by Username'),
+        h('div', { class: 'pv-two-col pv-settings-inline-actions' }, [
+          settingsInput('Username', blockUsername.value, value => { blockUsername.value = value }),
+          h('button', { class: 'pv-primary-button', disabled: blockingUsername.value || !blockUsername.value.trim(), onClick: blockMemberByUsername }, blockingUsername.value ? 'Blocking...' : 'Block Username'),
+        ]),
+      ]),
+      h('article', { class: 'pv-panel' }, [
+        h('h2', 'Find a Member'),
         settingsInput('Search Members', blockUserSearch.value, value => { blockUserSearch.value = value }),
         h('div', { class: 'pv-mini-list' }, blockableMembers.value.length > 0
           ? blockableMembers.value.map(member => h('span', { class: 'pv-mini-row' }, [
@@ -6650,18 +6663,22 @@ function settingsMain(pageName: string) {
         settingsInput('Token Name', apiTokenForm.value.name, value => { apiTokenForm.value.name = value }),
         h('button', { class: 'pv-primary-button', disabled: !apiTokenForm.value.name.trim(), onClick: createApiToken }, 'Create Token'),
       ]),
-      newPlainApiToken.value ? h('p', { class: 'pv-muted' }, `New token: ${newPlainApiToken.value}`) : null,
+      newPlainApiToken.value ? h('div', { class: 'pv-token-secret' }, [
+        h('strong', 'Copy this token now'),
+        h('code', newPlainApiToken.value),
+        h('button', { class: 'pv-small-button', onClick: copyPlainApiToken }, [h(PvIcon, { name: 'document' }), ' Copy Token']),
+      ]) : null,
       h('div', { class: 'pv-mini-list' }, userApiTokens.value.length > 0
         ? userApiTokens.value.map(token => h('span', { class: 'pv-mini-row' }, [
           h(PvIcon, { name: 'document' }),
-          h('span', [h('strong', token.name), h('small', token.last_used_at ? `Last used ${formatDate(token.last_used_at)}` : `Created ${formatDate(token.created_at ?? '')}`)]),
+          h('span', [h('strong', token.name), h('small', [token.last_used_at ? `Last used ${formatDate(token.last_used_at)}` : `Created ${formatDate(token.created_at ?? '')}`, token.expires_at ? `Expires ${formatDate(token.expires_at)}` : 'No expiry'].join(' · '))]),
           h('button', { class: 'pv-small-button', onClick: () => deleteApiToken(token.id) }, 'Revoke'),
         ]))
         : [h('p', { class: 'pv-muted' }, 'No personal API tokens have been created yet.')]),
     ])
   }
   if (pageName === 'settingsSessions') {
-    return h('article', { class: 'pv-panel' }, [h('h2', 'Sessions'), status, sessionList()])
+    return h('article', { class: 'pv-panel' }, [h('h2', 'Sessions'), status, sessionList(20, true)])
   }
   if (pageName === 'settingsDanger') {
     return h('div', { class: 'pv-stack' }, [
@@ -6711,6 +6728,13 @@ function settingsMain(pageName: string) {
 
 function settingsInput(label: string, value: string, onValue: (value: string) => void, type = 'text', disabled = false) {
   return h('label', [label, h('input', { type, placeholder: label, value, disabled, onInput: (event: Event) => onValue((event.target as HTMLInputElement).value) })])
+}
+
+function settingsSelect(label: string, value: string, onValue: (value: string) => void, options: Array<[string, string]>) {
+  return h('label', { class: 'pv-settings-select' }, [
+    label,
+    h('select', { value, onChange: (event: Event) => onValue((event.target as HTMLSelectElement).value) }, options.map(option => h('option', { value: option[0] }, option[1]))),
+  ])
 }
 
 function twoFactorSecurityPanel() {
@@ -6771,16 +6795,31 @@ function settingsRadioGroup(key: 'profile_visibility' | 'direct_messages', optio
   ])))
 }
 
-function sessionList() {
+function sessionList(limit = 6, allowRevoke = false) {
   if (userSessions.value.length === 0) {
     return h('p', { class: 'pv-muted' }, 'No active sessions or tokens were found.')
   }
 
-  return h('div', { class: 'pv-mini-list' }, userSessions.value.slice(0, 6).map(session => h('span', { class: 'pv-mini-row' }, [
-    h(PvIcon, { name: 'document' }),
-    h('span', [h('strong', session.name ?? session.userAgent ?? 'Authenticated session'), h('small', session.lastActivity ? formatDate(session.lastActivity) : 'Active')]),
-    session.isCurrent ? h('em', { class: 'pv-tag trusted' }, 'Current') : null,
-  ])))
+  return h('div', { class: 'pv-mini-list' }, userSessions.value.slice(0, limit).map(session => {
+    const title = session.name ?? session.userAgent ?? (session.kind === 'browser' ? 'Browser session' : 'Auth token')
+    const meta = [
+      session.kind === 'browser' ? 'Browser' : 'Token',
+      session.ipAddress || '',
+      session.lastActivity ? `Last active ${formatDate(session.lastActivity)}` : '',
+      session.expiresAt ? `Expires ${formatDate(session.expiresAt)}` : '',
+    ].filter(Boolean).join(' · ')
+
+    return h('span', { class: 'pv-mini-row' }, [
+      h(PvIcon, { name: session.kind === 'browser' ? 'lock' : 'document' }),
+      h('span', [h('strong', title), h('small', meta || 'Active')]),
+      session.isCurrent ? h('em', { class: 'pv-tag trusted' }, 'Current') : null,
+      allowRevoke ? h('button', {
+        class: 'pv-small-button',
+        disabled: revokingSessionId.value === session.id,
+        onClick: () => void revokeUserSession(session),
+      }, revokingSessionId.value === session.id ? 'Revoking...' : 'Revoke') : null,
+    ])
+  }))
 }
 
 function settingsSummary() {
