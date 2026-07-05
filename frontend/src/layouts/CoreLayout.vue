@@ -153,7 +153,7 @@ const isActive = (item: { match: string[] }) => {
 const searchPlaceholder = computed(() => {
   const path = route.path
   if (path.startsWith('/lab-results')) return 'Search lab results...'
-  if (path.startsWith('/vendor-reviews')) return 'Search vendors, reviews...'
+  if (path.startsWith('/vendor-reviews')) return 'Search vendors, products, reviews...'
   if (path.startsWith('/vendor-portal')) return 'Search vendors...'
   if (path.startsWith('/research-library')) return 'Search research library...'
   if (path.startsWith('/guides')) return 'Search guides & FAQ...'

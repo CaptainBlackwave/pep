@@ -5237,6 +5237,20 @@ summary {
     display: none;
   }
 
+  .pv-product-toolbar,
+  .pv-product-card footer,
+  .pv-product-manage-row {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pv-product-card-image {
+    aspect-ratio: 1.6;
+  }
+
+  .pv-product-manage-row {
+    justify-items: stretch;
+  }
+
   .pv-score-block,
   .pv-rate-box {
     width: 100%;
@@ -6237,6 +6251,10 @@ a[target="_blank"] {
   }
 
   .pv-content-grid--vendor-index > .pv-stack:last-child {
+    display: none;
+  }
+
+  .pv-content-grid > aside.pv-stack {
     display: none;
   }
 

@@ -39,7 +39,14 @@ class CommunityVendorController extends Controller
             $query->where(function ($inner) use ($search) {
                 $inner
                     ->where('name', 'like', "%{$search}%")
-                    ->orWhere('description', 'like', "%{$search}%");
+                    ->orWhere('description', 'like', "%{$search}%")
+                    ->orWhereHas('publishedProducts', function ($products) use ($search) {
+                        $products
+                            ->where('name', 'like', "%{$search}%")
+                            ->orWhere('category', 'like', "%{$search}%")
+                            ->orWhere('strength', 'like', "%{$search}%")
+                            ->orWhere('description', 'like', "%{$search}%");
+                    });
             });
         }
 
