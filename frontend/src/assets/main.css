@@ -3474,3 +3474,568 @@ summary {
     color: #f87171;
   }
 }
+
+@media (max-width: 720px) {
+  html,
+  body,
+  #app,
+  .pv-shell {
+    width: 100%;
+    overflow-x: hidden;
+  }
+
+  :root {
+    --pv-topbar: 116px;
+    --pv-sidebar: min(86vw, 318px);
+  }
+
+  .pv-topbar {
+    height: var(--pv-topbar);
+    display: grid;
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    grid-template-rows: 42px 42px;
+    align-content: center;
+    gap: 8px 10px;
+    padding: 10px 12px;
+  }
+
+  .pv-brand {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .pv-brand-mark {
+    width: 44px;
+    height: 32px;
+  }
+
+  .pv-menu-button {
+    grid-column: 2;
+    grid-row: 1;
+  }
+
+  .pv-account {
+    grid-column: 4;
+    grid-row: 1;
+    gap: 8px;
+  }
+
+  .pv-account .pv-icon-button {
+    width: 38px;
+    height: 38px;
+  }
+
+  .pv-search {
+    grid-column: 1 / -1;
+    grid-row: 2;
+    justify-self: stretch;
+    width: 100%;
+    height: 42px;
+    display: flex;
+  }
+
+  .pv-search input {
+    min-width: 0;
+  }
+
+  .pv-sidebar {
+    width: var(--pv-sidebar);
+    gap: 14px;
+    padding: 16px 14px 18px;
+  }
+
+  .pv-nav {
+    gap: 4px;
+  }
+
+  .pv-nav-item {
+    min-height: 40px;
+    padding: 0 10px;
+  }
+
+  .pv-telegram-card {
+    margin-top: 8px;
+    padding: 12px;
+  }
+
+  .pv-sidebar-footer {
+    gap: 12px;
+    font-size: 0.78rem;
+  }
+
+  .pv-main {
+    padding: calc(var(--pv-topbar) + 14px) 12px 28px;
+  }
+
+  .pv-page,
+  .pv-content-grid,
+  .pv-dashboard-grid,
+  .pv-settings-grid,
+  .pv-stack,
+  .pv-panel,
+  .pv-form-card,
+  .pv-topic-detail,
+  .pv-reply-card,
+  .pv-vendor-hero,
+  .pv-certificate,
+  .pv-announcement-row,
+  .pv-notification-hero,
+  .pv-hero,
+  .pv-messages,
+  .pv-modal {
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .pv-content-grid,
+  .pv-dashboard-grid,
+  .pv-settings-grid,
+  .pv-right-rail,
+  .pv-content-grid > aside,
+  .pv-settings-grid > aside:last-child,
+  .pv-article-grid,
+  .pv-guide-cats,
+  .pv-type-grid,
+  .pv-metrics,
+  .pv-metrics--member,
+  .pv-profile-grid,
+  .pv-badge-grid,
+  .pv-two-col,
+  .pv-choice-row,
+  .pv-upload-preview-grid,
+  .pv-stat-grid,
+  .pv-content-grid > aside .pv-stat-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pv-settings-grid {
+    gap: 14px;
+  }
+
+  .pv-settings-nav {
+    position: static;
+    z-index: auto;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 -12px;
+    padding: 2px 12px 10px;
+    overflow-x: auto;
+    border-right: 0;
+    border-bottom: 1px solid var(--pv-border);
+    background: transparent;
+    scrollbar-width: none;
+  }
+
+  .pv-settings-nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pv-settings-nav small {
+    display: none;
+  }
+
+  .pv-settings-nav a {
+    flex: 0 0 auto;
+    width: auto;
+    min-height: 38px;
+    padding: 0 12px;
+    border: 1px solid var(--pv-border);
+    border-radius: 999px;
+    background: rgba(255, 255, 255, 0.025);
+    white-space: nowrap;
+  }
+
+  .pv-settings-nav a.active {
+    border-color: rgba(160, 119, 255, 0.45);
+    background: var(--pv-purple-soft);
+  }
+
+  .pv-content-grid,
+  .pv-dashboard-grid,
+  .pv-stack {
+    gap: 14px;
+  }
+
+  .pv-panel,
+  .pv-topic-detail,
+  .pv-reply-card,
+  .pv-vendor-hero,
+  .pv-certificate,
+  .pv-form-card,
+  .pv-announcement-row,
+  .pv-notification-hero,
+  .pv-empty-route {
+    padding: 14px;
+  }
+
+  .pv-page-header,
+  .pv-panel-header,
+  .pv-toolbar,
+  .pv-action-row,
+  .pv-form-actions,
+  .pv-detail-actions,
+  .pv-topic-actions,
+  .pv-composer-tools {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .pv-page-header h1,
+  .pv-topic-detail h1,
+  .pv-article-hero h1,
+  .pv-empty-route h1 {
+    font-size: 1.58rem;
+    line-height: 1.15;
+  }
+
+  .pv-page-header p,
+  .pv-topic-detail p,
+  .pv-article-hero p,
+  .pv-panel p {
+    font-size: 0.94rem;
+  }
+
+  .pv-primary-button,
+  .pv-small-button,
+  .pv-action-row .pv-primary-button,
+  .pv-action-row .pv-small-button,
+  .pv-page-header .pv-primary-button,
+  .pv-page-header .pv-small-button,
+  .pv-form-actions .pv-primary-button,
+  .pv-form-actions .pv-small-button {
+    width: 100%;
+    min-height: 42px;
+    justify-content: center;
+  }
+
+  .pv-tabs,
+  .pv-tabs--line,
+  .pv-chip-row,
+  .pv-author-line,
+  .pv-reply-head {
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-x: contain;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+
+  .pv-tabs::-webkit-scrollbar,
+  .pv-tabs--line::-webkit-scrollbar,
+  .pv-chip-row::-webkit-scrollbar,
+  .pv-author-line::-webkit-scrollbar,
+  .pv-reply-head::-webkit-scrollbar {
+    display: none;
+  }
+
+  .pv-tabs,
+  .pv-tabs--line {
+    flex-wrap: nowrap;
+    justify-content: flex-start;
+    margin-inline: -12px;
+    padding-inline: 12px;
+  }
+
+  .pv-tabs button,
+  .pv-tabs .pv-tab-label {
+    flex: 0 0 auto;
+    white-space: nowrap;
+  }
+
+  .pv-toolbar .pv-input-search,
+  .pv-filter-panel label,
+  .pv-filter-panel select,
+  .pv-filter-panel input,
+  .pv-filter-panel button,
+  .pv-portal-label,
+  .pv-vendor-portal-form input,
+  .pv-vendor-portal-form textarea,
+  .pv-vendor-portal-form select {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .pv-topic-row,
+  .pv-topic-row--large,
+  .pv-result-row,
+  .pv-vendor-row,
+  .pv-guide-row,
+  .pv-member-row,
+  .pv-announcement-row,
+  .pv-notification-row,
+  .pv-mini-row,
+  .pv-action-card,
+  .pv-review-row,
+  .pv-vendor-owner-card,
+  .pv-avatar-upload-row,
+  .pv-profile-form-head,
+  .pv-settings-card,
+  .pv-article-hero,
+  .pv-lab-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .pv-topic-row,
+  .pv-topic-row--large,
+  .pv-mini-row,
+  .pv-notification-row,
+  .pv-action-card {
+    align-items: start;
+  }
+
+  .pv-topic-row .pv-avatar,
+  .pv-topic-row--large .pv-avatar,
+  .pv-mini-row .pv-avatar,
+  .pv-notification-row .pv-large-icon,
+  .pv-action-card .pv-icon,
+  .pv-lab-row .pv-large-icon,
+  .pv-vendor-row .pv-logo-card,
+  .pv-member-row .pv-avatar {
+    grid-row: auto;
+  }
+
+  .pv-topic-row .pv-topic-main,
+  .pv-topic-row--large .pv-topic-main {
+    max-width: none;
+    flex: 1 1 auto;
+  }
+
+  .pv-topic-main strong,
+  .pv-topic-main small,
+  .pv-mini-row strong,
+  .pv-mini-row small,
+  .pv-notification-row strong,
+  .pv-notification-row small {
+    overflow-wrap: anywhere;
+  }
+
+  .pv-data-list div {
+    align-items: flex-start;
+    flex-direction: column;
+    gap: 4px;
+  }
+
+  .pv-data-list dd {
+    max-width: 100%;
+    text-align: left;
+    overflow-wrap: anywhere;
+  }
+
+  .pv-profile-form-head,
+  .pv-avatar-upload-row,
+  .pv-summary-user {
+    align-items: center;
+    grid-template-columns: 82px minmax(0, 1fr);
+    gap: 12px;
+  }
+
+  .pv-summary-user {
+    display: grid;
+    margin: 12px 0;
+  }
+
+  .pv-avatar--xl {
+    width: 82px;
+    height: 82px;
+    font-size: 2.45rem;
+  }
+
+  .pv-profile-form-head .pv-input-group {
+    min-width: 0;
+  }
+
+  .pv-avatar-upload-row .pv-small-button,
+  .pv-avatar-upload-row + input + .pv-small-button {
+    width: 100%;
+  }
+
+  .pv-settings-card {
+    align-items: stretch;
+  }
+
+  .pv-settings-card .pv-icon-tile {
+    width: 42px;
+    height: 42px;
+  }
+
+  .pv-toggle-row,
+  .pv-radio-list label,
+  .pv-filter-list a,
+  .pv-filter-list button {
+    min-width: 0;
+  }
+
+  .pv-report-meta,
+  .pv-review-summary,
+  .pv-metrics,
+  .pv-metrics--member {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pv-report-meta span,
+  .pv-stat,
+  .pv-metric {
+    min-width: 0;
+  }
+
+  .pv-hero {
+    min-height: 250px;
+    padding: 24px 18px;
+    background-position: 68% center;
+  }
+
+  .pv-hero h1 {
+    font-size: 1.7rem;
+  }
+
+  .pv-hero-points {
+    gap: 10px;
+  }
+
+  .pv-article-card {
+    min-height: 0;
+    grid-template-rows: 128px auto auto auto auto;
+  }
+
+  .pv-article-hero {
+    align-items: stretch;
+  }
+
+  .pv-article-image,
+  .pv-guide-hero {
+    min-height: 180px;
+  }
+
+  .pv-prose {
+    max-width: 100%;
+  }
+
+  .pv-prose h2 {
+    font-size: 1.18rem;
+  }
+
+  .pv-prose p,
+  .pv-prose li {
+    font-size: 0.96rem;
+  }
+
+  .pv-modal-backdrop {
+    padding: 10px;
+    align-items: flex-start;
+  }
+
+  .pv-modal {
+    width: 100%;
+    max-height: calc(100vh - 20px);
+    padding: 16px;
+    overflow-y: auto;
+  }
+
+  .pv-modal footer {
+    flex-direction: column-reverse;
+    align-items: stretch;
+  }
+
+  .pv-textarea-with-emoji textarea {
+    padding-right: 12px;
+    padding-bottom: 48px;
+  }
+
+  .pv-textarea-with-emoji .emoji-picker-wrapper {
+    right: 10px;
+    bottom: 10px;
+  }
+
+  .pv-messages {
+    grid-template-columns: minmax(0, 1fr);
+    min-height: calc(100vh - var(--pv-topbar) - 42px);
+  }
+
+  .pv-message-list,
+  .pv-message-thread {
+    min-width: 0;
+  }
+
+  .pv-message-list,
+  .pv-chat-panel {
+    padding: 14px;
+  }
+
+  .pv-chat-row,
+  .pv-chat-input {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .pv-message-bubble {
+    max-width: 92%;
+  }
+
+  .pv-pagination {
+    flex-wrap: wrap;
+    justify-content: flex-start;
+  }
+
+  .pv-pagination span {
+    width: 100%;
+    margin-right: 0;
+  }
+}
+
+@media (max-width: 420px) {
+  :root {
+    --pv-topbar: 112px;
+  }
+
+  .pv-topbar {
+    grid-template-columns: auto auto minmax(0, 1fr) auto;
+    gap: 7px;
+    padding-inline: 10px;
+  }
+
+  .pv-brand-mark {
+    width: 40px;
+    height: 30px;
+    font-size: 0.95rem;
+  }
+
+  .pv-menu-button,
+  .pv-account .pv-icon-button,
+  .pv-avatar--small {
+    width: 36px;
+    height: 36px;
+  }
+
+  .pv-account {
+    gap: 6px;
+  }
+
+  .pv-user-chip .pv-icon {
+    display: none;
+  }
+
+  .pv-main {
+    padding-inline: 10px;
+  }
+
+  .pv-panel,
+  .pv-topic-detail,
+  .pv-reply-card,
+  .pv-vendor-hero,
+  .pv-certificate,
+  .pv-form-card,
+  .pv-announcement-row,
+  .pv-notification-hero,
+  .pv-empty-route {
+    padding: 12px;
+  }
+
+  .pv-page-header h1,
+  .pv-topic-detail h1,
+  .pv-article-hero h1,
+  .pv-empty-route h1 {
+    font-size: 1.42rem;
+  }
+}
