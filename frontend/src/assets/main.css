@@ -3029,40 +3029,84 @@ table {
 
 @media (max-width: 600px) {
   .vendor-card {
-    padding: 22px;
-    border-radius: 24px;
+    padding: 14px 16px;
+    border-radius: 16px;
+    margin-bottom: 10px;
   }
 
-  .vendor-logo {
-    width: 86px;
-    height: 86px;
-    border-radius: 18px;
+  .vendor-arrow {
+    top: 14px;
+    right: 12px;
+    width: 30px;
+    height: 30px;
+    font-size: 22px;
   }
 
-  .vendor-info h3 {
-    font-size: 26px;
-  }
-
-  .vendor-meta {
-    font-size: 15px;
-  }
-
-  .vendor-tags span {
-    font-size: 14px;
-    padding: 9px 12px;
-  }
-
-  .vendor-stats strong {
-    font-size: 28px;
-  }
-
-  .vendor-actions {
+  .vendor-top {
     gap: 12px;
   }
 
+  .vendor-logo {
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+  }
+
+  .vendor-info h3 {
+    font-size: 18px;
+    margin-bottom: 6px;
+  }
+
+  .trusted {
+    padding: 4px 10px;
+    font-size: 12px;
+  }
+
+  .vendor-meta {
+    margin-top: 8px;
+    font-size: 13px;
+  }
+
+  .vendor-tags {
+    gap: 6px;
+    margin-top: 14px;
+  }
+
+  .vendor-tags span {
+    font-size: 12px;
+    padding: 5px 10px;
+  }
+
+  .vendor-stats {
+    margin-top: 14px;
+    border-radius: 12px;
+  }
+
+  .vendor-stats div {
+    padding: 12px 14px;
+  }
+
+  .vendor-stats strong {
+    font-size: 20px;
+  }
+
+  .vendor-stats small {
+    font-size: 14px;
+  }
+
+  .vendor-stats span {
+    font-size: 13px;
+  }
+
+  .vendor-actions {
+    gap: 10px;
+    margin-top: 14px;
+  }
+
   .vendor-actions a {
-    height: 52px;
-    font-size: 15px;
+    height: 38px;
+    font-size: 13px;
+    border-radius: 10px;
   }
 }
 

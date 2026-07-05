@@ -1549,9 +1549,53 @@ interface RatingDistributionRow {
 }
 
 interface VendorProduct {
+  id?: number
+  vendorId?: number
   name: string
+  slug: string
+  category: string
+  strength: string
+  packageSize: string
+  purityLabel: string
+  description: string
+  price: number | null
+  priceLabel: string
+  currencyCode: string
+  availability: string
+  availabilityLabel: string
+  imageUrl?: string | null
+  tags: string[]
   rating: number
+  ratingLabel: string
   reviews: number
+  sortOrder: number
+  status: string
+  href?: string | null
+}
+
+interface ApiVendorProduct {
+  id?: number
+  vendor_id?: number
+  name: string
+  slug: string
+  category?: string | null
+  strength?: string | null
+  package_size?: string | null
+  purity_label?: string | null
+  description?: string | null
+  price?: number | null
+  price_label?: string | null
+  currency_code?: string | null
+  availability?: string | null
+  availability_label?: string | null
+  image_url?: string | null
+  tags?: string[]
+  average_rating?: number
+  rating_label?: string | null
+  review_count?: number
+  sort_order?: number
+  status?: string | null
+  href?: string | null
 }
 
 interface VendorContact {
@@ -1591,6 +1635,8 @@ interface UiVendor {
   lastActive: string
   responseRate: string
   avgResponseTime: string
+  productCount: number
+  products: VendorProduct[]
   topProducts: VendorProduct[]
   ratingDistribution: RatingDistributionRow[]
 }
@@ -1661,7 +1707,9 @@ interface ApiVendor {
   response_rate_label?: string | null
   avg_response_time?: string | null
   tags?: string[]
-  top_products?: VendorProduct[]
+  product_count?: number
+  products?: ApiVendorProduct[]
+  top_products?: ApiVendorProduct[]
   href?: string
   rating_distribution?: RatingDistributionRow[]
   review_items?: ApiVendorReview[]
@@ -2292,6 +2340,29 @@ const vendorPortalForm = ref({
   public_contact_notes: '',
   tags: '',
 })
+const vendorProductFormError = ref('')
+const vendorProductStatusMessage = ref('')
+const savingVendorProduct = ref(false)
+const editingVendorProductId = ref<number | null>(null)
+const vendorProductImageInput = ref<HTMLInputElement | null>(null)
+const vendorProductImageFile = ref<File | null>(null)
+const vendorProductImagePreview = ref('')
+const vendorProductForm = ref({
+  name: '',
+  slug: '',
+  category: '',
+  strength: '',
+  package_size: '',
+  purity_label: '',
+  description: '',
+  price: '',
+  currency_code: 'USD',
+  availability: 'in_stock',
+  image_url: '',
+  tags: '',
+  sort_order: '0',
+  status: 'published',
+})
 const vendorReviewStatusMessage = ref('')
 const vendorReviewFormError = ref('')
 const submittingVendorReview = ref(false)
@@ -2304,7 +2375,11 @@ const vendorReviewRatingFilter = ref('')
 const vendorReviewProductFilter = ref('')
 const vendorReviewTimeFilter = ref('all')
 const vendorReviewSort = ref<'helpful' | 'recent'>('helpful')
-const vendorDetailTab = ref<'overview' | 'reviews' | 'about'>('reviews')
+const vendorProductSearch = ref('')
+const vendorProductCategoryFilter = ref('')
+const vendorProductAvailabilityFilter = ref('')
+const vendorProductSort = ref<'featured' | 'price-low' | 'price-high' | 'name'>('featured')
+const vendorDetailTab = ref<'overview' | 'reviews' | 'products' | 'about'>('products')
 const vendorStats = ref<VendorStats>({
   vendors_reviewed: 0,
   total_reviews: 0,
@@ -4500,8 +4575,56 @@ const vendorSortLabel = computed(() => {
 const vendorReviewProductOptions = computed(() => [...new Set(apiVendorReviews.value.map(review => review.productName).filter(Boolean) as string[])])
 const vendorReviewSortLabel = computed(() => vendorReviewSort.value === 'helpful' ? 'Most Helpful' : 'Recent First')
 const detailVendorContactLinks = computed(() => detailVendor.value ? vendorContactLinks(detailVendor.value) : [])
+const vendorProductCategoryOptions = computed(() => [
+  ...new Set((detailVendor.value?.products ?? []).map(product => product.category).filter(Boolean)),
+])
+const filteredVendorProducts = computed(() => {
+  const search = vendorProductSearch.value.trim().toLowerCase()
+  const products = [...(detailVendor.value?.products ?? [])]
+    .filter(product => product.status === 'published')
+    .filter(product => !search || [product.name, product.category, product.strength, product.description, ...product.tags].some(value => value.toLowerCase().includes(search)))
+    .filter(product => !vendorProductCategoryFilter.value || product.category === vendorProductCategoryFilter.value)
+    .filter(product => !vendorProductAvailabilityFilter.value || product.availability === vendorProductAvailabilityFilter.value)
+
+  return products.sort((a, b) => {
+    if (vendorProductSort.value === 'price-low') return (a.price ?? Number.MAX_SAFE_INTEGER) - (b.price ?? Number.MAX_SAFE_INTEGER)
+    if (vendorProductSort.value === 'price-high') return (b.price ?? -1) - (a.price ?? -1)
+    if (vendorProductSort.value === 'name') return a.name.localeCompare(b.name)
+    return a.sortOrder - b.sortOrder || b.rating - a.rating || b.reviews - a.reviews || a.name.localeCompare(b.name)
+  })
+})
+const vendorProductManageList = computed(() => [...(apiMyVendor.value?.products ?? [])].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)))
+
+function mapVendorProduct(item: ApiVendorProduct): VendorProduct {
+  return {
+    id: item.id,
+    vendorId: item.vendor_id,
+    name: item.name,
+    slug: item.slug,
+    category: item.category ?? '',
+    strength: item.strength ?? '',
+    packageSize: item.package_size ?? '',
+    purityLabel: item.purity_label ?? '',
+    description: item.description ?? '',
+    price: item.price ?? null,
+    priceLabel: item.price_label ?? '',
+    currencyCode: item.currency_code ?? 'USD',
+    availability: item.availability ?? 'in_stock',
+    availabilityLabel: item.availability_label ?? 'In stock',
+    imageUrl: assetUrl(item.image_url),
+    tags: item.tags ?? [],
+    rating: item.average_rating ?? 0,
+    ratingLabel: item.rating_label ?? (item.average_rating !== undefined ? Number(item.average_rating).toFixed(1) : '0.0'),
+    reviews: item.review_count ?? 0,
+    sortOrder: item.sort_order ?? 0,
+    status: item.status ?? 'published',
+    href: item.href ?? null,
+  }
+}
 
 function mapVendor(item: ApiVendor): UiVendor {
+  const products = (item.products ?? []).map(mapVendorProduct)
+
   return {
     id: item.id,
     ownerUserId: item.owner_user_id ?? null,
@@ -4537,7 +4660,9 @@ function mapVendor(item: ApiVendor): UiVendor {
     lastActive: item.last_active_label ?? '',
     responseRate: item.response_rate_label ?? '',
     avgResponseTime: item.avg_response_time ?? '',
-    topProducts: item.top_products ?? [],
+    productCount: item.product_count ?? products.filter(product => product.status === 'published').length,
+    products,
+    topProducts: (item.top_products ?? []).map(mapVendorProduct),
     ratingDistribution: item.rating_distribution ?? [],
   }
 }
