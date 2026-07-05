@@ -321,47 +321,20 @@
 
   <section v-else-if="page === 'discussionDetail'" class="pv-page">
     <div v-if="detailDiscussion" class="thread-wrap">
-      <article class="post-card original-post">
-        <div class="post-left reply-left">
-          <div class="avatar">
-            <span v-if="detailDiscussion.avatarUrl" class="img-wrap"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
-            <span v-else>{{ detailDiscussion.initial }}</span>
-            <span class="online-dot"></span>
-          </div>
-          <div class="reply-name">{{ detailDiscussion.author }}</div>
-        </div>
-        <div class="post-main">
-          <div class="reply-top">
-            <div class="reply-meta">
-              <span>{{ detailDiscussion.time }}</span>
-              <span v-if="detailDiscussion.tag" class="small-badge">{{ detailDiscussion.tag }}</span>
+      <article class="op-card">
+        <header class="op-header">
+          <span v-if="detailDiscussion.avatarUrl" class="op-avatar"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
+          <span v-else class="op-avatar op-avatar--letter">{{ detailDiscussion.initial }}</span>
+          <div class="op-user">
+            <div>
+              <strong>{{ detailDiscussion.author }}</strong>
+              <span class="verified">✓</span>
             </div>
+            <span>{{ detailDiscussion.authorUsername ? '@' + detailDiscussion.authorUsername : 'Member' }}</span>
           </div>
-          <h1>{{ detailDiscussion.title }}</h1>
-          <div v-if="!isEditingDiscussion" class="body-text">
-            <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>
-          </div>
-          <div v-else class="thread-edit-form">
-            <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
-            <input v-model="editDiscussionTitle" required maxlength="160">
-            <textarea v-model="editDiscussionBody" required rows="6" maxlength="10000"></textarea>
-            <div class="pv-form-actions">
-              <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
-              <button type="button" class="pv-primary-button" :disabled="discussionEditSaving" @click="saveEditDiscussion">{{ discussionEditSaving ? 'Saving...' : 'Save Changes' }}</button>
-            </div>
-          </div>
-          <div class="divider"></div>
-          <div class="actions">
-            <div class="vote-box">
-              <button class="vote" :class="{ active: detailDiscussion.viewerVote === 1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(1)">▲</button>
-              <span>{{ detailDiscussion.voteScore }}</span>
-              <button class="vote" :class="{ active: detailDiscussion.viewerVote === -1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(-1)">▼</button>
-            </div>
-            <div class="action-links">
-              <button @click="jumpToReplyComposer">↩ Reply</button>
-              <button @click="prepareReply(null, true)">❞ Quote</button>
-            </div>
-            <div class="dots-corner">
+          <div class="op-meta">
+            <span>{{ detailDiscussion.time }}</span>
+            <div class="dots-corner" style="position:static">
               <button class="dots" @click.stop="togglePostMenu">⋯</button>
               <div v-if="showPostMenu" class="dots-dropdown" @click.stop>
                 <button @click="openDiscussionReport">Report</button>
@@ -370,7 +343,33 @@
               </div>
             </div>
           </div>
+        </header>
+        <div class="op-badges">
+          <span v-if="detailDiscussion.tag">▰ {{ detailDiscussion.tag }}</span>
+          <span>★ Original Post</span>
         </div>
+        <h1>{{ detailDiscussion.title }}</h1>
+        <div v-if="!isEditingDiscussion" class="op-content">
+          <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>
+        </div>
+        <div v-else class="thread-edit-form">
+          <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
+          <input v-model="editDiscussionTitle" required maxlength="160">
+          <textarea v-model="editDiscussionBody" required rows="6" maxlength="10000"></textarea>
+          <div class="pv-form-actions">
+            <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
+            <button type="button" class="pv-primary-button" :disabled="discussionEditSaving" @click="saveEditDiscussion">{{ discussionEditSaving ? 'Saving...' : 'Save Changes' }}</button>
+          </div>
+        </div>
+        <footer class="op-actions">
+          <div class="vote-pill">
+            <button :class="{ active: detailDiscussion.viewerVote === 1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(1)">▲</button>
+            <strong>{{ detailDiscussion.voteScore }}</strong>
+            <button :class="{ active: detailDiscussion.viewerVote === -1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(-1)">▼</button>
+          </div>
+          <button @click="jumpToReplyComposer">↩ Reply</button>
+          <button @click="prepareReply(null, true)">❞ Quote</button>
+        </footer>
       </article>
 
       <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
