@@ -179,36 +179,6 @@
 
         <article class="pv-panel">
           <header class="pv-panel-header">
-            <h2><span class="pv-flame"> </span>Trending Discussions</h2>
-            <router-link to="/discussions" class="pv-small-button">View all</router-link>
-          </header>
-          <div class="pv-topic-list">
-            <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No trending discussions yet.</p>
-            <router-link v-for="topic in discussions.slice(0, 4)" :key="topic.title" :to="topic.href" class="topic-card topic-card--mini">
-              <aside class="author-panel">
-                <div class="avatar-wrap">
-                  <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
-                  <span v-else class="avatar" :class="topic.color">{{ topic.initial }}</span>
-                </div>
-                <h4>{{ topic.author }}</h4>
-              </aside>
-              <div class="topic-body">
-                <div class="topic-head-compact">
-                  <h2 class="topic-title-compact">{{ topic.title }} <span v-if="topic.tag" class="topic-type-compact">{{ topic.tag }}</span></h2>
-                  <span class="topic-time-compact">{{ topic.time }}</span>
-                </div>
-                <div class="topic-stats-compact">
-                  <span>💬 {{ topic.replies }}</span>
-                  <span>👁 {{ topic.views }}</span>
-                  <span>♡ {{ topic.voteScore }}</span>
-                </div>
-              </div>
-            </router-link>
-          </div>
-        </article>
-
-        <article class="pv-panel">
-          <header class="pv-panel-header">
             <h2><PvIcon name="flask" /> Latest Lab Results</h2>
             <router-link to="/lab-results" class="pv-small-button">View all</router-link>
           </header>
