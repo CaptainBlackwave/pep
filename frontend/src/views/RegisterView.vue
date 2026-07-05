@@ -53,21 +53,6 @@
           </span>
         </label>
 
-        <label for="access-code">
-          Access Code
-          <span class="pv-input-shell">
-            <PvIcon name="lock" />
-            <input
-              id="access-code"
-              v-model="form.access_code"
-              type="text"
-              required
-              autocomplete="one-time-code"
-              placeholder="Enter your private access code"
-            >
-          </span>
-        </label>
-
         <label for="password">
           Password
           <span class="pv-input-shell">
@@ -141,7 +126,6 @@ const form = ref({
   email: '',
   password: '',
   password_confirmation: '',
-  access_code: '',
 })
 
 async function handleRegister() {

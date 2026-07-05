@@ -53,16 +53,18 @@ class AuthController extends Controller
         // Wrap user creation, profile seeding, and role assignment in a transaction.
         // A partial failure (e.g. role table missing) must not leave a user without a profile.
         $user = DB::transaction(function () use ($validated, $firstRank, $firstLocation) {
-            $accessCode = CommunityAccessCode::query()
-                ->available()
-                ->where('code_hash', CommunityAccessCode::hashCode($validated['access_code']))
-                ->lockForUpdate()
-                ->first();
+            if (!empty($validated['access_code'])) {
+                $accessCode = CommunityAccessCode::query()
+                    ->available()
+                    ->where('code_hash', CommunityAccessCode::hashCode($validated['access_code']))
+                    ->lockForUpdate()
+                    ->first();
 
-            if (!$accessCode) {
-                throw ValidationException::withMessages([
-                    'access_code' => ['The access code is invalid or has already been used.'],
-                ]);
+                if (!$accessCode) {
+                    throw ValidationException::withMessages([
+                        'access_code' => ['The access code is invalid or has already been used.'],
+                    ]);
+                }
             }
 
             // Create identity-only — no game stats on the users table.
@@ -101,7 +103,9 @@ class AuthController extends Controller
                 $user->assignRole('user');
             }
 
-            $accessCode->markUsedBy($user);
+            if (isset($accessCode)) {
+                $accessCode->markUsedBy($user);
+            }
 
             return $user;
         });

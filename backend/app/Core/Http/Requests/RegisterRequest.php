@@ -27,11 +27,12 @@ class RegisterRequest extends FormRequest
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
             'access_code' => [
-                'required',
+                'sometimes',
+                'nullable',
                 'string',
                 'max:80',
                 function (string $attribute, mixed $value, \Closure $fail): void {
-                    if (!CommunityAccessCode::isUsableCode((string) $value)) {
+                    if ($value && !CommunityAccessCode::isUsableCode((string) $value)) {
                         $fail('The access code is invalid or has already been used.');
                     }
                 },
