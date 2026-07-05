@@ -147,7 +147,7 @@ const form = ref({
 
 onMounted(async () => {
   try {
-    const res = await api.get('/api/v1/settings/public')
+    const res = await api.get<{ access_code_required?: boolean }>('/api/v1/settings/public')
     showAccessCode.value = res.data.access_code_required === true
   } catch {
     // ignore

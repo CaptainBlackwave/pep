@@ -357,12 +357,12 @@
         </div>
         <footer class="op-actions">
           <div class="vote-pill">
-            <button :class="{ active: detailDiscussion.viewerVote === 1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(1)">▲</button>
+            <button :class="{ active: detailDiscussion.viewerVote === 1 }" :disabled="discussionVoteLoading" aria-label="Upvote discussion" title="Upvote" @click="voteOnDiscussion(1)"><PvIcon name="vote-up" /></button>
             <strong>{{ detailDiscussion.voteScore }}</strong>
-            <button :class="{ active: detailDiscussion.viewerVote === -1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(-1)">▼</button>
+            <button :class="{ active: detailDiscussion.viewerVote === -1 }" :disabled="discussionVoteLoading" aria-label="Downvote discussion" title="Downvote" @click="voteOnDiscussion(-1)"><PvIcon name="vote-down" /></button>
           </div>
-          <button @click="jumpToReplyComposer">↩ Reply</button>
-          <button @click="prepareReply(null, true)">❞ Quote</button>
+          <button aria-label="Reply to discussion" title="Reply" @click="jumpToReplyComposer"><PvIcon name="reply" /><span>Reply</span></button>
+          <button aria-label="Quote discussion" title="Quote" @click="prepareReply(null, true)"><PvIcon name="quote" /><span>Quote</span></button>
         </footer>
       </article>
 
@@ -395,13 +395,13 @@
           <div class="divider"></div>
           <div class="actions">
             <div class="vote-box small">
-              <button class="vote" :class="{ active: reply.viewerVote === 1 }" :disabled="replyVoteLoading === `${reply.id}:1`" @click="voteOnReply(reply, 1)">▲</button>
+              <button class="vote" :class="{ active: reply.viewerVote === 1 }" :disabled="replyVoteLoading === `${reply.id}:1`" aria-label="Upvote reply" title="Upvote" @click="voteOnReply(reply, 1)"><PvIcon name="vote-up" /></button>
               <span>{{ reply.votes }}</span>
-              <button class="vote" :class="{ active: reply.viewerVote === -1 }" :disabled="replyVoteLoading === `${reply.id}:-1`" @click="voteOnReply(reply, -1)">▼</button>
+              <button class="vote" :class="{ active: reply.viewerVote === -1 }" :disabled="replyVoteLoading === `${reply.id}:-1`" aria-label="Downvote reply" title="Downvote" @click="voteOnReply(reply, -1)"><PvIcon name="vote-down" /></button>
             </div>
             <div class="action-links">
-              <button @click="prepareReply(reply)">↩ Reply</button>
-              <button @click="prepareReply(reply, true)">❞ Quote</button>
+              <button aria-label="Reply to this post" title="Reply" @click="prepareReply(reply)"><PvIcon name="reply" /><span class="action-label">Reply</span></button>
+              <button aria-label="Quote this post" title="Quote" @click="prepareReply(reply, true)"><PvIcon name="quote" /><span class="action-label">Quote</span></button>
             </div>
             <div class="dots-corner">
               <button class="dots" @click.stop="toggleReplyMenu(index)">⋯</button>
@@ -3714,7 +3714,14 @@ function jumpToReplyComposer(): void {
   document.getElementById('reply-composer')?.scrollIntoView({ behavior: 'smooth', block: 'center' })
 }
 
-function prepareReply(reply: UiReply, quote = false): void {
+function prepareReply(reply: UiReply | null, quote = false): void {
+  if (!reply) {
+    const text = detailParagraphs.value.join('\n') || detailDiscussion.value?.title || ''
+    replyBody.value = quote && text ? `> ${text}\n\n` : ''
+    jumpToReplyComposer()
+    return
+  }
+
   replyBody.value = quote ? `> ${reply.text}\n\n` : `@${reply.author} `
   jumpToReplyComposer()
 }
@@ -5649,7 +5656,11 @@ function linkifyText(text: string): string {
       return `<a href="${url}" target="_blank" rel="noreferrer" class="pv-link">${url}</a>`
     }
   )
-  return withLinks
+
+  return withLinks.replace(
+    /(^|[^\w@])@([A-Za-z0-9_]{3,40})/g,
+    (_match, prefix: string, username: string) => `${prefix}<a href="/members/${username}" class="pv-mention">@${username}</a>`
+  )
 }
 
 const nextNotification = computed(() => currentNotificationIndex.value >= 0 && currentNotificationIndex.value < notifications.value.length - 1 ? notifications.value[currentNotificationIndex.value + 1] : null)

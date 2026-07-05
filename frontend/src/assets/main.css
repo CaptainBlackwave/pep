@@ -1194,6 +1194,9 @@ table {
 }
 
 .op-actions > button {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
   border: 0;
   background: transparent;
   color: #cbd5e1;
@@ -1215,6 +1218,8 @@ table {
 }
 
 .vote-pill button {
+  display: inline-grid;
+  place-items: center;
   width: 38px;
   height: 36px;
   border: 0;
@@ -1234,6 +1239,14 @@ table {
   text-align: center;
   color: #a855f7;
   font-size: 15px;
+}
+
+.vote-pill .pv-icon,
+.vote .pv-icon,
+.action-links .pv-icon,
+.op-actions .pv-icon {
+  width: 1em;
+  height: 1em;
 }
 
 @media (max-width: 600px) {
@@ -1580,6 +1593,8 @@ table {
 }
 
 .vote {
+  display: inline-grid;
+  place-items: center;
   width: 18px;
   height: 18px;
   border: 0;
@@ -1601,6 +1616,9 @@ table {
 }
 
 .action-links button {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
   border: 0;
   background: transparent;
   color: #c3c8da;
@@ -1621,14 +1639,21 @@ table {
   flex-direction: column;
   align-items: center;
   border-right: 1px solid rgba(255, 255, 255, 0.1);
+  min-width: 0;
+  overflow: hidden;
 }
 
 .reply-name {
+  width: 100%;
   margin-top: 2px;
   font-size: 8px;
   font-weight: 600;
   color: #fff;
   line-height: 1;
+  overflow: hidden;
+  text-align: center;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .reply-meta {
@@ -5627,6 +5652,18 @@ a[target="_blank"] {
   text-decoration: underline;
 }
 
+.pv-mention {
+  display: inline-block;
+  color: #c084fc;
+  font-weight: 700;
+  text-decoration: none;
+}
+
+.pv-mention:hover {
+  color: #e9d5ff;
+  text-decoration: underline;
+}
+
 @media (max-width: 700px) {
   .thread-wrap {
     padding: 0 10px;
@@ -5723,12 +5760,17 @@ a[target="_blank"] {
   }
 
   .action-links button {
-    font-size: 0;
+    width: 30px;
+    height: 28px;
+    justify-content: center;
     padding: 0;
+    border-radius: 8px;
+    background: rgba(255,255,255,.035);
+    font-size: 14px;
   }
 
-  .action-links button::first-letter {
-    font-size: 18px;
+  .action-links .action-label {
+    display: none;
   }
 
   .reply-post {

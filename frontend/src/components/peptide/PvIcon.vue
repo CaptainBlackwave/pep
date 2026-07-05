@@ -60,6 +60,10 @@ const icons: Record<string, string[]> = {
   menu: ['M4 6h16', 'M4 12h16', 'M4 18h16'],
   close: ['M6 6l12 12', 'M18 6 6 18'],
   emoji: ['M12 22a10 10 0 1 0 0-20 10 10 0 0 0 0 20Z', 'M8 10h.01', 'M16 10h.01', 'M9 16a3.5 3.5 0 0 0 6 0'],
+  'vote-up': ['M12 5 5 12h4v7h6v-7h4L12 5Z'],
+  'vote-down': ['M12 19 5 12h4V5h6v7h4l-7 7Z'],
+  reply: ['M9 17 4 12l5-5', 'M20 18v-2a4 4 0 0 0-4-4H4'],
+  quote: ['M7 7h5v5c0 4-2 6-6 7', 'M17 7h4v5c0 4-2 6-6 7'],
 }
 
 const iconPaths = computed(() => icons[props.name] ?? icons.question)
