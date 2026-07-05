@@ -58,6 +58,7 @@ class CommunityDiscussionResource extends JsonResource
                 'username' => $this->user?->username,
                 'initial' => Str::upper(Str::substr($authorName, 0, 1)),
                 'avatar' => $this->user?->profile_picture ?? $this->user?->profile_photo_path ?? null,
+                'is_online' => $this->user?->last_active && $this->user->last_active->gt(now()->subMinutes(15)),
             ],
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

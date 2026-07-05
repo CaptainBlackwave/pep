@@ -49,6 +49,7 @@ class CommunityDiscussionReplyResource extends JsonResource
                 'initial' => Str::upper(Str::substr($authorName, 0, 1)),
                 'badge' => $roleName ? Str::headline($roleName) : null,
                 'avatar' => $this->user?->profile_picture ?? $this->user?->profile_photo_path ?? null,
+                'is_online' => $this->user?->last_active && $this->user->last_active->gt(now()->subMinutes(15)),
             ],
             'created_at' => $this->created_at?->toIso8601String(),
             'time_ago' => $this->created_at?->diffForHumans(),

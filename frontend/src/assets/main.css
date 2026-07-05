@@ -2931,6 +2931,22 @@ table {
   font-size: 28px;
 }
 
+.online-indicator {
+  position: absolute;
+  right: -1px;
+  bottom: 1px;
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: #00d68f;
+  border: 2px solid #090d18;
+}
+
+.avatar:has(.online-indicator),
+.op-avatar:has(.online-indicator) {
+  position: relative;
+}
+
 .vendor-hero-bg {
   position: absolute;
   inset: 0;

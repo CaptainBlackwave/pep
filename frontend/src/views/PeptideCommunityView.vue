@@ -323,6 +323,7 @@
         <header class="op-header">
           <span v-if="detailDiscussion.avatarUrl" class="op-avatar"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
           <span v-else class="op-avatar op-avatar--letter">{{ detailDiscussion.initial }}</span>
+          <span v-if="detailDiscussion.authorOnline" class="online-indicator"></span>
           <div class="op-user">
             <strong>{{ detailDiscussion.author }}</strong>
             <span class="verified">✓</span>
@@ -370,6 +371,7 @@
           <div class="avatar letter-avatar">
             <span v-if="reply.avatarUrl" class="img-wrap"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author"></span>
             <span v-else>{{ reply.initial }}</span>
+            <span v-if="reply.authorOnline" class="online-indicator"></span>
           </div>
           <div class="reply-name">{{ reply.author }}</div>
         </div>
@@ -1508,6 +1510,7 @@ interface UiDiscussion {
   excerpt: string
   author: string
   authorUsername: string
+  authorOnline: boolean
   authorId?: number
   time: string
   replies: number
@@ -1558,6 +1561,7 @@ interface UiReply {
   attachmentMeta: Record<string, unknown>
   viewerVote: -1 | 0 | 1
   authorId?: number
+  authorOnline: boolean
 }
 
 interface ApiDiscussion {
@@ -1575,7 +1579,7 @@ interface ApiDiscussion {
   is_pinned?: boolean
   is_locked?: boolean
   category?: { name?: string | null; slug?: string | null; color?: string | null } | null
-  author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; avatar?: string | null } | null
+  author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; avatar?: string | null; is_online?: boolean } | null
   vote_score?: number
   viewer_vote?: number
   reply_items?: ApiReply[]
@@ -1607,7 +1611,7 @@ interface ApiReply {
   votes?: number
   viewer_vote?: number
   time_ago?: string | null
-  author?: { id?: number; name?: string | null; initial?: string | null; badge?: string | null; avatar?: string | null } | null
+  author?: { id?: number; name?: string | null; initial?: string | null; badge?: string | null; avatar?: string | null; is_online?: boolean } | null
 }
 
 interface DiscussionIndexResponse {
@@ -4265,6 +4269,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     excerpt: item.excerpt ?? item.body?.slice(0, 140) ?? '',
     author,
     authorUsername: item.author?.username ?? author,
+    authorOnline: item.author?.is_online ?? false,
     authorId: item.author?.id,
     avatarUrl,
     time: item.time_ago ?? '',
@@ -4313,6 +4318,7 @@ function mapReply(item: ApiReply): UiReply {
     attachmentMeta: item.attachment_meta ?? {},
     votes: Number(item.votes ?? 0),
     viewerVote: normalizedVote(item.viewer_vote),
+    authorOnline: item.author?.is_online ?? false,
   }
 }
 
