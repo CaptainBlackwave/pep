@@ -54,7 +54,7 @@
             </router-link>
             <a
               v-if="authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')"
-              href="/admin"
+              href="/admin/dashboard"
               @click="accountMenuOpen = false"
             >
               Admin Panel
