@@ -659,6 +659,16 @@ table {
   background: rgba(255, 255, 255, 0.025);
 }
 
+.pv-icon-button--danger {
+  border-color: rgba(239, 68, 68, 0.3);
+  color: #ef4444;
+}
+
+.pv-icon-button--danger:hover {
+  background: rgba(239, 68, 68, 0.1);
+  border-color: rgba(239, 68, 68, 0.5);
+}
+
 .pv-badge {
   position: absolute;
   top: 1px;
