@@ -905,15 +905,52 @@
               <p class="pv-vendor-meta-line">Member since {{ detailVendor.since }} <span>·</span> Last active {{ detailVendor.lastActive }}</p>
               <span class="pv-chip-row"><span v-for="chip in detailVendor.chips" :key="chip"><PvIcon :name="vendorChipIcon(chip)" /> {{ chip }}</span></span>
             </div>
-            <div class="pv-vendor-actions"><router-link :to="`${detailVendor.href}/review`" class="pv-primary-button"><PvIcon name="edit" /> Write Review</router-link><router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="pv-small-button">Manage Profile <PvIcon name="settings" /></router-link><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a></div>
+            <div class="pv-vendor-actions"><router-link :to="`${detailVendor.href}/review`" class="pv-primary-button"><PvIcon name="edit" /> Write Review</router-link><button v-if="hasVendorContact(detailVendor)" class="pv-small-button" type="button" @click="vendorDetailTab = 'about'"><PvIcon name="mail" /> Contact Vendor</button><router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="pv-small-button">Manage Profile <PvIcon name="settings" /></router-link><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a></div>
           </div>
         </article>
-        <div class="pv-tabs pv-tabs--line"><button :class="{ active: vendorDetailTab === 'overview' }" @click="vendorDetailTab = 'overview'">Overview</button><button :class="{ active: vendorDetailTab === 'reviews' }" @click="vendorDetailTab = 'reviews'">Reviews ({{ detailVendor.reviews }})</button><button :class="{ active: vendorDetailTab === 'about' }" @click="vendorDetailTab = 'about'">About</button></div>
+        <div class="pv-tabs pv-tabs--line"><button :class="{ active: vendorDetailTab === 'overview' }" @click="vendorDetailTab = 'overview'">Overview</button><button :class="{ active: vendorDetailTab === 'reviews' }" @click="vendorDetailTab = 'reviews'">Reviews ({{ detailVendor.reviews }})</button><button :class="{ active: vendorDetailTab === 'products' }" @click="vendorDetailTab = 'products'">Products ({{ detailVendor.productCount }})</button><button :class="{ active: vendorDetailTab === 'about' }" @click="vendorDetailTab = 'about'">About</button></div>
         <article v-if="vendorDetailTab === 'overview'" class="pv-panel pv-review-summary">
           <div class="pv-score-block"><strong>{{ detailVendor.rating }}</strong><span class="pv-stars">★★★★★</span><small>{{ detailVendor.reviews }} reviews</small></div>
           <div class="pv-bars pv-bars--wide"><span v-for="row in detailVendor.ratingDistribution" :key="row.rating">{{ row.rating }} stars <b :style="{ '--w': `${row.percent}%` }"></b><em>{{ row.percent }}% ({{ row.count }})</em></span></div>
           <div class="pv-rate-box"><h3>Rate this vendor</h3><p>Share your experience to help others in the community.</p><div class="pv-stars pv-stars--big">☆☆☆☆☆</div><router-link :to="`${detailVendor.href}/review`" class="pv-primary-button pv-full">Write a Review</router-link></div>
         </article>
+        <template v-if="vendorDetailTab === 'products'">
+          <article class="pv-panel pv-product-catalog-panel">
+            <header class="pv-panel-header">
+              <div>
+                <h2>Product Catalog</h2>
+                <p class="pv-muted">{{ detailVendor.productCount }} products listed. Purchases happen off-site through vendor contact only.</p>
+              </div>
+              <button v-if="hasVendorContact(detailVendor)" class="pv-small-button" type="button" @click="vendorDetailTab = 'about'"><PvIcon name="mail" /> Contact Vendor</button>
+            </header>
+            <div class="pv-toolbar pv-product-toolbar">
+              <label class="pv-input-search">
+                <input v-model="vendorProductSearch" placeholder="Search products..." type="search">
+                <PvIcon name="search" />
+              </label>
+              <label class="pv-compact-select">Category<select v-model="vendorProductCategoryFilter"><option value="">All Categories</option><option v-for="category in vendorProductCategoryOptions" :key="category" :value="category">{{ category }}</option></select></label>
+              <label class="pv-compact-select">Availability<select v-model="vendorProductAvailabilityFilter"><option value="">All Availability</option><option value="in_stock">In stock</option><option value="limited">Limited</option><option value="out_of_stock">Out of stock</option></select></label>
+              <label class="pv-compact-select">Sort<select v-model="vendorProductSort"><option value="featured">Featured</option><option value="price-low">Price low to high</option><option value="price-high">Price high to low</option><option value="name">Name A-Z</option></select></label>
+            </div>
+            <p v-if="filteredVendorProducts.length === 0" class="pv-muted">No public products match these filters.</p>
+            <div class="pv-product-grid">
+              <article v-for="product in filteredVendorProducts" :key="product.id ?? product.slug" class="pv-product-card">
+                <span class="pv-product-card-image"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span>
+                <span class="pv-tag" :class="product.availability === 'out_of_stock' ? 'avoid' : product.availability === 'limited' ? 'caution' : 'trusted'">{{ product.availabilityLabel }}</span>
+                <h3>{{ product.name }}</h3>
+                <p class="pv-product-meta">{{ [product.strength, product.category, product.packageSize].filter(Boolean).join(' · ') }}</p>
+                <p v-if="product.description" class="pv-muted">{{ product.description }}</p>
+                <span class="pv-stars"><template v-if="product.reviews > 0">★★★★★ <em>{{ product.ratingLabel }} ({{ product.reviews }})</em></template><template v-else>No product reviews yet</template></span>
+                <span class="pv-chip-row"><span v-for="tag in product.tags" :key="tag">{{ tag }}</span></span>
+                <footer>
+                  <strong>{{ product.priceLabel || 'Contact for price' }}</strong>
+                  <button class="pv-small-button" type="button" @click="vendorDetailTab = 'about'"><PvIcon name="mail" /> Contact Vendor</button>
+                </footer>
+              </article>
+            </div>
+          </article>
+          <article class="pv-alert pv-alert--compact"><PvIcon name="shield" /> Product listings are informational only. This site does not process orders, carts, payments, shipping, refunds, or transactions.</article>
+        </template>
         <template v-if="vendorDetailTab === 'reviews'">
           <div class="pv-toolbar pv-vendor-review-toolbar">
             <label class="pv-compact-select">Rating<select v-model="vendorReviewRatingFilter"><option value="">All Ratings</option><option v-for="rating in [5, 4, 3, 2, 1]" :key="rating" :value="String(rating)">{{ rating }} stars</option></select></label>
@@ -976,7 +1013,7 @@
           <p v-if="detailVendor.contact.publicNotes" class="pv-muted">{{ detailVendor.contact.publicNotes }}</p>
           <p class="pv-muted">Vendor contact details are for support and profile verification context only.</p>
         </article>
-        <article class="pv-panel"><h2>Top Rated Products</h2><div class="pv-ranked-list"><span v-for="product in detailVendor.topProducts" :key="product.name" class="pv-ranked-row"><span class="pv-vendor-logo"><PvIcon name="flask" /></span><strong>{{ product.name }}</strong><span>{{ product.rating }} ★ ({{ product.reviews }})</span></span></div><button class="pv-small-button pv-full" @click="vendorReviewProductFilter = ''; jumpToVendorReviews()">View all products</button></article>
+        <article class="pv-panel"><h2>Top Products</h2><div class="pv-ranked-list"><span v-for="product in detailVendor.topProducts" :key="product.slug || product.name" class="pv-ranked-row"><span class="pv-vendor-logo"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span><strong>{{ product.name }}</strong><span>{{ product.priceLabel || product.availabilityLabel }}</span></span></div><button class="pv-small-button pv-full" @click="vendorDetailTab = 'products'">View all products</button></article>
         <article class="pv-panel"><h2>Active Discussions</h2><div class="pv-mini-list"><router-link v-for="topic in discussions.slice(0, 3)" :key="topic.title" :to="topic.href" class="pv-mini-row"><PvIcon name="discussions" /><span><strong>{{ topic.title }}</strong></span><span>{{ topic.replies }}</span></router-link></div><router-link class="pv-small-button pv-full" to="/discussions">View all discussions</router-link></article>
         <article class="pv-panel"><h2>About {{ detailVendor.name }}</h2><p class="pv-muted">{{ detailVendor.description }}</p><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a></article>
       </aside>
