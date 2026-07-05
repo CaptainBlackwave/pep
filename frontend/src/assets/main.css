@@ -1076,6 +1076,7 @@ table {
 }
 
 .post-card {
+  position: relative;
   display: grid;
   grid-template-columns: 44px 1fr;
   gap: 10px;
@@ -1241,6 +1242,28 @@ table {
 .dots-wrap {
   position: relative;
   display: inline-flex;
+}
+
+.dots-corner {
+  position: absolute;
+  right: 14px;
+  top: 14px;
+  z-index: 5;
+}
+
+.dots-corner .dots {
+  font-size: 20px;
+  opacity: 0.5;
+}
+
+.dots-corner .dots:hover {
+  opacity: 1;
+}
+
+.dots-corner .dots-dropdown {
+  right: 0;
+  top: 100%;
+  margin-top: 4px;
 }
 
 .dots-dropdown {

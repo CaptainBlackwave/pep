@@ -370,13 +370,13 @@
             <div class="action-links">
               <button @click="jumpToReplyComposer">↩ Reply</button>
               <button @click="prepareReply(null, true)">❞ Quote</button>
-              <div class="dots-wrap">
-                <button class="dots" @click.stop="togglePostMenu">⋯</button>
-                <div v-if="showPostMenu" class="dots-dropdown" @click.stop>
-                  <button @click="openDiscussionReport">Report</button>
-                  <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="startEditDiscussion">Edit</button>
-                  <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="deleteDiscussion">Delete</button>
-                </div>
+            </div>
+            <div class="dots-corner">
+              <button class="dots" @click.stop="togglePostMenu">⋯</button>
+              <div v-if="showPostMenu" class="dots-dropdown" @click.stop>
+                <button @click="openDiscussionReport">Report</button>
+                <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="startEditDiscussion">Edit</button>
+                <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="deleteDiscussion">Delete</button>
               </div>
             </div>
           </div>
@@ -419,12 +419,12 @@
             <div class="action-links">
               <button @click="prepareReply(reply)">↩ Reply</button>
               <button @click="prepareReply(reply, true)">❞ Quote</button>
-              <div class="dots-wrap">
-                <button class="dots" @click.stop="toggleReplyMenu(index)">⋯</button>
-                <div v-if="activeReplyMenu === index" class="dots-dropdown" @click.stop>
-                  <button @click="openReplyReport(reply)">Report</button>
-                  <button v-if="authStore.user?.id === reply.authorId" @click="deleteReply(reply)">Delete</button>
-                </div>
+            </div>
+            <div class="dots-corner">
+              <button class="dots" @click.stop="toggleReplyMenu(index)">⋯</button>
+              <div v-if="activeReplyMenu === index" class="dots-dropdown" @click.stop>
+                <button @click="openReplyReport(reply)">Report</button>
+                <button v-if="authStore.user?.id === reply.authorId" @click="deleteReply(reply)">Delete</button>
               </div>
             </div>
           </div>
