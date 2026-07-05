@@ -36,6 +36,14 @@
       <label>
         Message
         <div class="pv-textarea-with-emoji">
+          <div class="pv-format-bar">
+            <button type="button" class="pv-format-btn" title="Bold" @click="wrapText('newDiscussion.body', '**')"><strong>B</strong></button>
+            <button type="button" class="pv-format-btn" title="Italic" @click="wrapText('newDiscussion.body', '*')"><em>I</em></button>
+            <button type="button" class="pv-format-btn" title="Strikethrough" @click="wrapText('newDiscussion.body', '~~')"><s>S</s></button>
+            <span class="pv-format-sep"></span>
+            <button type="button" class="pv-format-btn" title="Link" @click="wrapLink('newDiscussion.body')">🔗</button>
+            <button type="button" class="pv-format-btn" title="List" @click="insertAtCursor('newDiscussion.body', '\n- ')">☰</button>
+          </div>
           <textarea v-model="newDiscussion.body" required rows="7" maxlength="10000" placeholder="Share the details, context, and what kind of help or feedback you want."></textarea>
           <EmojiPicker v-model="newDiscussion.body" />
         </div>
@@ -421,6 +429,14 @@
         <div class="reply-composer-head">
           <strong>Reply as {{ accountName() }}</strong>
           <small>{{ replyBody.length }}/8000</small>
+        </div>
+        <div class="pv-format-bar">
+          <button type="button" class="pv-format-btn" title="Bold" @click="wrapText('replyBody', '**')"><strong>B</strong></button>
+          <button type="button" class="pv-format-btn" title="Italic" @click="wrapText('replyBody', '*')"><em>I</em></button>
+          <button type="button" class="pv-format-btn" title="Strikethrough" @click="wrapText('replyBody', '~~')"><s>S</s></button>
+          <span class="pv-format-sep"></span>
+          <button type="button" class="pv-format-btn" title="Link" @click="wrapLink('replyBody')">🔗</button>
+          <button type="button" class="pv-format-btn" title="List" @click="insertAtCursor('replyBody', '\n- ')">☰</button>
         </div>
         <textarea v-model="replyBody" maxlength="8000" placeholder="Write a reply..." rows="4"></textarea>
         <div v-if="replyAttachmentFile || replyAttachmentGifUrl" class="pv-attachment-preview">
@@ -6274,6 +6290,7 @@ function formatText(text: string): string {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
     .replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')
     .replace(/\*(.+?)\*/g, '<em>$1</em>')
+    .replace(/~~(.+?)~~/g, '<s>$1</s>')
     .replace(/### (.+)/g, '<h3>$1</h3>')
     .replace(/## (.+)/g, '<h2>$1</h2>')
     .replace(/# (.+)/g, '<h1>$1</h1>')
@@ -6286,6 +6303,41 @@ function formatText(text: string): string {
       return `<p>${p.replace(/\n/g, '<br>')}</p>`
     }).join('\n')
   return linkifyText(html)
+}
+
+function wrapText(field: string, wrapper: string): void {
+  const textarea = document.activeElement as HTMLTextAreaElement
+  if (!textarea) return
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const ref = field === 'replyBody' ? replyBody : newDiscussion.value.body
+  const selected = ref.substring(start, end)
+  const rev = wrapper.split('').reverse().join('')
+  const wrapped = wrapper + selected + rev
+  const newText = ref.substring(0, start) + wrapped + ref.substring(end)
+  if (field === 'replyBody') { replyBody.value = newText } else { newDiscussion.value.body = newText }
+  requestAnimationFrame(() => {
+    textarea.focus()
+    textarea.setSelectionRange(start + wrapper.length, end + wrapper.length)
+  })
+}
+
+function wrapLink(field: string): void {
+  const textarea = document.activeElement as HTMLTextAreaElement
+  if (!textarea) return
+  const start = textarea.selectionStart
+  const end = textarea.selectionEnd
+  const ref = field === 'replyBody' ? replyBody.value : newDiscussion.value.body
+  const selected = ref.substring(start, end) || 'link text'
+  const link = '[' + selected + '](url)'
+  const newText = ref.substring(0, start) + link + ref.substring(end)
+  if (field === 'replyBody') { replyBody.value = newText } else { newDiscussion.value.body = newText }
+}
+
+function insertAtCursor(field: string, text: string): void {
+  const ref = field === 'replyBody' ? replyBody.value : newDiscussion.value.body
+  const newText = ref + text
+  if (field === 'replyBody') { replyBody.value = newText } else { newDiscussion.value.body = newText }
 }
 
 function linkifyText(text: string): string {
