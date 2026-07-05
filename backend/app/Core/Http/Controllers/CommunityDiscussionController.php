@@ -37,7 +37,7 @@ class CommunityDiscussionController extends Controller
         ]);
 
         $query = CommunityDiscussion::query()
-            ->with(['category', 'user'])
+            ->with(['category', 'user', 'lastReplyUser'])
             ->where('status', 'published');
 
         if (!empty($validated['search'])) {

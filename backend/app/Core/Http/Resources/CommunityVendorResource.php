@@ -75,7 +75,7 @@ class CommunityVendorResource extends JsonResource
      */
     private function ratingDistribution(): array
     {
-        $hydratedDistribution = $this->getAttribute('community_rating_distribution');
+        $hydratedDistribution = $this->resource->getAttributes()['community_rating_distribution'] ?? null;
         if (is_array($hydratedDistribution)) {
             return $hydratedDistribution;
         }

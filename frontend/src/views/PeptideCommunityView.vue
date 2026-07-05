@@ -286,16 +286,41 @@
           <p v-if="discussionStatusMessage" class="pv-alert pv-alert--compact">{{ discussionStatusMessage }}</p>
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
-            <router-link v-for="topic in discussions" :key="topic.title" :to="topic.href" class="pv-topic-row">
-              <span v-if="topic.avatarUrl" class="pv-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author" class="pv-avatar-img"></span>
-              <span v-else class="pv-avatar" :class="topic.color">{{ topic.initial }}</span>
-              <span class="pv-topic-main pv-topic-main--row">
-                <strong class="pv-topic-title">{{ topic.title }}</strong>
-                <em v-if="topic.tag" class="pv-tag">{{ topic.tag }}</em>
-                <span class="pv-topic-meta">{{ topic.author }} · {{ topic.time }}</span>
-              </span>
-              <span class="pv-stat"><strong>{{ topic.replies }}</strong><small>{{ topic.replies === 1 ? 'reply' : 'replies' }}</small></span>
-              <span class="pv-stat pv-stat--views"><strong>{{ formatCount(topic.views) }}</strong><small>views</small></span>
+            <router-link v-for="topic in discussions" :key="topic.title" :to="topic.href" class="pv-topic-card">
+              <aside class="pv-topic-author">
+                <span v-if="topic.avatarUrl" class="pv-avatar-lg" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
+                <span v-else class="pv-avatar-lg" :class="topic.color">{{ topic.initial }}</span>
+                <strong class="pv-author-name">{{ topic.author }}</strong>
+              </aside>
+              <main class="pv-topic-body">
+                <div class="pv-topic-head">
+                  <div>
+                    <h3>{{ topic.title }} <em v-if="topic.tag" class="pv-tag-pill">{{ topic.tag }}</em></h3>
+                    <p>{{ topic.excerpt }}</p>
+                  </div>
+                  <div class="pv-topic-ts">
+                    <small>{{ topic.time }}</small>
+                  </div>
+                </div>
+                <div class="pv-topic-foot">
+                  <div class="pv-topic-stats">
+                    <span><PvIcon name="message" /><strong>{{ topic.replies }}</strong><small>replies</small></span>
+                    <span><PvIcon name="eye" /><strong>{{ topic.views }}</strong><small>views</small></span>
+                    <span><PvIcon name="heart" /><strong>{{ topic.voteScore }}</strong><small>votes</small></span>
+                  </div>
+                  <div v-if="topic.latestReply" class="pv-topic-latest">
+                    <small>Latest reply</small>
+                    <div>
+                      <span v-if="topic.latestReply.avatar" class="pv-avatar-sm"><img :src="assetUrl(topic.latestReply.avatar)" :alt="topic.latestReply.author"></span>
+                      <span v-else class="pv-avatar-sm">{{ topic.latestReply.initial }}</span>
+                      <div>
+                        <strong>{{ topic.latestReply.author }}</strong>
+                        <span>{{ topic.latestReply.timeAgo }}</span>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </main>
             </router-link>
           </div>
           <PaginationBlock :meta="discussionPagination" @page="setDiscussionPage" />
@@ -1386,6 +1411,12 @@ interface UiDiscussion {
   voteScore: number
   viewerVote: -1 | 0 | 1
   avatarUrl?: string | null
+  latestReply?: {
+    author: string
+    timeAgo: string
+    avatar?: string | null
+    initial: string
+  } | null
 }
 
 interface PaginationMeta {
@@ -1435,6 +1466,12 @@ interface ApiDiscussion {
   reply_items?: ApiReply[]
   participants?: ApiMemberProfile[]
   similar_discussions?: ApiDiscussion[]
+  last_reply?: {
+    author: string
+    time_ago: string
+    avatar?: string | null
+    initial: string
+  } | null
 }
 
 interface ApiCategory {
@@ -3934,6 +3971,14 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     isLocked: Boolean(item.is_locked),
     voteScore: Number(item.vote_score ?? 0),
     viewerVote: normalizedVote(item.viewer_vote),
+    latestReply: item.last_reply
+      ? {
+          author: item.last_reply.author,
+          timeAgo: item.last_reply.time_ago,
+          avatar: item.last_reply.avatar ?? null,
+          initial: item.last_reply.initial,
+        }
+      : null,
   }
 }
 

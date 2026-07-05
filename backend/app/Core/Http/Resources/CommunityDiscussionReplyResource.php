@@ -19,8 +19,9 @@ class CommunityDiscussionReplyResource extends JsonResource
             ? $this->user?->roles?->pluck('name')->first()
             : null;
         $userId = $request->user()?->id;
-        $voteScore = $this->getAttribute('community_vote_score');
-        $viewerVote = $this->getAttribute('community_viewer_vote');
+        $attributes = $this->resource->getAttributes();
+        $voteScore = $attributes['community_vote_score'] ?? null;
+        $viewerVote = $attributes['community_viewer_vote'] ?? null;
 
         if ($voteScore === null || ($userId && $viewerVote === null)) {
             $votes = CommunityDiscussionVote::query()
