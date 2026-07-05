@@ -62,8 +62,13 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
   function readKeyForNotification(notification: Notification | undefined, fallback: number): string {
     const slug = notification?.data?.slug
+    const source = notification?.data?.source
 
-    return typeof slug === 'string' && slug ? slug : String(fallback)
+    if (slug) {
+      return source ? `${source}_${slug}` : String(slug)
+    }
+
+    return String(fallback)
   }
 
   function unreadCountFromResponse(data: CommunityNotificationsResponse, fallback: number): number {
