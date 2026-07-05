@@ -5334,94 +5334,89 @@ a[target="_blank"] {
   text-decoration: underline;
 }
 
-@media (max-width: 900px) {
+@media (max-width: 700px) {
+  .thread-wrap {
+    padding: 0 14px;
+  }
+
   .post-card,
   .reply-post {
-    grid-template-columns: 1fr;
-    padding: 10px 12px;
-    gap: 8px;
+    grid-template-columns: 92px 1fr;
+    gap: 14px;
+    padding: 22px 18px;
+    border-radius: 22px;
+  }
+
+  .avatar {
+    width: 68px;
+    height: 68px;
+    font-size: 32px;
   }
 
   .post-left,
   .reply-left {
-    flex-direction: row;
-    align-items: center;
-    gap: 8px;
-    border-right: 0;
-  }
-
-  .post-card .avatar {
-    width: 28px;
-    height: 28px;
-    font-size: 13px;
-  }
-
-  .online-dot {
-    width: 6px;
-    height: 6px;
-    border-width: 1.5px;
-    bottom: 2px;
-  }
-
-  .reply-name {
-    margin-top: 0;
-    font-size: 11px;
+    align-items: flex-start;
+    border-right: 1px solid rgba(255,255,255,.1);
   }
 
   .post-top,
-  .reply-top,
-  .actions {
-    flex-direction: column;
+  .reply-top {
+    flex-direction: row;
     align-items: flex-start;
   }
 
   .meta-row {
-    flex-wrap: wrap;
-    gap: 6px;
+    gap: 10px;
+    font-size: 14px;
+  }
+
+  .badge,
+  .tag {
+    font-size: 13px;
+    padding: 7px 10px;
+  }
+
+  .username {
+    font-size: 20px;
   }
 
   .post-card h1 {
-    font-size: 15px;
-    margin-top: 10px;
+    font-size: 28px;
+    margin: 28px 0 12px;
   }
 
   .body-text,
   .reply-text {
-    font-size: 12px;
+    font-size: 18px;
   }
 
   .reply-text {
-    margin-top: 10px;
+    margin-top: 26px;
   }
 
-  .action-links {
-    gap: 8px;
-    flex-wrap: wrap;
+  .actions {
+    flex-direction: row;
+    align-items: center;
+    gap: 12px;
   }
 
-  .action-links button {
-    font-size: 11px;
-  }
-
-  .vote {
-    width: 24px;
-    height: 24px;
-    font-size: 11px;
+  .vote-box .vote {
+    width: 42px;
+    height: 42px;
+    font-size: 18px;
   }
 
   .vote-box span {
-    font-size: 11px;
-    padding: 0 6px;
+    padding: 0 14px;
+    font-size: 18px;
   }
 
-  .vote-box.small .vote {
-    width: 22px;
-    height: 22px;
-    font-size: 10px;
+  .action-links {
+    gap: 12px;
+    flex-wrap: nowrap;
   }
 
-  .vote-box.small span {
-    font-size: 10px;
-    padding: 0 5px;
+  .action-links button {
+    font-size: 15px;
   }
 }
