@@ -358,7 +358,11 @@ class CommunityDiscussionController extends Controller
             $discussion->decrement('replies_count');
         }
 
-        $replyModel->update(['body' => '[deleted]']);
+        $replyModel->update([
+            'body' => '[deleted]',
+            'user_id' => null,
+            'author_name' => null,
+        ]);
 
         return response()->json(['success' => true, 'message' => 'Reply deleted.']);
     }

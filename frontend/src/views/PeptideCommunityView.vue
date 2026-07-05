@@ -924,7 +924,7 @@
       <main class="pv-stack">
         <header class="pv-page-header"><div><h1>Research Library</h1><p>Explore research, studies, and educational resources on peptides and performance compounds.</p></div></header>
         <div class="pv-tabs"><button :class="{ active: activeResearchCategory === '' }" @click="activeResearchCategory = ''; loadResearchContent()">All</button><button v-for="category in contentCategories.research" :key="category.slug" :class="{ active: activeResearchCategory === category.slug }" @click="activeResearchCategory = category.slug; loadResearchContent()">{{ category.name }}</button></div>
-        <div class="pv-toolbar"><label class="pv-input-search"><input v-model="researchSearch" placeholder="Search articles, compounds, topics..." @keydown.enter="loadResearchContent"><PvIcon name="search" /></label><button class="pv-small-button" @click="cycleResearchSort">{{ researchSortLabel }} <PvIcon name="chevron" /></button><span class="pv-icon-button active pv-mode-indicator" aria-label="Library view"><PvIcon name="library" /></span><button class="pv-icon-button pv-icon-button--static" @click="loadResearchContent"><PvIcon name="filter" /></button></div>
+        <div class="pv-toolbar"><label class="pv-input-search"><input v-model="researchSearch" placeholder="Search articles, compounds, topics..." @input="loadResearchContent"><PvIcon name="search" /></label><button class="pv-small-button" @click="cycleResearchSort">{{ researchSortLabel }} <PvIcon name="chevron" /></button><span class="pv-icon-button active pv-mode-indicator" aria-label="Library view"><PvIcon name="library" /></span><button class="pv-icon-button pv-icon-button--static" @click="loadResearchContent"><PvIcon name="filter" /></button></div>
         <p v-if="contentStatusMessage" class="pv-form-error">{{ contentStatusMessage }}</p>
         <p v-if="contentLoaded && articles.length === 0" class="pv-muted">No research articles published yet.</p>
         <div class="pv-article-grid">
@@ -2307,7 +2307,7 @@ const activeGuideCategory = ref('')
 const researchSearch = ref('')
 const researchTagFilter = ref('')
 const researchCompoundFilter = ref('')
-const researchSort = ref('latest')
+const researchSort = ref('title')
 const researchDetailTab = ref<'article' | 'data' | 'references' | 'comments'>('article')
 const researchPublishedFrom = ref('')
 const researchPublishedTo = ref('')
@@ -2459,7 +2459,7 @@ const discussions = computed(() => {
 
   return items
 })
-const replies = computed(() => apiReplies.value)
+const replies = computed(() => apiReplies.value.filter(r => r.text !== '[deleted]'))
 const discussionCategories = computed(() => apiCategories.value)
 const vendors = computed(() => {
   const items = [...apiVendors.value]
