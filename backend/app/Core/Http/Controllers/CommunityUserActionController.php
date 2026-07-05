@@ -19,7 +19,7 @@ class CommunityUserActionController extends Controller
     {
         $validated = $request->validate([
             'action' => ['required', Rule::in(['follow', 'save', 'bookmark'])],
-            'target_type' => ['required', Rule::in(['discussion', 'content', 'member'])],
+            'target_type' => ['required', Rule::in(['discussion', 'content', 'member', 'product'])],
             'target_key' => ['required', 'string', 'max:240'],
         ]);
 
@@ -71,6 +71,12 @@ class CommunityUserActionController extends Controller
             'bookmarked_content' => $actions
                 ->where('action', 'bookmark')
                 ->where('target_type', 'content')
+                ->pluck('target_key')
+                ->values()
+                ->all(),
+            'bookmarked_products' => $actions
+                ->where('action', 'bookmark')
+                ->where('target_type', 'product')
                 ->pluck('target_key')
                 ->values()
                 ->all(),

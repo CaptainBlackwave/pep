@@ -956,7 +956,7 @@
           </div>
           <div class="vendor-actions" style="margin-top:16px">
             <router-link :to="`${detailVendor.href}/review`" class="primary">✎ Write Review</router-link>
-            <button v-if="hasVendorContact(detailVendor)" class="secondary" @click="vendorDetailTab = 'about'; setTimeout(() => document.querySelector('.pv-tabs--line')?.scrollIntoView({ behavior: 'smooth' }), 50)">Contact</button>
+            <button v-if="hasVendorContact(detailVendor)" class="secondary" @click="showVendorContactSection">Contact</button>
             <router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="secondary">Manage</router-link>
             <a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="secondary">Website</a>
           </div>
@@ -974,7 +974,7 @@
                 <h2>Product Catalog</h2>
                 <p class="pv-muted">{{ detailVendor.productCount }} products listed. Purchases happen off-site through vendor contact only.</p>
               </div>
-              <button v-if="hasVendorContact(detailVendor)" class="pv-small-button" type="button" @click="vendorDetailTab = 'about'"><PvIcon name="mail" /> Contact Vendor</button>
+              <button v-if="hasVendorContact(detailVendor)" class="pv-small-button" type="button" @click="showVendorContactSection"><PvIcon name="mail" /> Contact Vendor</button>
             </header>
             <div class="pv-toolbar pv-product-toolbar">
               <label class="pv-input-search">
@@ -985,27 +985,51 @@
               <label class="pv-compact-select">Availability<select v-model="vendorProductAvailabilityFilter"><option value="">All Availability</option><option value="in_stock">In stock</option><option value="limited">Limited</option><option value="out_of_stock">Out of stock</option></select></label>
               <label class="pv-compact-select">Sort<select v-model="vendorProductSort"><option value="featured">Featured</option><option value="price-low">Price low to high</option><option value="price-high">Price high to low</option><option value="name">Name A-Z</option></select></label>
             </div>
+            <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
             <p v-if="filteredVendorProducts.length === 0" class="pv-muted">No public products match these filters.</p>
             <div class="pv-product-grid">
               <article v-for="product in filteredVendorProducts" :key="product.id ?? product.slug" class="pv-product-card">
-                <span class="pv-product-card-image"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span>
-                <span class="pv-tag" :class="product.availability === 'out_of_stock' ? 'avoid' : product.availability === 'limited' ? 'caution' : 'trusted'">{{ product.availabilityLabel }}</span>
-                <h3>{{ product.name }}</h3>
-                <p class="pv-product-meta">{{ [product.strength, product.category, product.packageSize].filter(Boolean).join(' · ') }}</p>
-                <p v-if="product.description" class="pv-muted">{{ product.description }}</p>
-                <span class="pv-stars"><template v-if="product.reviews > 0">★★★★★ <em>{{ product.ratingLabel }} ({{ product.reviews }})</em></template><template v-else>No product reviews yet</template></span>
-                <span class="pv-chip-row"><span v-for="tag in product.tags" :key="tag">{{ tag }}</span></span>
-                <div v-if="product.variants && product.variants.length" class="pv-variant-list">
-                  <div v-for="variant in product.variants" :key="variant.label" class="pv-variant-row">
-                    <span class="pv-variant-label">{{ variant.label }}</span>
-                    <span class="pv-variant-price">{{ variantPrice(variant) }}</span>
-                    <span class="pv-tag pv-tag--sm" :class="variant.availability === 'out_of_stock' ? 'avoid' : variant.availability === 'limited' ? 'caution' : 'trusted'">{{ variantAvailability(variant) }}</span>
+                <header class="pv-product-card-top">
+                  <span class="pv-product-stock" :class="product.availability === 'out_of_stock' ? 'avoid' : product.availability === 'limited' ? 'caution' : 'trusted'"><i></i>{{ product.availabilityLabel }}</span>
+                  <button class="pv-product-save-button" :class="{ active: isBookmarkedProduct(product) }" type="button" :aria-label="isBookmarkedProduct(product) ? 'Remove product bookmark' : 'Bookmark product'" @click="toggleProductBookmark(product)">
+                    <PvIcon name="bookmark" />
+                  </button>
+                </header>
+                <div class="pv-product-card-body">
+                  <span class="pv-product-card-image"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span>
+                  <div class="pv-product-card-info">
+                    <span class="pv-product-kind">{{ product.category || 'Product' }}</span>
+                    <h3>{{ product.name }}</h3>
+                    <div class="pv-product-specs">
+                      <span><PvIcon name="flask" /><strong>{{ product.strength || 'Ask' }}</strong><small>Strength</small></span>
+                      <span><PvIcon name="box" /><strong>{{ product.packageSize || 'Ask' }}</strong><small>Quantity</small></span>
+                      <span><PvIcon name="tag" /><strong>{{ product.category || 'Product' }}</strong><small>Type</small></span>
+                    </div>
+                    <p v-if="product.description" class="pv-product-description">{{ product.description }}</p>
+                    <div class="pv-product-variant-tiles">
+                      <span v-for="(variant, index) in product.variants.slice(0, 3)" :key="variant.label" :class="{ active: index === 0 }">
+                        <strong>{{ variant.label }}</strong>
+                        <em>{{ variantPrice(variant) }}</em>
+                      </span>
+                      <span v-if="!product.variants.length" class="active">
+                        <strong>{{ product.strength || product.packageSize || 'Listing' }}</strong>
+                        <em>{{ product.priceLabel || 'Contact for price' }}</em>
+                      </span>
+                    </div>
+                    <span class="pv-product-review-note"><PvIcon name="star" /><template v-if="product.reviews > 0">{{ product.ratingLabel }} / 5 · {{ product.reviews }} {{ product.reviews === 1 ? 'review' : 'reviews' }}</template><template v-else>No product reviews yet</template></span>
+                    <span v-if="product.tags.length" class="pv-chip-row pv-product-chip-row"><span v-for="tag in product.tags.slice(0, 4)" :key="tag">{{ tag }}</span></span>
                   </div>
                 </div>
-                <footer>
-                  <strong v-if="!product.variants || !product.variants.length">{{ product.priceLabel || 'Contact for price' }}</strong>
-                  <button class="pv-small-button" type="button" @click="vendorDetailTab = 'about'"><PvIcon name="mail" /> Contact Vendor</button>
+                <footer class="pv-product-card-footer">
+                  <strong>{{ product.priceLabel || (product.variants[0] ? variantPrice(product.variants[0]) : 'Contact') }}</strong>
+                  <span><PvIcon name="shield" /> Verified listing</span>
+                  <button class="pv-primary-button" type="button" @click="showVendorContactSection"><PvIcon name="mail" /> Contact Vendor</button>
                 </footer>
+                <div class="pv-product-trust-strip">
+                  <span><PvIcon name="mail" /><strong>Direct Contact</strong><small>No on-site checkout</small></span>
+                  <span><PvIcon name="shield" /><strong>Trusted Vendor</strong><small>Reviewed profile</small></span>
+                  <span><PvIcon name="lock" /><strong>Research Use Only</strong><small>Not for human use</small></span>
+                </div>
               </article>
             </div>
           </article>
@@ -2454,6 +2478,7 @@ interface UserActionsResponse {
     followed_discussions?: string[]
     saved_discussions?: string[]
     bookmarked_content?: string[]
+    bookmarked_products?: string[]
     followed_members?: string[]
   }
 }
@@ -2674,6 +2699,7 @@ const researchPage = ref(1)
 const guideSearch = ref('')
 const guidePage = ref(1)
 const bookmarkedContentSlugs = ref<string[]>([])
+const bookmarkedProductKeys = ref<string[]>([])
 const apiMembers = ref<UiMemberProfile[]>([])
 const apiTopContributorMembers = ref<UiMemberProfile[]>([])
 const apiOnlineMemberSummaries = ref<UiMemberProfile[]>([])
@@ -3802,6 +3828,7 @@ function loadLocalActionState(): void {
   savedDiscussionSlugs.value = readLocalList('pv.savedDiscussions')
   followedMemberSlugs.value = readLocalList('pv.followedMembers')
   bookmarkedContentSlugs.value = readLocalList('pv.bookmarkedContent')
+  bookmarkedProductKeys.value = readLocalList('pv.bookmarkedProducts')
 }
 
 function applyUserActionPayload(payload: UserActionsResponse['data']): void {
@@ -3809,6 +3836,7 @@ function applyUserActionPayload(payload: UserActionsResponse['data']): void {
   savedDiscussionSlugs.value = payload.saved_discussions ?? []
   followedMemberSlugs.value = payload.followed_members ?? []
   bookmarkedContentSlugs.value = payload.bookmarked_content ?? []
+  bookmarkedProductKeys.value = payload.bookmarked_products ?? []
 }
 
 async function loadUserActions(force = false): Promise<void> {
@@ -3835,7 +3863,7 @@ async function loadUserActions(force = false): Promise<void> {
 
 async function toggleCommunityAction(
   action: 'follow' | 'save' | 'bookmark',
-  targetType: 'discussion' | 'content' | 'member',
+  targetType: 'discussion' | 'content' | 'member' | 'product',
   targetKey: string,
   addedMessage: string,
   removedMessage: string,
@@ -3847,14 +3875,18 @@ async function toggleCommunityAction(
         ? 'pv.savedDiscussions'
         : targetType === 'member'
           ? 'pv.followedMembers'
-          : 'pv.bookmarkedContent'
+          : targetType === 'product'
+            ? 'pv.bookmarkedProducts'
+            : 'pv.bookmarkedContent'
     const localList = targetType === 'discussion' && action === 'follow'
       ? followedDiscussionSlugs
       : targetType === 'discussion' && action === 'save'
         ? savedDiscussionSlugs
         : targetType === 'member'
           ? followedMemberSlugs
-          : bookmarkedContentSlugs
+          : targetType === 'product'
+            ? bookmarkedProductKeys
+            : bookmarkedContentSlugs
 
     toggleLocalValue(localList, localKey, targetKey, addedMessage, removedMessage)
     return
@@ -3901,6 +3933,13 @@ function cycleVendorSort(): void {
 
 function toggleVendorReviewSort(): void {
   vendorReviewSort.value = vendorReviewSort.value === 'helpful' ? 'recent' : 'helpful'
+}
+
+function showVendorContactSection(): void {
+  vendorDetailTab.value = 'about'
+  window.setTimeout(() => {
+    document.querySelector('.pv-tabs--line')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
+  }, 50)
 }
 
 function cycleResearchSort(): void {
@@ -4038,6 +4077,25 @@ async function toggleContentBookmark(slug: string): Promise<void> {
     slug,
     'Content bookmarked.',
     'Bookmark removed.',
+  )
+}
+
+function productBookmarkKey(product: VendorProduct): string {
+  const vendor = detailVendor.value?.slug ?? String(product.vendorId ?? 'vendor')
+  return `${vendor}:${product.slug || product.id || product.name}`
+}
+
+function isBookmarkedProduct(product: VendorProduct): boolean {
+  return bookmarkedProductKeys.value.includes(productBookmarkKey(product))
+}
+
+async function toggleProductBookmark(product: VendorProduct): Promise<void> {
+  await toggleCommunityAction(
+    'bookmark',
+    'product',
+    productBookmarkKey(product),
+    `${product.name} bookmarked.`,
+    `${product.name} removed from bookmarks.`,
   )
 }
 
@@ -4936,7 +4994,7 @@ function mapVendorProduct(item: ApiVendorProduct): VendorProduct {
 }
 
 function variantPrice(variant: ProductVariant): string {
-  if (variant.price === null || variant.price === undefined || variant.price === '') return 'Contact for price'
+  if (variant.price === null || variant.price === undefined) return 'Contact for price'
   return '$' + Number(variant.price).toFixed(2)
 }
 

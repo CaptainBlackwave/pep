@@ -225,10 +225,19 @@ class UserSettingsApiTest extends TestCase
             ->assertJsonPath('active', true)
             ->assertJsonPath('data.bookmarked_content.0', 'storage-guide');
 
+        $this->postJson('/api/v1/community/user-actions/toggle', [
+            'action' => 'bookmark',
+            'target_type' => 'product',
+            'target_key' => 'vendor:tirzepatide',
+        ])->assertOk()
+            ->assertJsonPath('active', true)
+            ->assertJsonPath('data.bookmarked_products.0', 'vendor:tirzepatide');
+
         $this->getJson('/api/v1/community/user-actions')
             ->assertOk()
             ->assertJsonPath('data.followed_discussions.0', 'introduce-yourself')
-            ->assertJsonPath('data.bookmarked_content.0', 'storage-guide');
+            ->assertJsonPath('data.bookmarked_content.0', 'storage-guide')
+            ->assertJsonPath('data.bookmarked_products.0', 'vendor:tirzepatide');
 
         $this->postJson('/api/v1/community/user-actions/toggle', [
             'action' => 'follow',
