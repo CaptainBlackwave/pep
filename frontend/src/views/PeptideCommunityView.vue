@@ -259,18 +259,20 @@
           </div>
           <button class="pv-primary-button" @click="openNewDiscussion"><PvIcon name="plus" /> New Discussion</button>
         </header>
+        <div class="pv-category-strip">
+          <button
+            v-for="category in categoryFilters"
+            :key="category.slug"
+            :class="{ active: activeCategory === category.slug }"
+            @click="setDiscussionCategory(category.slug)"
+          >
+            <PvIcon :name="category.icon" />
+            <span class="pv-category-name">{{ category.name }}</span>
+            <strong>{{ formatCount(category.count) }}</strong>
+          </button>
+        </div>
         <article class="pv-panel">
           <div class="pv-toolbar">
-            <div class="pv-tabs">
-              <button
-                v-for="category in categoryFilters"
-                :key="category.slug"
-                :class="{ active: activeCategory === category.slug }"
-                @click="setDiscussionCategory(category.slug)"
-              >
-                {{ category.name }}
-              </button>
-            </div>
             <button class="pv-small-button" type="button" @click="cycleDiscussionSort">{{ discussionSortLabel }} <PvIcon name="chevron" /></button>
             <button class="pv-icon-button" @click="applyDiscussionFilters"><PvIcon name="filter" /></button>
           </div>
@@ -302,24 +304,6 @@
         </article>
       </main>
       <aside class="pv-stack">
-        <article class="pv-panel">
-          <header class="pv-panel-header">
-            <h2>Categories</h2>
-            <button class="pv-small-button" @click="clearDiscussionFilters">View all</button>
-          </header>
-          <div class="pv-filter-list">
-            <button
-              v-for="category in categoryFilters"
-              :key="category.slug"
-              :class="{ active: activeCategory === category.slug }"
-              @click="setDiscussionCategory(category.slug)"
-            >
-              <PvIcon :name="category.icon" />
-              <i class="pv-filter-label">{{ category.name }}</i>
-              <strong>{{ formatCount(category.count) }}</strong>
-            </button>
-          </div>
-        </article>
         <PanelTrending />
         <article class="pv-panel">
           <header class="pv-panel-header"><h2><PvIcon name="chart" /> Community Stats</h2></header>
