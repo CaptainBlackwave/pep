@@ -13,7 +13,7 @@
 
     <section class="pv-login-card">
       <header>
-        <h1>Request Access</h1>
+        <h1>Sign Up</h1>
         <p>Use your one-time code to create an account</p>
       </header>
 

@@ -69,7 +69,7 @@
 
         <p class="pv-login-register">
           Don&apos;t have an account?
-          <router-link to="/register">Request Access</router-link>
+          <router-link to="/register">Sign Up</router-link>
         </p>
       </form>
     </section>
