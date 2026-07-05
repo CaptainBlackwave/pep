@@ -956,7 +956,7 @@
           </div>
           <div class="vendor-actions" style="margin-top:16px">
             <router-link :to="`${detailVendor.href}/review`" class="primary">✎ Write Review</router-link>
-            <button v-if="hasVendorContact(detailVendor)" class="secondary" @click="vendorDetailTab = 'about'">Contact</button>
+            <button v-if="hasVendorContact(detailVendor)" class="secondary" @click="vendorDetailTab = 'about'; setTimeout(() => document.querySelector('.pv-tabs--line')?.scrollIntoView({ behavior: 'smooth' }), 50)">Contact</button>
             <router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="secondary">Manage</router-link>
             <a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="secondary">Website</a>
           </div>
