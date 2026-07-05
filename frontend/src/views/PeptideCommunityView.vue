@@ -298,7 +298,7 @@
                   <span class="online-dot"></span>
                 </div>
                 <h4>{{ topic.author }}</h4>
-                <p>@{{ topic.author }}</p>
+                <p>@{{ topic.authorUsername }}</p>
                 <div class="author-badge">🛡 Trusted Member</div>
                 <div class="level-badge">✪ Level 12</div>
                 <div class="author-posts">💬 {{ topic.replies }} posts</div>
@@ -1411,6 +1411,7 @@ interface UiDiscussion {
   title: string
   excerpt: string
   author: string
+  authorUsername: string
   authorId?: number
   time: string
   replies: number
@@ -1478,7 +1479,7 @@ interface ApiDiscussion {
   is_pinned?: boolean
   is_locked?: boolean
   category?: { name?: string | null; slug?: string | null; color?: string | null } | null
-  author?: { id?: number; name?: string | null; initial?: string | null; avatar?: string | null } | null
+  author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; avatar?: string | null } | null
   vote_score?: number
   viewer_vote?: number
   reply_items?: ApiReply[]
@@ -3971,6 +3972,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     title: item.title,
     excerpt: item.excerpt ?? item.body?.slice(0, 140) ?? '',
     author,
+    authorUsername: item.author?.username ?? author,
     authorId: item.author?.id,
     avatarUrl,
     time: item.time_ago ?? '',
