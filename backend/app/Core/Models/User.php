@@ -196,6 +196,11 @@ class User extends Authenticatable
         return $this->hasMany(CommunityUserBlock::class);
     }
 
+    public function vendorAccessRequests(): HasMany
+    {
+        return $this->hasMany(VendorAccessRequest::class);
+    }
+
     public function oauthProviders()
     {
         return $this->hasMany(OAuthProvider::class);

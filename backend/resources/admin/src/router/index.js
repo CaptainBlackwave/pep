@@ -203,6 +203,11 @@ const router = createRouter({
           path: '/api-keys',
           name: 'api-keys',
           component: () => import('../views/ApiKeysView.vue')
+        },
+        {
+          path: '/vendor-access-requests',
+          name: 'VendorAccessRequests',
+          component: () => import('../views/VendorAccessRequestsView.vue')
         }
       ]
     }

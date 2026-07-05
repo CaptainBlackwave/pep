@@ -51,6 +51,7 @@ class CoreAdminMenu
                     [ 'route' => '/community-notifications', 'label' => 'Notifications', 'icon' => 'BellIcon' ],
                     [ 'route' => '/community-access-codes', 'label' => 'Access Codes', 'icon' => 'KeyIcon' ],
                     [ 'route' => '/community-content', 'label' => 'Content Library', 'icon' => 'DocumentTextIcon' ],
+                    [ 'route' => '/vendor-access-requests', 'label' => 'Vendor Access Requests', 'icon' => 'IdentificationIcon' ],
                 ],
             ],
             // Communication section removed - no backend implementations

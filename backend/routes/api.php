@@ -13,6 +13,7 @@ use App\Core\Http\Controllers\CommunityVendorController;
 use App\Core\Http\Controllers\EmojiController;
 use App\Core\Http\Controllers\PluginController;
 use App\Core\Http\Controllers\PushSubscriptionController;
+use App\Core\Http\Controllers\VendorAccessRequestController;
 use App\Core\Http\Controllers\UserSettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -121,6 +122,8 @@ Route::prefix('v1')->group(function () {
         Route::get('/user/blocked-users', [UserSettingsController::class, 'blockedUsers']);
         Route::post('/user/blocked-users', [UserSettingsController::class, 'blockUser']);
         Route::delete('/user/blocked-users/{user}', [UserSettingsController::class, 'unblockUser']);
+
+        Route::post('/vendor-access/request', [VendorAccessRequestController::class, 'store']);
 
         Route::prefix('community')->group(function () {
             Route::get('/user-actions', [CommunityUserActionController::class, 'index']);
@@ -336,6 +339,9 @@ Route::prefix('v1')->group(function () {
                 Route::post('/', 'store');
                 Route::delete('/{accessCode}', 'destroy');
             });
+
+            Route::get('/vendor-access/requests', [VendorAccessRequestController::class, 'index']);
+            Route::patch('/vendor-access/requests/{vendorAccessRequest}', [VendorAccessRequestController::class, 'update']);
 
             Route::prefix('community/content')->controller(\App\Core\Http\Controllers\Admin\CommunityContentAdminController::class)->group(function () {
                 Route::get('/', 'index');

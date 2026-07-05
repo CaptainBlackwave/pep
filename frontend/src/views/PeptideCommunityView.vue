@@ -861,6 +861,22 @@
             <div><dt>Vendor Access</dt><dd>Not approved</dd></div>
             <div v-if="apiMyVendor"><dt>Existing Profile</dt><dd>{{ apiMyVendor.publishStatus }}</dd></div>
           </dl>
+          <button
+            v-if="!vendorAccessRequested"
+            class="pv-primary-button pv-full"
+            style="margin-top:12px"
+            @click="requestVendorAccess"
+          >
+            Request Vendor Access
+          </button>
+          <button
+            v-else
+            class="pv-primary-button pv-full"
+            style="margin-top:12px"
+            disabled
+          >
+            Requested
+          </button>
         </article>
       </main>
 
@@ -2475,6 +2491,7 @@ const vendorFilterOptions = ref<VendorFilterOptions>({
 const vendorStatusMessage = ref('')
 const apiMyVendor = ref<UiVendor | null>(null)
 const vendorPortalAccessApproved = ref(false)
+const vendorAccessRequested = ref(false)
 const vendorPortalLoaded = ref(false)
 const vendorPortalStatusMessage = ref('')
 const vendorPortalFormError = ref('')
@@ -5204,6 +5221,17 @@ async function saveVendorProfile(): Promise<void> {
     vendorPortalFormError.value = vendorPortalError(error, 'Unable to save vendor profile.')
   } finally {
     savingVendorProfile.value = false
+  }
+}
+
+async function requestVendorAccess(): Promise<void> {
+  vendorAccessRequested.value = true
+  try {
+    await api.post('/api/v1/vendor-access/request')
+    vendorPortalStatusMessage.value = 'Vendor access request submitted.'
+  } catch {
+    vendorAccessRequested.value = false
+    vendorPortalStatusMessage.value = 'Failed to submit vendor access request.'
   }
 }
 
