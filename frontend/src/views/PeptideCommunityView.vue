@@ -287,6 +287,10 @@
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
             <router-link v-for="topic in discussions" :key="topic.title" :to="topic.href" class="topic-card">
+              <div class="topic-menu">
+                <span>{{ topic.time }}</span>
+                <button>⋮</button>
+              </div>
               <aside class="author-panel">
                 <div class="avatar-wrap">
                   <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
@@ -300,10 +304,6 @@
                 <div class="author-posts">💬 {{ topic.replies }} posts</div>
               </aside>
               <main class="topic-body">
-                <div class="topic-menu">
-                  <span>{{ topic.time }}</span>
-                  <button>⋮</button>
-                </div>
                 <span class="topic-type">▱ {{ topic.tag || 'Discussion' }}</span>
                 <h2>{{ topic.title }}</h2>
                 <p class="topic-excerpt">{{ topic.excerpt }}</p>

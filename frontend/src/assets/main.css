@@ -775,6 +775,7 @@ table {
   padding: 24px 28px;
   margin-bottom: 16px;
   border-radius: 16px;
+  position: relative;
   background:
     radial-gradient(circle at 18% 20%, rgba(139, 92, 246, 0.12), transparent 32%),
     linear-gradient(180deg, #101426 0%, #080c19 100%);
@@ -882,17 +883,17 @@ table {
 
 .topic-menu {
   position: absolute;
-  right: 0;
-  top: 0;
+  right: 28px;
+  top: 24px;
   display: flex;
-  align-items: flex-start;
-  gap: 14px;
+  align-items: center;
+  gap: 12px;
   color: #aeb4c6;
   font-size: 13px;
+  z-index: 1;
 }
 
 .topic-menu button {
-  margin-top: -6px;
   padding: 0;
   border: 0;
   background: transparent;
