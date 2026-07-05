@@ -1077,11 +1077,11 @@ table {
 
 .post-card {
   display: grid;
-  grid-template-columns: 60px 1fr;
-  gap: 12px;
-  padding: 12px 16px;
-  margin-bottom: 10px;
-  border-radius: 12px;
+  grid-template-columns: 44px 1fr;
+  gap: 10px;
+  padding: 10px 12px;
+  margin-bottom: 8px;
+  border-radius: 10px;
   background:
     radial-gradient(circle at top left, rgba(126, 67, 255, 0.13), transparent 35%),
     linear-gradient(145deg, #101522, #090d18);
@@ -1105,17 +1105,18 @@ table {
 
 .avatar {
   position: relative;
-  width: 32px;
-  height: 32px;
+  width: 28px;
+  height: 28px;
   border-radius: 50%;
   background: linear-gradient(145deg, #a855f7, #5b21b6);
   display: flex;
   align-items: center;
   justify-content: center;
-  font-size: 14px;
+  font-size: 12px;
   font-weight: 800;
   color: white;
-  box-shadow: 0 0 0 2px rgba(141, 70, 255, 0.2);
+  flex-shrink: 0;
+  box-shadow: 0 0 0 1.5px rgba(141, 70, 255, 0.2);
 }
 
 .avatar .img-wrap {
@@ -1137,9 +1138,9 @@ table {
 .online-dot {
   position: absolute;
   right: -1px;
-  bottom: 2px;
-  width: 8px;
-  height: 8px;
+  bottom: 1px;
+  width: 7px;
+  height: 7px;
   background: #00d68f;
   border: 2px solid #090d18;
   border-radius: 50%;
@@ -1163,38 +1164,39 @@ table {
 }
 
 .username {
-  font-size: 13px;
+  font-size: 12px;
   font-weight: 700;
   color: #fff;
+  line-height: 1.2;
 }
 
 .verified {
   color: #9b5cff;
   font-weight: 900;
-  font-size: 11px;
+  font-size: 10px;
 }
 
 .post-meta-row {
   display: flex;
   align-items: center;
-  gap: 6px;
-  margin-top: 2px;
+  gap: 4px;
+  margin-top: 1px;
   flex-wrap: wrap;
 }
 
 .post-tag {
   display: inline-flex;
-  padding: 2px 8px;
-  border-radius: 5px;
+  padding: 1px 6px;
+  border-radius: 4px;
   background: rgba(141, 70, 255, 0.22);
   color: #c99cff;
   font-weight: 600;
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .post-edit,
 .post-delete {
-  font-size: 10px;
+  font-size: 9px;
   color: #aeb4c8;
   cursor: pointer;
 }
@@ -1206,20 +1208,20 @@ table {
 .meta-row {
   display: flex;
   align-items: flex-start;
-  gap: 8px;
+  gap: 6px;
   color: #b7bed2;
-  font-size: 11px;
+  font-size: 10px;
   flex-shrink: 0;
 }
 
 .badge,
 .small-badge {
-  padding: 2px 8px;
-  border-radius: 6px;
+  padding: 1px 6px;
+  border-radius: 4px;
   background: rgba(141, 70, 255, 0.2);
   color: #c9a3ff;
   font-weight: 600;
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .dots {
@@ -1235,8 +1237,8 @@ table {
 }
 
 .post-card h1 {
-  margin: 12px 0 6px;
-  font-size: 17px;
+  margin: 8px 0 4px;
+  font-size: 14px;
   line-height: 1.2;
   color: #fff;
 }
@@ -1245,22 +1247,22 @@ table {
 .reply-text {
   margin: 0;
   color: #c3c8da;
-  font-size: 13px;
-  line-height: 1.5;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 .body-text p {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
 }
 
 .reply-text {
-  margin-top: 12px;
+  margin-top: 8px;
   color: #ffffff;
 }
 
 .divider {
   height: 1px;
-  margin: 10px 0 8px;
+  margin: 8px 0 6px;
   background: rgba(255, 255, 255, 0.09);
 }
 
@@ -1268,32 +1270,32 @@ table {
   display: flex;
   align-items: center;
   justify-content: space-between;
-  gap: 10px;
+  gap: 8px;
 }
 
 .vote-box {
   display: inline-flex;
   align-items: center;
   overflow: hidden;
-  border-radius: 6px;
+  border-radius: 5px;
   border: 1px solid rgba(255, 255, 255, 0.1);
   background: rgba(255, 255, 255, 0.025);
 }
 
 .vote-box span {
-  padding: 0 8px;
+  padding: 0 6px;
   color: #a855f7;
-  font-size: 12px;
+  font-size: 11px;
   font-weight: 800;
 }
 
 .vote {
-  width: 26px;
-  height: 26px;
+  width: 22px;
+  height: 22px;
   border: 0;
   background: transparent;
   color: #cbd1e3;
-  font-size: 12px;
+  font-size: 10px;
   cursor: pointer;
 }
 
@@ -1305,14 +1307,14 @@ table {
 .action-links {
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 6px;
 }
 
 .action-links button {
   border: 0;
   background: transparent;
   color: #c3c8da;
-  font-size: 11px;
+  font-size: 10px;
   cursor: pointer;
 }
 
@@ -1321,47 +1323,48 @@ table {
 }
 
 .reply-post {
-  grid-template-columns: 60px 1fr;
-  padding: 10px 14px;
+  grid-template-columns: 44px 1fr;
+  padding: 8px 10px;
 }
 
 .reply-left {
   flex-direction: column;
   align-items: center;
-  border-right: 1px solid rgba(255, 255, 255, 0.12);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
 }
 
 .reply-name {
-  margin-top: 4px;
-  font-size: 10px;
+  margin-top: 3px;
+  font-size: 9px;
   font-weight: 600;
   color: #fff;
+  line-height: 1.1;
 }
 
 .reply-meta {
   display: flex;
   align-items: center;
-  gap: 6px;
+  gap: 4px;
   color: #aeb4c8;
-  font-size: 10px;
+  font-size: 9px;
 }
 
 .small-badge {
-  font-size: 9px;
-  padding: 1px 6px;
+  font-size: 8px;
+  padding: 1px 5px;
   color: #c8cad7;
   background: rgba(255, 255, 255, 0.07);
 }
 
 .vote-box.small .vote {
-  width: 24px;
-  height: 24px;
-  font-size: 11px;
+  width: 20px;
+  height: 20px;
+  font-size: 9px;
 }
 
 .vote-box.small span {
-  font-size: 11px;
-  padding: 0 6px;
+  font-size: 10px;
+  padding: 0 5px;
 }
 
 .thread-edit-form input,
@@ -5336,21 +5339,21 @@ a[target="_blank"] {
 
 @media (max-width: 700px) {
   .thread-wrap {
-    padding: 0 14px;
+    padding: 0 12px;
   }
 
   .post-card,
   .reply-post {
-    grid-template-columns: 92px 1fr;
-    gap: 14px;
-    padding: 22px 18px;
-    border-radius: 22px;
+    grid-template-columns: 60px 1fr;
+    gap: 10px;
+    padding: 14px 14px;
+    border-radius: 14px;
   }
 
   .avatar {
-    width: 68px;
-    height: 68px;
-    font-size: 32px;
+    width: 44px;
+    height: 44px;
+    font-size: 20px;
   }
 
   .post-left,
@@ -5366,57 +5369,56 @@ a[target="_blank"] {
   }
 
   .meta-row {
-    gap: 10px;
-    font-size: 14px;
+    gap: 6px;
+    font-size: 11px;
   }
 
-  .badge,
-  .tag {
-    font-size: 13px;
-    padding: 7px 10px;
+  .badge {
+    font-size: 10px;
+    padding: 3px 8px;
   }
 
   .username {
-    font-size: 20px;
+    font-size: 15px;
   }
 
   .post-card h1 {
-    font-size: 28px;
-    margin: 28px 0 12px;
+    font-size: 20px;
+    margin: 16px 0 8px;
   }
 
   .body-text,
   .reply-text {
-    font-size: 18px;
+    font-size: 14px;
   }
 
   .reply-text {
-    margin-top: 26px;
+    margin-top: 16px;
   }
 
   .actions {
     flex-direction: row;
     align-items: center;
-    gap: 12px;
+    gap: 8px;
   }
 
   .vote-box .vote {
-    width: 42px;
-    height: 42px;
-    font-size: 18px;
+    width: 30px;
+    height: 30px;
+    font-size: 14px;
   }
 
   .vote-box span {
-    padding: 0 14px;
-    font-size: 18px;
+    padding: 0 8px;
+    font-size: 13px;
   }
 
   .action-links {
-    gap: 12px;
+    gap: 8px;
     flex-wrap: nowrap;
   }
 
   .action-links button {
-    font-size: 15px;
+    font-size: 12px;
   }
 }
