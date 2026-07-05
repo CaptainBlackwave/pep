@@ -1007,7 +1007,7 @@
                     </div>
                     <p v-if="product.description" class="pv-product-description">{{ product.description }}</p>
                     <div class="pv-product-variant-tiles">
-                      <span v-for="(variant, index) in product.variants.slice(0, 3)" :key="variant.label" :class="{ active: index === 0 }">
+                      <span v-for="(variant, index) in product.variants" :key="`${variant.label}-${index}`" :class="{ active: index === 0 }" :title="`${variant.label} ${variantPrice(variant)}`">
                         <strong>{{ variant.label }}</strong>
                         <em>{{ variantPrice(variant) }}</em>
                       </span>
@@ -1021,7 +1021,7 @@
                   </div>
                 </div>
                 <footer class="pv-product-card-footer">
-                  <strong>{{ product.priceLabel || (product.variants[0] ? variantPrice(product.variants[0]) : 'Contact') }}</strong>
+                  <strong>{{ productCatalogPriceLabel(product) }}</strong>
                   <span><PvIcon name="shield" /> Verified listing</span>
                   <button class="pv-primary-button" type="button" @click="showVendorContactSection"><PvIcon name="mail" /> Contact Vendor</button>
                 </footer>
@@ -5000,6 +5000,18 @@ function mapVendorProduct(item: ApiVendorProduct): VendorProduct {
 function variantPrice(variant: ProductVariant): string {
   if (variant.price === null || variant.price === undefined) return 'Contact for price'
   return '$' + Number(variant.price).toFixed(2)
+}
+
+function productCatalogPriceLabel(product: VendorProduct): string {
+  const prices = product.variants
+    .map(variant => variant.price)
+    .filter((price): price is number => price !== null && price !== undefined)
+
+  if (prices.length > 0) {
+    return `From $${Math.min(...prices).toFixed(2)}`
+  }
+
+  return product.priceLabel || 'Contact'
 }
 
 function variantAvailability(variant: ProductVariant): string {
