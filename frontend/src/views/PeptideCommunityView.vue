@@ -845,7 +845,13 @@
     <div v-if="detailVendor" class="pv-content-grid">
       <main class="pv-stack">
         <nav class="pv-breadcrumbs">Vendor Reviews <PvIcon name="chevron" /> {{ detailVendor.name }} <PvIcon name="chevron" /> Reviews</nav>
-        <article class="pv-vendor-hero" :style="detailVendor.imageUrl ? { backgroundImage: `url(${detailVendor.imageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' } : {}">
+        <article class="pv-vendor-hero">
+          <span
+            v-if="detailVendor.imageUrl"
+            class="pv-vendor-hero-bg"
+            :style="{ backgroundImage: `url(${detailVendor.imageUrl})` }"
+            aria-hidden="true"
+          ></span>
           <div class="pv-vendor-hero-overlay">
             <span class="pv-logo-card" :class="detailVendor.class"><img v-if="detailVendor.imageUrl" :src="detailVendor.imageUrl" :alt="detailVendor.name"><template v-else>{{ detailVendor.logoText }}</template></span>
             <div class="pv-topic-main"><h1>{{ detailVendor.name }} <span class="pv-tag" :class="detailVendor.statusClass">{{ detailVendor.status }}</span></h1><p><PvIcon name="star" /> {{ detailVendor.rating }} / 5 · {{ detailVendor.reviews }} reviews</p><span class="pv-chip-row"><span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span></span></div>
@@ -859,7 +865,7 @@
           <div class="pv-rate-box"><h3>Rate this vendor</h3><p>Share your experience to help others in the community.</p><div class="pv-stars pv-stars--big">☆☆☆☆☆</div><router-link :to="`${detailVendor.href}/review`" class="pv-primary-button pv-full">Write a Review</router-link></div>
         </article>
         <template v-if="vendorDetailTab === 'reviews'">
-          <div class="pv-toolbar">
+          <div class="pv-toolbar pv-vendor-review-toolbar">
             <label class="pv-compact-select">Rating<select v-model="vendorReviewRatingFilter"><option value="">All Ratings</option><option v-for="rating in [5, 4, 3, 2, 1]" :key="rating" :value="String(rating)">{{ rating }} stars</option></select></label>
             <label class="pv-compact-select">Product<select v-model="vendorReviewProductFilter"><option value="">All Products</option><option v-for="product in vendorReviewProductOptions" :key="product" :value="product">{{ product }}</option></select></label>
             <label class="pv-compact-select">When<select v-model="vendorReviewTimeFilter"><option value="all">All Time</option><option value="recent">Recent First</option></select></label>
@@ -1171,10 +1177,10 @@
         </form>
         <p v-if="messagesStatusMessage" class="pv-muted">{{ messagesStatusMessage }}</p>
         <p v-if="messagesLoaded && chats.length === 0" class="pv-muted">No message threads yet.</p>
-        <button v-for="chat in chats" :key="chat.id" class="pv-chat-row" :class="{ active: currentThread?.id === chat.id }" @click="loadMessageThread(chat.id)"><span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span><span><strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag">{{ chat.participant.role }}</em></strong><small>{{ chat.preview }}</small></span><time>{{ chat.time }}</time></button>
+        <button v-for="chat in chats" :key="chat.id" class="pv-chat-row" :class="{ active: currentThread?.id === chat.id }" @click="openMessageThread(chat.id)"><span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span><span><strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag">{{ chat.participant.role }}</em></strong><small>{{ chat.preview }}</small></span><time>{{ chat.time }}</time></button>
       </aside>
       <main v-if="currentThread" class="pv-chat-panel">
-        <header><button class="pv-icon-button pv-icon-button--static pv-mobile-back" @click="apiCurrentMessageThread = null" aria-label="Back to threads"><PvIcon name="chevron" /></button><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div><h2>{{ currentThread.participant.name }} <span class="pv-tag">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static" aria-label="View member profile"><PvIcon name="settings" /></router-link></header>
+        <header><button class="pv-icon-button pv-icon-button--static pv-mobile-back" @click="openMessagesInbox" aria-label="Back to threads"><PvIcon name="chevron" /></button><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div><h2>{{ currentThread.participant.name }} <span class="pv-tag">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static" aria-label="View member profile"><PvIcon name="settings" /></router-link></header>
         <div v-if="showMessageSafetyNotice" class="pv-alert"><PvIcon name="shield" /><span>Messages are visible only to you and the recipient. Do not share personal info or make any transactions.</span><button type="button" class="pv-icon-button" aria-label="Dismiss notice" @click="showMessageSafetyNotice = false"><PvIcon name="close" /></button></div>
         <div class="pv-chat-stream"><span class="pv-date-sep">Messages</span><MessageBubble v-for="message in currentThread.messages" :key="message.id ?? message.time" :side="message.side" :text="message.text" :time="message.time" :file="Boolean(message.attachmentName)" :attachment-name="message.attachmentName ?? ''" :attachment-label="message.attachmentLabel" :avatar-initial="message.avatarInitial || currentThread.participant.initial" :avatar-color="message.avatarColor || currentThread.participant.color" /></div>
         <form class="pv-chat-input" @submit.prevent="sendMessage"><PvIcon name="share" /><input v-model="messageBody" placeholder="Type a message..."><PvIcon name="question" /><button class="pv-primary-button" :disabled="sendingMessage"><PvIcon name="send" /></button></form>
@@ -5360,6 +5366,8 @@ async function loadMessages(): Promise<void> {
 
     if (selectedThread) {
       await loadMessageThread(selectedThread.id)
+    } else if (!requestedThread) {
+      apiCurrentMessageThread.value = null
     } else if (apiCurrentMessageThread.value && !apiMessageThreads.value.some(thread => thread.id === apiCurrentMessageThread.value?.id)) {
       apiCurrentMessageThread.value = null
     }
@@ -5381,6 +5389,20 @@ async function loadMessageThread(threadId: number): Promise<void> {
   } catch {
     apiCurrentMessageThread.value = null
   }
+}
+
+async function openMessagesInbox(): Promise<void> {
+  apiCurrentMessageThread.value = null
+
+  if (route.path === '/messages' && Object.keys(route.query).length === 0) {
+    return
+  }
+
+  await router.push('/messages')
+}
+
+async function openMessageThread(threadId: number): Promise<void> {
+  await router.push({ path: '/messages', query: { thread: threadId } })
 }
 
 async function startMessage(profile: UiMemberProfile): Promise<void> {

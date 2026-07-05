@@ -1059,6 +1059,10 @@ table {
   text-transform: none;
 }
 
+.pv-vendor-review-toolbar {
+  gap: 12px;
+}
+
 .pv-flex-spacer {
   flex: 1;
 }
@@ -1920,7 +1924,19 @@ table {
   overflow: hidden;
 }
 
+.pv-vendor-hero-bg {
+  position: absolute;
+  inset: 0;
+  background-size: cover;
+  background-position: center;
+  opacity: 0.34;
+  filter: blur(2px) saturate(1.08);
+  transform: scale(1.03);
+}
+
 .pv-vendor-hero-overlay {
+  position: relative;
+  z-index: 1;
   display: grid;
   grid-template-columns: 100px minmax(0, 1fr) auto;
   align-items: center;
@@ -3502,6 +3518,10 @@ summary {
     background-image: none !important;
   }
 
+  .pv-vendor-hero-bg {
+    display: none;
+  }
+
   .pv-vendor-hero-overlay {
     grid-template-columns: 1fr;
     justify-items: start;
@@ -3539,6 +3559,32 @@ summary {
 
   .pv-vendor-actions small {
     line-height: 1.45;
+  }
+
+  .pv-review-summary {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
+  .pv-vendor-review-toolbar {
+    padding: 12px;
+    border: 1px solid var(--pv-border);
+    border-radius: 8px;
+    background: rgba(255, 255, 255, 0.025);
+  }
+
+  .pv-vendor-review-toolbar .pv-compact-select,
+  .pv-vendor-review-toolbar .pv-small-button {
+    width: 100%;
+  }
+
+  .pv-vendor-review-toolbar .pv-flex-spacer {
+    display: none;
+  }
+
+  .pv-score-block,
+  .pv-rate-box {
+    width: 100%;
   }
 
   .pv-vendor-row-actions,

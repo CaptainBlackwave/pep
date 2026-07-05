@@ -24,7 +24,7 @@
           <PvIcon name="bell" />
           <span v-if="notificationCount > 0" class="pv-badge">{{ notificationCount }}</span>
         </router-link>
-        <router-link to="/messages" class="pv-icon-button" aria-label="Messages">
+        <router-link :to="{ path: '/messages', query: { inbox: '1' } }" class="pv-icon-button" aria-label="Messages">
           <PvIcon name="mail" />
         </router-link>
         <div class="pv-account-menu">
