@@ -1052,6 +1052,7 @@
             <a v-for="link in detailVendorContactLinks" :key="`${link.label}-${link.value}`" :href="link.href" target="_blank" rel="noreferrer" class="pv-contact-row">
               <PvIcon :name="link.icon" />
               <span><strong>{{ link.label }}</strong><small>{{ link.value }}</small></span>
+              <small class="pv-open-link">Open</small>
             </a>
             <p v-if="detailVendor.contact.responsePolicy" class="pv-muted"><strong>Response policy:</strong> {{ detailVendor.contact.responsePolicy }}</p>
             <p v-if="detailVendor.contact.publicNotes" class="pv-muted">{{ detailVendor.contact.publicNotes }}</p>
@@ -1067,6 +1068,7 @@
             <a v-for="link in detailVendorContactLinks" :key="`${link.label}-sidebar-${link.value}`" :href="link.href" target="_blank" rel="noreferrer" class="pv-contact-row">
               <PvIcon :name="link.icon" />
               <span><strong>{{ link.label }}</strong><small>{{ link.value }}</small></span>
+              <small class="pv-open-link">Open</small>
             </a>
           </div>
           <p v-if="detailVendor.contact.responsePolicy" class="pv-muted">{{ detailVendor.contact.responsePolicy }}</p>
