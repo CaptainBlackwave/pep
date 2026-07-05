@@ -961,6 +961,12 @@ table {
   line-height: 1.45;
 }
 
+.topic-pinned {
+  font-size: 13px;
+  margin-left: 4px;
+  vertical-align: middle;
+}
+
 .divider {
   height: 1px;
   margin: 18px 0 14px;

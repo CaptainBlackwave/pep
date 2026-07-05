@@ -274,7 +274,7 @@
               </aside>
               <main class="topic-body">
                 <span v-if="topic.tag" class="topic-type">▱ {{ topic.tag }}</span>
-                <h2>{{ topic.title }}</h2>
+                <h2>{{ topic.title }} <span v-if="topic.isPinned" class="topic-pinned">📌</span></h2>
                 <p class="topic-excerpt">{{ topic.excerpt }}</p>
                 <div class="divider"></div>
                 <div class="topic-bottom">
