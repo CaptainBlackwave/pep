@@ -889,6 +889,7 @@
   <section v-else-if="page === 'vendorDetail' || page === 'reviewModal'" class="pv-page">
     <div v-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
       <main class="pv-stack">
+        <router-link to="/vendor-reviews" class="op-back">← Back to Vendor Reviews</router-link>
         <nav class="pv-breadcrumbs">Vendor Reviews <PvIcon name="chevron" /> {{ detailVendor.name }} <PvIcon name="chevron" /> Reviews</nav>
         <article class="pv-vendor-hero">
           <span
@@ -4506,6 +4507,9 @@ watch(() => route.fullPath, () => {
 
 onUnmounted(() => {
   clearVendorReviewPhotos()
+  if (vendorProductImagePreview.value && vendorProductImagePreview.value.startsWith('blob:')) {
+    URL.revokeObjectURL(vendorProductImagePreview.value)
+  }
 })
 
 const labResults = computed(() => {
