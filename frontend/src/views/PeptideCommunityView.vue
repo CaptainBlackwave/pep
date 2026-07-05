@@ -304,16 +304,6 @@
         </article>
       </main>
       <aside class="pv-stack">
-        <PanelTrending />
-        <article class="pv-panel">
-          <header class="pv-panel-header"><h2><PvIcon name="chart" /> Community Stats</h2></header>
-          <div class="pv-stat-grid">
-            <span><strong>{{ formatCount(memberStats.total) }}</strong><small>Members</small></span>
-            <span><strong>{{ formatCount(memberStats.online) }}</strong><small>Online</small></span>
-            <span><strong>{{ formatCount(communityStats.total_discussions) }}</strong><small>Discussions</small></span>
-            <span><strong>{{ formatCount(communityStats.total_replies) }}</strong><small>Messages</small></span>
-          </div>
-        </article>
       </aside>
     </div>
   </section>
@@ -2404,7 +2394,6 @@ const apiTopContributorMembers = ref<UiMemberProfile[]>([])
 const apiOnlineMemberSummaries = ref<UiMemberProfile[]>([])
 const apiDetailMember = ref<UiMemberProfile | null>(null)
 const memberStats = ref({ total: 0, online: 0 })
-const communityStats = ref({ total_discussions: 0, total_replies: 0 })
 const membersLoaded = ref(false)
 const memberPagination = ref<PaginationMeta | null>(null)
 const memberPage = ref(1)
@@ -3957,13 +3946,11 @@ async function loadDiscussions(): Promise<void> {
     })
     apiDiscussions.value = response.data.data.map(mapDiscussion)
     apiCategories.value = response.data.meta?.categories ?? apiCategories.value
-    communityStats.value = response.data.meta?.stats ?? { total_discussions: 0, total_replies: 0 }
     discussionPagination.value = extractPagination(response.data.meta)
     discussionsLoaded.value = true
   } catch {
     apiDiscussions.value = []
     apiCategories.value = []
-    communityStats.value = { total_discussions: 0, total_replies: 0 }
     discussionPagination.value = null
     discussionsLoaded.value = true
     discussionStatusMessage.value = 'Unable to load discussions from the API.'
@@ -5327,6 +5314,11 @@ async function loadMessages(): Promise<void> {
     apiMessageThreads.value = response.data.data.map(mapMessageThread)
     messagesLoaded.value = true
 
+    if (route.query.inbox !== undefined) {
+      apiCurrentMessageThread.value = null
+      return
+    }
+
     const requestedThread = Number(route.query.thread ?? 0)
     const selectedThread = requestedThread
       ? apiMessageThreads.value.find(thread => thread.id === requestedThread)
@@ -5362,11 +5354,11 @@ async function loadMessageThread(threadId: number): Promise<void> {
 async function openMessagesInbox(): Promise<void> {
   apiCurrentMessageThread.value = null
 
-  if (route.path === '/messages' && Object.keys(route.query).length === 0) {
+  if (route.path === '/messages' && route.query.inbox !== undefined) {
     return
   }
 
-  await router.push('/messages')
+  await router.push({ path: '/messages', query: { inbox: '1' } })
 }
 
 async function openMessageThread(threadId: number): Promise<void> {
@@ -5664,15 +5656,6 @@ function thumbnailStyle(index: number, imageUrl?: string | null) {
 function contentThumbnailStyle(item: UiContentItem, fallbackIndex = 0) {
   return thumbnailStyle(item.imageIndex || fallbackIndex, item.imageUrl)
 }
-
-const PanelTrending = defineComponent({
-  setup() {
-    return () => h('article', { class: 'pv-panel' }, [
-      h('h2', 'Trending Discussions'),
-      h('div', { class: 'pv-ranked-list' }, discussions.value.slice(0, 5).map((topic, index) => h(RouterLink, { to: topic.href, class: 'pv-ranked-row' }, () => [h('span', { class: 'pv-rank' }, String(index + 1)), h('strong', topic.title), h('small', `${topic.replies} replies`)]))),
-    ])
-  },
-})
 
 const PaginationBlock = defineComponent({
   props: {
