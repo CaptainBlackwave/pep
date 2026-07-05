@@ -5336,7 +5336,7 @@ a[target="_blank"] {
   text-decoration: underline;
 }
 
-@media (max-width: 700px) {
+@media (max-width: 900px) {
   .post-card,
   .reply-post {
     grid-template-columns: 1fr;
@@ -5355,7 +5355,7 @@ a[target="_blank"] {
     gap: 12px;
   }
 
-  .avatar {
+  .post-card .avatar {
     width: 56px;
     height: 56px;
     font-size: 26px;
