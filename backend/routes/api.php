@@ -116,6 +116,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/user/privacy', [UserSettingsController::class, 'privacy']);
         Route::patch('/user/privacy', [UserSettingsController::class, 'updatePrivacy']);
         Route::get('/user/sessions', [UserSettingsController::class, 'sessions']);
+        Route::delete('/user/sessions/{session}', [UserSettingsController::class, 'deleteSession']);
         Route::get('/user/api-tokens', [UserSettingsController::class, 'apiTokens']);
         Route::post('/user/api-tokens', [UserSettingsController::class, 'createApiToken']);
         Route::delete('/user/api-tokens/{token}', [UserSettingsController::class, 'deleteApiToken']);

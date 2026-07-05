@@ -141,6 +141,23 @@ class UserSettingsApiTest extends TestCase
         ]);
     }
 
+    public function test_user_can_revoke_session_token_from_settings(): void
+    {
+        $user = User::factory()->create();
+        Sanctum::actingAs($user);
+
+        $token = $user->createToken('Mobile browser');
+        $tokenId = $token->accessToken->id;
+
+        $this->deleteJson("/api/v1/user/sessions/{$tokenId}")
+            ->assertOk()
+            ->assertJsonPath('success', true);
+
+        $this->assertDatabaseMissing('personal_access_tokens', [
+            'id' => $tokenId,
+        ]);
+    }
+
     public function test_user_can_block_and_unblock_members(): void
     {
         $user = User::factory()->create(['username' => 'viewer']);
@@ -162,6 +179,23 @@ class UserSettingsApiTest extends TestCase
             ->assertJsonCount(0, 'data');
 
         $this->assertDatabaseMissing('community_user_blocks', [
+            'user_id' => $user->id,
+            'blocked_user_id' => $blocked->id,
+        ]);
+    }
+
+    public function test_user_can_block_member_by_username(): void
+    {
+        $user = User::factory()->create(['username' => 'viewer']);
+        $blocked = User::factory()->create(['username' => 'blocked-by-name']);
+        Sanctum::actingAs($user);
+
+        $this->postJson('/api/v1/user/blocked-users', [
+            'username' => 'blocked-by-name',
+        ])->assertOk()
+            ->assertJsonPath('data.0.username', 'blocked-by-name');
+
+        $this->assertDatabaseHas('community_user_blocks', [
             'user_id' => $user->id,
             'blocked_user_id' => $blocked->id,
         ]);

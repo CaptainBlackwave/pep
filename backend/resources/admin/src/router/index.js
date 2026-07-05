@@ -136,7 +136,7 @@ const router = createRouter({
         {
           path: '/community-vendors',
           name: 'community-vendors',
-          redirect: '/community-vendor-claims'
+          component: () => import('../views/CommunityVendorsView.vue')
         },
         {
           path: '/community-vendor-claims',

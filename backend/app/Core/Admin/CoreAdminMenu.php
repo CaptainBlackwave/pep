@@ -43,7 +43,8 @@ class CoreAdminMenu
                 'icon' => 'BeakerIcon',
                 'order' => 3,
                 'children' => [
-                    [ 'route' => '/community-vendor-claims', 'label' => 'Vendor Claims', 'icon' => 'BuildingStorefrontIcon' ],
+                    [ 'route' => '/community-vendors', 'label' => 'Vendors', 'icon' => 'BuildingStorefrontIcon' ],
+                    [ 'route' => '/community-vendor-claims', 'label' => 'Vendor Claims', 'icon' => 'ShieldCheckIcon' ],
                     [ 'route' => '/community-discussions', 'label' => 'Discussions', 'icon' => 'ChatBubbleLeftRightIcon' ],
                     [ 'route' => '/community-categories', 'label' => 'Categories', 'icon' => 'TagIcon' ],
                     [ 'route' => '/community-lab-results', 'label' => 'Lab Results', 'icon' => 'BeakerIcon' ],

@@ -138,6 +138,7 @@ class UserSettingsController extends Controller
                 ->get()
                 ->map(fn ($session) => [
                     'id' => $session->id,
+                    'kind' => 'browser',
                     'ipAddress' => $session->ip_address,
                     'userAgent' => $session->user_agent,
                     'lastActivity' => Carbon::createFromTimestamp($session->last_activity)->toISOString(),
@@ -151,6 +152,7 @@ class UserSettingsController extends Controller
             ->get()
             ->map(fn ($token) => [
                 'id' => (string) $token->id,
+                'kind' => 'token',
                 'name' => $token->name,
                 'lastActivity' => $token->last_used_at?->toISOString() ?? $token->created_at?->toISOString(),
                 'createdAt' => $token->created_at?->toISOString(),
@@ -161,6 +163,27 @@ class UserSettingsController extends Controller
         return response()->json([
             'sessions' => $sessions,
             'tokens' => $tokens,
+        ]);
+    }
+
+    public function deleteSession(Request $request, string $session)
+    {
+        $user = $request->user();
+        $deleted = 0;
+
+        if (ctype_digit($session)) {
+            $deleted = $user->tokens()->whereKey((int) $session)->delete();
+        }
+
+        if ($deleted === 0 && Schema::hasTable('sessions')) {
+            $deleted = DB::table('sessions')
+                ->where('id', $session)
+                ->where('user_id', $user->id)
+                ->delete();
+        }
+
+        return response()->json([
+            'success' => $deleted > 0,
         ]);
     }
 
@@ -243,14 +266,25 @@ class UserSettingsController extends Controller
     public function blockUser(Request $request)
     {
         $validated = $request->validate([
-            'user_id' => ['required', 'integer', 'exists:users,id'],
+            'user_id' => ['nullable', 'required_without:username', 'integer', 'exists:users,id'],
+            'username' => ['nullable', 'required_without:user_id', 'string', 'max:255'],
         ]);
 
-        abort_if((int) $validated['user_id'] === (int) $request->user()->id, 422, 'You cannot block yourself.');
+        $blockedUser = User::query()
+            ->when(
+                !empty($validated['user_id']),
+                fn ($query) => $query->whereKey((int) $validated['user_id']),
+                fn ($query) => $query->where('username', $validated['username'])
+                    ->orWhere('name', $validated['username'])
+            )
+            ->first();
+
+        abort_if(!$blockedUser, 422, 'Choose a valid member to block.');
+        abort_if((int) $blockedUser->id === (int) $request->user()->id, 422, 'You cannot block yourself.');
 
         CommunityUserBlock::firstOrCreate([
             'user_id' => $request->user()->id,
-            'blocked_user_id' => (int) $validated['user_id'],
+            'blocked_user_id' => (int) $blockedUser->id,
         ]);
 
         return $this->blockedUsers($request);
