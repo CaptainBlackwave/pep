@@ -6509,7 +6509,7 @@ const MessageBubble = defineComponent({
 const SettingsScreens = defineComponent({
   props: { page: { type: String, required: true } },
   setup(props) {
-     const tabs: Array<[string, string, string, string]> = [['settingsProfile', '/settings', 'Profile', 'user'], ['settingsAccount', '/settings/account', 'Account', 'users'], ['settingsSecurity', '/settings/security', 'Security', 'shield'], ['settingsPrivacy', '/settings/privacy', 'Privacy', 'lock'], ['settingsNotifications', '/settings/notifications', 'Notifications', 'bell'], ['settingsPreferences', '/settings/preferences', 'Preferences', 'settings'], ['settingsBlocked', '/settings/blocked-users', 'Blocked Users', 'close'], ['settingsApi', '/settings/api-tokens', 'API Tokens', 'share'], ['settingsSessions', '/settings/sessions', 'Sessions', 'document'], ['settingsDanger', '/settings/danger-zone', 'Danger Zone', 'shield']]
+     const tabs: Array<[string, string, string, string]> = [['settingsProfile', '/settings', 'Profile', 'user'], ['settingsAccount', '/settings/account', 'Account', 'users'], ['settingsSecurity', '/settings/security', 'Security', 'shield'], ['settingsPrivacy', '/settings/privacy', 'Privacy', 'lock'], ['settingsNotifications', '/settings/notifications', 'Notifications', 'bell'], ['settingsPreferences', '/settings/preferences', 'Preferences', 'settings'], ['settingsBlocked', '/settings/blocked-users', 'Blocked Users', 'close'], ['settingsSessions', '/settings/sessions', 'Sessions', 'document'], ['settingsDanger', '/settings/danger-zone', 'Danger Zone', 'shield']]
      return () => h('div', { class: 'pv-settings-grid' }, [
       h('aside', { class: 'pv-settings-nav' }, [h('small', 'ACCOUNT SETTINGS'), ...tabs.map(tab => h(RouterLink, { to: tab[1], class: props.page === tab[0] ? 'active' : '' }, () => [h(PvIcon, { name: tab[3] }), tab[2]]))]),
       h('main', { class: 'pv-stack' }, [h('header', { class: 'pv-page-header' }, [h('div', [h('h1', settingsPageTitle(props.page)), h('p', settingsPageDescription(props.page))])]), settingsMain(props.page)]),
@@ -6527,7 +6527,6 @@ function settingsPageTitle(pageName: string): string {
     settingsNotifications: 'Notifications',
     settingsPreferences: 'Preferences',
     settingsBlocked: 'Blocked Users',
-    settingsApi: 'API Tokens',
     settingsSessions: 'Sessions',
     settingsDanger: 'Danger Zone',
   }
@@ -6544,7 +6543,6 @@ function settingsPageDescription(pageName: string): string {
     settingsNotifications: 'Choose how community alerts reach you.',
     settingsPreferences: 'Tune display, language and browsing preferences.',
     settingsBlocked: 'Manage members you do not want to interact with.',
-    settingsApi: 'Create and revoke personal API tokens.',
     settingsSessions: 'Review and revoke active browser sessions and auth tokens.',
     settingsDanger: 'Export your account data or sign out everywhere.',
   }
@@ -6677,28 +6675,6 @@ function settingsMain(pageName: string) {
           ]))
           : [h('p', { class: 'pv-muted' }, membersLoaded.value ? 'No matching members available to block.' : 'Loading member directory...')]),
       ]),
-    ])
-  }
-  if (pageName === 'settingsApi') {
-    return h('article', { class: 'pv-panel' }, [
-      h('header', { class: 'pv-panel-header' }, [h('h2', 'API Tokens')]),
-      status,
-      h('div', { class: 'pv-two-col' }, [
-        settingsInput('Token Name', apiTokenForm.value.name, value => { apiTokenForm.value.name = value }),
-        h('button', { class: 'pv-primary-button', disabled: !apiTokenForm.value.name.trim(), onClick: createApiToken }, 'Create Token'),
-      ]),
-      newPlainApiToken.value ? h('div', { class: 'pv-token-secret' }, [
-        h('strong', 'Copy this token now'),
-        h('code', newPlainApiToken.value),
-        h('button', { class: 'pv-small-button', onClick: copyPlainApiToken }, [h(PvIcon, { name: 'document' }), ' Copy Token']),
-      ]) : null,
-      h('div', { class: 'pv-mini-list' }, userApiTokens.value.length > 0
-        ? userApiTokens.value.map(token => h('span', { class: 'pv-mini-row' }, [
-          h(PvIcon, { name: 'document' }),
-          h('span', [h('strong', token.name), h('small', [token.last_used_at ? `Last used ${formatDate(token.last_used_at)}` : `Created ${formatDate(token.created_at ?? '')}`, token.expires_at ? `Expires ${formatDate(token.expires_at)}` : 'No expiry'].join(' · '))]),
-          h('button', { class: 'pv-small-button', onClick: () => deleteApiToken(token.id) }, 'Revoke'),
-        ]))
-        : [h('p', { class: 'pv-muted' }, 'No personal API tokens have been created yet.')]),
     ])
   }
   if (pageName === 'settingsSessions') {
