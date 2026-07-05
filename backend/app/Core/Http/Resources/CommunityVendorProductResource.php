@@ -22,6 +22,7 @@ class CommunityVendorProductResource extends JsonResource
             'package_size' => $this->package_size,
             'purity_label' => $this->purity_label,
             'description' => $this->description,
+            'variants' => $this->variants ?? [],
             'price' => $this->price !== null ? (float) $this->price : null,
             'price_label' => $this->priceLabel(),
             'currency_code' => $this->currency_code,

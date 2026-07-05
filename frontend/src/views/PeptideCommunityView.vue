@@ -801,6 +801,31 @@
                 <input v-model="vendorProductForm.currency_code" maxlength="3" placeholder="USD">
               </label>
             </div>
+            <fieldset class="pv-vendor-fieldset">
+              <legend>Variants</legend>
+              <p class="pv-muted" style="font-size:12px">When variants exist, each variant has its own price. The main price field becomes optional.</p>
+              <div v-if="vendorProductForm.variants.length === 0" class="pv-muted" style="font-size:12px;padding:4px 0">No variants yet.</div>
+              <div v-for="(variant, vi) in vendorProductForm.variants" :key="vi" class="pv-two-col" style="align-items:end">
+                <label>
+                  Label
+                  <input v-model="variant.label" maxlength="80" placeholder="10mg">
+                </label>
+                <label>
+                  Price
+                  <input v-model="variant.price" inputmode="decimal" placeholder="50.00">
+                </label>
+                <label>
+                  Availability
+                  <select v-model="variant.availability">
+                    <option value="in_stock">In stock</option>
+                    <option value="limited">Limited</option>
+                    <option value="out_of_stock">Out of stock</option>
+                  </select>
+                </label>
+                <button type="button" class="pv-small-button pv-small-button--danger" @click="removeVendorProductVariant(vi)">Remove</button>
+              </div>
+              <button type="button" class="pv-small-button" @click="addVendorProductVariant">+ Add Variant</button>
+            </fieldset>
             <div class="pv-two-col">
               <label>
                 Availability
@@ -853,7 +878,7 @@
               <span class="pv-product-thumb"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span>
               <span>
                 <strong>{{ product.name }}</strong>
-                <small>{{ product.category || 'Uncategorised' }} · {{ product.priceLabel || 'No price' }} · {{ product.availabilityLabel }} · {{ product.status }}</small>
+                <small>{{ product.category || 'Uncategorised' }} · {{ product.variants?.length ? product.variants.length + ' variants' : product.priceLabel || 'No price' }} · {{ product.availabilityLabel }} · {{ product.status }}</small>
               </span>
               <button class="pv-small-button" type="button" @click="editVendorProduct(product)">Edit</button>
               <button class="pv-small-button pv-small-button--danger" type="button" @click="deleteVendorProduct(product)">Delete</button>
@@ -970,8 +995,15 @@
                 <p v-if="product.description" class="pv-muted">{{ product.description }}</p>
                 <span class="pv-stars"><template v-if="product.reviews > 0">★★★★★ <em>{{ product.ratingLabel }} ({{ product.reviews }})</em></template><template v-else>No product reviews yet</template></span>
                 <span class="pv-chip-row"><span v-for="tag in product.tags" :key="tag">{{ tag }}</span></span>
+                <div v-if="product.variants && product.variants.length" class="pv-variant-list">
+                  <div v-for="variant in product.variants" :key="variant.label" class="pv-variant-row">
+                    <span class="pv-variant-label">{{ variant.label }}</span>
+                    <span class="pv-variant-price">{{ variantPrice(variant) }}</span>
+                    <span class="pv-tag pv-tag--sm" :class="variant.availability === 'out_of_stock' ? 'avoid' : variant.availability === 'limited' ? 'caution' : 'trusted'">{{ variantAvailability(variant) }}</span>
+                  </div>
+                </div>
                 <footer>
-                  <strong>{{ product.priceLabel || 'Contact for price' }}</strong>
+                  <strong v-if="!product.variants || !product.variants.length">{{ product.priceLabel || 'Contact for price' }}</strong>
                   <button class="pv-small-button" type="button" @click="vendorDetailTab = 'about'"><PvIcon name="mail" /> Contact Vendor</button>
                 </footer>
               </article>
@@ -1730,6 +1762,12 @@ interface RatingDistributionRow {
   percent: number
 }
 
+interface ProductVariant {
+  label: string
+  price: number | null
+  availability: string
+}
+
 interface VendorProduct {
   id?: number
   vendorId?: number
@@ -1740,6 +1778,7 @@ interface VendorProduct {
   packageSize: string
   purityLabel: string
   description: string
+  variants: ProductVariant[]
   price: number | null
   priceLabel: string
   currencyCode: string
@@ -1765,6 +1804,7 @@ interface ApiVendorProduct {
   package_size?: string | null
   purity_label?: string | null
   description?: string | null
+  variants?: ProductVariant[]
   price?: number | null
   price_label?: string | null
   currency_code?: string | null
@@ -2542,6 +2582,7 @@ const vendorProductForm = ref({
   purity_label: '',
   description: '',
   price: '',
+  variants: [] as ProductVariant[],
   currency_code: 'USD',
   availability: 'in_stock',
   image_url: '',
@@ -4839,6 +4880,14 @@ const detailVendorContactLinks = computed(() => detailVendor.value ? vendorConta
 const vendorProductCategoryOptions = computed(() => [
   ...new Set((detailVendor.value?.products ?? []).map(product => product.category).filter(Boolean)),
 ])
+function productEffectivePrice(product: VendorProduct): number | null {
+  if (product.variants && product.variants.length > 0) {
+    const prices = product.variants.map(v => v.price).filter(p => p !== null && p !== undefined) as number[]
+    return prices.length > 0 ? Math.min(...prices) : null
+  }
+  return product.price
+}
+
 const filteredVendorProducts = computed(() => {
   const search = vendorProductSearch.value.trim().toLowerCase()
   const products = [...(detailVendor.value?.products ?? [])]
@@ -4848,8 +4897,8 @@ const filteredVendorProducts = computed(() => {
     .filter(product => !vendorProductAvailabilityFilter.value || product.availability === vendorProductAvailabilityFilter.value)
 
   return products.sort((a, b) => {
-    if (vendorProductSort.value === 'price-low') return (a.price ?? Number.MAX_SAFE_INTEGER) - (b.price ?? Number.MAX_SAFE_INTEGER)
-    if (vendorProductSort.value === 'price-high') return (b.price ?? -1) - (a.price ?? -1)
+    if (vendorProductSort.value === 'price-low') return (productEffectivePrice(a) ?? Number.MAX_SAFE_INTEGER) - (productEffectivePrice(b) ?? Number.MAX_SAFE_INTEGER)
+    if (vendorProductSort.value === 'price-high') return (productEffectivePrice(b) ?? -1) - (productEffectivePrice(a) ?? -1)
     if (vendorProductSort.value === 'name') return a.name.localeCompare(b.name)
     return a.sortOrder - b.sortOrder || b.rating - a.rating || b.reviews - a.reviews || a.name.localeCompare(b.name)
   })
@@ -4867,6 +4916,7 @@ function mapVendorProduct(item: ApiVendorProduct): VendorProduct {
     packageSize: item.package_size ?? '',
     purityLabel: item.purity_label ?? '',
     description: item.description ?? '',
+    variants: item.variants ?? [],
     price: item.price ?? null,
     priceLabel: item.price_label ?? '',
     currencyCode: item.currency_code ?? 'USD',
@@ -4881,6 +4931,17 @@ function mapVendorProduct(item: ApiVendorProduct): VendorProduct {
     status: item.status ?? 'published',
     href: item.href ?? null,
   }
+}
+
+function variantPrice(variant: ProductVariant): string {
+  if (variant.price === null || variant.price === undefined) return 'Contact for price'
+  return '$' + Number(variant.price).toFixed(2)
+}
+
+function variantAvailability(variant: ProductVariant): string {
+  if (variant.availability === 'out_of_stock') return 'Out of stock'
+  if (variant.availability === 'limited') return 'Limited'
+  return 'In stock'
 }
 
 function mapVendor(item: ApiVendor): UiVendor {
@@ -5024,6 +5085,18 @@ function vendorPortalError(error: unknown, fallback: string): string {
   return errors ? Object.values(errors)[0]?.[0] ?? fallback : apiError.response?.data?.message ?? fallback
 }
 
+function emptyVendorProductVariant(): ProductVariant {
+  return { label: '', price: null, availability: 'in_stock' }
+}
+
+function addVendorProductVariant(): void {
+  vendorProductForm.value.variants.push(emptyVendorProductVariant())
+}
+
+function removeVendorProductVariant(index: number): void {
+  vendorProductForm.value.variants.splice(index, 1)
+}
+
 function resetVendorProductForm(): void {
   if (vendorProductImagePreview.value) {
     URL.revokeObjectURL(vendorProductImagePreview.value)
@@ -5041,6 +5114,7 @@ function resetVendorProductForm(): void {
     purity_label: '',
     description: '',
     price: '',
+    variants: [],
     currency_code: 'USD',
     availability: 'in_stock',
     image_url: '',
@@ -5067,6 +5141,7 @@ function editVendorProduct(product: VendorProduct): void {
     purity_label: product.purityLabel,
     description: product.description,
     price: product.price !== null ? String(product.price) : '',
+    variants: product.variants.map(v => ({ ...v })),
     currency_code: product.currencyCode,
     availability: product.availability,
     image_url: product.imageUrl ?? '',
@@ -5106,6 +5181,9 @@ function vendorProductPayload(): FormData {
   if (form.purity_label.trim()) payload.append('purity_label', form.purity_label.trim())
   if (form.description.trim()) payload.append('description', form.description.trim())
   if (form.price !== '') payload.append('price', form.price)
+  if (form.variants.length > 0) {
+    payload.append('variants', JSON.stringify(form.variants))
+  }
   payload.append('currency_code', form.currency_code.trim().toUpperCase() || 'USD')
   payload.append('availability', form.availability)
   if (form.image_url.trim() && !vendorProductImageFile.value) payload.append('image_url', form.image_url.trim())

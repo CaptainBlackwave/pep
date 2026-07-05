@@ -3634,6 +3634,53 @@ table {
   color: #fff;
 }
 
+.pv-variant-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 8px 0;
+  border-top: 1px solid var(--pv-border);
+  margin-top: 8px;
+}
+
+.pv-variant-row {
+  display: grid;
+  grid-template-columns: 1fr auto auto;
+  gap: 8px;
+  align-items: center;
+  font-size: 13px;
+}
+
+.pv-variant-label {
+  color: #e2e8f0;
+  font-weight: 500;
+}
+
+.pv-variant-price {
+  color: #a78bfa;
+  font-weight: 600;
+}
+
+.pv-tag--sm {
+  font-size: 11px;
+  padding: 1px 8px;
+}
+
+.pv-vendor-fieldset {
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  padding: 12px;
+  display: grid;
+  gap: 8px;
+}
+
+.pv-vendor-fieldset legend {
+  font-size: 13px;
+  font-weight: 600;
+  color: #e2e8f0;
+  padding: 0 6px;
+}
+
 .pv-product-form {
   display: grid;
   gap: 14px;

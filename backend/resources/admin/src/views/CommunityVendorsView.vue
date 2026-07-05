@@ -234,7 +234,8 @@
                 <p class="text-white truncate">{{ product.name }}</p>
                 <div class="flex flex-wrap gap-x-3 gap-y-0.5 text-xs text-slate-400 mt-0.5">
                   <span v-if="product.category">{{ product.category }}</span>
-                  <span v-if="product.price_label">{{ product.price_label }}</span>
+                  <span v-if="product.variants?.length" class="text-sky-400">{{ product.variants.length }} variants</span>
+                  <span v-else-if="product.price_label">{{ product.price_label }}</span>
                   <span>{{ product.availability_label }}</span>
                   <span :class="product.status === 'published' ? 'text-emerald-400' : 'text-red-400'">{{ product.status }}</span>
                 </div>
@@ -314,6 +315,64 @@
                   <option value="out_of_stock">Out of stock</option>
                 </select>
               </label>
+            </div>
+
+            <div class="border-t border-slate-700/40 pt-3">
+              <div class="flex items-center justify-between mb-2">
+                <span class="text-xs font-medium text-slate-300">Variants</span>
+                <button
+                  type="button"
+                  class="px-2 py-1 rounded text-xs font-medium bg-sky-500/15 text-sky-300 hover:bg-sky-500/25"
+                  @click="addVariant"
+                >
+                  + Add Variant
+                </button>
+              </div>
+              <div v-if="productForm.variants.length === 0" class="text-xs text-slate-500">No variants. Main price is used.</div>
+              <div
+                v-for="(variant, vi) in productForm.variants"
+                :key="vi"
+                class="grid grid-cols-[1fr_80px_100px_auto] gap-2 mb-2 items-end"
+              >
+                <label class="block">
+                  <span class="text-xs text-slate-400">Label</span>
+                  <input
+                    v-model="variant.label"
+                    maxlength="80"
+                    class="mt-0.5 w-full px-2 py-1.5 bg-slate-900/60 border border-slate-700 rounded text-white text-xs"
+                    placeholder="10mg"
+                  >
+                </label>
+                <label class="block">
+                  <span class="text-xs text-slate-400">Price</span>
+                  <input
+                    v-model.number="variant.price"
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    class="mt-0.5 w-full px-2 py-1.5 bg-slate-900/60 border border-slate-700 rounded text-white text-xs"
+                    placeholder="0.00"
+                  >
+                </label>
+                <label class="block">
+                  <span class="text-xs text-slate-400">Avail.</span>
+                  <select
+                    v-model="variant.availability"
+                    class="mt-0.5 w-full px-2 py-1.5 bg-slate-900/60 border border-slate-700 rounded text-white text-xs"
+                  >
+                    <option value="in_stock">In stock</option>
+                    <option value="limited">Limited</option>
+                    <option value="out_of_stock">OOS</option>
+                  </select>
+                </label>
+                <button
+                  type="button"
+                  class="px-2 py-1.5 rounded text-xs font-medium bg-red-500/15 text-red-300 hover:bg-red-500/25"
+                  @click="removeVariant(vi)"
+                >
+                  Remove
+                </button>
+              </div>
             </div>
 
             <label class="block">
@@ -628,14 +687,27 @@ const productEditing = ref(null)
 const productSaving = ref(false)
 const productError = ref('')
 
+function emptyVariant() {
+  return { label: '', price: null, availability: 'in_stock' }
+}
+
 const emptyProductForm = () => ({
   name: '',
   category: '',
   strength: '',
   price: null,
   availability: 'in_stock',
+  variants: [],
   status: 'published',
 })
+
+function addVariant() {
+  productForm.variants.push(emptyVariant())
+}
+
+function removeVariant(index) {
+  productForm.variants.splice(index, 1)
+}
 
 const productForm = reactive(emptyProductForm())
 
@@ -663,6 +735,7 @@ function openProductForm(product) {
       strength: product.strength || '',
       price: product.price ?? null,
       availability: product.availability || 'in_stock',
+      variants: (product.variants || []).map(v => ({ ...v })),
       status: product.status || 'published',
     })
   } else {
@@ -690,6 +763,7 @@ async function saveProduct() {
     strength: productForm.strength || null,
     price: productForm.price ?? null,
     availability: productForm.availability,
+    variants: productForm.variants.length ? productForm.variants : null,
     status: productForm.status,
   }
 

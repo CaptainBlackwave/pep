@@ -4,8 +4,10 @@ namespace App\Core\Http\Controllers\Admin;
 
 use App\Core\Http\Controllers\Controller;
 use App\Core\Http\Resources\CommunityVendorProductResource;
+use App\Core\Models\CommunityVendor;
 use App\Core\Models\CommunityVendorProduct;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class CommunityVendorProductAdminController extends Controller
@@ -46,6 +48,10 @@ class CommunityVendorProductAdminController extends Controller
             'package_size' => ['nullable', 'string', 'max:80'],
             'purity_label' => ['nullable', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:50000'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.label' => ['required', 'string', 'max:80'],
+            'variants.*.price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.availability' => ['nullable', Rule::in(['in_stock', 'limited', 'out_of_stock'])],
             'price' => ['nullable', 'numeric', 'min:0'],
             'currency_code' => ['nullable', 'string', 'max:3'],
             'availability' => ['nullable', Rule::in(['in_stock', 'limited', 'out_of_stock'])],
@@ -57,6 +63,7 @@ class CommunityVendorProductAdminController extends Controller
 
         $validated['status'] ??= 'published';
         $validated['availability'] ??= 'in_stock';
+        $validated['slug'] = $this->uniqueSlug($validated['vendor_id'], $validated['slug'] ?? $validated['name']);
 
         $product = CommunityVendorProduct::create($validated);
 
@@ -75,6 +82,10 @@ class CommunityVendorProductAdminController extends Controller
             'package_size' => ['nullable', 'string', 'max:80'],
             'purity_label' => ['nullable', 'string', 'max:120'],
             'description' => ['nullable', 'string', 'max:50000'],
+            'variants' => ['nullable', 'array'],
+            'variants.*.label' => ['required', 'string', 'max:80'],
+            'variants.*.price' => ['nullable', 'numeric', 'min:0'],
+            'variants.*.availability' => ['nullable', Rule::in(['in_stock', 'limited', 'out_of_stock'])],
             'price' => ['nullable', 'numeric', 'min:0'],
             'currency_code' => ['nullable', 'string', 'max:3'],
             'availability' => ['nullable', Rule::in(['in_stock', 'limited', 'out_of_stock'])],
@@ -85,6 +96,12 @@ class CommunityVendorProductAdminController extends Controller
         ]);
 
         $product->fill($validated)->save();
+
+        // Regenerate slug if name changed and no custom slug provided
+        if (!empty($validated['name']) && empty($validated['slug'])) {
+            $product->slug = $this->uniqueSlug($product->vendor_id, $validated['name'], $product->id);
+            $product->save();
+        }
 
         return new CommunityVendorProductResource($product->fresh()->load('vendor'));
     }

@@ -16,6 +16,7 @@ class CommunityVendorProduct extends Model
         'package_size',
         'purity_label',
         'description',
+        'variants',
         'price',
         'currency_code',
         'availability',
@@ -32,6 +33,7 @@ class CommunityVendorProduct extends Model
         return [
             'price' => 'decimal:2',
             'tags' => 'array',
+            'variants' => 'array',
             'review_count' => 'integer',
             'average_rating' => 'decimal:2',
             'sort_order' => 'integer',
