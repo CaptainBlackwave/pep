@@ -341,6 +341,10 @@
           </div>
         </header>
         <h1>{{ detailDiscussion.title }}</h1>
+        <div v-if="detailDiscussion.isPinned || detailDiscussion.isLocked" class="op-flags">
+          <span v-if="detailDiscussion.isPinned" class="flag-pinned">📌 Pinned</span>
+          <span v-if="detailDiscussion.isLocked" class="flag-locked">🔒 Locked</span>
+        </div>
         <div v-if="!isEditingDiscussion" class="op-content">
           <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>
         </div>

@@ -1173,11 +1173,37 @@ table {
 }
 
 .op-card h1 {
-  margin: 28px 0 16px;
-  font-size: 30px;
-  line-height: 1.15;
-  letter-spacing: -0.03em;
+  margin: 8px 0 4px;
+  font-size: 13px;
+  line-height: 1.2;
   color: #fff;
+}
+
+.op-flags {
+  display: flex;
+  gap: 8px;
+  margin-bottom: 10px;
+}
+
+.flag-pinned,
+.flag-locked {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 3px 10px;
+  border-radius: 6px;
+  font-size: 11px;
+  font-weight: 600;
+}
+
+.flag-pinned {
+  background: rgba(59, 130, 246, .15);
+  color: #93bbfc;
+}
+
+.flag-locked {
+  background: rgba(239, 68, 68, .12);
+  color: #f87171;
 }
 
 .op-content {
