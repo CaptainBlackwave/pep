@@ -113,13 +113,14 @@ const submitForm = async () => {
   successMessage.value = ''
 
   try {
-    const response = await api.post('/api/v1/forgot-password', {
+    const response = await api.post<{ message?: string }>('/api/v1/forgot-password', {
       email: email.value
     })
 
     successMessage.value = response.data.message || 'If an account exists with this email, you will receive a password reset link shortly.'
     email.value = ''
-  } catch (error) {
+  } catch (err: unknown) {
+    const error = err as { response?: { status?: number; data?: { message?: string } } }
     if (error.response?.status === 429) {
       errorMessage.value = 'Too many requests. Please wait a moment before trying again.'
     } else if (error.response?.data?.message) {

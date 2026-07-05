@@ -11,12 +11,14 @@ class CommunityNotificationRead extends Model
         'notification_id',
         'user_id',
         'read_at',
+        'dismissed_at',
     ];
 
     protected function casts(): array
     {
         return [
             'read_at' => 'datetime',
+            'dismissed_at' => 'datetime',
         ];
     }
 

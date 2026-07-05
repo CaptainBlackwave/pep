@@ -272,6 +272,9 @@
           </button>
         </div>
         <article class="pv-panel">
+          <div class="pv-toolbar">
+            <button class="pv-small-button" type="button" @click="cycleDiscussionSort">{{ discussionSortLabel }} <PvIcon name="chevron" /></button>
+          </div>
           <form class="pv-inline-search" @submit.prevent="applyDiscussionFilters">
             <label class="pv-input-search">
               <input v-model="discussionSearch" placeholder="Search discussions..." type="search">
@@ -2641,6 +2644,11 @@ const messageRecipientOptions = computed(() => {
 })
 const currentThread = computed(() => apiCurrentMessageThread.value)
 const categoryFilters = computed<ApiCategory[]>(() => discussionCategories.value)
+const discussionSortLabel = computed(() => {
+  if (discussionSort.value === 'replies') return 'Most Replies'
+  if (discussionSort.value === 'views') return 'Most Viewed'
+  return 'Latest Activity'
+})
 const isFollowingDiscussion = computed(() => Boolean(detailDiscussion.value?.slug && followedDiscussionSlugs.value.includes(detailDiscussion.value.slug)))
 const isSavedDiscussion = computed(() => Boolean(detailDiscussion.value?.slug && savedDiscussionSlugs.value.includes(detailDiscussion.value.slug)))
 const currentDiscussionSlug = computed(() => {
@@ -3508,6 +3516,10 @@ function syncFiltersFromRouteQuery(): void {
   if (page.value === 'guides') guideSearch.value = query
   if (page.value === 'members') memberSearch.value = query
   if (page.value === 'messages') messageSearch.value = query
+}
+
+function cycleDiscussionSort(): void {
+  discussionSort.value = discussionSort.value === 'latest' ? 'replies' : discussionSort.value === 'replies' ? 'views' : 'latest'
 }
 
 function cycleLabSort(): void {

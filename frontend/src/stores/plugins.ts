@@ -57,6 +57,13 @@ export interface Plugin {
   permissions: string[]
 }
 
+interface EnabledPluginsResponse {
+  success: boolean
+  plugins: Plugin[]
+  routes?: PluginRoute[]
+  navigation?: PluginNavigationItem[]
+}
+
 export const usePluginsStore = defineStore('plugins', () => {
   const plugins = ref<Plugin[]>([])
   const routes = ref<PluginRoute[]>([])
@@ -121,7 +128,7 @@ export const usePluginsStore = defineStore('plugins', () => {
 
     loading.value = true
     try {
-      const response = await api.get('/api/v1/plugins/enabled')
+      const response = await api.get<EnabledPluginsResponse>('/api/v1/plugins/enabled')
       if (response.data.success) {
         plugins.value = response.data.plugins
         routes.value = response.data.routes || []

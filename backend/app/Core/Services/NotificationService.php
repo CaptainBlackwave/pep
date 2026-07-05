@@ -269,9 +269,11 @@ class NotificationService
     /**
      * Mark notification as read.
      */
-    public function markAsRead(int $notificationId): bool
+    public function markAsRead(int $notificationId, ?User $user = null): bool
     {
-        $notification = Notification::find($notificationId);
+        $notification = Notification::query()
+            ->when($user, fn ($query) => $query->where('user_id', $user->id))
+            ->find($notificationId);
         
         if ($notification) {
             $notification->markAsRead();
@@ -294,9 +296,11 @@ class NotificationService
     /**
      * Delete a notification.
      */
-    public function delete(int $notificationId): bool
+    public function delete(int $notificationId, ?User $user = null): bool
     {
-        $notification = Notification::find($notificationId);
+        $notification = Notification::query()
+            ->when($user, fn ($query) => $query->where('user_id', $user->id))
+            ->find($notificationId);
         
         if ($notification) {
             $notification->delete();

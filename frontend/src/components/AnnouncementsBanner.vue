@@ -66,7 +66,7 @@ const saveDismissed = () => {
 
 const fetchAnnouncements = async () => {
   try {
-    const response = await api.get('/announcements')
+    const response = await api.get<Announcement[]>('/announcements')
     // Filter out dismissed announcements
     announcements.value = response.data.filter((a: Announcement) => !dismissedIds.value.has(a.id))
   } catch (error) {

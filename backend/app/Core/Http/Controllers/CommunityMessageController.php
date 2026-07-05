@@ -5,6 +5,7 @@ namespace App\Core\Http\Controllers;
 use App\Core\Http\Resources\CommunityMessageResource;
 use App\Core\Http\Resources\CommunityMessageThreadResource;
 use App\Core\Models\CommunityMessageThread;
+use App\Core\Models\CommunityUserBlock;
 use App\Core\Models\User;
 use App\Core\Services\NotificationService;
 use App\Core\Services\PushNotificationService;
@@ -78,6 +79,7 @@ class CommunityMessageController extends Controller
         abort_if(!$participant, 422, 'Choose a valid member to message.');
         abort_if($participant->id === $user->id, 422, 'You cannot message yourself.');
         abort_if($participant->settings?->direct_messages === 'nobody', 403, 'This member is not accepting direct messages.');
+        abort_if($this->messagingBlockedBetween($user->id, $participant->id), 403, 'Messaging is blocked between these members.');
 
         $thread = CommunityMessageThread::query()
             ->where('status', 'active')
@@ -138,33 +140,35 @@ class CommunityMessageController extends Controller
         ]);
 
         $threadModel = $this->findThread($request, $thread);
+        $recipientId = $threadModel->user_id === $request->user()->id
+            ? $threadModel->participant_user_id
+            : $threadModel->user_id;
+
+        $recipient = User::query()->with('settings')->find($recipientId);
+        abort_if(!$recipient, 404, 'Recipient not found.');
+        abort_if($recipient->settings?->direct_messages === 'nobody', 403, 'This member is not accepting direct messages.');
+        abort_if($this->messagingBlockedBetween($request->user()->id, $recipientId), 403, 'Messaging is blocked between these members.');
+
         $message = $threadModel->messages()->create([
             'sender_user_id' => $request->user()->id,
             'body' => $validated['body'],
             'sent_at' => now(),
         ]);
 
-        $recipientId = $threadModel->user_id === $request->user()->id
-            ? $threadModel->participant_user_id
-            : $threadModel->user_id;
-
         $threadModel->forceFill([
             'last_message_at' => now(),
         ])->save();
         $this->incrementUnreadFor($threadModel, $recipientId);
 
-        $recipient = User::find($recipientId);
-        if ($recipient) {
-            $senderName = $this->notificationNameFor($request->user());
+        $senderName = $this->notificationNameFor($request->user());
 
-            $this->notifications->message($recipient, $senderName, $threadModel->id);
-            $this->websocket->toUser($recipient, 'notification', [
-                'type' => 'message',
-                'title' => 'New Message',
-                'message' => "New message from {$senderName}",
-            ]);
-            $this->push->send($recipient, "New message from {$senderName}", substr($validated['body'], 0, 120), "/messages?thread={$threadModel->id}");
-        }
+        $this->notifications->message($recipient, $senderName, $threadModel->id);
+        $this->websocket->toUser($recipient, 'notification', [
+            'type' => 'message',
+            'title' => 'New Message',
+            'message' => "New message from {$senderName}",
+        ]);
+        $this->push->send($recipient, "New message from {$senderName}", substr($validated['body'], 0, 120), "/messages?thread={$threadModel->id}");
 
         return (new CommunityMessageResource($message))
             ->response()
@@ -244,5 +248,19 @@ class CommunityMessageController extends Controller
                 fn ($query) => $query->where('username', $validated['participant_username'] ?? '')
             )
             ->first();
+    }
+
+    private function messagingBlockedBetween(int $senderId, int $recipientId): bool
+    {
+        return CommunityUserBlock::query()
+            ->where(function ($query) use ($senderId, $recipientId) {
+                $query->where('user_id', $senderId)
+                    ->where('blocked_user_id', $recipientId);
+            })
+            ->orWhere(function ($query) use ($senderId, $recipientId) {
+                $query->where('user_id', $recipientId)
+                    ->where('blocked_user_id', $senderId);
+            })
+            ->exists();
     }
 }

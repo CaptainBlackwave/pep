@@ -148,6 +148,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/messages/{thread}/messages', [CommunityMessageController::class, 'store']);
             Route::post('/notifications/{notification}/read', [CommunityNotificationController::class, 'markAsRead']);
             Route::post('/notifications/read-all', [CommunityNotificationController::class, 'markAllAsRead']);
+            Route::delete('/notifications/read/clear', [CommunityNotificationController::class, 'deleteRead']);
+            Route::delete('/notifications/{notification}', [CommunityNotificationController::class, 'delete']);
         });
 
         // Two-Factor Authentication (authenticated routes)

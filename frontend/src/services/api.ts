@@ -53,12 +53,79 @@ const axiosInstance: AxiosInstance = axios.create({
   withCredentials: true
 })
 
+function normalizeRequestValue(value: unknown): unknown {
+  if (value === null || value === undefined) {
+    return value
+  }
+
+  if (value instanceof URLSearchParams) {
+    return Array.from(value.entries()).sort(([a], [b]) => a.localeCompare(b))
+  }
+
+  if (typeof FormData !== 'undefined' && value instanceof FormData) {
+    return Array.from(value.entries()).map(([key, entry]) => {
+      if (entry instanceof File) {
+        return [key, { name: entry.name, size: entry.size, type: entry.type, lastModified: entry.lastModified }]
+      }
+
+      return [key, entry]
+    })
+  }
+
+  if (Array.isArray(value)) {
+    return value.map(normalizeRequestValue)
+  }
+
+  if (typeof value === 'object') {
+    return Object.fromEntries(
+      Object.entries(value as Record<string, unknown>)
+        .filter(([, entry]) => entry !== undefined)
+        .sort(([a], [b]) => a.localeCompare(b))
+        .map(([key, entry]) => [key, normalizeRequestValue(entry)])
+    )
+  }
+
+  return value
+}
+
+function stableSerialize(value: unknown): string {
+  if (value === undefined || value === null || value === '') {
+    return ''
+  }
+
+  if (typeof value === 'string') {
+    return value
+  }
+
+  return JSON.stringify(normalizeRequestValue(value))
+}
+
 /**
- * Generate a unique key for request deduplication and caching
+ * Generate a unique key for request deduplication and caching.
  */
-function generateRequestKey(method: string, url: string, data?: unknown): string {
-  const dataHash = data ? JSON.stringify(data) : ''
-  return `${method.toUpperCase()}:${url}:${dataHash}`
+function generateRequestKey(method: string, url: string, params?: unknown, data?: unknown): string {
+  return [
+    method.toUpperCase(),
+    url,
+    stableSerialize(params),
+    stableSerialize(data),
+  ].join(':')
+}
+
+function requestKeyFromConfig(config: AxiosRequestConfig): string {
+  return generateRequestKey(config.method || 'GET', config.url || '', config.params, config.data)
+}
+
+function cacheKeyFor(url: string, params?: unknown): string {
+  return generateRequestKey('CACHE', url, params)
+}
+
+function invalidateCacheForUrl(url: string): void {
+  for (const key of responseCache.keys()) {
+    if (key.startsWith(`CACHE:${url}:`)) {
+      responseCache.delete(key)
+    }
+  }
 }
 
 /**
@@ -91,13 +158,13 @@ axiosInstance.interceptors.request.use(
 axiosInstance.interceptors.response.use(
   (response: AxiosResponse) => {
     // Clear pending request on success
-    const key = generateRequestKey(response.config.method || 'GET', response.config.url || '', response.config.data)
+    const key = requestKeyFromConfig(response.config)
     pendingRequests.delete(key)
 
     // Store ETag if present for future cache validation
     const etag = response.headers['etag']
     if (etag && response.config.url) {
-      const cacheKey = `cache:${response.config.url}`
+      const cacheKey = cacheKeyFor(response.config.url, response.config.params)
       const existingEntry = responseCache.get(cacheKey)
       if (existingEntry) {
         existingEntry.etag = etag
@@ -109,17 +176,16 @@ axiosInstance.interceptors.response.use(
   (error: { response?: { status?: number }; config?: InternalAxiosRequestConfig }) => {
     // Clear pending request on error
     if (error.config) {
-      const key = generateRequestKey(
-        error.config.method || 'GET',
-        error.config.url || '',
-        error.config.data
-      )
-      pendingRequests.delete(key)
+      pendingRequests.delete(requestKeyFromConfig(error.config))
     }
 
     // Handle 401 unauthorized responses
     if (error.response?.status === 401) {
       localStorage.removeItem('user')
+      localStorage.removeItem('auth_token')
+      localStorage.removeItem('2fa_challenge')
+      responseCache.clear()
+      pendingRequests.clear()
       // Only redirect if not already on login page
       if (!window.location.pathname.includes('/login')) {
         window.location.href = '/login'
@@ -236,8 +302,8 @@ const api = {
       proxy: options.proxy,
     }
 
-    const key = generateRequestKey('GET', url)
-    const cacheKey = `cache:${url}`
+    const key = generateRequestKey('GET', url, options.params)
+    const cacheKey = cacheKeyFor(url, options.params)
 
     // Check cache first
     if (cacheTTL > 0 && !forceRefresh) {
@@ -322,7 +388,7 @@ const api = {
     } = options
     const timeout = options.timeout
 
-    const key = generateRequestKey('POST', url, data)
+    const key = generateRequestKey('POST', url, options.params, data)
 
     // Check for duplicate pending request
     if (!skipDeduplication && pendingRequests.has(key)) {
@@ -372,15 +438,16 @@ const api = {
     }
 
     // Invalidate cache for this URL on POST
-    const cacheKey = `cache:${url}`
-    responseCache.delete(cacheKey)
+    invalidateCacheForUrl(url)
 
     try {
       const response = await request
       abortControllers.delete(key)
+      pendingRequests.delete(key)
       return response
     } catch (error) {
       abortControllers.delete(key)
+      pendingRequests.delete(key)
       throw error
     }
   },
@@ -397,7 +464,7 @@ const api = {
     const { signal } = options
     const timeout = options.timeout
 
-    const key = generateRequestKey('PUT', url, data)
+    const key = generateRequestKey('PUT', url, options.params, data)
 
     const controller = new AbortController()
     abortControllers.set(key, controller)
@@ -407,8 +474,7 @@ const api = {
     }
 
     // Invalidate cache for this URL on PUT
-    const cacheKey = `cache:${url}`
-    responseCache.delete(cacheKey)
+    invalidateCacheForUrl(url)
 
     const axiosConfig: AxiosRequestConfig = {
       url: options.url,
@@ -439,9 +505,11 @@ const api = {
         timeout,
       })
       abortControllers.delete(key)
+      pendingRequests.delete(key)
       return response
     } catch (error) {
       abortControllers.delete(key)
+      pendingRequests.delete(key)
       throw error
     }
   },
@@ -458,7 +526,7 @@ const api = {
     const { signal } = options
     const timeout = options.timeout
 
-    const key = generateRequestKey('PATCH', url, data)
+    const key = generateRequestKey('PATCH', url, options.params, data)
 
     const controller = new AbortController()
     abortControllers.set(key, controller)
@@ -468,8 +536,7 @@ const api = {
     }
 
     // Invalidate cache for this URL on PATCH
-    const cacheKey = `cache:${url}`
-    responseCache.delete(cacheKey)
+    invalidateCacheForUrl(url)
 
     const axiosConfig: AxiosRequestConfig = {
       url: options.url,
@@ -500,9 +567,11 @@ const api = {
         timeout,
       })
       abortControllers.delete(key)
+      pendingRequests.delete(key)
       return response
     } catch (error) {
       abortControllers.delete(key)
+      pendingRequests.delete(key)
       throw error
     }
   },
@@ -518,7 +587,7 @@ const api = {
     const { signal } = options
     const timeout = options.timeout
 
-    const key = generateRequestKey('DELETE', url)
+    const key = generateRequestKey('DELETE', url, options.params)
 
     const controller = new AbortController()
     abortControllers.set(key, controller)
@@ -528,8 +597,7 @@ const api = {
     }
 
     // Invalidate cache for this URL on DELETE
-    const cacheKey = `cache:${url}`
-    responseCache.delete(cacheKey)
+    invalidateCacheForUrl(url)
 
     const axiosConfig: AxiosRequestConfig = {
       url: options.url,
@@ -560,9 +628,11 @@ const api = {
         timeout,
       })
       abortControllers.delete(key)
+      pendingRequests.delete(key)
       return response
     } catch (error) {
       abortControllers.delete(key)
+      pendingRequests.delete(key)
       throw error
     }
   },

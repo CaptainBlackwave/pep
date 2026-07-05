@@ -89,7 +89,7 @@ class NotificationController extends Controller
      */
     public function markAsRead(Request $request, int $id)
     {
-        $success = $this->notificationService->markAsRead($id);
+        $success = $this->notificationService->markAsRead($id, $request->user());
 
         return response()->json([
             'success' => $success,
@@ -117,7 +117,7 @@ class NotificationController extends Controller
      */
     public function delete(Request $request, int $id)
     {
-        $success = $this->notificationService->delete($id);
+        $success = $this->notificationService->delete($id, $request->user());
 
         return response()->json([
             'success' => $success,
@@ -140,4 +140,3 @@ class NotificationController extends Controller
         ]);
     }
 }
-

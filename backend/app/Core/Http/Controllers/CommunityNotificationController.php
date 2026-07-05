@@ -33,6 +33,9 @@ class CommunityNotificationController extends Controller
 
         if ($user) {
             $communityQuery->with(['reads' => fn ($q) => $q->where('user_id', $user->id)]);
+            $communityQuery->whereDoesntHave('reads', fn ($q) => $q
+                ->where('user_id', $user->id)
+                ->whereNotNull('dismissed_at'));
         }
 
         if ($categoryFilter && !$isPersonalCategory) {
@@ -203,6 +206,9 @@ class CommunityNotificationController extends Controller
         $unreadCommunity = CommunityNotification::query()
             ->where('status', 'published')
             ->whereDoesntHave('reads', fn ($q) => $q->where('user_id', $user->id))
+            ->whereDoesntHave('reads', fn ($q) => $q
+                ->where('user_id', $user->id)
+                ->whereNotNull('dismissed_at'))
             ->get(['id']);
 
         foreach ($unreadCommunity as $notification) {
@@ -220,6 +226,63 @@ class CommunityNotificationController extends Controller
         return response()->json([
             'success' => true,
             'read_count' => $unreadCommunity->count() + $personalReadCount,
+        ]);
+    }
+
+    public function delete(Request $request, string $notification)
+    {
+        $user = $request->user();
+
+        [$source, $realId] = $this->parseNotificationIdentifier($notification);
+
+        if ($source === 'community') {
+            $communityItem = CommunityNotification::query()
+                ->where('status', 'published')
+                ->where(function ($q) use ($realId) {
+                    $q->where('slug', $realId);
+                    if (ctype_digit($realId)) $q->orWhere('id', (int) $realId);
+                })
+                ->first();
+
+            if ($communityItem) {
+                CommunityNotificationRead::updateOrCreate(
+                    ['notification_id' => $communityItem->id, 'user_id' => $user->id],
+                    ['read_at' => now(), 'dismissed_at' => now()]
+                );
+
+                return response()->json(['success' => true, 'message' => 'Notification dismissed.']);
+            }
+        }
+
+        $personalItem = $this->findPersonalNotification($user, $notification);
+        if ($personalItem) {
+            $personalItem->delete();
+
+            return response()->json(['success' => true, 'message' => 'Notification deleted.']);
+        }
+
+        abort(404, 'Notification not found.');
+    }
+
+    public function deleteRead(Request $request)
+    {
+        $user = $request->user();
+
+        $communityCount = CommunityNotificationRead::query()
+            ->where('user_id', $user->id)
+            ->whereNotNull('read_at')
+            ->whereNull('dismissed_at')
+            ->update(['dismissed_at' => now()]);
+
+        $personalCount = Notification::query()
+            ->where('user_id', $user->id)
+            ->read()
+            ->delete();
+
+        return response()->json([
+            'success' => true,
+            'count' => $communityCount + $personalCount,
+            'message' => 'Read notifications cleared.',
         ]);
     }
 
@@ -254,6 +317,12 @@ class CommunityNotificationController extends Controller
     private function stats(?int $userId): array
     {
         $base = CommunityNotification::query()->where('status', 'published');
+        if ($userId) {
+            $base->whereDoesntHave('reads', fn ($q) => $q
+                ->where('user_id', $userId)
+                ->whereNotNull('dismissed_at'));
+        }
+
         $communityUnread = $userId
             ? (clone $base)->whereDoesntHave('reads', fn ($q) => $q->where('user_id', $userId))->count()
             : 0;
@@ -284,6 +353,9 @@ class CommunityNotificationController extends Controller
     {
         $cats = CommunityNotification::query()
             ->where('status', 'published')
+            ->when($userId, fn ($query) => $query->whereDoesntHave('reads', fn ($q) => $q
+                ->where('user_id', $userId)
+                ->whereNotNull('dismissed_at')))
             ->orderByDesc('published_at')
             ->get(['category', 'category_slug', 'icon'])
             ->groupBy('category_slug')
@@ -292,6 +364,11 @@ class CommunityNotificationController extends Controller
                 $base = CommunityNotification::query()
                     ->where('status', 'published')
                     ->where('category_slug', $first->category_slug);
+                if ($userId) {
+                    $base->whereDoesntHave('reads', fn ($q) => $q
+                        ->where('user_id', $userId)
+                        ->whereNotNull('dismissed_at'));
+                }
                 return [
                     'name' => $first->category,
                     'slug' => $first->category_slug,

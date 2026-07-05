@@ -197,7 +197,7 @@ const submitForm = async () => {
   errorMessage.value = ''
 
   try {
-    const response = await api.post('/api/v1/reset-password', {
+    const response = await api.post<{ message?: string }>('/api/v1/reset-password', {
       email,
       token,
       password: password.value,

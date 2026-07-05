@@ -18,7 +18,6 @@ export default defineConfig({
       includeAssets: ['icons/icon-192.svg', 'icons/icon-512.svg'],
       srcDir: '',
       filename: 'sw.js',
-      swDest: 'dist/sw.js',
       strategies: 'injectManifest',
       workbox: {
         globPatterns: ['**/*.{js,css,html,svg,png,woff2}'],

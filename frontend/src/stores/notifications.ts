@@ -32,14 +32,29 @@ export const useNotificationsStore = defineStore('notifications', () => {
     notifications.value.filter(n => n.read_at)
   )
 
-  function mapCommunityNotification(item: Record<string, any>): Notification {
+  type CommunityNotificationsResponse = {
+    data?: Record<string, unknown>[]
+    meta?: { stats?: { unread?: number } }
+    notifications?: Notification[]
+    unread_count?: number
+    count?: number
+  }
+
+  function stringValue(value: unknown, fallback = ''): string {
+    return typeof value === 'string' ? value : fallback
+  }
+
+  function mapCommunityNotification(item: Record<string, unknown>): Notification {
+    const sourceId = String(item.id ?? item.slug ?? '0')
+    const slug = stringValue(item.slug, sourceId)
+
     return {
-      id: Number(String(item.id ?? item.slug ?? '0').replace(/\D+/g, '') || 0),
+      id: Number(sourceId.replace(/\D+/g, '') || 0),
       type: String(item.category_slug ?? item.type ?? 'notification'),
       title: String(item.title ?? ''),
       message: String(item.text ?? item.body ?? item.message ?? ''),
       link: String(item.href ?? item.detail_href ?? item.link ?? ''),
-      data: { slug: item.slug, source: item.source },
+      data: { slug, source: stringValue(item.source), source_id: sourceId },
       read_at: item.unread ? null : String(item.read_at ?? item.date ?? new Date().toISOString()),
       created_at: String(item.date ?? item.created_at ?? new Date().toISOString()),
     }
@@ -51,6 +66,10 @@ export const useNotificationsStore = defineStore('notifications', () => {
     return typeof slug === 'string' && slug ? slug : String(fallback)
   }
 
+  function unreadCountFromResponse(data: CommunityNotificationsResponse, fallback: number): number {
+    return data.meta?.stats?.unread ?? data.unread_count ?? data.count ?? fallback
+  }
+
   /**
    * Fetch all notifications
    */
@@ -60,17 +79,17 @@ export const useNotificationsStore = defineStore('notifications', () => {
 
     try {
       const response = await api.get('/api/v1/community/notifications', { cacheTTL: 0 })
-      const data = response.data as NotificationsListResponse | { data?: Record<string, any>[]; meta?: { stats?: { unread?: number } } } | Notification[]
+      const data = response.data as NotificationsListResponse | CommunityNotificationsResponse | Notification[]
       if (Array.isArray(data)) {
         notifications.value = data as Notification[]
         unreadCount.value = notifications.value.filter(n => !n.read_at).length
       } else if ('data' in data && Array.isArray(data.data)) {
         notifications.value = data.data.map(mapCommunityNotification)
-        unreadCount.value = data.meta?.stats?.unread ?? notifications.value.filter(n => !n.read_at).length
+        unreadCount.value = unreadCountFromResponse(data, notifications.value.filter(n => !n.read_at).length)
       } else {
         const notifData = 'notifications' in data ? data.notifications : []
         notifications.value = (notifData as Notification[]) || []
-        unreadCount.value = notifications.value.filter(n => !n.read_at).length
+        unreadCount.value = unreadCountFromResponse(data as CommunityNotificationsResponse, notifications.value.filter(n => !n.read_at).length)
       }
     } catch {
       error.value = 'Failed to fetch notifications'
@@ -88,8 +107,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
         cacheTTL: 0,
         params: { status: 'unread', limit: 1 },
       })
-      const data = response.data as { meta?: { stats?: { unread?: number } } }
-      unreadCount.value = data.meta?.stats?.unread ?? 0
+      const data = response.data as CommunityNotificationsResponse
+      unreadCount.value = unreadCountFromResponse(data, 0)
     } catch {
       // Silently fail - unread count will be updated on next fetch
     }
@@ -104,9 +123,9 @@ export const useNotificationsStore = defineStore('notifications', () => {
         cacheTTL: 0,
         params: { limit: 10 },
       })
-      const data = response.data as { data?: Record<string, any>[]; meta?: { stats?: { unread?: number } } }
+      const data = response.data as CommunityNotificationsResponse
       notifications.value = (data.data ?? []).map(mapCommunityNotification)
-      unreadCount.value = data.meta?.stats?.unread ?? notifications.value.filter(n => !n.read_at).length
+      unreadCount.value = unreadCountFromResponse(data, notifications.value.filter(n => !n.read_at).length)
     } catch {
       // Silently fail - recent notifications will be fetched on next load
     }
@@ -152,7 +171,8 @@ export const useNotificationsStore = defineStore('notifications', () => {
    */
   async function deleteNotification(id: number): Promise<void> {
     try {
-      await api.delete(`/api/v1/notifications/${id}`)
+      const notification = notifications.value.find(n => n.id === id)
+      await api.delete(`/api/v1/community/notifications/${encodeURIComponent(readKeyForNotification(notification, id))}`)
 
       const index = notifications.value.findIndex(n => n.id === id)
       if (index !== -1) {
@@ -172,7 +192,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
    */
   async function clearRead(): Promise<void> {
     try {
-      await api.delete('/api/v1/notifications/read/clear')
+      await api.delete('/api/v1/community/notifications/read/clear')
       notifications.value = notifications.value.filter(n => !n.read_at)
     } catch {
       // Silently fail - read notifications will be cleared on server

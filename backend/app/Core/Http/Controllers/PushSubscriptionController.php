@@ -20,6 +20,7 @@ class PushSubscriptionController extends Controller
 
         if ($existing) {
             $existing->update([
+                'user_id' => $request->user()->id,
                 'public_key' => $validated['public_key'] ?? $existing->public_key,
                 'auth_token' => $validated['auth_token'] ?? $existing->auth_token,
                 'user_agent' => $request->userAgent(),

@@ -242,7 +242,7 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     void notificationsStore.fetchUnreadCount()
   }
-  api.get('/api/v1/settings/public').then(r => {
+  api.get<{ telegram_url?: string }>('/api/v1/settings/public').then(r => {
     if (r.data?.telegram_url) telegramUrl.value = r.data.telegram_url
   }).catch(() => {})
 })

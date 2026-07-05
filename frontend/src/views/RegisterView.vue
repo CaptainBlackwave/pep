@@ -33,7 +33,7 @@
               required
               autofocus
               autocomplete="username"
-              placeholder="Choose a username"
+              placeholder="Username"
             >
           </span>
         </label>

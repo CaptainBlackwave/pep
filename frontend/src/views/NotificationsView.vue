@@ -117,7 +117,7 @@ const getIcon = (type: string): string => {
     update: '🔄',
     default: '📢',
   }
-  return icons[type] ?? icons.default
+  return icons[type] ?? '📢'
 }
 
 const formatTime = (dateString: string): string => {
