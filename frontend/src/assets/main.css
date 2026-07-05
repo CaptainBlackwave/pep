@@ -1092,10 +1092,8 @@ table {
 }
 
 .original-post {
-  border: 1.5px solid #8d46ff;
-  box-shadow:
-    0 0 0 1px rgba(141, 70, 255, 0.15),
-    0 0 24px rgba(141, 70, 255, 0.12);
+  grid-template-columns: 44px 1fr;
+  padding: 10px 12px;
 }
 
 .post-left {

@@ -322,29 +322,19 @@
   <section v-else-if="page === 'discussionDetail'" class="pv-page">
     <div v-if="detailDiscussion" class="thread-wrap">
       <article class="post-card original-post">
-        <div class="post-left">
-          <div class="avatar image-avatar">
+        <div class="post-left reply-left">
+          <div class="avatar">
             <span v-if="detailDiscussion.avatarUrl" class="img-wrap"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
             <span v-else>{{ detailDiscussion.initial }}</span>
             <span class="online-dot"></span>
           </div>
+          <div class="reply-name">{{ detailDiscussion.author }}</div>
         </div>
         <div class="post-main">
-          <div class="post-top">
-            <div>
-              <div class="username-row">
-                <span class="username">{{ detailDiscussion.author }}</span>
-                <span class="verified">✓</span>
-              </div>
-              <div class="post-meta-row">
-                <span v-if="detailDiscussion.tag" class="post-tag">▰ {{ detailDiscussion.tag }}</span>
-                <span v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="post-edit" @click="startEditDiscussion">Edit</span>
-                <span v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="post-delete" @click="deleteDiscussion">Delete</span>
-              </div>
-            </div>
-            <div class="meta-row">
-              <span class="badge">★ Original Post</span>
-              <span class="time">{{ detailDiscussion.time }}</span>
+          <div class="reply-top">
+            <div class="reply-meta">
+              <span>{{ detailDiscussion.time }}</span>
+              <span v-if="detailDiscussion.tag" class="small-badge">{{ detailDiscussion.tag }}</span>
             </div>
           </div>
           <h1>{{ detailDiscussion.title }}</h1>
