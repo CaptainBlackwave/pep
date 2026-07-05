@@ -141,6 +141,9 @@ Route::prefix('v1')->group(function () {
             Route::post('/vendor-profile/image', [CommunityVendorController::class, 'uploadVendorImage']);
             Route::post('/vendor-profile', [CommunityVendorController::class, 'storeVendorProfile']);
             Route::patch('/vendor-profile', [CommunityVendorController::class, 'updateVendorProfile']);
+            Route::post('/vendor-profile/products', [CommunityVendorController::class, 'storeVendorProduct']);
+            Route::patch('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
+            Route::delete('/vendor-profile/products/{product}', [CommunityVendorController::class, 'destroyVendorProduct']);
             Route::post('/vendors/{vendor}/claim', [CommunityVendorController::class, 'claimVendor']);
             Route::post('/vendors/{vendor}/reviews', [CommunityVendorController::class, 'storeReview']);
             Route::post('/vendor-reviews/{review}/helpful', [CommunityVendorController::class, 'markReviewHelpful']);

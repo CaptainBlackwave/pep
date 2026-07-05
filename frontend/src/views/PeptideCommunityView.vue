@@ -579,21 +579,34 @@
           </form>
           <p v-if="vendorStatusMessage" class="pv-alert pv-alert--compact">{{ vendorStatusMessage }}</p>
           <p v-if="vendorsLoaded && vendors.length === 0" class="pv-muted">No vendors found.</p>
-          <article v-for="vendor in vendors" :key="vendor.slug" class="pv-vendor-row">
-            <router-link :to="vendor.href" class="pv-logo-card pv-vendor-card-logo" :class="vendor.class"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logoText }}</template></router-link>
-            <div class="pv-vendor-card-main">
-              <router-link :to="vendor.href" class="pv-vendor-name-row">
-                <strong>{{ vendor.name }}</strong>
-                <em class="pv-tag" :class="vendor.statusClass">{{ vendor.status }}</em>
-              </router-link>
-              <small class="pv-vendor-card-meta"><PvIcon name="star" /> {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} <span>·</span> Member since {{ vendor.since }}</small>
-              <span class="pv-chip-row pv-vendor-chip-row"><span v-for="chip in vendor.chips" :key="chip"><PvIcon :name="vendorChipIcon(chip)" /> {{ chip }}</span></span>
-              <div class="pv-vendor-score-strip">
-                <span class="pv-vendor-rating" :class="vendor.tone"><PvIcon name="star" /><strong>{{ vendor.rating || '0.0' }} <small>/ 5</small></strong></span>
-                <span class="pv-vendor-buy-again"><small>Would buy again</small><strong>{{ vendor.buyAgain || '0%' }}</strong></span>
+          <article v-for="vendor in vendors" :key="vendor.slug" class="vendor-card">
+            <router-link :to="vendor.href" class="vendor-arrow">›</router-link>
+            <div class="vendor-top">
+              <span v-if="vendor.imageUrl" class="vendor-logo"><img :src="vendor.imageUrl" :alt="vendor.name"></span>
+              <span v-else class="vendor-logo vendor-logo--letter">{{ vendor.logoText }}</span>
+              <div class="vendor-info">
+                <h3>{{ vendor.name }}</h3>
+                <span class="trusted">✓ {{ vendor.status }}</span>
+                <p class="vendor-meta">☆ {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} · Member since {{ vendor.since }}</p>
               </div>
             </div>
-            <span class="pv-vendor-row-actions"><router-link :to="vendor.href" class="pv-small-button"><PvIcon name="list" /> View Reviews</router-link><router-link :to="`${vendor.href}/review`" class="pv-primary-button"><PvIcon name="edit" /> Write Review</router-link></span>
+            <div class="vendor-tags">
+              <span v-for="chip in vendor.chips" :key="chip">{{ chip }}</span>
+            </div>
+            <div class="vendor-stats">
+              <div>
+                <strong>★ {{ vendor.rating || '0.0' }} <small>/ 5</small></strong>
+                <span>Overall Rating</span>
+              </div>
+              <div>
+                <strong>🛒 {{ vendor.buyAgain || '0%' }}</strong>
+                <span>Would buy again</span>
+              </div>
+            </div>
+            <div class="vendor-actions">
+              <router-link :to="vendor.href" class="secondary">☷ View Reviews</router-link>
+              <router-link :to="`${vendor.href}/review`" class="primary">✎ Write Review</router-link>
+            </div>
           </article>
           <PaginationBlock :meta="vendorPagination" @page="setVendorPage" />
         </article>

@@ -3,9 +3,11 @@
 namespace App\Core\Http\Controllers;
 
 use App\Core\Http\Resources\CommunityVendorResource;
+use App\Core\Http\Resources\CommunityVendorProductResource;
 use App\Core\Http\Resources\CommunityVendorReviewResource;
 use App\Core\Models\CommunityVendor;
 use App\Core\Models\CommunityVendorClaim;
+use App\Core\Models\CommunityVendorProduct;
 use App\Core\Models\CommunityVendorReview;
 use App\Core\Models\User;
 use App\Core\Services\CommunityNotificationService;
@@ -70,7 +72,10 @@ class CommunityVendorController extends Controller
     public function show(string $vendor)
     {
         $vendorModel = $this->findPublishedVendor($vendor)
-            ->load(['publishedReviews' => fn ($query) => $query->with('user')->latest('reviewed_at')->latest()]);
+            ->load([
+                'publishedReviews' => fn ($query) => $query->with('user')->latest('reviewed_at')->latest(),
+                'publishedProducts' => fn ($query) => $query->orderBy('sort_order')->orderBy('name'),
+            ]);
         $this->hydrateRatingDistributions(collect([$vendorModel]));
 
         return new CommunityVendorResource($vendorModel);
@@ -79,6 +84,7 @@ class CommunityVendorController extends Controller
     public function myVendorProfile(Request $request)
     {
         $vendor = CommunityVendor::query()
+            ->with(['products' => fn ($query) => $query->orderBy('sort_order')->orderBy('name')])
             ->where('owner_user_id', $request->user()->id)
             ->latest('updated_at')
             ->first();
@@ -219,6 +225,74 @@ class CommunityVendorController extends Controller
         ], 201);
     }
 
+    public function storeVendorProduct(Request $request)
+    {
+        $vendor = $this->ownedVendor($request);
+        $validated = $this->validateVendorProduct($request, $vendor);
+        $imageUrl = $this->storeProductImageIfPresent($request);
+        $name = trim($validated['name']);
+
+        unset($validated['image']);
+
+        $product = $vendor->products()->create([
+            ...$validated,
+            'name' => $name,
+            'slug' => $this->uniqueProductSlug($vendor, $validated['slug'] ?? $name),
+            'image_url' => $imageUrl ?? ($validated['image_url'] ?? null),
+            'currency_code' => strtoupper($validated['currency_code'] ?? 'USD'),
+            'availability' => $validated['availability'] ?? 'in_stock',
+            'status' => $validated['status'] ?? 'published',
+        ]);
+
+        $this->refreshVendorProductSnapshots($vendor);
+
+        return (new CommunityVendorProductResource($product->load('vendor')))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function updateVendorProduct(Request $request, string $product)
+    {
+        $vendor = $this->ownedVendor($request);
+        $productModel = $vendor->products()->whereKey($product)->firstOrFail();
+        $validated = $this->validateVendorProduct($request, $vendor, true, $productModel->id);
+        $imageUrl = $this->storeProductImageIfPresent($request);
+
+        unset($validated['image']);
+
+        if (isset($validated['name'])) {
+            $validated['name'] = trim($validated['name']);
+        }
+
+        if (isset($validated['slug'])) {
+            $validated['slug'] = $this->uniqueProductSlug($vendor, $validated['slug'], $productModel->id);
+        }
+
+        if (isset($validated['currency_code'])) {
+            $validated['currency_code'] = strtoupper($validated['currency_code']);
+        }
+
+        if ($imageUrl) {
+            $validated['image_url'] = $imageUrl;
+        }
+
+        $productModel->fill($validated)->save();
+        $vendor->forceFill(['last_active_at' => now()])->save();
+        $this->refreshVendorProductSnapshots($vendor);
+
+        return new CommunityVendorProductResource($productModel->refresh()->load('vendor'));
+    }
+
+    public function destroyVendorProduct(Request $request, string $product)
+    {
+        $vendor = $this->ownedVendor($request);
+        $productModel = $vendor->products()->whereKey($product)->firstOrFail();
+        $productModel->delete();
+        $this->refreshVendorProductSnapshots($vendor);
+
+        return response()->json(['message' => 'Product removed.']);
+    }
+
     public function claimVendor(Request $request, string $vendor)
     {
         $vendorModel = $this->findPublishedVendor($vendor);
@@ -355,6 +429,60 @@ class CommunityVendorController extends Controller
         ]);
     }
 
+    private function validateVendorProduct(Request $request, CommunityVendor $vendor, bool $partial = false, ?int $ignoreProductId = null): array
+    {
+        $required = $partial ? 'sometimes' : 'required';
+
+        return $request->validate([
+            'name' => [$required, 'string', 'max:160'],
+            'slug' => [
+                'nullable',
+                'string',
+                'max:180',
+                'regex:/^[a-z0-9-]+$/i',
+                Rule::unique('community_vendor_products', 'slug')
+                    ->where(fn ($query) => $query->where('vendor_id', $vendor->id))
+                    ->ignore($ignoreProductId),
+            ],
+            'category' => ['nullable', 'string', 'max:80'],
+            'strength' => ['nullable', 'string', 'max:80'],
+            'package_size' => ['nullable', 'string', 'max:80'],
+            'purity_label' => ['nullable', 'string', 'max:80'],
+            'description' => ['nullable', 'string', 'max:2000'],
+            'price' => ['nullable', 'numeric', 'min:0', 'max:999999.99'],
+            'currency_code' => ['nullable', 'string', 'size:3'],
+            'availability' => ['nullable', Rule::in(['in_stock', 'limited', 'out_of_stock'])],
+            'image_url' => ['nullable', 'url', 'max:255'],
+            'image' => ['nullable', 'image', 'max:5120'],
+            'tags' => ['nullable', 'array', 'max:10'],
+            'tags.*' => ['string', 'max:60'],
+            'sort_order' => ['nullable', 'integer', 'min:0', 'max:100000'],
+            'status' => ['nullable', Rule::in(['published', 'hidden'])],
+        ]);
+    }
+
+    private function ownedVendor(Request $request): CommunityVendor
+    {
+        abort_unless(
+            $this->userIsApprovedVendor($request->user()),
+            403,
+            'An admin must approve this account as a vendor before you can manage products.'
+        );
+
+        return CommunityVendor::query()
+            ->where('owner_user_id', $request->user()->id)
+            ->firstOrFail();
+    }
+
+    private function storeProductImageIfPresent(Request $request): ?string
+    {
+        if (!$request->hasFile('image')) {
+            return null;
+        }
+
+        return $this->publicStorageUrl($request, $request->file('image')->store('vendor-product-images', 'public'));
+    }
+
     private function userIsApprovedVendor(User $user): bool
     {
         $attributes = $user->getAttributes();
@@ -397,6 +525,24 @@ class CommunityVendorController extends Controller
         return $slug;
     }
 
+    private function uniqueProductSlug(CommunityVendor $vendor, string $value, ?int $ignoreId = null): string
+    {
+        $base = Str::slug($value) ?: 'product';
+        $slug = $base;
+        $suffix = 2;
+
+        while ($vendor->products()
+            ->when($ignoreId, fn ($query) => $query->whereKeyNot($ignoreId))
+            ->where('slug', $slug)
+            ->exists()
+        ) {
+            $slug = "{$base}-{$suffix}";
+            $suffix++;
+        }
+
+        return $slug;
+    }
+
     private function initials(string $value): string
     {
         $words = Str::of($value)
@@ -425,6 +571,33 @@ class CommunityVendorController extends Controller
                 ? round(($reviews->where('would_buy_again', true)->count() / $count) * 100, 2)
                 : 0,
         ])->save();
+
+        $this->refreshVendorProductSnapshots($vendor);
+    }
+
+    private function refreshVendorProductSnapshots(CommunityVendor $vendor): void
+    {
+        $products = $vendor->products()->get();
+
+        if ($products->isEmpty()) {
+            return;
+        }
+
+        $reviews = $vendor->publishedReviews()
+            ->whereNotNull('product_name')
+            ->get(['product_name', 'rating'])
+            ->groupBy(fn (CommunityVendorReview $review) => Str::lower(trim((string) $review->product_name)));
+
+        foreach ($products as $product) {
+            $matchedReviews = $reviews->get(Str::lower($product->name), collect());
+
+            $product->forceFill([
+                'review_count' => $matchedReviews->count(),
+                'average_rating' => $matchedReviews->isNotEmpty()
+                    ? round((float) $matchedReviews->avg('rating'), 2)
+                    : 0,
+            ])->save();
+        }
     }
 
     private function topVendors()

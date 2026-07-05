@@ -12,6 +12,8 @@ class CommunityVendorResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        $products = $this->loadedProducts();
+
         return [
             'id' => $this->id,
             'owner_user_id' => $this->owner_user_id,
@@ -50,7 +52,9 @@ class CommunityVendorResource extends JsonResource
             'response_rate_label' => rtrim(rtrim(number_format((float) $this->response_rate_percent, 1), '0'), '.') . '%',
             'avg_response_time' => $this->avg_response_time,
             'tags' => $this->tags ?? [],
-            'top_products' => $this->top_products ?? [],
+            'product_count' => $products->where('status', 'published')->count(),
+            'products' => CommunityVendorProductResource::collection($products),
+            'top_products' => $this->topProducts($products, $request),
             'status' => $this->status,
             'profile_submitted_at' => $this->profile_submitted_at?->toIso8601String(),
             'href' => "/vendor-reviews/{$this->slug}",
@@ -59,6 +63,39 @@ class CommunityVendorResource extends JsonResource
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];
+    }
+
+    private function loadedProducts()
+    {
+        if ($this->resource->relationLoaded('products')) {
+            return $this->products;
+        }
+
+        if ($this->resource->relationLoaded('publishedProducts')) {
+            return $this->publishedProducts;
+        }
+
+        return collect();
+    }
+
+    private function topProducts($products, Request $request): array
+    {
+        if ($products->isNotEmpty()) {
+            return $products
+                ->where('status', 'published')
+                ->sortBy([
+                    ['average_rating', 'desc'],
+                    ['review_count', 'desc'],
+                    ['sort_order', 'asc'],
+                    ['name', 'asc'],
+                ])
+                ->take(5)
+                ->map(fn ($product) => (new CommunityVendorProductResource($product))->resolve($request))
+                ->values()
+                ->all();
+        }
+
+        return $this->top_products ?? [];
     }
 
     private function tone(): string

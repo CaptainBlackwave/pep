@@ -5,6 +5,7 @@ namespace Tests\Feature;
 use App\Core\Middleware\VerifyLicense;
 use App\Core\Models\CommunityVendor;
 use App\Core\Models\CommunityVendorClaim;
+use App\Core\Models\CommunityVendorProduct;
 use App\Core\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
 use Illuminate\Http\UploadedFile;
@@ -126,6 +127,42 @@ class CommunityVendorApiTest extends TestCase
             ->assertJsonPath('data.slug', 'purepeptides')
             ->assertJsonPath('data.review_items.0.title', 'Excellent quality')
             ->assertJsonMissingPath('data.review_items.1');
+    }
+
+    public function test_private_vendor_detail_includes_published_product_catalog(): void
+    {
+        $vendor = CommunityVendor::create([
+            'name' => 'PurePeptides',
+            'slug' => 'purepeptides',
+            'status' => 'published',
+        ]);
+
+        CommunityVendorProduct::create([
+            'vendor_id' => $vendor->id,
+            'name' => 'Retatrutide',
+            'slug' => 'retatrutide',
+            'category' => 'Peptide',
+            'strength' => '10mg',
+            'price' => 85.00,
+            'availability' => 'in_stock',
+            'status' => 'published',
+        ]);
+
+        CommunityVendorProduct::create([
+            'vendor_id' => $vendor->id,
+            'name' => 'Hidden Product',
+            'slug' => 'hidden-product',
+            'status' => 'hidden',
+        ]);
+
+        $response = $this->getJson('/api/v1/community/vendors/purepeptides');
+
+        $response->assertOk()
+            ->assertJsonPath('data.product_count', 1)
+            ->assertJsonPath('data.products.0.name', 'Retatrutide')
+            ->assertJsonPath('data.products.0.price_label', '$85.00')
+            ->assertJsonPath('data.top_products.0.slug', 'retatrutide')
+            ->assertJsonMissingPath('data.products.1');
     }
 
     public function test_authenticated_user_can_submit_published_vendor_review(): void
@@ -345,6 +382,74 @@ class CommunityVendorApiTest extends TestCase
         Storage::disk('public')->assertExists(Str::after($imageUrl, '/storage/'));
 
         $this->assertSame($imageUrl, $vendor->fresh()->image_url);
+    }
+
+    public function test_approved_vendor_user_can_manage_product_catalog(): void
+    {
+        Storage::fake('public');
+
+        $user = User::factory()->create([
+            'username' => 'VendorUser',
+            'is_approved_vendor' => true,
+        ]);
+        $vendor = CommunityVendor::create([
+            'name' => 'Frontend Vendor',
+            'slug' => 'frontend-vendor',
+            'owner_user_id' => $user->id,
+            'status' => 'published',
+            'claim_status' => 'verified',
+        ]);
+
+        Sanctum::actingAs($user);
+
+        $create = $this->post('/api/v1/community/vendor-profile/products', [
+            'name' => 'Retatrutide',
+            'category' => 'Peptide',
+            'strength' => '10mg',
+            'package_size' => '1 vial',
+            'purity_label' => '>98%',
+            'description' => 'Research catalog listing only.',
+            'price' => '85.00',
+            'currency_code' => 'USD',
+            'availability' => 'in_stock',
+            'tags' => ['GLP-1', 'Research'],
+            'image' => UploadedFile::fake()->image('retatrutide.png', 400, 400),
+        ], ['Accept' => 'application/json']);
+
+        $create->assertCreated()
+            ->assertJsonPath('data.name', 'Retatrutide')
+            ->assertJsonPath('data.price_label', '$85.00')
+            ->assertJsonPath('data.availability_label', 'In stock');
+
+        $productId = $create->json('data.id');
+        $imageUrl = $create->json('data.image_url');
+        $this->assertStringStartsWith('http://localhost/storage/vendor-product-images/', $imageUrl);
+        Storage::disk('public')->assertExists(Str::after($imageUrl, '/storage/'));
+
+        $update = $this->patchJson("/api/v1/community/vendor-profile/products/{$productId}", [
+            'price' => '79.50',
+            'availability' => 'limited',
+            'status' => 'published',
+        ]);
+
+        $update->assertOk()
+            ->assertJsonPath('data.price_label', '$79.50')
+            ->assertJsonPath('data.availability', 'limited');
+
+        $this->assertDatabaseHas('community_vendor_products', [
+            'vendor_id' => $vendor->id,
+            'name' => 'Retatrutide',
+            'price' => 79.50,
+            'availability' => 'limited',
+        ]);
+
+        $this->deleteJson("/api/v1/community/vendor-profile/products/{$productId}")
+            ->assertOk()
+            ->assertJsonPath('message', 'Product removed.');
+
+        $this->assertDatabaseMissing('community_vendor_products', [
+            'id' => $productId,
+        ]);
     }
 
     public function test_admin_can_toggle_vendor_access_from_user_management(): void
