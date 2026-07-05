@@ -103,43 +103,6 @@ textarea::placeholder {
   right: 8px;
 }
 
-.pv-textarea-with-emoji .pv-format-bar,
-.reply-composer .pv-format-bar {
-  display: flex;
-  align-items: center;
-  gap: 2px;
-  padding: 6px 8px;
-  background: rgba(255,255,255,0.03);
-  border: 1px solid rgba(255,255,255,0.08);
-  border-bottom: 0;
-  border-radius: 8px 8px 0 0;
-}
-
-.pv-format-btn {
-  width: 30px;
-  height: 28px;
-  display: grid;
-  place-items: center;
-  border: 0;
-  border-radius: 4px;
-  background: transparent;
-  color: #aeb4c8;
-  font-size: 14px;
-  cursor: pointer;
-}
-
-.pv-format-btn:hover {
-  background: rgba(255,255,255,0.06);
-  color: #fff;
-}
-
-.pv-format-sep {
-  width: 1px;
-  height: 16px;
-  background: rgba(255,255,255,0.1);
-  margin: 0 4px;
-}
-
 hr {
   width: 100%;
   border: 0;
