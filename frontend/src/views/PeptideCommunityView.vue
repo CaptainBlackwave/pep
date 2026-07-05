@@ -376,8 +376,6 @@
           <div class="reply-body">
             <div class="reply-head">
               <span class="reply-time">{{ reply.time }}</span>
-              <span v-if="reply.authorId && reply.authorId === detailDiscussion.authorId" class="reply-op">OP</span>
-              <span v-if="reply.badge" class="reply-badge">{{ reply.badge }}</span>
             </div>
             <p v-html="linkifyText(reply.text)"></p>
             <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
