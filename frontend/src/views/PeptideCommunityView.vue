@@ -275,6 +275,7 @@
               <main class="topic-body">
                 <span v-if="topic.tag" class="topic-type">▱ {{ topic.tag }}</span>
                 <span v-if="topic.isPinned" class="topic-type topic-type--pinned">📌 Pinned</span>
+                <span v-if="topic.isLocked" class="topic-type topic-type--locked">🔒 Locked</span>
                 <h2>{{ topic.title }}</h2>
                 <p class="topic-excerpt">{{ topic.excerpt }}</p>
                 <div class="divider"></div>

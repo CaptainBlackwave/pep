@@ -973,6 +973,12 @@ table {
   margin-left: 8px;
 }
 
+.topic-type--locked {
+  background: rgba(239, 68, 68, .15);
+  color: #f87171;
+  margin-left: 4px;
+}
+
 .divider {
   height: 1px;
   margin: 18px 0 14px;
