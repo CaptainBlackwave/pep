@@ -35,7 +35,10 @@
             :aria-expanded="accountMenuOpen"
             @click.stop="accountMenuOpen = !accountMenuOpen"
           >
-            <span class="pv-avatar pv-avatar--small">{{ accountInitial }}</span>
+            <span class="pv-avatar pv-avatar--small">
+              <img v-if="accountAvatar" :src="accountAvatar" :alt="accountLabel">
+              <template v-else>{{ accountInitial }}</template>
+            </span>
             <span>{{ accountLabel }}</span>
             <PvIcon name="chevron" />
           </button>
@@ -48,6 +51,13 @@
               @click="accountMenuOpen = false"
             >
               Account Settings
+            </router-link>
+            <router-link
+              v-if="authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')"
+              to="/admin"
+              @click="accountMenuOpen = false"
+            >
+              Admin Panel
             </router-link>
             <button
               type="button"
@@ -74,6 +84,11 @@
           <span>{{ item.label }}</span>
         </router-link>
       </nav>
+
+      <button type="button" class="pv-nav-item pv-logout-mobile" @click="handleLogout">
+        <PvIcon name="close" />
+        <span>Logout</span>
+      </button>
 
       <section class="pv-telegram-card">
         <PvIcon name="send" />
@@ -122,6 +137,7 @@ const navItems = [
   { to: '/discussions', label: 'Discussions', icon: 'discussions', match: ['/discussions'] },
   { to: '/lab-results', label: 'Lab Results', icon: 'flask', match: ['/lab-results'] },
   { to: '/vendor-reviews', label: 'Vendor Reviews', icon: 'star', match: ['/vendor-reviews'] },
+  { to: '/vendor-portal', label: 'Vendor Portal', icon: 'box', match: ['/vendor-portal'] },
   { to: '/research-library', label: 'Research Library', icon: 'library', match: ['/research-library'] },
   { to: '/guides', label: 'Guides & FAQ', icon: 'question', match: ['/guides'] },
   { to: '/members', label: 'Members', icon: 'users', match: ['/members'] },
@@ -138,6 +154,7 @@ const searchPlaceholder = computed(() => {
   const path = route.path
   if (path.startsWith('/lab-results')) return 'Search lab results...'
   if (path.startsWith('/vendor-reviews')) return 'Search vendors, reviews...'
+  if (path.startsWith('/vendor-portal')) return 'Search vendors...'
   if (path.startsWith('/research-library')) return 'Search research library...'
   if (path.startsWith('/guides')) return 'Search guides & FAQ...'
   if (path.startsWith('/members')) return 'Search members...'
@@ -147,13 +164,45 @@ const searchPlaceholder = computed(() => {
 
 const accountLabel = computed(() => authStore.user?.username || authStore.user?.name || 'Account')
 const accountInitial = computed(() => accountLabel.value.charAt(0).toUpperCase())
+const accountAvatar = computed(() => {
+  const user = authStore.user as Record<string, any> | null
+
+  return assetUrl(String(user?.avatar || user?.profile_photo_path || user?.profile_picture || ''))
+})
 const notificationCount = computed(() => notificationsStore.unreadCount)
+
+const backendAssetOrigin = () => {
+  const configured = String(import.meta.env.VITE_API_URL || '').replace(/\/$/, '')
+
+  if (configured) {
+    return configured
+  }
+
+  if (window.location.port.startsWith('517')) {
+    return `${window.location.protocol}//${window.location.hostname}:8001`
+  }
+
+  return window.location.origin
+}
+
+const assetUrl = (value: string) => {
+  if (!value || /^(https?:|data:|blob:)/i.test(value)) {
+    return value
+  }
+
+  if (value.startsWith('/storage/')) {
+    return `${backendAssetOrigin()}${value}`
+  }
+
+  return value
+}
 
 const topbarSearchTarget = computed(() => {
   const path = route.path
 
   if (path.startsWith('/lab-results')) return '/lab-results'
   if (path.startsWith('/vendor-reviews')) return '/vendor-reviews'
+  if (path.startsWith('/vendor-portal')) return '/vendor-reviews'
   if (path.startsWith('/research-library')) return '/research-library'
   if (path.startsWith('/guides')) return '/guides'
   if (path.startsWith('/members')) return '/members'
