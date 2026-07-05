@@ -824,10 +824,24 @@ table {
 }
 
 .author-name {
-  font-size: 21px;
+  font-size: 18px;
   font-weight: 800;
-  margin-bottom: 14px;
   color: #fff;
+  line-height: 1.2;
+  text-align: center;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+  max-width: 200px;
+}
+
+.topic-author small {
+  display: block;
+  color: #a0a6b8;
+  font-size: 13px;
+  margin-top: 6px;
 }
 
 .topic-main {
