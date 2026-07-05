@@ -52,13 +52,13 @@
             >
               Account Settings
             </router-link>
-            <router-link
+            <a
               v-if="authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')"
-              to="/admin"
+              href="/admin"
               @click="accountMenuOpen = false"
             >
               Admin Panel
-            </router-link>
+            </a>
             <button
               type="button"
               @click="handleLogout"
