@@ -438,6 +438,14 @@ class CommunityVendorController extends Controller
 
     private function validateVendorProduct(Request $request, CommunityVendor $vendor, bool $partial = false, ?int $ignoreProductId = null): array
     {
+        // Decode JSON string variants sent from FormData
+        if ($request->has('variants') && is_string($request->input('variants'))) {
+            $decoded = json_decode($request->input('variants'), true);
+            if (is_array($decoded)) {
+                $request->merge(['variants' => $decoded]);
+            }
+        }
+
         $required = $partial ? 'sometimes' : 'required';
 
         return $request->validate([
