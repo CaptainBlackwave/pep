@@ -361,14 +361,7 @@
               <strong>{{ detailDiscussion.voteScore }}</strong>
               <button :class="{ active: detailDiscussion.viewerVote === -1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(-1)"><PvIcon name="thumbs" /></button>
             </div>
-            <div class="thread-bar">
-              <span>{{ replies.length }} {{ replies.length === 1 ? 'reply' : 'replies' }}</span>
-              <button class="pv-small-button" @click="jumpToReplyComposer"><PvIcon name="message" /> Reply</button>
-              <button class="pv-small-button" @click="toggleDiscussionFollow">{{ isFollowingDiscussion ? 'Following' : 'Follow' }}</button>
-              <button class="pv-small-button" @click="toggleDiscussionSave">{{ isSavedDiscussion ? 'Saved' : 'Save' }}</button>
-              <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-small-button" @click="startEditDiscussion"><PvIcon name="settings" /> Edit</button>
-              <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="pv-small-button pv-small-button--danger" @click="deleteDiscussion">Delete</button>
-            </div>
+
           </div>
         </div>
 
