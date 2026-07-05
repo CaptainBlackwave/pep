@@ -5744,6 +5744,26 @@ summary {
     border-top: 0;
   }
 
+  .pv-product-card {
+    border-radius: 12px;
+  }
+
+  .pv-product-stock {
+    min-height: 28px;
+    padding: 0 10px;
+    font-size: 0.78rem;
+  }
+
+  .pv-product-stock i {
+    width: 7px;
+    height: 7px;
+  }
+
+  .pv-product-save-button {
+    width: 36px;
+    height: 36px;
+  }
+
   .pv-product-manage-row {
     justify-items: stretch;
   }
@@ -6891,5 +6911,106 @@ a[target="_blank"] {
   .role,
   .small-badge {
     display: none;
+  }
+}
+
+@media (max-width: 640px) {
+  .pv-product-grid {
+    gap: 10px;
+  }
+
+  .pv-product-card-top {
+    padding: 10px 10px 0;
+  }
+
+  .pv-product-card-body {
+    grid-template-columns: 72px minmax(0, 1fr);
+    align-items: center;
+    gap: 9px;
+    padding: 9px 10px;
+  }
+
+  .pv-product-card-image {
+    width: 72px;
+    max-width: 72px;
+    aspect-ratio: 1;
+    border-radius: 9px;
+  }
+
+  .pv-product-card-info {
+    gap: 7px;
+  }
+
+  .pv-product-kind {
+    font-size: 0.64rem;
+  }
+
+  .pv-product-card h3 {
+    overflow: hidden;
+    font-size: 1rem;
+    line-height: 1.08;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pv-product-specs {
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 4px;
+  }
+
+  .pv-product-specs span {
+    min-height: 0;
+    display: flex;
+    gap: 4px;
+    padding: 5px 6px;
+    border: 1px solid rgba(148, 163, 184, 0.12);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.018);
+  }
+
+  .pv-product-specs .pv-icon,
+  .pv-product-specs small {
+    display: none;
+  }
+
+  .pv-product-specs strong {
+    overflow: hidden;
+    font-size: 0.72rem;
+    line-height: 1.1;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+  }
+
+  .pv-product-description {
+    display: none;
+  }
+
+  .pv-product-variant-tiles {
+    display: none;
+  }
+
+  .pv-product-review-note,
+  .pv-product-chip-row,
+  .pv-product-trust-strip {
+    display: none;
+  }
+
+  .pv-product-card footer {
+    grid-template-columns: minmax(76px, 0.8fr) minmax(0, 1.2fr);
+    gap: 7px;
+    padding: 8px 10px 10px;
+  }
+
+  .pv-product-card footer strong {
+    font-size: 1.05rem;
+  }
+
+  .pv-product-card footer > span {
+    display: none;
+  }
+
+  .pv-product-card footer .pv-primary-button {
+    min-height: 36px;
+    font-size: 0.86rem;
   }
 }

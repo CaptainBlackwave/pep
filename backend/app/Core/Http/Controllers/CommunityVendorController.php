@@ -520,6 +520,11 @@ class CommunityVendorController extends Controller
         $url = Storage::disk('public')->url($path);
 
         if (str_starts_with($url, 'http://') || str_starts_with($url, 'https://')) {
+            $parsed = parse_url($url);
+            if (($parsed['host'] ?? null) === 'localhost' && empty($parsed['port'])) {
+                return rtrim($request->getSchemeAndHttpHost(), '/') . '/' . ltrim($parsed['path'] ?? '', '/');
+            }
+
             return $url;
         }
 

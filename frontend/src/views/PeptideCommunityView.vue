@@ -3160,6 +3160,10 @@ function assetUrl(value?: string | null): string {
     return ''
   }
 
+  if (/^https?:\/\/localhost\/storage\//i.test(path)) {
+    return `${backendAssetOrigin()}${new URL(path).pathname}`
+  }
+
   if (/^(https?:|data:|blob:)/i.test(path)) {
     return path
   }
@@ -5158,7 +5162,7 @@ function removeVendorProductVariant(index: number): void {
 }
 
 function resetVendorProductForm(): void {
-  if (vendorProductImagePreview.value) {
+  if (vendorProductImagePreview.value.startsWith('blob:')) {
     URL.revokeObjectURL(vendorProductImagePreview.value)
   }
 
@@ -5185,7 +5189,7 @@ function resetVendorProductForm(): void {
 }
 
 function editVendorProduct(product: VendorProduct): void {
-  if (vendorProductImagePreview.value) {
+  if (vendorProductImagePreview.value.startsWith('blob:')) {
     URL.revokeObjectURL(vendorProductImagePreview.value)
   }
 
@@ -5279,7 +5283,25 @@ async function saveVendorProduct(): Promise<void> {
     const request = editingVendorProductId.value
       ? api.post<{ data: ApiVendorProduct }>(`/api/v1/community/vendor-profile/products/${editingVendorProductId.value}`, payload, requestConfig)
       : api.post<{ data: ApiVendorProduct }>('/api/v1/community/vendor-profile/products', payload, requestConfig)
-    await request
+    const response = await request
+    const savedProduct = mapVendorProduct(response.data.data)
+    if (apiMyVendor.value) {
+      const products = apiMyVendor.value.products.filter(product => product.id !== savedProduct.id)
+      apiMyVendor.value = {
+        ...apiMyVendor.value,
+        products: [...products, savedProduct],
+        productCount: Math.max(apiMyVendor.value.productCount, products.length + 1),
+      }
+    }
+    const currentDetailVendor = apiDetailVendor.value
+    if (currentDetailVendor && currentDetailVendor.id === apiMyVendor.value?.id) {
+      const products = currentDetailVendor.products.filter(product => product.id !== savedProduct.id)
+      apiDetailVendor.value = {
+        ...currentDetailVendor,
+        products: [...products, savedProduct],
+        productCount: Math.max(currentDetailVendor.productCount, products.length + 1),
+      }
+    }
     vendorProductStatusMessage.value = editingVendorProductId.value ? 'Product updated.' : 'Product added.'
     resetVendorProductForm()
     await loadVendorProfile()

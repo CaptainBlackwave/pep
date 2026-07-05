@@ -402,19 +402,27 @@ class CommunityVendorApiTest extends TestCase
 
         Sanctum::actingAs($user);
 
-        $create = $this->post('/api/v1/community/vendor-profile/products', [
-            'name' => 'Retatrutide',
-            'category' => 'Peptide',
-            'strength' => '10mg',
-            'package_size' => '1 vial',
-            'purity_label' => '>98%',
-            'description' => 'Research catalog listing only.',
-            'price' => '85.00',
-            'currency_code' => 'USD',
-            'availability' => 'in_stock',
-            'tags' => ['GLP-1', 'Research'],
-            'image' => UploadedFile::fake()->image('retatrutide.png', 400, 400),
-        ], ['Accept' => 'application/json']);
+        $create = $this->withServerVariables([
+            'HTTP_HOST' => 'localhost:8001',
+            'SERVER_NAME' => 'localhost',
+            'SERVER_PORT' => '8001',
+        ])->post(
+            'http://localhost:8001/api/v1/community/vendor-profile/products',
+            [
+                'name' => 'Retatrutide',
+                'category' => 'Peptide',
+                'strength' => '10mg',
+                'package_size' => '1 vial',
+                'purity_label' => '>98%',
+                'description' => 'Research catalog listing only.',
+                'price' => '85.00',
+                'currency_code' => 'USD',
+                'availability' => 'in_stock',
+                'tags' => ['GLP-1', 'Research'],
+                'image' => UploadedFile::fake()->image('retatrutide.png', 400, 400),
+            ],
+            ['Accept' => 'application/json']
+        );
 
         $create->assertCreated()
             ->assertJsonPath('data.name', 'Retatrutide')
@@ -423,7 +431,7 @@ class CommunityVendorApiTest extends TestCase
 
         $productId = $create->json('data.id');
         $imageUrl = $create->json('data.image_url');
-        $this->assertStringStartsWith('http://localhost/storage/vendor-product-images/', $imageUrl);
+        $this->assertStringStartsWith('http://localhost:8001/storage/vendor-product-images/', $imageUrl);
         Storage::disk('public')->assertExists(Str::after($imageUrl, '/storage/'));
 
         $update = $this->patchJson("/api/v1/community/vendor-profile/products/{$productId}", [
