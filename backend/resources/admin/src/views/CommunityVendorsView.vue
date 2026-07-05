@@ -103,6 +103,16 @@
           />
         </label>
 
+        <label class="block">
+          <span class="text-sm font-medium text-slate-300">Country</span>
+          <input
+            v-model="form.country"
+            maxlength="100"
+            class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white"
+            placeholder="e.g. China, USA, UK"
+          >
+        </label>
+
         <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
           <label class="block">
             <span class="text-sm font-medium text-slate-300">Website URL</span>
@@ -492,6 +502,7 @@ const emptyForm = () => ({
   contact_signal: '',
   contact_discord: '',
   support_url: '',
+  country: '',
   status: 'published',
 })
 
@@ -534,6 +545,7 @@ async function saveVendor() {
     slug: form.slug || undefined,
     owner_user_id: form.owner_user_id ? Number(form.owner_user_id) : undefined,
     description: form.description || null,
+    country: form.country || null,
     website_url: form.website_url || null,
     image_url: form.image_url || null,
     contact_email: form.contact_email || null,
@@ -576,6 +588,7 @@ function editItem(vendor) {
     contact_signal: vendor.contact?.signal || '',
     contact_discord: vendor.contact?.discord || '',
     support_url: vendor.contact?.support_url || '',
+    country: vendor.country || '',
     status: vendor.status,
   })
   tagsInput.value = Array.isArray(vendor.tags) ? vendor.tags.join(', ') : ''

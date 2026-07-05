@@ -3373,8 +3373,19 @@ async function deleteApiToken(tokenId: number): Promise<void> {
     return
   }
 
+  const isCurrentToken = userSessions.value.some(session => session.kind === 'token' && String(session.id) === String(tokenId) && session.isCurrent)
+
   try {
     await api.delete(`/api/v1/user/api-tokens/${tokenId}`)
+
+    if (isCurrentToken) {
+      authStore.user = null as any
+      localStorage.removeItem('user')
+      localStorage.removeItem('auth_token')
+      await router.push('/login')
+      return
+    }
+
     await loadUserApiTokens()
     await loadUserSessions()
     settingsStatusMessage.value = 'API token revoked.'
@@ -6628,7 +6639,7 @@ function settingsMain(pageName: string) {
         ['Compact discussion lists', 'compact_discussions'],
         ['Show online members', 'show_online_members'],
         ['Remember content filters', 'remember_content_filters'],
-      ]),
+      ], false),
     ])
   }
   if (pageName === 'settingsBlocked') {
@@ -6850,10 +6861,10 @@ function quickActions() {
   ])
 }
 
-function settingsOptionPanel(title: string, options: Array<[string, BooleanUserSettingKey]>) {
+function settingsOptionPanel(title: string, options: Array<[string, BooleanUserSettingKey]>, showStatus = true) {
   return h('article', { class: 'pv-panel' }, [
     h('h2', title),
-    settingsStatusMessage.value ? h('p', { class: 'pv-muted' }, settingsStatusMessage.value) : null,
+    showStatus && settingsStatusMessage.value ? h('p', { class: 'pv-settings-status' }, settingsStatusMessage.value) : null,
     h('div', { class: 'pv-stack' }, options.map(option => h('div', { class: 'pv-toggle-row' }, [
       h('span', [h('strong', option[0]), h('small', userSettings.value[option[1]] ? 'Enabled' : 'Disabled')]),
       h('button', { class: 'pv-toggle-button', disabled: savingSettings.value, onClick: () => toggleUserSetting(option[1]) }, [
