@@ -320,123 +320,129 @@
   </section>
 
   <section v-else-if="page === 'discussionDetail'" class="pv-page">
-    <div v-if="detailDiscussion" class="pv-content-grid pv-discussion-grid">
-      <main class="pv-stack">
-        <nav class="pv-breadcrumbs"><router-link to="/discussions">All Discussions</router-link> <PvIcon name="chevron" /> Topic</nav>
-
-        <div class="topic-card topic-card--thread">
-          <div class="topic-menu">
-            <span>{{ detailDiscussion.time }}</span>
-          </div>
-          <aside class="author-panel">
-            <div class="avatar-wrap">
-              <span v-if="detailDiscussion.avatarUrl" class="avatar" :class="detailDiscussion.color"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
-              <span v-else class="avatar" :class="detailDiscussion.color">{{ detailDiscussion.initial }}</span>
-              <span class="online-dot"></span>
-            </div>
-            <h4>{{ detailDiscussion.author }}</h4>
-            <p>@{{ detailDiscussion.authorUsername }}</p>
-          </aside>
-          <div class="topic-body">
-            <span v-if="detailDiscussion.tag" class="topic-type">▱ {{ detailDiscussion.tag }}</span>
-            <div class="thread-actions">
-              <button class="pv-icon-button pv-icon-button--static" aria-label="Share" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /></button>
-              <button class="pv-icon-button pv-icon-button--static" aria-label="Report" @click="openDiscussionReport"><PvIcon name="shield" /></button>
-            </div>
-            <h2>{{ detailDiscussion.title }}</h2>
-            <div v-if="!isEditingDiscussion" class="thread-body">
-              <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>
-            </div>
-            <div v-else class="thread-edit-form">
-              <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
-              <input v-model="editDiscussionTitle" required maxlength="160">
-              <textarea v-model="editDiscussionBody" required rows="8" maxlength="10000"></textarea>
-              <div class="pv-form-actions">
-                <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
-                <button type="button" class="pv-primary-button" :disabled="discussionEditSaving" @click="saveEditDiscussion">{{ discussionEditSaving ? 'Saving...' : 'Save Changes' }}</button>
-              </div>
-            </div>
-            <div class="thread-vote">
-              <button :class="{ active: detailDiscussion.viewerVote === 1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(1)"><PvIcon name="thumbs" /></button>
-              <strong>{{ detailDiscussion.voteScore }}</strong>
-              <button :class="{ active: detailDiscussion.viewerVote === -1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(-1)"><PvIcon name="thumbs" /></button>
-            </div>
-
+    <div v-if="detailDiscussion" class="thread-wrap">
+      <article class="post-card original-post">
+        <div class="post-left">
+          <div class="avatar image-avatar">
+            <span v-if="detailDiscussion.avatarUrl" class="img-wrap"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
+            <span v-else>{{ detailDiscussion.initial }}</span>
+            <span class="online-dot"></span>
           </div>
         </div>
-
-        <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
-
-        <div v-for="(reply, index) in replies" :key="reply.id ?? `${reply.author}-${reply.time}`" class="reply-card">
-          <aside class="reply-author">
-            <span v-if="reply.avatarUrl" class="reply-avatar" :class="reply.color"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author"></span>
-            <span v-else class="reply-avatar" :class="reply.color">{{ reply.initial }}</span>
-            <div class="reply-name">{{ reply.author }}</div>
-          </aside>
-          <div class="reply-body">
-            <div class="reply-head">
-              <span class="reply-time">{{ reply.time }}</span>
+        <div class="post-main">
+          <div class="post-top">
+            <div>
+              <div class="username-row">
+                <span class="username">{{ detailDiscussion.author }}</span>
+                <span class="verified">✓</span>
+              </div>
+              <div class="post-meta-row">
+                <span v-if="detailDiscussion.tag" class="post-tag">▰ {{ detailDiscussion.tag }}</span>
+                <span v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="post-edit" @click="startEditDiscussion">Edit</span>
+                <span v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" class="post-delete" @click="deleteDiscussion">Delete</span>
+              </div>
             </div>
-            <p v-html="linkifyText(reply.text)"></p>
-            <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
-              <img :src="reply.attachmentUrl || ''" :alt="reply.file || 'Reply attachment'">
-              <figcaption>{{ reply.file }} <span>{{ attachmentLabel(reply) }}</span></figcaption>
-            </figure>
-            <div v-else-if="reply.file" class="pv-file-card"><PvIcon name="document" /><span><strong>{{ reply.file }}</strong><small>{{ attachmentLabel(reply) || 'Attachment' }}</small></span></div>
-            <div class="reply-foot">
-              <div class="reply-vote">
-                <button :class="{ active: reply.viewerVote === 1 }" :disabled="replyVoteLoading === `${reply.id}:1`" @click="voteOnReply(reply, 1)"><PvIcon name="thumbs" /></button>
-                <strong>{{ reply.votes }}</strong>
-                <button :class="{ active: reply.viewerVote === -1 }" :disabled="replyVoteLoading === `${reply.id}:-1`" @click="voteOnReply(reply, -1)"><PvIcon name="thumbs" /></button>
-              </div>
-              <div class="reply-actions">
-                <button @click="prepareReply(reply)">Reply</button>
-                <button @click="prepareReply(reply, true)">Quote</button>
-                <button @click="openReplyReport(reply)">Report</button>
-                <button v-if="authStore.user?.id === reply.authorId || authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')" class="reply-delete" @click="deleteReply(reply)">Delete</button>
-              </div>
+            <div class="meta-row">
+              <span class="badge">★ Original Post</span>
+              <span class="time">{{ detailDiscussion.time }}</span>
+              <button class="dots" @click="openDiscussionReport">•••</button>
+            </div>
+          </div>
+          <h1>{{ detailDiscussion.title }}</h1>
+          <div v-if="!isEditingDiscussion" class="body-text">
+            <p v-for="paragraph in detailParagraphs" :key="paragraph" v-html="linkifyText(paragraph)"></p>
+          </div>
+          <div v-else class="thread-edit-form">
+            <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
+            <input v-model="editDiscussionTitle" required maxlength="160">
+            <textarea v-model="editDiscussionBody" required rows="6" maxlength="10000"></textarea>
+            <div class="pv-form-actions">
+              <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
+              <button type="button" class="pv-primary-button" :disabled="discussionEditSaving" @click="saveEditDiscussion">{{ discussionEditSaving ? 'Saving...' : 'Save Changes' }}</button>
+            </div>
+          </div>
+          <div class="divider"></div>
+          <div class="actions">
+            <div class="vote-box">
+              <button class="vote" :class="{ active: detailDiscussion.viewerVote === 1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(1)">▲</button>
+              <span>{{ detailDiscussion.voteScore }}</span>
+              <button class="vote" :class="{ active: detailDiscussion.viewerVote === -1 }" :disabled="discussionVoteLoading" @click="voteOnDiscussion(-1)">▼</button>
+            </div>
+            <div class="action-links">
+              <button @click="jumpToReplyComposer">↩ Reply</button>
+              <button @click="toggleDiscussionFollow">{{ isFollowingDiscussion ? 'Unfollow' : 'Follow' }}</button>
+              <button @click="shareCurrentPage(detailDiscussion.title)">⇧ Share</button>
             </div>
           </div>
         </div>
+      </article>
 
-        <p v-if="replyStatusMessage" class="pv-alert pv-alert--compact">{{ replyStatusMessage }}</p>
+      <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
 
-        <form id="reply-composer" class="reply-composer" @submit.prevent="submitReply">
-          <div class="reply-composer-head">
-            <strong>Reply as {{ accountName() }}</strong>
-            <small>{{ replyBody.length }}/8000</small>
+      <article v-for="(reply, index) in replies" :key="reply.id ?? `${reply.author}-${reply.time}`" class="post-card reply-post">
+        <div class="post-left reply-left">
+          <div class="avatar letter-avatar">
+            <span v-if="reply.avatarUrl" class="img-wrap"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author"></span>
+            <span v-else>{{ reply.initial }}</span>
+            <span class="online-dot"></span>
           </div>
-          <textarea v-model="replyBody" maxlength="8000" placeholder="Write a reply..." rows="4"></textarea>
-          <div v-if="replyAttachmentFile || replyAttachmentGifUrl" class="pv-attachment-preview">
-            <img v-if="replyAttachmentPreviewUrl || replyAttachmentGifUrl" :src="replyAttachmentPreviewUrl || replyAttachmentGifUrl" alt="Attachment preview">
-            <span><strong>{{ replyAttachmentName() }}</strong><small>{{ replyAttachmentFile ? 'Image' : 'GIF' }}</small></span>
-            <button type="button" class="pv-icon-button" aria-label="Remove" @click="clearReplyAttachment"><PvIcon name="close" /></button>
+          <div class="reply-name">{{ reply.author }}</div>
+        </div>
+        <div class="post-main">
+          <div class="reply-top">
+            <div class="reply-meta">
+              <span>#{{ index + 1 }}</span>
+              <span>•</span>
+              <span>{{ reply.time }}</span>
+              <span v-if="reply.authorId && reply.authorId === detailDiscussion.authorId" class="small-badge">OP</span>
+            </div>
+            <button class="dots" @click="openReplyReport(reply)">•••</button>
           </div>
-          <div class="reply-composer-tools">
-            <EmojiPicker v-model="replyBody" />
-            <label class="pv-icon-button" for="reply-image-upload" aria-label="Attach image"><PvIcon name="image" /></label>
-            <input id="reply-image-upload" class="pv-sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" @change="handleReplyAttachment">
-            <GiphyPicker @select="onGifSelect" />
-            <span class="pv-flex-spacer"></span>
-            <button type="submit" class="pv-primary-button" :disabled="submittingReply"><PvIcon name="send" /> {{ submittingReply ? 'Posting...' : 'Post Reply' }}</button>
+          <p class="reply-text" v-html="linkifyText(reply.text)"></p>
+          <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
+            <img :src="reply.attachmentUrl || ''" :alt="reply.file || 'Reply attachment'">
+            <figcaption>{{ reply.file }} <span>{{ attachmentLabel(reply) }}</span></figcaption>
+          </figure>
+          <div v-else-if="reply.file" class="pv-file-card"><PvIcon name="document" /><span><strong>{{ reply.file }}</strong><small>{{ attachmentLabel(reply) || 'Attachment' }}</small></span></div>
+          <div class="divider"></div>
+          <div class="actions">
+            <div class="vote-box small">
+              <button class="vote" :class="{ active: reply.viewerVote === 1 }" :disabled="replyVoteLoading === `${reply.id}:1`" @click="voteOnReply(reply, 1)">▲</button>
+              <span>{{ reply.votes }}</span>
+              <button class="vote" :class="{ active: reply.viewerVote === -1 }" :disabled="replyVoteLoading === `${reply.id}:-1`" @click="voteOnReply(reply, -1)">▼</button>
+            </div>
+            <div class="action-links">
+              <button @click="prepareReply(reply)">↩ Reply</button>
+              <button @click="prepareReply(reply, true)">❞ Quote</button>
+              <button @click="shareCurrentPage(reply.text)">⇧ Share</button>
+              <button v-if="authStore.user?.id === reply.authorId || authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')" @click="deleteReply(reply)" style="color:#ef4444">Delete</button>
+            </div>
           </div>
-        </form>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel">
-          <header class="pv-panel-header"><h2>Participants</h2><span class="pv-count">{{ discussionParticipants.length }}</span></header>
-          <div class="pv-avatar-stack"><span v-for="member in discussionParticipants.slice(0, 5)" :key="member.name" class="pv-avatar" :class="member.color">{{ member.initial }}</span><span v-if="discussionParticipants.length > 5" class="pv-more">+{{ discussionParticipants.length - 5 }}</span></div>
-        </article>
-        <article class="pv-panel">
-          <h2>Similar topics</h2>
-          <div class="pv-mini-list">
-            <router-link v-for="topic in similarDiscussionTopics" :key="topic.title" :to="topic.href" class="pv-mini-row">
-              <span class="pv-avatar" :class="topic.color">{{ topic.initial }}</span>
-              <span><strong>{{ topic.title }}</strong><small>{{ topic.replies }} replies</small></span>
-            </router-link>
-          </div>
-        </article>
-      </aside>
+        </div>
+      </article>
+
+      <p v-if="replyStatusMessage" class="pv-alert pv-alert--compact">{{ replyStatusMessage }}</p>
+
+      <form id="reply-composer" class="reply-composer" @submit.prevent="submitReply">
+        <div class="reply-composer-head">
+          <strong>Reply as {{ accountName() }}</strong>
+          <small>{{ replyBody.length }}/8000</small>
+        </div>
+        <textarea v-model="replyBody" maxlength="8000" placeholder="Write a reply..." rows="4"></textarea>
+        <div v-if="replyAttachmentFile || replyAttachmentGifUrl" class="pv-attachment-preview">
+          <img v-if="replyAttachmentPreviewUrl || replyAttachmentGifUrl" :src="replyAttachmentPreviewUrl || replyAttachmentGifUrl" alt="Attachment preview">
+          <span><strong>{{ replyAttachmentName() }}</strong><small>{{ replyAttachmentFile ? 'Image' : 'GIF' }}</small></span>
+          <button type="button" class="pv-icon-button" aria-label="Remove" @click="clearReplyAttachment"><PvIcon name="close" /></button>
+        </div>
+        <div class="reply-composer-tools">
+          <EmojiPicker v-model="replyBody" />
+          <label class="pv-icon-button" for="reply-image-upload" aria-label="Attach image"><PvIcon name="image" /></label>
+          <input id="reply-image-upload" class="pv-sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" @change="handleReplyAttachment">
+          <GiphyPicker @select="onGifSelect" />
+          <span class="pv-flex-spacer"></span>
+          <button type="submit" class="pv-primary-button" :disabled="submittingReply"><PvIcon name="send" /> {{ submittingReply ? 'Posting...' : 'Post Reply' }}</button>
+        </div>
+      </form>
     </div>
     <div v-else class="pv-empty-route">
       <h1>Discussion not found</h1>
