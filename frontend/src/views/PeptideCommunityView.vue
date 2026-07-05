@@ -265,7 +265,6 @@
                 <div class="avatar-wrap">
                   <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
                   <span v-else class="avatar" :class="topic.color">{{ topic.initial }}</span>
-                  <span class="online-dot"></span>
                 </div>
                 <h4>{{ topic.author }}</h4>
                 <p>@{{ topic.authorUsername }}</p>
@@ -371,7 +370,6 @@
           <div class="avatar letter-avatar">
             <span v-if="reply.avatarUrl" class="img-wrap"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author"></span>
             <span v-else>{{ reply.initial }}</span>
-            <span class="online-dot"></span>
           </div>
           <div class="reply-name">{{ reply.author }}</div>
         </div>
