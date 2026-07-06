@@ -266,7 +266,7 @@ class MembershipController extends Controller
     private function payPalCreatePlan(string $token, string $base, string $productId, $plan, string $interval, float $price): ?string
     {
         $planData = [
-            'product_id' => 'PROD-XXXX', // Placeholder - API will accept it
+            'product_id' => $productId,
             'name' => $plan->name . ' (' . $interval . 'ly)',
             'description' => $plan->description ?? $plan->name . ' subscription',
             'billing_cycles' => [[
