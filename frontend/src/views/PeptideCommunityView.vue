@@ -231,7 +231,10 @@
         <article class="pv-panel">
           <header class="pv-panel-header"><h2><PvIcon name="users" /> Members Online</h2><span class="pv-count">{{ memberStats.online }}</span></header>
           <div class="pv-avatar-stack">
-            <span v-for="member in onlineMembers" :key="member.name" class="pv-avatar" :class="member.color">{{ member.initial }}</span>
+            <router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color">
+              <img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name">
+              <span v-else>{{ member.initial }}</span>
+            </router-link>
             <span class="pv-more">+{{ Math.max(0, memberStats.online - onlineMembers.length) }}</span>
           </div>
           <p class="pv-muted">Active members in the last 15 minutes</p>
@@ -1491,7 +1494,7 @@
       </main>
       <aside class="pv-stack">
         <article class="pv-panel"><h2>Top Contributors</h2><div class="pv-mini-list"><router-link v-for="member in topContributors" :key="member.slug" :to="member.href" class="pv-mini-row"><span class="pv-avatar" :class="member.color">{{ member.initial }}</span><span><strong>{{ member.name }}</strong><small>{{ formatCount(memberEngagementScore(member)) }} contributions</small></span><PvIcon name="chevron" /></router-link></div></article>
-        <article class="pv-panel"><h2>Online Members</h2><div class="pv-avatar-stack"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color">{{ member.initial }}</router-link><span v-if="onlineMembers.length === 0" class="pv-muted">Nobody online right now.</span></div></article>
+        <article class="pv-panel"><h2>Online Members</h2><div class="pv-avatar-stack"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color"><img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name"><span v-else>{{ member.initial }}</span></router-link><span v-if="onlineMembers.length === 0" class="pv-muted">Nobody online right now.</span></div></article>
         <article class="pv-panel"><h2>Member Tips</h2><ul class="pv-check-list"><li>Keep your profile bio current</li><li>Use reports for moderation issues</li><li>Message members from their profile</li><li>Reputation grows from useful posts</li></ul></article>
       </aside>
     </div>
