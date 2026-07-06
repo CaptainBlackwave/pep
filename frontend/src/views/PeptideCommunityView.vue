@@ -1696,15 +1696,16 @@
             <span class="pv-toggle-track" @click="toggleBillingInterval">
               <span class="pv-toggle-thumb" :class="{ right: billingInterval === 'year' }"></span>
             </span>
-            <span :class="{ active: billingInterval === 'year' }" @click="billingInterval = 'year'">Yearly <small class="pv-save-badge">Save 17%</small></span>
+            <span :class="{ active: billingInterval === 'year' }" @click="billingInterval = 'year'">Yearly <small class="pv-save-badge">Best value</small></span>
           </label>
+          <small class="pv-muted">Monthly not available — yearly only</small>
         </header>
 
         <div class="pv-pricing-grid">
           <article class="pv-pricing-card pv-pricing-card--free">
             <header>
               <h2>Free</h2>
-              <p class="pv-price"><sup>$</sup>0</p>
+              <p class="pv-price"><sup>£</sup>0</p>
               <small>Forever free</small>
             </header>
             <ul class="pv-check-list">
@@ -1728,7 +1729,7 @@
             <header>
               <span class="pv-badge">Popular</span>
               <h2>Premium</h2>
-              <p class="pv-price"><sup>$</sup>{{ billingInterval === 'year' ? '99.99' : '9.99' }}</p>
+              <p class="pv-price"><sup>£</sup>{{ billingInterval === 'year' ? '10' : 'N/A' }}</p>
               <small>per {{ billingInterval === 'year' ? 'year' : 'month' }}</small>
             </header>
             <ul class="pv-check-list">
@@ -2970,7 +2971,7 @@ const vendorPortalForm = ref({
 const membershipPlans = ref<MembershipPlan[]>([])
 const membershipTier = ref('free')
 const membershipStatus = ref<Record<string, unknown> | null>(null)
-const billingInterval = ref<'month' | 'year'>('month')
+const billingInterval = ref<'month' | 'year'>('year')
 const paymentStatusMessage = ref('')
 const subscribing = ref(false)
 

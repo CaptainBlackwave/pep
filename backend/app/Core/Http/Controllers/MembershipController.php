@@ -76,7 +76,7 @@ class MembershipController extends Controller
             'payment_method_types' => ['card'],
             'line_items' => [[
                 'price_data' => [
-                    'currency' => 'usd',
+                    'currency' => 'gbp',
                     'product_data' => ['name' => $plan->name . ' (' . $request->interval . 'ly)'],
                     'unit_amount' => (int) ($price * 100),
                     'recurring' => ['interval' => $request->interval],
@@ -267,7 +267,7 @@ class MembershipController extends Controller
                 'sequence' => 1,
                 'total_cycles' => 0,
                 'pricing_scheme' => [
-                    'fixed_price' => ['value' => number_format($price, 2, '.', ''), 'currency_code' => 'USD'],
+                    'fixed_price' => ['value' => number_format($price, 2, '.', ''), 'currency_code' => 'GBP'],
                 ],
             ]],
             'payment_preferences' => [
