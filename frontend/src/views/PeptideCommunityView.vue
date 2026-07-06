@@ -6130,6 +6130,12 @@ async function submitVendorReview(): Promise<void> {
   submittingVendorReview.value = true
   vendorReviewFormError.value = ''
 
+  if (newVendorReview.value.rating === 0 || !newVendorReview.value.title.trim() || !newVendorReview.value.body.trim()) {
+    vendorReviewFormError.value = 'Please fill in all required fields: rating, title, and your review.'
+    submittingVendorReview.value = false
+    return
+  }
+
   if (vendorReviewPhotos.value.length === 0) {
     vendorReviewFormError.value = 'You must upload at least one photo showing the product with your username and the date.'
     submittingVendorReview.value = false
