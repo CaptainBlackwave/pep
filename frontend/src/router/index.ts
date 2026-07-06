@@ -39,20 +39,20 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/terms',
     name: 'terms',
-    component: peptidePage,
-    meta: { title: 'Terms of Service', page: 'legalTerms' } satisfies RouteMeta,
+    component: () => import('@/views/TermsOfService.vue'),
+    meta: { title: 'Terms of Service' } satisfies RouteMeta,
   },
   {
     path: '/privacy',
     name: 'privacy',
-    component: peptidePage,
-    meta: { title: 'Privacy Policy', page: 'legalPrivacy' } satisfies RouteMeta,
+    component: () => import('@/views/PrivacyPolicy.vue'),
+    meta: { title: 'Privacy Policy' } satisfies RouteMeta,
   },
   {
     path: '/community-rules',
     name: 'community-rules',
-    component: peptidePage,
-    meta: { title: 'Community Rules', page: 'legalRules' } satisfies RouteMeta,
+    component: () => import('@/views/CommunityRules.vue'),
+    meta: { title: 'Community Rules' } satisfies RouteMeta,
   },
   {
     path: '/',

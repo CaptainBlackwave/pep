@@ -1820,28 +1820,6 @@
     </div>
   </section>
 
-  <section v-else-if="page.startsWith('legal')" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <article class="pv-panel pv-prose">
-          <router-link to="/login" class="pv-purple-link">Back to sign in</router-link>
-          <h1>{{ legalPage.title }}</h1>
-          <p v-for="paragraph in legalPage.paragraphs" :key="paragraph">{{ paragraph }}</p>
-        </article>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel">
-          <h2>Community Documents</h2>
-          <div class="pv-filter-list">
-            <router-link to="/terms"><PvIcon name="document" /> Terms of Service <PvIcon name="chevron" /></router-link>
-            <router-link to="/privacy"><PvIcon name="lock" /> Privacy Policy <PvIcon name="chevron" /></router-link>
-            <router-link to="/community-rules"><PvIcon name="shield" /> Community Rules <PvIcon name="chevron" /></router-link>
-          </div>
-        </article>
-      </aside>
-    </div>
-  </section>
-
   <section v-else class="pv-page">
     <div class="pv-empty-route">
       <h1>{{ fallbackTitle }}</h1>
@@ -3160,32 +3138,6 @@ const loadingTwoFactor = ref(false)
 const savingTwoFactor = ref(false)
 const publicSettingsLoaded = ref(false)
 const publicTelegramUrl = ref('https://t.me/peptidevendors')
-const publicLegalPages = ref<Record<'terms' | 'privacy' | 'rules', LegalPageContent>>({
-  terms: {
-    title: 'Terms of Service',
-    paragraphs: [
-      'By using Peptide Vendors, you agree to use the community for lawful, educational discussion and to follow all community rules and moderation decisions.',
-      'Content is provided by community members and administrators for informational purposes. You are responsible for verifying information before relying on it.',
-      'Accounts may be restricted or removed for abuse, unsafe conduct, spam, evasion, or attempts to use the site as a marketplace.',
-    ],
-  },
-  privacy: {
-    title: 'Privacy Policy',
-    paragraphs: [
-      'Peptide Vendors keeps account data, profile preferences, messages, submissions, and moderation records only for operating the private community.',
-      'We use your information to authenticate access, show community content, support account settings, prevent abuse, and improve reliability.',
-      'Do not post private medical, payment, or identifying information in public areas. You can manage profile visibility, notifications, privacy, sessions, and API tokens from account settings.',
-    ],
-  },
-  rules: {
-    title: 'Community Rules',
-    paragraphs: [
-      'Keep discussion educational, evidence-led, and respectful. Personal attacks, harassment, spam, scams, and transaction coordination are not allowed.',
-      'Vendor reviews and lab-result submissions should be specific, honest, and batch-aware where possible. Moderators may hide incomplete, unsafe, promotional, or unverifiable submissions.',
-      'This community is for information sharing and harm-reduction context only. It is not medical advice, legal advice, or a marketplace.',
-    ],
-  },
-})
 const blockedUsers = ref<UiMemberProfile[]>([])
 const blockedUsersLoaded = ref(false)
 const blockingUserId = ref<number | null>(null)
@@ -3596,12 +3548,6 @@ async function loadPublicCommunitySettings(force = false): Promise<void> {
       skipDeduplication: true,
     })
     publicTelegramUrl.value = response.data.telegram_url || publicTelegramUrl.value
-    publicLegalPages.value = {
-      terms: response.data.legal_pages?.terms ?? publicLegalPages.value.terms,
-      privacy: response.data.legal_pages?.privacy ?? publicLegalPages.value.privacy,
-      rules: response.data.legal_pages?.rules ?? publicLegalPages.value.rules,
-    }
-    publicSettingsLoaded.value = true
   } catch {
     publicSettingsLoaded.value = true
   }
@@ -7627,18 +7573,6 @@ function renderFormattedText(text?: string | null): string {
 }
 
 const nextNotification = computed(() => currentNotificationIndex.value >= 0 && currentNotificationIndex.value < notifications.value.length - 1 ? notifications.value[currentNotificationIndex.value + 1] : null)
-const legalPage = computed(() => {
-  if (page.value === 'legalPrivacy') {
-    return publicLegalPages.value.privacy
-  }
-
-  if (page.value === 'legalRules') {
-    return publicLegalPages.value.rules
-  }
-
-  return publicLegalPages.value.terms
-})
-
 function thumbnailStyle(index: number, imageUrl?: string | null) {
   if (imageUrl) {
     return {
