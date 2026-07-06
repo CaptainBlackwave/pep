@@ -398,11 +398,16 @@
          <div v-else class="thread-edit-form">
            <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
            <input v-model="editDiscussionTitle" required maxlength="160" placeholder="Title">
-           <select v-model="editDiscussionTag" class="pv-edit-select">
-             <option value="">No tag</option>
-             <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
-           </select>
-           <small class="pv-edit-label">Tag — select a topic type</small>
+            <select v-model="editDiscussionTag" class="pv-edit-select">
+              <option value="">No tag</option>
+              <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
+            </select>
+            <small class="pv-edit-label">Tag — select a topic type</small>
+            <select v-model="editDiscussionCategory" class="pv-edit-select">
+              <option value="">No category</option>
+              <option v-for="cat in discussionCategories" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
+            </select>
+            <small class="pv-edit-label">Category — select a category</small>
            <TipTapComposer v-model="editDiscussionBody" placeholder="Update your discussion..." :max-length="10000" compact />
           <div class="pv-form-actions">
             <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
@@ -2700,6 +2705,7 @@ const isEditingDiscussion = ref(false)
 const editDiscussionTitle = ref('')
 const editDiscussionBody = ref('')
 const editDiscussionTag = ref('')
+const editDiscussionCategory = ref('')
 const discussionEditError = ref('')
 const discussionEditSaving = ref(false)
 const replyVoteLoading = ref('')
@@ -4169,6 +4175,7 @@ function startEditDiscussion(): void {
   editDiscussionTitle.value = detailDiscussion.value.title
   editDiscussionBody.value = detailDiscussion.value.body ?? ''
   editDiscussionTag.value = detailDiscussion.value.tag ?? ''
+  editDiscussionCategory.value = detailDiscussion.value.categorySlug ?? ''
   isEditingDiscussion.value = true
   discussionEditError.value = ''
 }
@@ -4191,7 +4198,11 @@ async function saveEditDiscussion(): Promise<void> {
   discussionEditSaving.value = true
   discussionEditError.value = ''
   try {
-    await api.patch(`/api/v1/community/discussions/${detailDiscussion.value.slug}`, { title, body, tag: editDiscussionTag.value || undefined })
+    await api.patch(`/api/v1/community/discussions/${detailDiscussion.value.slug}`, {
+      title, body,
+      tag: editDiscussionTag.value || undefined,
+      category_slug: editDiscussionCategory.value || undefined,
+    })
     await loadDiscussionDetail()
     isEditingDiscussion.value = false
   } catch (err: any) {
