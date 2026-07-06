@@ -7821,3 +7821,27 @@ a[target="_blank"] {
     font-size: 0.86rem;
   }
 }
+
+.pv-star-rating {
+  display: flex;
+  gap: 4px;
+  margin-top: 6px;
+}
+
+.pv-star-rating button {
+  font-size: 28px;
+  color: #4a4d5a;
+  border: 0;
+  background: none;
+  cursor: pointer;
+  padding: 0 2px;
+  transition: color 0.15s;
+}
+
+.pv-star-rating button.active {
+  color: #fbbf24;
+}
+
+.pv-star-rating button:hover {
+  color: #fcd34d;
+}

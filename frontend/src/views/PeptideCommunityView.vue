@@ -1276,7 +1276,11 @@
       <form v-if="detailVendor" class="pv-modal" @submit.prevent="submitVendorReview">
         <header class="pv-panel-header"><div><h2>Write a Review</h2><p class="pv-muted">Reviewing {{ detailVendor.name }}. Share your experience to help others in the community.</p></div><router-link :to="detailVendor.href" class="pv-icon-button pv-icon-button--static"><PvIcon name="close" /></router-link></header>
         <p v-if="vendorReviewFormError" class="pv-alert pv-alert--compact">{{ vendorReviewFormError }}</p>
-        <label>Overall Rating *<input v-model.number="newVendorReview.rating" type="number" min="1" max="5" required></label>
+         <label>Overall Rating *
+           <div class="pv-star-rating">
+             <button type="button" v-for="star in 5" :key="star" :class="{ active: star <= newVendorReview.rating }" @click="newVendorReview.rating = star">★</button>
+           </div>
+         </label>
         <label>Review Title *<input v-model="newVendorReview.title" required maxlength="160" placeholder="Summarise your experience in a few words..."><small>{{ newVendorReview.title.length }}/160</small></label>
         <label>Your Review *
   <div class="pv-textarea-with-emoji">
@@ -1284,9 +1288,7 @@
     <EmojiPicker v-model="newVendorReview.body" />
   </div>
   <small>{{ newVendorReview.body.length }}/4000</small></label>
-        <label>Product<input v-model="newVendorReview.product_name" maxlength="120" placeholder="Product reviewed"></label>
-        <label>Tags<input v-model="newVendorReview.tags" placeholder="Comma-separated review tags"></label>
-        <div><strong>Would you buy from this vendor again?</strong><div class="pv-choice-row"><button type="button" :class="{ active: newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = true"><PvIcon name="thumbs" /> Yes, I would</button><button type="button" :class="{ active: !newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = false">No, I wouldn&apos;t</button></div></div>
+         <div><strong>Would you buy from this vendor again?</strong><div class="pv-choice-row"><button type="button" :class="{ active: newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = true"><PvIcon name="thumbs" /> Yes, I would</button><button type="button" :class="{ active: !newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = false">No, I wouldn&apos;t</button></div></div>
          <label>Review Photos *
            <p class="pv-muted" style="font-size:13px">You must include a photo of the received product with a handwritten note showing your <strong>username</strong> and the <strong>date received</strong>. Cover any personal info before uploading.</p>
            <input ref="vendorReviewPhotoInput" type="file" accept="image/*" multiple class="pv-sr-only" @change="selectVendorReviewPhotos">
@@ -3061,11 +3063,9 @@ const newLabResult = ref({
   notes: '',
 })
 const newVendorReview = ref({
-  rating: 5,
+  rating: 0,
   title: '',
   body: '',
-  product_name: '',
-  tags: '',
   would_buy_again: true,
 })
 
@@ -6142,16 +6142,6 @@ async function submitVendorReview(): Promise<void> {
     form.append('title', newVendorReview.value.title)
     form.append('body', newVendorReview.value.body)
     form.append('would_buy_again', newVendorReview.value.would_buy_again ? '1' : '0')
-
-    if (newVendorReview.value.product_name) {
-      form.append('product_name', newVendorReview.value.product_name)
-    }
-
-    newVendorReview.value.tags
-      .split(',')
-      .map(tag => tag.trim())
-      .filter(Boolean)
-      .forEach(tag => form.append('tags[]', tag))
 
     vendorReviewPhotos.value.forEach(file => form.append('photos[]', file))
 
