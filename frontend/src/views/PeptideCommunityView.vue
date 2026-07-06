@@ -6747,6 +6747,15 @@ async function loadContentDetails(): Promise<void> {
 }
 
 async function loadMembers(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    apiMembers.value = []
+    apiTopContributorMembers.value = []
+    apiOnlineMemberSummaries.value = []
+    memberStats.value = { total: 0, online: 0 }
+    memberPagination.value = null
+    membersLoaded.value = true
+    return
+  }
   try {
     const response = await api.get<MemberIndexResponse>('/api/v1/community/members', {
       cacheTTL: 0,
