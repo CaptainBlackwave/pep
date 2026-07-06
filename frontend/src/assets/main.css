@@ -296,8 +296,8 @@ table {
 
 .pv-telegram-card {
   display: grid;
-  gap: 10px;
-  padding: 14px;
+  gap: 4px;
+  padding: 8px 10px;
   margin-top: auto;
   border: 1px solid var(--pv-border);
   border-radius: 8px;
@@ -305,9 +305,17 @@ table {
 }
 
 .pv-telegram-card .pv-icon {
-  width: 32px;
-  height: 32px;
+  width: 20px;
+  height: 20px;
   color: var(--pv-purple);
+}
+
+.pv-telegram-card h2 {
+  font-size: 0.8rem;
+}
+
+.pv-telegram-card p {
+  font-size: 0.7rem;
 }
 
 .pv-telegram-card h2,
@@ -8087,31 +8095,31 @@ a[target="_blank"] {
 .pv-upgrade-card {
   background: var(--pv-panel);
   border: 1px solid var(--pv-border-strong);
-  border-radius: 10px;
-  padding: 16px;
+  border-radius: 8px;
+  padding: 10px;
   text-align: center;
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
 }
 
 .pv-upgrade-card .pv-icon {
-  width: 28px;
-  height: 28px;
+  width: 20px;
+  height: 20px;
   color: var(--pv-purple);
 }
 
 .pv-upgrade-card h2 {
   margin: 0;
-  font-size: 1rem;
+  font-size: 0.8rem;
 }
 
 .pv-upgrade-card p {
   color: var(--pv-muted);
-  font-size: 0.8rem;
+  font-size: 0.7rem;
   margin: 0;
-  line-height: 1.4;
+  line-height: 1.2;
 }
 
 /* ── Billing Settings ─────────────────────────────────────────────────── */
