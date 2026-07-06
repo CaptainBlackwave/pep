@@ -75,6 +75,9 @@ Route::prefix('v1')->group(function () {
     // Public push VAPID key (needed before subscribing)
     Route::get('/push/vapid-key', [PushSubscriptionController::class, 'vapidPublicKey']);
 
+    // Public membership plans
+    Route::get('/membership/plans', [\App\Core\Http\Controllers\MembershipController::class, 'plans']);
+
     // Public community routes (guests and members)
     Route::prefix('community')->group(function () {
         Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories']);
@@ -573,9 +576,57 @@ Route::prefix('v1')->group(function () {
             Route::delete('/read/clear', 'deleteRead');
         });
 
-        // Membership routes
+
+        // NOTE: Gaming routes (crimes, gym, hospital, bank, drugs, jail, inventory,
+        // combat, theft, racing, properties, bounties, missions, detective, gangs,
+        // organized-crime, travel, shop) are now provided by plugins.
+        // Install the gaming bundle to restore these features.
+    });
+
+    // Authenticated routes
+    Route::middleware('auth:sanctum')->group(function () {
+        // Emoji Routes
+        Route::get('/emojis', [EmojiController::class, 'index']);
+        Route::get('/emojis/quick-reactions', [EmojiController::class, 'quickReactions']);
+        Route::get('/emojis/search', [EmojiController::class, 'search']);
+
+        // Text Formatter Routes (BBCode & JoyPixels)
+        Route::post('/format/preview', [\App\Core\Http\Controllers\TextFormatterController::class, 'preview']);
+        Route::get('/format/bbcodes', [\App\Core\Http\Controllers\TextFormatterController::class, 'bbcodes']);
+        Route::get('/format/emojis', [\App\Core\Http\Controllers\TextFormatterController::class, 'emojis']);
+        Route::post('/format/plain', [\App\Core\Http\Controllers\TextFormatterController::class, 'plain']);
+        Route::get('/format/emoji/search', [\App\Core\Http\Controllers\TextFormatterController::class, 'searchEmoji']);
+
+        // Dashboard
+        Route::get('/dashboard', [\App\Core\Http\Controllers\DashboardController::class, 'index']);
+
+        // Player Profile
+        Route::get('/player/{id}', [\App\Core\Http\Controllers\ProfileController::class, 'show']);
+
+        // Player Statistics
+        Route::prefix('stats')->controller(\App\Core\Http\Controllers\PlayerStatsController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/player/{userId}', 'show');
+            Route::post('/refresh', 'refresh');
+        });
+
+        // Activity Logs (Player's own)
+        Route::get('/activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']);
+        Route::get('/activity/my-activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']);
+
+        // Notifications
+        Route::prefix('notifications')->controller(\App\Core\Http\Controllers\NotificationController::class)->group(function () {
+            Route::get('/', 'index');
+            Route::get('/recent', 'recent');
+            Route::get('/unread-count', 'unreadCount');
+            Route::post('/{id}/read', 'markAsRead');
+            Route::post('/mark-all-read', 'markAllAsRead');
+            Route::delete('/{id}', 'delete');
+            Route::delete('/read/clear', 'deleteRead');
+        });
+
+        // Membership routes (authenticated)
         Route::prefix('membership')->controller(\App\Core\Http\Controllers\MembershipController::class)->group(function () {
-            Route::get('/plans', 'plans');
             Route::get('/status', 'status');
             Route::post('/stripe/create-checkout', 'createStripeCheckout');
             Route::post('/paypal/create-order', 'createPayPalOrder');
