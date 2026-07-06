@@ -46,7 +46,12 @@ return Application::configure(basePath: dirname(__DIR__))
         // Return JSON for API errors — skip exceptions Laravel already handles properly
         $exceptions->render(function (\Throwable $e, \Illuminate\Http\Request $request) {
             if (($request->is('api/*') || $request->expectsJson()) && !$e instanceof \Illuminate\Validation\ValidationException) {
-                $status = $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException ? $e->getStatusCode() : 500;
+                $status = match (true) {
+                    $e instanceof \Symfony\Component\HttpKernel\Exception\HttpException => $e->getStatusCode(),
+                    $e instanceof \Illuminate\Auth\AuthenticationException => 401,
+                    $e instanceof \Illuminate\Auth\Access\AuthorizationException => 403,
+                    default => 500,
+                };
                 return response()->json(['message' => $e->getMessage() ?: 'Error'], $status);
             }
         });
