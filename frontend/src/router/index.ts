@@ -63,7 +63,7 @@ const routes: RouteRecordRaw[] = [
   {
     path: '/',
     component: () => import('@/layouts/CoreLayout.vue'),
-    meta: { requiresAuth: true } satisfies RouteMeta,
+    meta: {} satisfies RouteMeta,
     children: [
       { path: 'dashboard', name: 'dashboard', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
       { path: 'home', name: 'home', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
