@@ -117,7 +117,7 @@ class CommunityNotificationService
             'category_slug' => 'vendor-reviews',
             'icon' => 'star',
             'tone' => 'purple',
-            'excerpt' => $vendorName ? "{$vendorName}: {$review->body}" : $review->body,
+            'excerpt' => \Illuminate\Support\Str::limit($vendorName ? "{$vendorName}: {$review->body}" : $review->body, 400),
             'body' => $review->body,
             'source_url' => $review->vendor ? "/vendor-reviews/{$review->vendor->slug}" : '/vendor-reviews',
             'published_at' => $review->reviewed_at ?: $review->updated_at ?: now(),
