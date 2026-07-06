@@ -202,7 +202,7 @@ class CommunityDiscussionController extends Controller
     public function destroy(Request $request, string $discussion)
     {
         $discussionModel = $this->findOwnDiscussion($request, $discussion);
-        $discussionModel->update(['status' => 'hidden']);
+        $discussionModel->delete();
 
         return response()->noContent();
     }
