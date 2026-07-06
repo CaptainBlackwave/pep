@@ -102,7 +102,7 @@ Route::prefix('v1')->group(function () {
     // Protected authentication routes
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/upload/image', function (\Illuminate\Http\Request $request) {
-            $request->validate(['image' => 'required|file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,pdf|max:25600']);
+            $request->validate(['image' => 'required|file|mimes:jpg,jpeg,png,gif,webp,mp4,mov,avi,pdf,x-pdf|max:25600']);
             $path = $request->file('image')->store('uploads/images', 'public');
             return response()->json(['url' => \Illuminate\Support\Facades\Storage::url($path), 'path' => $path]);
         });
