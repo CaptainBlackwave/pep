@@ -1028,10 +1028,12 @@ table {
 }
 
 .topic-bottom {
-  display: grid;
-  grid-template-columns: 1fr auto;
-  gap: 24px;
+  display: flex;
   align-items: center;
+  justify-content: space-between;
+  padding-top: 12px;
+  margin-top: 12px;
+  border-top: 1px solid rgba(255,255,255,0.08);
 }
 
 .stats {
@@ -6568,8 +6570,17 @@ summary {
   }
 
   .topic-bottom {
-    grid-template-columns: 1fr;
+    flex-direction: column;
     gap: 12px;
+  }
+
+  .topic-actions {
+    width: 100%;
+  }
+
+  .open-link {
+    width: 100%;
+    justify-content: center;
   }
 
   .stats {
@@ -6593,7 +6604,28 @@ summary {
     font-size: 11px;
   }
 
-  .last-reply {
+.topic-actions {
+  display: flex;
+  align-items: center;
+}
+
+.open-link {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: #a855f7;
+  font-size: 13px;
+  font-weight: 600;
+  text-decoration: none;
+  padding: 6px 14px;
+  border-radius: 8px;
+  transition: background .2s;
+}
+.open-link:hover {
+  background: rgba(168, 85, 247, 0.12);
+}
+
+.last-reply {
     padding-left: 0;
     padding-top: 10px;
     border-left: 0;
