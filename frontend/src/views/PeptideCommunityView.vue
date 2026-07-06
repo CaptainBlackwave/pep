@@ -250,6 +250,11 @@
             </router-link>
           </div>
         </article>
+        <article class="pv-panel">
+          <h2><PvIcon name="send" /> Telegram Updates</h2>
+          <p class="pv-muted" style="font-size:13px">Quick notices for new announcements, lab results, and platform updates.</p>
+          <a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-primary-button pv-full"><PvIcon name="send" /> Join Telegram</a>
+        </article>
       </aside>
     </div>
   </section>
