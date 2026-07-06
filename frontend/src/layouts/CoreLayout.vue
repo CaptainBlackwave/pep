@@ -90,6 +90,12 @@
         <span>Logout</span>
       </button>
 
+      <section v-if="showUpgradePrompt" class="pv-upgrade-card">
+        <PvIcon name="star" />
+        <h2>Upgrade to Premium</h2>
+        <p>Unlock vendor reviews, lab results, messaging and more.</p>
+        <router-link to="/pricing" class="pv-primary-button" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">View Plans</router-link>
+      </section>
       <section class="pv-telegram-card">
         <PvIcon name="send" />
         <h2>Join our Telegram</h2>
@@ -131,6 +137,7 @@ const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
 const currentYear = new Date().getFullYear()
 const telegramUrl = ref('https://t.me/peptidevendors')
+const showUpgradePrompt = computed(() => authStore.isAuthenticated && authStore.user?.tier === 'free')
 const navItems = computed(() => {
   const isAuth = authStore.isAuthenticated
   const allItems = [
