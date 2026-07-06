@@ -96,6 +96,12 @@
         <p>Unlock vendor reviews, lab results, messaging and more.</p>
         <router-link to="/pricing" class="pv-primary-button" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">View Plans</router-link>
       </section>
+      <section class="pv-telegram-card">
+        <PvIcon name="send" />
+        <h2>Join our Telegram</h2>
+        <p>Get instant updates, alerts and community chat on Telegram.</p>
+        <a :href="telegramUrl" target="_blank" rel="noopener noreferrer" class="pv-primary-button" style="display:inline-flex;align-items:center;justify-content:center;text-decoration:none">Join Telegram</a>
+      </section>
       <footer class="pv-sidebar-footer">
         <p>&copy; {{ currentYear }} Peptide Vendors.<br>All rights reserved.</p>
         <div>
@@ -129,6 +135,7 @@ const topbarSearch = ref('')
 const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
 const currentYear = new Date().getFullYear()
+const telegramUrl = ref('https://t.me/peptidevendors')
 const showUpgradePrompt = computed(() => authStore.isAuthenticated && authStore.user?.tier === 'free')
 const navItems = computed(() => {
   const isAuth = authStore.isAuthenticated
@@ -249,7 +256,9 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     void notificationsStore.fetchUnreadCount()
   }
-  api.get('/api/v1/settings/public').catch(() => {})
+  api.get<{ telegram_url?: string }>('/api/v1/settings/public').then(r => {
+    if (r.data?.telegram_url) telegramUrl.value = r.data.telegram_url
+  }).catch(() => {})
 })
 
 onUnmounted(() => {
