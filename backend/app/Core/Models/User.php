@@ -88,6 +88,11 @@ class User extends Authenticatable
         'register_ip',
         'last_ip',
 
+        // Membership tier
+        'tier',
+        'stripe_customer_id',
+        'subscription_ends_at',
+
     ];
 
 
@@ -119,8 +124,9 @@ class User extends Authenticatable
         return [
             'email_verified_at' => 'datetime',
             'password'          => 'hashed',
-            'last_active'       => 'datetime',
-            'is_approved_vendor' => 'boolean',
+            'last_active'           => 'datetime',
+            'is_approved_vendor'    => 'boolean',
+            'subscription_ends_at'  => 'datetime',
         ];
     }
 
@@ -201,6 +207,16 @@ class User extends Authenticatable
     public function vendorAccessRequests(): HasMany
     {
         return $this->hasMany(VendorAccessRequest::class);
+    }
+
+    public function subscriptions(): HasMany
+    {
+        return $this->hasMany(MembershipSubscription::class);
+    }
+
+    public function dailyLimits(): HasMany
+    {
+        return $this->hasMany(UserDailyLimit::class);
     }
 
     public function oauthProviders()

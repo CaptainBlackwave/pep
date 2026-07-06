@@ -75,17 +75,26 @@ Route::prefix('v1')->group(function () {
     // Public push VAPID key (needed before subscribing)
     Route::get('/push/vapid-key', [PushSubscriptionController::class, 'vapidPublicKey']);
 
-    // Private community content
-    Route::middleware('auth:sanctum')->prefix('community')->group(function () {
-        Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories']);
-        Route::get('/discussions', [CommunityDiscussionController::class, 'index']);
-        Route::get('/discussions/{discussion}', [CommunityDiscussionController::class, 'show']);
-        Route::get('/lab-results', [CommunityLabResultController::class, 'index']);
-        Route::get('/lab-results/{result}', [CommunityLabResultController::class, 'show']);
-        Route::get('/vendors', [CommunityVendorController::class, 'index']);
-        Route::get('/vendors/{vendor}', [CommunityVendorController::class, 'show']);
+    // Public community routes (no auth required — tier middleware gates access)
+    Route::prefix('community')->group(function () {
+        Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories'])->middleware('tier:free,paid');
+        Route::get('/discussions', [CommunityDiscussionController::class, 'index'])->middleware('tier:free,paid');
+        Route::get('/discussions/{discussion}', [CommunityDiscussionController::class, 'show'])->middleware('tier:free,paid')->middleware(\App\Core\Middleware\CheckDailyLimit::class);
         Route::get('/announcements', [CommunityAnnouncementController::class, 'index']);
         Route::get('/announcements/{announcement}', [CommunityAnnouncementController::class, 'show']);
+    });
+
+    // Authenticated community content (some routes require paid tier)
+    Route::middleware('auth:sanctum')->prefix('community')->group(function () {
+        Route::get('/lab-results', [CommunityLabResultController::class, 'index'])->middleware('tier:paid');
+        Route::get('/lab-results/{result}', [CommunityLabResultController::class, 'show'])->middleware('tier:paid');
+        Route::get('/vendors', [CommunityVendorController::class, 'index'])->middleware('tier:paid');
+        Route::get('/vendors/{vendor}', [CommunityVendorController::class, 'show'])->middleware('tier:paid');
+        Route::get('/members', [CommunityMemberController::class, 'index'])->middleware('tier:paid');
+        Route::get('/members/{member}', [CommunityMemberController::class, 'show'])->middleware('tier:paid');
+        Route::get('/messages', [CommunityMessageController::class, 'index'])->middleware('tier:paid');
+        Route::get('/messages/{thread}', [CommunityMessageController::class, 'show'])->middleware('tier:paid');
+
         Route::get('/notifications', [CommunityNotificationController::class, 'index']);
         Route::get('/notifications/{notification}', [CommunityNotificationController::class, 'show']);
         Route::get('/research-library', [CommunityContentController::class, 'researchIndex']);
@@ -93,10 +102,6 @@ Route::prefix('v1')->group(function () {
         Route::get('/guides', [CommunityContentController::class, 'guideIndex']);
         Route::get('/guides/{content}', [CommunityContentController::class, 'guideShow']);
         Route::get('/faqs', [CommunityContentController::class, 'faqIndex']);
-        Route::get('/members', [CommunityMemberController::class, 'index']);
-        Route::get('/members/{member}', [CommunityMemberController::class, 'show']);
-        Route::get('/messages', [CommunityMessageController::class, 'index']);
-        Route::get('/messages/{thread}', [CommunityMessageController::class, 'show']);
     });
 
     // Protected authentication routes
@@ -145,23 +150,28 @@ Route::prefix('v1')->group(function () {
             Route::post('/discussion-replies/{reply}/vote', [CommunityDiscussionController::class, 'voteOnReply']);
             Route::post('/discussion-replies/{reply}/report', [CommunityDiscussionController::class, 'reportReply']);
             Route::delete('/discussion-replies/{reply}', [CommunityDiscussionController::class, 'destroyReply']);
-            Route::post('/lab-results', [CommunityLabResultController::class, 'store']);
-            Route::get('/vendor-profile', [CommunityVendorController::class, 'myVendorProfile']);
-            Route::post('/vendor-profile/image', [CommunityVendorController::class, 'uploadVendorImage']);
-            Route::post('/vendor-profile', [CommunityVendorController::class, 'storeVendorProfile']);
-            Route::patch('/vendor-profile', [CommunityVendorController::class, 'updateVendorProfile']);
-            Route::post('/vendor-profile/products', [CommunityVendorController::class, 'storeVendorProduct']);
-            Route::post('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
-            Route::patch('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
-            Route::delete('/vendor-profile/products/{product}', [CommunityVendorController::class, 'destroyVendorProduct']);
-            Route::post('/vendor-profile/documents', [CommunityVendorController::class, 'storeVendorDocument']);
-            Route::delete('/vendor-profile/documents/{document}', [CommunityVendorController::class, 'destroyVendorDocument']);
-            Route::post('/vendors/{vendor}/claim', [CommunityVendorController::class, 'claimVendor']);
-            Route::post('/vendors/{vendor}/reviews', [CommunityVendorController::class, 'storeReview']);
-            Route::post('/vendor-reviews/{review}/helpful', [CommunityVendorController::class, 'markReviewHelpful']);
-            Route::post('/vendor-reviews/{review}/respond', [CommunityVendorController::class, 'respondToReview']);
-            Route::post('/messages', [CommunityMessageController::class, 'storeThread']);
-            Route::post('/messages/{thread}/messages', [CommunityMessageController::class, 'store']);
+
+            // Paid-only routes
+            Route::middleware('tier:paid')->group(function () {
+                Route::post('/lab-results', [CommunityLabResultController::class, 'store']);
+                Route::get('/vendor-profile', [CommunityVendorController::class, 'myVendorProfile']);
+                Route::post('/vendor-profile/image', [CommunityVendorController::class, 'uploadVendorImage']);
+                Route::post('/vendor-profile', [CommunityVendorController::class, 'storeVendorProfile']);
+                Route::patch('/vendor-profile', [CommunityVendorController::class, 'updateVendorProfile']);
+                Route::post('/vendor-profile/products', [CommunityVendorController::class, 'storeVendorProduct']);
+                Route::post('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
+                Route::patch('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
+                Route::delete('/vendor-profile/products/{product}', [CommunityVendorController::class, 'destroyVendorProduct']);
+                Route::post('/vendor-profile/documents', [CommunityVendorController::class, 'storeVendorDocument']);
+                Route::delete('/vendor-profile/documents/{document}', [CommunityVendorController::class, 'destroyVendorDocument']);
+                Route::post('/vendors/{vendor}/claim', [CommunityVendorController::class, 'claimVendor']);
+                Route::post('/vendors/{vendor}/reviews', [CommunityVendorController::class, 'storeReview']);
+                Route::post('/vendor-reviews/{review}/helpful', [CommunityVendorController::class, 'markReviewHelpful']);
+                Route::post('/vendor-reviews/{review}/respond', [CommunityVendorController::class, 'respondToReview']);
+                Route::post('/messages', [CommunityMessageController::class, 'storeThread']);
+                Route::post('/messages/{thread}/messages', [CommunityMessageController::class, 'store']);
+            });
+
             Route::post('/notifications/{notification}/read', [CommunityNotificationController::class, 'markAsRead']);
             Route::post('/notifications/read-all', [CommunityNotificationController::class, 'markAllAsRead']);
             Route::delete('/notifications/read/clear', [CommunityNotificationController::class, 'deleteRead']);
