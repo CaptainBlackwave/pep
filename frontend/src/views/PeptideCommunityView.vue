@@ -55,11 +55,11 @@
         <section class="pv-compose-attachments" aria-label="Add attachments">
           <p>Drag and drop files here or click to browse</p>
           <div>
-            <button type="button" @click="insertDiscussionAttachment('image')"><PvIcon name="image" />Image</button>
-            <button type="button" @click="insertDiscussionAttachment('video')"><PvIcon name="list" />Video</button>
+            <button type="button" :disabled="discussionUploading" @click="insertDiscussionAttachment('image')"><PvIcon name="image" />Image</button>
+            <button type="button" :disabled="discussionUploading" @click="insertDiscussionAttachment('video')"><PvIcon name="list" />Video</button>
             <button type="button" @click="insertDiscussionAttachment('link')"><PvIcon name="share" />Link</button>
             <button type="button" @click="insertDiscussionAttachment('poll')"><PvIcon name="chart" />Poll</button>
-            <button type="button" @click="insertDiscussionAttachment('file')"><PvIcon name="document" />File</button>
+            <button type="button" :disabled="discussionUploading" @click="insertDiscussionAttachment('file')"><PvIcon name="document" />{{ discussionUploading ? 'Uploading...' : 'File' }}</button>
             <input ref="discussionFileInput" type="file" accept="image/*,video/*,application/pdf" class="pv-sr-only" @change="handleDiscussionFileUpload">
           </div>
         </section>
