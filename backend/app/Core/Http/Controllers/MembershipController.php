@@ -199,7 +199,37 @@ class MembershipController extends Controller
         if (!$productId) return response()->json(['error' => 'Failed to create PayPal product'], 500);
 
         $planId = $this->payPalCreatePlan($token, $base, $productId, $plan, $request->interval, $price);
-        if (!$planId) return response()->json(['error' => 'Failed to create PayPal billing plan'], 500);
+        if (!$planId) {
+            $ch = curl_init();
+            curl_setopt($ch, CURLOPT_URL, "$base/v1/billing/plans");
+            curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
+            curl_setopt($ch, CURLOPT_POST, true);
+            curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+                'product_id' => $productId,
+                'name' => $plan->name . ' (' . $request->interval . 'ly)',
+                'description' => $plan->description ?? $plan->name . ' subscription',
+                'billing_cycles' => [[
+                    'frequency' => ['interval_unit' => strtoupper($request->interval), 'interval_count' => 1],
+                    'tenure_type' => 'REGULAR',
+                    'sequence' => 1,
+                    'total_cycles' => 0,
+                    'pricing_scheme' => [
+                        'fixed_price' => ['value' => number_format((float) $price, 2, '.', ''), 'currency_code' => 'USD'],
+                    ],
+                ]],
+                'payment_preferences' => [
+                    'auto_bill_outstanding' => true,
+                    'setup_fee_failure_action' => 'CANCEL',
+                    'payment_failure_threshold' => 3,
+                ],
+            ]));
+            curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+            curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+            $r = curl_exec($ch);
+            $c = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+            curl_close($ch);
+            return response()->json(['error' => 'PayPal plan failed', 'detail' => substr($r, 0, 300), 'http' => $c], 500);
+        }
 
         return $this->payPalCreateSubscription($token, $base, $planId, $request);
     }
