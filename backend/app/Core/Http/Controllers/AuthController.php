@@ -70,10 +70,12 @@ class AuthController extends Controller
 
             // Create identity-only — no game stats on the users table.
             $user = User::create([
-                'name'     => $validated['username'],
-                'username' => $validated['username'],
-                'email'    => $validated['email'],
-                'password' => $validated['password'],
+                'name'        => $validated['username'],
+                'username'    => $validated['username'],
+                'email'       => $validated['email'],
+                'password'    => $validated['password'],
+                'register_ip' => $request->ip(),
+                'last_ip'     => $request->ip(),
             ]);
 
             // User::booted() auto-creates a profile with column defaults.
@@ -159,6 +161,7 @@ class AuthController extends Controller
             'last_active' => now(),
             'last_login_at' => now(),
             'last_login_ip' => $request->ip(),
+            'last_ip' => $request->ip(),
         ]);
 
         // Enforce 2FA: if enabled, do not issue token yet

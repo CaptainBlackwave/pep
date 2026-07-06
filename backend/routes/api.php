@@ -497,6 +497,9 @@ Route::prefix('v1')->group(function () {
                 Route::get('/{id}/logs', 'logs');
             });
 
+            // Account Duplication Detection
+            Route::get('/account-duplication', [\App\Core\Http\Controllers\Admin\AccountDuplicationController::class, 'index']);
+
             // Admin Sidebar (for dynamic menu loading)
             Route::get('/sidebar', function () {
                 $user = request()->user();

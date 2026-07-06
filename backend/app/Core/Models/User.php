@@ -85,6 +85,8 @@ class User extends Authenticatable
         'last_active',
         'last_login_at',
         'last_login_ip',
+        'register_ip',
+        'last_ip',
 
     ];
 

@@ -73,6 +73,7 @@ class CoreAdminMenu
                     [ 'route' => '/webhooks',       'label' => 'Webhooks',        'icon' => 'ArrowTopRightOnSquareIcon' ],
                     [ 'route' => '/api-keys',       'label' => 'API Keys',        'icon' => 'KeyIcon' ],
                     [ 'route' => '/notifications',  'label' => 'Notifications',   'icon' => 'BellIcon' ],
+                    [ 'route' => '/account-duplication', 'label' => 'Duplicate Accounts', 'icon' => 'UsersIcon' ],
                     // Calendar and Tasks removed - no backend implementations
                     // See ADMIN_MENU_AUDIT.md for tracking
                 ],

@@ -208,6 +208,11 @@ const router = createRouter({
           path: '/vendor-access-requests',
           name: 'VendorAccessRequests',
           component: () => import('../views/VendorAccessRequestsView.vue')
+        },
+        {
+          path: '/account-duplication',
+          name: 'account-duplication',
+          component: () => import('../views/AccountDuplicationView.vue')
         }
       ]
     }
