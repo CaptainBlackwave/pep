@@ -244,7 +244,12 @@ class WebSocketService {
    * Build WebSocket URL
    */
   private buildWebSocketUrl(): string {
-    const { url, key, cluster } = this.config
+    let url = this.config.url
+    if (!url || url.includes('localhost') || url.includes('127.0.0.1')) {
+      const proto = window.location.protocol === 'https:' ? 'wss:' : 'ws:'
+      url = `${proto}//${window.location.host}`
+    }
+    const { key, cluster } = this.config
     const protocol = url.startsWith('wss') ? 'wss' : 'ws'
     const baseUrl = url.replace(/^wss?:\/\//, '')
 
