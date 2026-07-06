@@ -321,29 +321,38 @@
                 <span v-if="topic.isLocked" class="topic-type topic-type--locked">🔒 Locked</span>
                 <h2>{{ topic.title }}</h2>
                 <p class="topic-excerpt">{{ topic.excerpt }}</p>
+                <div class="divider"></div>
+                <div class="topic-bottom">
+                  <div class="stats">
+                    <div class="stat">
+                      <span>▱</span>
+                      <strong>{{ topic.replies }}</strong>
+                      <small>Replies</small>
+                    </div>
+                    <div class="stat">
+                      <span>◉</span>
+                      <strong>{{ topic.views }}</strong>
+                      <small>Views</small>
+                    </div>
+                    <div class="stat">
+                      <span>♡</span>
+                      <strong>{{ topic.voteScore }}</strong>
+                      <small>Likes</small>
+                    </div>
+                  </div>
+                  <div v-if="topic.latestReply" class="last-reply">
+                    <small>Last reply</small>
+                    <router-link class="reply-row pv-author-link" :to="memberHref(topic.latestReply.username || topic.latestReply.author)" @click.stop>
+                      <img v-if="topic.latestReply.avatar" :src="assetUrl(topic.latestReply.avatar)" :alt="topic.latestReply.author">
+                      <span v-else class="avatar-sm">{{ topic.latestReply.initial }}</span>
+                      <div>
+                        <strong>{{ topic.latestReply.username || topic.latestReply.author }}</strong>
+                        <span>{{ topic.latestReply.timeAgo }}</span>
+                      </div>
+                    </router-link>
+                  </div>
+                </div>
               </main>
-              <div class="topic-bottom">
-                <div class="stats">
-                  <div class="stat">
-                    <span>▱</span>
-                    <strong>{{ topic.replies }}</strong>
-                    <small>Replies</small>
-                  </div>
-                  <div class="stat">
-                    <span>◉</span>
-                    <strong>{{ topic.views }}</strong>
-                    <small>Views</small>
-                  </div>
-                  <div class="stat">
-                    <span>♡</span>
-                    <strong>{{ topic.voteScore }}</strong>
-                    <small>Likes</small>
-                  </div>
-                </div>
-                <div class="topic-actions">
-                  <router-link :to="topic.href" class="open-link" @click.stop>Open Discussion →</router-link>
-                </div>
-              </div>
             </article>
           </div>
           <PaginationBlock :meta="discussionPagination" @page="setDiscussionPage" />
