@@ -184,13 +184,26 @@ class MembershipController extends Controller
 
         $plan = MembershipPlan::findOrFail($request->plan_id);
         $price = $request->interval === 'year' ? $plan->price_yearly : $plan->price_monthly;
-
         $clientId = config('services.paypal.client_id');
         $secret = config('services.paypal.client_secret');
         $base = config('app.env') === 'production'
             ? 'https://api-m.paypal.com'
             : 'https://api-m.sandbox.paypal.com';
 
+        $token = $this->payPalAuth($clientId, $secret, $base);
+        if (!$token) return response()->json(['error' => 'PayPal auth failed'], 500);
+
+        $productId = $this->payPalGetOrCreateProduct($token, $base);
+        if (!$productId) return response()->json(['error' => 'Failed to create PayPal product'], 500);
+
+        $planId = $this->payPalCreatePlan($token, $base, $productId, $plan, $request->interval, $price);
+        if (!$planId) return response()->json(['error' => 'Failed to create PayPal billing plan'], 500);
+
+        return $this->payPalCreateSubscription($token, $base, $planId, $request);
+    }
+
+    private function payPalAuth($clientId, $secret, $base): ?string
+    {
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, "$base/v1/oauth2/token");
         curl_setopt($ch, CURLOPT_HEADER, false);
@@ -202,22 +215,94 @@ class MembershipController extends Controller
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
+        if ($httpCode !== 200) return null;
+        return json_decode($result)->access_token;
+    }
 
-        if ($httpCode !== 200) {
-            return response()->json(['error' => 'Failed to authenticate with PayPal'], 500);
+    private function payPalGetOrCreateProduct(string $token, string $base): ?string
+    {
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "$base/v1/catalog/products");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+
+        if ($httpCode === 200) {
+            $products = json_decode($result)->products ?? [];
+            foreach ($products as $p) {
+                if (($p->name ?? '') === 'PepVGuides Premium') return $p->id;
+            }
         }
 
-        $accessToken = json_decode($result)->access_token;
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "$base/v1/catalog/products");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
+            'name' => 'PepVGuides Premium',
+            'description' => 'Premium membership for pepvguides.com',
+            'type' => 'SERVICE',
+            'category' => 'SOFTWARE',
+        ]));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($httpCode !== 201) return null;
+        return json_decode($result)->id;
+    }
 
+    private function payPalCreatePlan(string $token, string $base, string $productId, $plan, string $interval, float $price): ?string
+    {
+        $planData = [
+            'product_id' => $productId,
+            'name' => $plan->name . ' (' . $interval . 'ly)',
+            'description' => $plan->description ?? $plan->name . ' subscription',
+            'billing_cycles' => [[
+                'frequency' => ['interval_unit' => strtoupper($interval), 'interval_count' => 1],
+                'tenure_type' => 'REGULAR',
+                'sequence' => 1,
+                'total_cycles' => 0,
+                'pricing_scheme' => [
+                    'fixed_price' => ['value' => number_format($price, 2, '.', ''), 'currency_code' => 'USD'],
+                ],
+            ]],
+            'payment_preferences' => [
+                'auto_bill_outstanding' => true,
+                'setup_fee_failure_action' => 'CANCEL',
+                'payment_failure_threshold' => 3,
+            ],
+        ];
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, "$base/v1/billing/plans");
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($planData));
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        $result = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        curl_close($ch);
+        if ($httpCode !== 201) return null;
+        return json_decode($result)->id;
+    }
+
+    private function payPalCreateSubscription(string $token, string $base, string $planId, Request $request): \Illuminate\Http\JsonResponse
+    {
         $subscriptionData = [
-            'plan_id' => 'P-XXXXXXXXXXXXXXXX',
+            'plan_id' => $planId,
             'start_time' => now()->addMinute()->toIso8601String(),
             'subscriber' => [
                 'name' => ['given_name' => $request->user()->name ?? 'Member'],
                 'email_address' => $request->user()->email,
             ],
             'application_context' => [
-                'brand_name' => 'Peptide Vendors',
+                'brand_name' => 'PepVGuides',
                 'locale' => 'en-US',
                 'shipping_preference' => 'NO_SHIPPING',
                 'user_action' => 'SUBSCRIBE_NOW',
@@ -228,10 +313,7 @@ class MembershipController extends Controller
 
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, "$base/v1/billing/subscriptions");
-        curl_setopt($ch, CURLOPT_HTTPHEADER, [
-            "Content-Type: application/json",
-            "Authorization: Bearer $accessToken",
-        ]);
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($subscriptionData));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
@@ -245,7 +327,6 @@ class MembershipController extends Controller
             return response()->json([
                 'id' => $data->id,
                 'approval_url' => $data->links[0]->href ?? null,
-                'status' => $data->status ?? 'created',
             ]);
         }
 
