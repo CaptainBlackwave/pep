@@ -1754,6 +1754,17 @@ table {
   resize: vertical;
 }
 
+.pv-edit-select {
+  width: 100%;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+  border-radius: 8px;
+  border: 1px solid rgba(255,255,255,0.1);
+  background: rgba(0,0,0,0.2);
+  color: #fff;
+  font-size: 15px;
+}
+
 .reply-composer {
   background: rgba(255,255,255,0.02);
   border: 1px solid rgba(255,255,255,0.08);
