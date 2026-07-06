@@ -513,6 +513,13 @@ Route::prefix('v1')->group(function () {
             // Account Duplication Detection
             Route::get('/account-duplication', [\App\Core\Http\Controllers\Admin\AccountDuplicationController::class, 'index']);
 
+            // Membership Management
+            Route::prefix('membership')->controller(\App\Core\Http\Controllers\Admin\MembershipAdminController::class)->group(function () {
+                Route::get('/settings', 'settings');
+                Route::post('/settings/toggle', 'toggle');
+                Route::patch('/plans/{plan}', 'updatePlan');
+            });
+
             // Admin Sidebar (for dynamic menu loading)
             Route::get('/sidebar', function () {
                 $user = request()->user();

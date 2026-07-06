@@ -119,6 +119,11 @@ const router = createRouter({
           component: () => import('../views/PluginsView.vue')
         },
         {
+          path: '/membership-settings',
+          name: 'membership-settings',
+          component: () => import('../views/MembershipSettingsView.vue')
+        },
+        {
           path: '/community-discussions',
           name: 'community-discussions',
           component: () => import('../views/CommunityDiscussionsView.vue')

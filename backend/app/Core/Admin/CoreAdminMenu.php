@@ -36,6 +36,7 @@ class CoreAdminMenu
                     [ 'route' => '/email-settings', 'label' => 'Email',       'icon' => 'EnvelopeIcon' ],
                     [ 'route' => '/plugin-settings','label' => 'Plugins',     'icon' => 'PuzzlePieceIcon' ],
                     [ 'route' => '/license',        'label' => 'License',     'icon' => 'KeyIcon' ],
+                    [ 'route' => '/membership-settings', 'label' => 'Membership', 'icon' => 'CreditCardIcon' ],
                 ],
             ],
             [
