@@ -1691,14 +1691,6 @@
             <h1>Choose Your Plan</h1>
             <p>Upgrade to Premium for full access to vendor reviews, lab results, and member messaging.</p>
           </div>
-          <label class="pv-toggle-switch">
-            <span :class="{ active: billingInterval === 'month' }" @click="billingInterval = 'month'">Monthly</span>
-            <span class="pv-toggle-track" @click="toggleBillingInterval">
-              <span class="pv-toggle-thumb" :class="{ right: billingInterval === 'year' }"></span>
-            </span>
-            <span :class="{ active: billingInterval === 'year' }" @click="billingInterval = 'year'">Yearly <small class="pv-save-badge">Best value</small></span>
-          </label>
-          <small class="pv-muted">Monthly not available — yearly only</small>
         </header>
 
         <div class="pv-pricing-grid">
@@ -1728,7 +1720,7 @@
               <span class="pv-badge">Popular</span>
               <h2>Premium</h2>
               <p class="pv-price"><sup>£</sup>{{ billingInterval === 'year' ? '10' : 'N/A' }}</p>
-              <small>per {{ billingInterval === 'year' ? 'year' : 'month' }}</small>
+              <small>per year</small>
             </header>
             <ul class="pv-check-list">
               <li>Community Discussions</li>
