@@ -1757,12 +1757,19 @@ table {
 .pv-edit-select {
   width: 100%;
   padding: 10px 14px;
-  margin-bottom: 12px;
+  margin-bottom: 4px;
   border-radius: 8px;
   border: 1px solid rgba(255,255,255,0.1);
   background: rgba(0,0,0,0.2);
   color: #fff;
   font-size: 15px;
+}
+
+.pv-edit-label {
+  display: block;
+  color: #8e95a8;
+  font-size: 12px;
+  margin-bottom: 12px;
 }
 
 .reply-composer {

@@ -402,6 +402,7 @@
              <option value="">No tag</option>
              <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
            </select>
+           <small class="pv-edit-label">Tag — select a topic type</small>
            <TipTapComposer v-model="editDiscussionBody" placeholder="Update your discussion..." :max-length="10000" compact />
           <div class="pv-form-actions">
             <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
