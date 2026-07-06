@@ -1705,9 +1705,7 @@
               <li>Guides &amp; FAQ</li>
               <li>Announcements</li>
               <li>Research Library</li>
-              <li class="pv-check-list--disabled">Vendor Reviews &amp; Lab Results</li>
-              <li class="pv-check-list--disabled">Member Messaging &amp; Profiles</li>
-              <li class="pv-check-list--disabled">5 discussions per day</li>
+              <li>5 discussions per day</li>
             </ul>
             <div class="pv-pricing-footer">
               <span v-if="authStore.isAuthenticated && membershipTier === 'free'" class="pv-tag trusted">Current Plan</span>
