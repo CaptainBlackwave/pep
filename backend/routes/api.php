@@ -78,6 +78,16 @@ Route::prefix('v1')->group(function () {
     // Public membership plans
     Route::get('/membership/plans', [\App\Core\Http\Controllers\MembershipController::class, 'plans']);
 
+    // Data deletion request (public)
+    Route::post('/data-deletion-request', function (\Illuminate\Http\Request $request) {
+        $validated = $request->validate([
+            'email' => 'required|email|max:255',
+            'reason' => 'nullable|string|max:2000',
+        ]);
+        \Illuminate\Support\Facades\Log::info('Data deletion request', $validated);
+        return response()->json(['message' => 'Request received.']);
+    });
+
     // Public community routes (guests and members)
     Route::prefix('community')->group(function () {
         Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories']);

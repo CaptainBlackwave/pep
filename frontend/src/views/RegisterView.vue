@@ -99,6 +99,13 @@
           </span>
         </label>
 
+        <label class="pv-checkbox pv-age-check">
+          <input v-model="agree18" type="checkbox" required>
+          <span>I am 18 years or older and understand this site discusses research compounds for educational purposes only.</span>
+        </label>
+
+        <p v-if="ageError" class="error-message">{{ ageError }}</p>
+
         <button type="submit" :disabled="authStore.loading" class="pv-primary-button pv-login-submit">
           {{ authStore.loading ? 'Creating account...' : 'Create Account' }}
         </button>
@@ -144,6 +151,8 @@ const form = ref({
   password_confirmation: '',
   access_code: '',
 })
+const agree18 = ref(false)
+const ageError = ref('')
 
 onMounted(async () => {
   try {
@@ -155,6 +164,11 @@ onMounted(async () => {
 })
 
 async function handleRegister() {
+  ageError.value = ''
+  if (!agree18.value) {
+    ageError.value = 'You must be 18 or older to register.'
+    return
+  }
   const success = await authStore.register(form.value)
 
   if (success) {

@@ -55,6 +55,18 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Community Rules' } satisfies RouteMeta,
   },
   {
+    path: '/dmca',
+    name: 'dmca',
+    component: () => import('@/views/DmcaView.vue'),
+    meta: { title: 'DMCA Policy' } satisfies RouteMeta,
+  },
+  {
+    path: '/data-deletion',
+    name: 'data-deletion',
+    component: () => import('@/views/DataDeletionView.vue'),
+    meta: { title: 'Data Deletion Request' } satisfies RouteMeta,
+  },
+  {
     path: '/',
     component: () => import('@/layouts/CoreLayout.vue'),
     meta: {} satisfies RouteMeta,
