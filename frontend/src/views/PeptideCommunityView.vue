@@ -5347,6 +5347,7 @@ function setupRealtime(): void {
   websocketService.connect().then(() => {
     websocketService.subscribe('discussions')
     websocketService.subscribe('announcements')
+    websocketService.subscribe('global')
 
     const unsubCreated = websocketService.on('discussion.created', (data: any) => {
       if (data?.discussion && page.value === 'discussions') {
@@ -5387,6 +5388,13 @@ function setupRealtime(): void {
     })
 
     wsUnsubscribers.push(unsubCreated, unsubUpdated, unsubDeleted, unsubReplyCreated, unsubReplyDeleted)
+
+    const unsubOnline = websocketService.on('online_count', (data: any) => {
+      if (typeof data?.count === 'number') {
+        memberStats.value = { ...memberStats.value, online: data.count }
+      }
+    })
+    wsUnsubscribers.push(unsubOnline)
   }).catch(() => {})
 }
 

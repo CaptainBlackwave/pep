@@ -25,6 +25,7 @@ export type WebSocketEvent =
   | 'discussion.deleted'
   | 'reply.created'
   | 'reply.deleted'
+  | 'online_count'
 
 /**
  * WebSocket message structure
