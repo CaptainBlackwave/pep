@@ -26,7 +26,7 @@ class RegisterRequest extends FormRequest
         $accessCodeRequired = Setting::where('key', 'access_code_required')->value('value') === '1';
 
         $rules = [
-            'username' => 'required|string|max:255|unique:users',
+            'username' => 'required|string|max:20|unique:users',
             'email'    => 'required|string|email|max:255|unique:users',
             'password' => 'required|string|min:8|confirmed',
         ];

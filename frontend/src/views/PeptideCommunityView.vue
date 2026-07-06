@@ -8017,7 +8017,7 @@ function settingsMain(pageName: string) {
       h('h2', 'Account Information'),
       status,
       h('div', { class: 'pv-input-group' }, [
-        settingsInput('Username', accountForm.value.username, value => { accountForm.value.username = value }),
+        settingsInput('Username', accountForm.value.username, value => { accountForm.value.username = value }, 'text', false, 20),
         settingsInput('Email Address', accountForm.value.email, value => { accountForm.value.email = value }, 'email'),
       ]),
       h('div', { class: 'pv-settings-meta-grid' }, [
@@ -8176,8 +8176,8 @@ function settingsMain(pageName: string) {
   ])
 }
 
-function settingsInput(label: string, value: string, onValue: (value: string) => void, type = 'text', disabled = false) {
-  return h('label', [label, h('input', { type, placeholder: label, value, disabled, onInput: (event: Event) => onValue((event.target as HTMLInputElement).value) })])
+function settingsInput(label: string, value: string, onValue: (value: string) => void, type = 'text', disabled = false, maxlength = 0) {
+  return h('label', [label, h('input', { type, placeholder: label, value, disabled, maxlength: maxlength || undefined, onInput: (event: Event) => onValue((event.target as HTMLInputElement).value) })])
 }
 
 function settingsSelect(label: string, value: string, onValue: (value: string) => void, options: Array<[string, string]>) {

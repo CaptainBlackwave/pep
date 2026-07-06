@@ -259,7 +259,7 @@ class AuthController extends Controller
         $user = $request->user();
 
         $validated = $request->validate([
-            'username' => ['required', 'string', 'max:255', Rule::unique('users', 'username')->ignore($user->id)],
+            'username' => ['required', 'string', 'max:20', Rule::unique('users', 'username')->ignore($user->id)],
         ]);
 
         $user->update([
