@@ -23,6 +23,7 @@ class CoreAdminMenu
                     [ 'route' => '/user-tools', 'label' => 'User Tools',          'icon' => 'WrenchScrewdriverIcon' ],
                     [ 'route' => '/roles',      'label' => 'Roles & Permissions', 'icon' => 'ShieldCheckIcon' ],
                     [ 'route' => '/ip-bans',    'label' => 'IP Bans',             'icon' => 'NoSymbolIcon' ],
+                    [ 'route' => '/account-duplication', 'label' => 'Duplicate Accounts', 'icon' => 'UsersIcon' ],
                 ],
             ],
             [
@@ -73,7 +74,6 @@ class CoreAdminMenu
                     [ 'route' => '/webhooks',       'label' => 'Webhooks',        'icon' => 'ArrowTopRightOnSquareIcon' ],
                     [ 'route' => '/api-keys',       'label' => 'API Keys',        'icon' => 'KeyIcon' ],
                     [ 'route' => '/notifications',  'label' => 'Notifications',   'icon' => 'BellIcon' ],
-                    [ 'route' => '/account-duplication', 'label' => 'Duplicate Accounts', 'icon' => 'UsersIcon' ],
                     // Calendar and Tasks removed - no backend implementations
                     // See ADMIN_MENU_AUDIT.md for tracking
                 ],
