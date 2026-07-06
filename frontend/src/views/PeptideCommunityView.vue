@@ -77,6 +77,7 @@
         <span><PvIcon name="upload" /> {{ discussionDraftStatus }}</span>
         <div>
           <button type="button" class="pv-small-button" @click="closeNewDiscussion">Cancel</button>
+          <button type="button" class="pv-small-button" @click="newDiscussion.value.body = ''; newDiscussion.value.title = ''">Clear</button>
           <button type="submit" class="pv-primary-button" :disabled="creatingDiscussion">
             <PvIcon name="send" />
             {{ creatingDiscussion ? 'Posting...' : 'Post Discussion' }}
