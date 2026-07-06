@@ -1725,10 +1725,10 @@
               <li>Guides &amp; FAQ</li>
               <li>Announcements</li>
               <li>Research Library</li>
-              <li>Vendor Reviews</li>
-              <li>Lab Results</li>
+              <li>Vendor Reviews &amp; Profiles</li>
+              <li>Access to Multiple Bulk Vendors</li>
+              <li>Lab Results &amp; COAs</li>
               <li>Member Messaging</li>
-              <li>Member Profiles</li>
               <li>Unlimited Discussions</li>
             </ul>
             <div class="pv-pricing-footer">
