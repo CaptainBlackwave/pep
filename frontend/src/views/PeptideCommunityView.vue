@@ -725,14 +725,10 @@
 
           <div class="pv-two-col">
             <label>
-              Vendor Name *
-              <input v-model="vendorPortalForm.name" required maxlength="160" placeholder="Public vendor name">
-            </label>
-            <label>
-              Profile Slug
-              <input v-model="vendorPortalForm.slug" maxlength="180" pattern="[a-zA-Z0-9-]+" placeholder="vendor-name">
-            </label>
-          </div>
+               Vendor Name *
+               <input v-model="vendorPortalForm.name" required maxlength="160" placeholder="Public vendor name">
+             </label>
+           </div>
           <label>
             About
             <textarea v-model="vendorPortalForm.description" maxlength="4000" rows="5" placeholder="Describe support expectations, service area, and public profile details."></textarea>
