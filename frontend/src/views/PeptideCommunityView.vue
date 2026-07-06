@@ -1025,7 +1025,7 @@
            >
              Requested
            </button>
-           <a href="https://t.me/peptidevendors" target="_blank" rel="noreferrer" class="pv-small-button pv-full" style="margin-top:8px">Contact Admin on Telegram</a>
+           <a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-small-button pv-full" style="margin-top:8px"><PvIcon name="send" /> Contact Admin on Telegram</a>
          </article>
       </main>
 
