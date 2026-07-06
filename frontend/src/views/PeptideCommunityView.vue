@@ -1287,10 +1287,11 @@
         <label>Product<input v-model="newVendorReview.product_name" maxlength="120" placeholder="Product reviewed"></label>
         <label>Tags<input v-model="newVendorReview.tags" placeholder="Comma-separated review tags"></label>
         <div><strong>Would you buy from this vendor again?</strong><div class="pv-choice-row"><button type="button" :class="{ active: newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = true"><PvIcon name="thumbs" /> Yes, I would</button><button type="button" :class="{ active: !newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = false">No, I wouldn&apos;t</button></div></div>
-        <label>Add Photos (Optional)
-          <input ref="vendorReviewPhotoInput" type="file" accept="image/*" multiple class="pv-sr-only" @change="selectVendorReviewPhotos">
-          <button class="pv-upload-box" type="button" @click="vendorReviewPhotoInput?.click()"><PvIcon name="image" /> Click to upload photos<br><small>PNG, JPG up to 5MB each (max 5 images)</small></button>
-        </label>
+         <label>Review Photos *
+           <p class="pv-muted" style="font-size:13px">You must include a photo of the received product with a handwritten note showing your <strong>username</strong> and the <strong>date received</strong>. Cover any personal info before uploading.</p>
+           <input ref="vendorReviewPhotoInput" type="file" accept="image/*" multiple class="pv-sr-only" @change="selectVendorReviewPhotos">
+           <button class="pv-upload-box" type="button" @click="vendorReviewPhotoInput?.click()"><PvIcon name="image" /> Click to upload photos<br><small>PNG, JPG up to 5MB each (min 1 photo required)</small></button>
+         </label>
         <div v-if="vendorReviewPhotoPreviews.length" class="pv-upload-preview-grid">
           <span v-for="(preview, index) in vendorReviewPhotoPreviews" :key="preview">
             <img :src="preview" :alt="`Review photo ${index + 1}`">
@@ -6128,6 +6129,12 @@ async function submitVendorReview(): Promise<void> {
 
   submittingVendorReview.value = true
   vendorReviewFormError.value = ''
+
+  if (vendorReviewPhotos.value.length === 0) {
+    vendorReviewFormError.value = 'You must upload at least one photo showing the product with your username and the date.'
+    submittingVendorReview.value = false
+    return
+  }
 
   try {
     const form = new FormData()
