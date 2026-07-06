@@ -826,11 +826,11 @@ table {
 .topic-card {
   width: 100%;
   display: grid;
-  grid-template-columns: 120px 1fr;
-  gap: 16px;
-  padding: 14px 18px;
-  margin-bottom: 10px;
-  border-radius: 12px;
+  grid-template-columns: 90px 1fr;
+  gap: 12px;
+  padding: 10px 14px;
+  margin-bottom: 8px;
+  border-radius: 10px;
   position: relative;
   background:
     radial-gradient(circle at 18% 20%, rgba(139, 92, 246, 0.12), transparent 32%),
@@ -863,16 +863,16 @@ table {
 }
 
 .avatar {
-  width: 48px;
-  height: 48px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
   display: grid;
   place-items: center;
   background: linear-gradient(145deg, #a855f7, #5b21b6);
   color: #fff;
-  font-size: 22px;
+  font-size: 16px;
   font-weight: 900;
-  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25), 0 0 20px rgba(139, 92, 246, 0.3);
+  box-shadow: 0 0 0 2px rgba(168, 85, 247, 0.25), 0 0 12px rgba(139, 92, 246, 0.25);
 }
 .avatar img {
   width: 100%;
@@ -968,10 +968,10 @@ table {
 }
 
 .topic-body h2 {
-  margin: 0 0 6px;
+  margin: 0 0 4px;
   max-width: 620px;
   color: #ffffff;
-  font-size: 18px;
+  font-size: 15px;
   line-height: 1.15;
   letter-spacing: -0.02em;
   font-weight: 800;
@@ -1036,16 +1036,16 @@ table {
 
 .stats {
   display: flex;
-  gap: 16px;
+  gap: 12px;
 }
 
 .stat {
   display: flex;
   align-items: center;
-  gap: 6px;
-  padding-right: 14px;
+  gap: 4px;
+  padding-right: 10px;
   border-right: 1px solid rgba(255,255,255,0.08);
-  min-height: 28px;
+  min-height: 22px;
 }
 
 .stat:last-child {
@@ -1054,20 +1054,20 @@ table {
 
 .stat > span {
   color: #b7bfd3;
-  font-size: 14px;
+  font-size: 12px;
   line-height: 1;
 }
 
 .stat strong {
   color: #fff;
-  font-size: 13px;
+  font-size: 12px;
   line-height: 1;
   font-weight: 800;
 }
 
 .stat small {
   color: #aab0c3;
-  font-size: 11px;
+  font-size: 10px;
   line-height: 1.2;
 }
 
