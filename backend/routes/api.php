@@ -101,6 +101,11 @@ Route::prefix('v1')->group(function () {
 
     // Protected authentication routes
     Route::middleware('auth:sanctum')->group(function () {
+        Route::post('/upload/image', function (\Illuminate\Http\Request $request) {
+            $request->validate(['image' => 'required|image|max:5120']);
+            $path = $request->file('image')->store('uploads/images', 'public');
+            return response()->json(['url' => \Illuminate\Support\Facades\Storage::url($path), 'path' => $path]);
+        });
         Route::get('/user', [AuthController::class, 'user']);
         Route::post('/logout', [AuthController::class, 'logout']);
         Route::post('/logout-all', [AuthController::class, 'logoutAll']);

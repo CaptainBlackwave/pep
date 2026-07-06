@@ -60,6 +60,7 @@
             <button type="button" @click="insertDiscussionAttachment('link')"><PvIcon name="share" />Link</button>
             <button type="button" @click="insertDiscussionAttachment('poll')"><PvIcon name="chart" />Poll</button>
             <button type="button" @click="insertDiscussionAttachment('file')"><PvIcon name="document" />File</button>
+            <input ref="discussionFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" class="pv-sr-only" @change="handleDiscussionFileUpload">
           </div>
         </section>
         <aside class="pv-compose-tips">
@@ -2866,6 +2867,8 @@ const blockUserSearch = ref('')
 const blockUsername = ref('')
 const revokingSessionId = ref('')
 const discussionTags = ['Discussion', 'Question', 'Guide', 'Review', 'Showcase', 'Tutorial', 'News', 'Tip']
+const discussionFileInput = ref<HTMLInputElement | null>(null)
+const discussionUploading = ref(false)
 const newDiscussion = ref({
   title: '',
   body: '',
@@ -4353,6 +4356,32 @@ function handleReplyAttachment(event: Event): void {
   replyAttachmentPreviewUrl.value = file ? URL.createObjectURL(file) : ''
 }
 
+async function handleDiscussionFileUpload(event: Event): Promise<void> {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (!file) return
+  discussionUploading.value = true
+  try {
+    const formData = new FormData()
+    formData.append('image', file)
+    const res = await api.post<{ url?: string; path?: string }>('/api/v1/upload/image', formData, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    })
+    const url = res.data.url || res.data.path
+    if (url) {
+      const isImage = file.type.startsWith('image/')
+      appendNewDiscussionHtml(isImage
+        ? `<figure><img src="${escapeHtml(url)}" alt="${escapeHtml(file.name)}"></figure>`
+        : `<p><a href="${escapeHtml(url)}">${escapeHtml(file.name)}</a></p>`)
+    }
+  } catch {
+    alert('Failed to upload file.')
+  } finally {
+    discussionUploading.value = false
+    input.value = ''
+  }
+}
+
 function onGifSelect(url: string): void {
   if (replyAttachmentPreviewUrl.value) {
     URL.revokeObjectURL(replyAttachmentPreviewUrl.value)
@@ -4701,9 +4730,8 @@ function appendNewDiscussionHtml(html: string): void {
 }
 
 function insertDiscussionAttachment(type: ComposeAttachmentType): void {
-  if (type === 'image') {
-    const url = window.prompt('Image URL')
-    if (url) appendNewDiscussionHtml(`<figure><img src="${escapeHtml(safeExternalUrl(url))}" alt="Discussion image"></figure>`)
+  if (type === 'image' || type === 'file') {
+    discussionFileInput.value?.click()
     return
   }
 
@@ -4722,12 +4750,7 @@ function insertDiscussionAttachment(type: ComposeAttachmentType): void {
 
   if (type === 'poll') {
     appendNewDiscussionHtml('<blockquote><p><strong>Poll:</strong> Add your question here</p><ul><li>Option 1</li><li>Option 2</li></ul></blockquote>')
-    return
   }
-
-  const url = window.prompt('File URL')
-  const label = url ? window.prompt('File label', 'Attached file') || 'Attached file' : ''
-  if (url) appendNewDiscussionHtml(`<p><a href="${escapeHtml(safeExternalUrl(url))}">${escapeHtml(label)}</a></p>`)
 }
 
 async function submitNewDiscussion(): Promise<void> {
