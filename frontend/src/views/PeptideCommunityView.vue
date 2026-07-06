@@ -346,7 +346,7 @@
                       <img v-if="topic.latestReply.avatar" :src="assetUrl(topic.latestReply.avatar)" :alt="topic.latestReply.author">
                       <span v-else class="avatar-sm">{{ topic.latestReply.initial }}</span>
                       <div>
-                        <strong>{{ topic.latestReply.author }} <i></i></strong>
+                        <strong>{{ topic.latestReply.username || topic.latestReply.author }}</strong>
                         <span>{{ topic.latestReply.timeAgo }}</span>
                       </div>
                     </router-link>
@@ -7701,7 +7701,6 @@ function settingsMain(pageName: string) {
       status,
       h('div', { class: 'pv-input-group' }, [
         settingsInput('Username', accountForm.value.username, value => { accountForm.value.username = value }),
-        settingsInput('Display Name', accountForm.value.name, value => { accountForm.value.name = value }),
         settingsInput('Email Address', accountForm.value.email, value => { accountForm.value.email = value }, 'email'),
       ]),
       h('div', { class: 'pv-settings-meta-grid' }, [
@@ -7802,7 +7801,6 @@ function settingsMain(pageName: string) {
     status,
     h('div', { class: 'pv-profile-form-head' }, [accountAvatarNode('pv-avatar--xl'), h('div', { class: 'pv-input-group' }, [
       settingsInput('Username', accountForm.value.username, value => { accountForm.value.username = value }),
-      settingsInput('Display Name', accountForm.value.name, value => { accountForm.value.name = value }),
     ])]),
     h('label', ['Email Address', h('input', { value: accountForm.value.email, disabled: true })]),
     settingsTextarea('Bio', accountForm.value.bio, value => { accountForm.value.bio = value }),
