@@ -8437,7 +8437,6 @@ function quickActions() {
     h('div', { class: 'pv-filter-list' }, [
       h(RouterLink, { to: '/settings/security' }, () => [h(PvIcon, { name: 'lock' }), ' Change Password', h(PvIcon, { name: 'chevron' })]),
       h(RouterLink, { to: '/settings/security' }, () => [h(PvIcon, { name: 'shield' }), ' Two-Factor Authentication', h(PvIcon, { name: 'chevron' })]),
-      h('button', { disabled: exportingAccountData.value, onClick: exportAccountData }, [h(PvIcon, { name: 'download' }), exportingAccountData.value ? ' Exporting...' : ' Download My Data', h(PvIcon, { name: 'chevron' })]),
       h(RouterLink, { to: '/settings/danger-zone' }, () => [h(PvIcon, { name: 'settings' }), ' Sign Out Everywhere', h(PvIcon, { name: 'chevron' })]),
     ]),
   ])
