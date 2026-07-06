@@ -154,7 +154,8 @@ const navItems = computed(() => {
     { to: '/notifications', label: 'Notifications', icon: 'bell', match: ['/notifications'] },
   ]
   return allItems.filter(item => {
-    if (!isAuth && ['/lab-results', '/vendor-reviews', '/vendor-portal', '/members', '/notifications'].includes(item.to)) {
+    const isFree = !isAuth || authStore.user?.tier === 'free'
+    if (isFree && ['/lab-results', '/vendor-reviews', '/vendor-portal', '/members', '/notifications'].includes(item.to)) {
       return false
     }
     return true
