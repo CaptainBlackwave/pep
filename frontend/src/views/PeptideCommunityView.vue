@@ -310,7 +310,7 @@
                   <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
                   <span v-else class="avatar" :class="topic.color">{{ topic.initial }}</span>
                 </router-link>
-                <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>@{{ topic.authorUsername }}</h4></router-link>
+                <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>{{ topic.authorUsername }}</h4></router-link>
                 <div class="author-badge">🛡 Trusted Member</div>
                 <div class="level-badge">✪ Level 12</div>
                 <div class="author-posts">💬 {{ topic.replies }} posts</div>
@@ -372,7 +372,7 @@
             <span v-if="detailDiscussion.authorOnline" class="online-indicator"></span>
           </router-link>
           <div class="op-user">
-            <router-link class="pv-author-name-link" :to="memberHref(detailDiscussion.authorUsername)"><strong>@{{ detailDiscussion.authorUsername }}</strong></router-link>
+            <router-link class="pv-author-name-link" :to="memberHref(detailDiscussion.authorUsername)"><strong>{{ detailDiscussion.authorUsername }}</strong></router-link>
             <span class="verified">✓</span>
           </div>
           <div class="op-meta">
@@ -424,7 +424,7 @@
             <span v-else>{{ reply.initial }}</span>
             <span v-if="reply.authorOnline" class="online-indicator"></span>
           </router-link>
-          <router-link class="reply-name pv-author-name-link" :to="memberHref(reply.authorUsername)">@{{ reply.authorUsername }}</router-link>
+          <router-link class="reply-name pv-author-name-link" :to="memberHref(reply.authorUsername)">{{ reply.authorUsername }}</router-link>
         </div>
         <div class="post-main">
           <div class="reply-top">
