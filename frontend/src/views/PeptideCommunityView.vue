@@ -1001,31 +1001,32 @@
           </div>
         </article>
 
-        <article v-else-if="!vendorPortalAccessApproved" class="pv-panel">
-          <h2>Vendor Access Required</h2>
-          <p class="pv-muted">An admin needs to approve this account as a vendor before you can create or edit a vendor profile.</p>
-          <dl class="pv-data-list">
-            <div><dt>Account</dt><dd>{{ authStore.user?.username || authStore.user?.name || 'Current user' }}</dd></div>
-            <div><dt>Vendor Access</dt><dd>Not approved</dd></div>
-            <div v-if="apiMyVendor"><dt>Existing Profile</dt><dd>{{ apiMyVendor.publishStatus }}</dd></div>
-          </dl>
-          <button
-            v-if="!vendorAccessRequested"
-            class="pv-primary-button pv-full"
-            style="margin-top:12px"
-            @click="requestVendorAccess"
-          >
-            Request Vendor Access
-          </button>
-          <button
-            v-else
-            class="pv-primary-button pv-full"
-            style="margin-top:12px"
-            disabled
-          >
-            Requested
-          </button>
-        </article>
+         <article v-else-if="!vendorPortalAccessApproved" class="pv-panel">
+           <h2>Vendor Access Required</h2>
+           <p class="pv-muted">Read the <router-link to="/discussions/vendor-application-process" class="pv-purple-link">Vendor Application Process</router-link> first, then follow the steps below.</p>
+           <dl class="pv-data-list">
+             <div><dt>Account</dt><dd>{{ authStore.user?.username || authStore.user?.name || 'Current user' }}</dd></div>
+             <div><dt>Vendor Access</dt><dd>Not approved</dd></div>
+             <div v-if="apiMyVendor"><dt>Existing Profile</dt><dd>{{ apiMyVendor.publishStatus }}</dd></div>
+           </dl>
+           <button
+             v-if="!vendorAccessRequested"
+             class="pv-primary-button pv-full"
+             style="margin-top:12px"
+             @click="requestVendorAccess"
+           >
+             Request Vendor Access
+           </button>
+           <button
+             v-else
+             class="pv-primary-button pv-full"
+             style="margin-top:12px"
+             disabled
+           >
+             Requested
+           </button>
+           <a href="https://t.me/peptidevendors" target="_blank" rel="noreferrer" class="pv-small-button pv-full" style="margin-top:8px">Contact Admin on Telegram</a>
+         </article>
       </main>
 
       <aside class="pv-stack">
