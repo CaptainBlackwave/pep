@@ -46,6 +46,34 @@ Route::prefix('admin')->group(function () {
 });
 
 // Community Frontend SPA — catch all non-API non-admin routes
+Route::get('/sitemap.xml', function () {
+    $pages = [
+        ['loc' => '/home', 'priority' => '1.0', 'changefreq' => 'daily'],
+        ['loc' => '/discussions', 'priority' => '0.9', 'changefreq' => 'hourly'],
+        ['loc' => '/guides', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        ['loc' => '/research-library', 'priority' => '0.8', 'changefreq' => 'weekly'],
+        ['loc' => '/announcements', 'priority' => '0.7', 'changefreq' => 'daily'],
+        ['loc' => '/vendor-reviews', 'priority' => '0.8', 'changefreq' => 'daily'],
+        ['loc' => '/pricing', 'priority' => '0.5', 'changefreq' => 'monthly'],
+        ['loc' => '/terms', 'priority' => '0.3', 'changefreq' => 'monthly'],
+        ['loc' => '/privacy', 'priority' => '0.3', 'changefreq' => 'monthly'],
+        ['loc' => '/community-rules', 'priority' => '0.3', 'changefreq' => 'monthly'],
+    ];
+
+    $xml = '<?xml version="1.0" encoding="UTF-8"?>';
+    $xml .= '<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">';
+    foreach ($pages as $page) {
+        $xml .= '<url>';
+        $xml .= '<loc>' . htmlspecialchars(config('app.url') . $page['loc'], ENT_QUOTES, 'UTF-8') . '</loc>';
+        $xml .= '<priority>' . $page['priority'] . '</priority>';
+        $xml .= '<changefreq>' . $page['changefreq'] . '</changefreq>';
+        $xml .= '</url>';
+    }
+    $xml .= '</urlset>';
+
+    return response($xml, 200, ['Content-Type' => 'application/xml']);
+});
+
 Route::get('/{any?}', function () {
     return file_get_contents(public_path('index.html'));
 })->where('any', '^(?!api|admin|install|storage).*$');

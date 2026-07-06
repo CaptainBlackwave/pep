@@ -11,6 +11,8 @@ export interface RouteMeta {
   requiresAuth?: boolean
   requiresGuest?: boolean
   title?: string
+  description?: string
+  ogImage?: string
   layout?: string
   transition?: string
   keepAlive?: boolean
@@ -26,6 +28,8 @@ declare module 'vue-router' {
     requiresAuth?: boolean
     requiresGuest?: boolean
     title?: string
+    description?: string
+    ogImage?: string
     layout?: string
     transition?: string
     keepAlive?: boolean

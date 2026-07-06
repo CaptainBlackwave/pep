@@ -60,10 +60,10 @@ const routes: RouteRecordRaw[] = [
     meta: {} satisfies RouteMeta,
     children: [
       { path: 'dashboard', name: 'dashboard', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
-      { path: 'home', name: 'home', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
+      { path: 'home', name: 'home', component: peptidePage, meta: { title: 'Home', page: 'home', description: 'Peptide research community with independent vendor reviews, lab results, and educational discussions.' } satisfies RouteMeta },
       { path: 'pricing', name: 'pricing', component: peptidePage, meta: { title: 'Pricing', page: 'pricing' } satisfies RouteMeta },
-      { path: 'discussions', name: 'discussions', component: peptidePage, meta: { title: 'Discussions', page: 'discussions' } satisfies RouteMeta },
-      { path: 'discussions/:slug', name: 'discussion-detail', component: peptidePage, meta: { title: 'Discussion', page: 'discussionDetail' } satisfies RouteMeta },
+      { path: 'discussions', name: 'discussions', component: peptidePage, meta: { title: 'Discussions', page: 'discussions', description: 'Community discussions about peptide research, harm reduction, and educational topics.' } satisfies RouteMeta },
+      { path: 'discussions/:slug', name: 'discussion-detail', component: peptidePage, meta: { title: 'Discussion', page: 'discussionDetail', description: 'Community discussion about peptide research.' } satisfies RouteMeta },
       { path: 'lab-results', name: 'lab-results', component: peptidePage, meta: { title: 'Lab Results', page: 'labResults' } satisfies RouteMeta },
       { path: 'lab-results/:slug', name: 'lab-report', component: peptidePage, meta: { title: 'Lab Result Report', page: 'labReport' } satisfies RouteMeta },
       { path: 'vendor-reviews', name: 'vendor-reviews', component: peptidePage, meta: { title: 'Vendor Reviews', page: 'vendorReviews' } satisfies RouteMeta },
@@ -120,8 +120,78 @@ router.beforeEach((to) => {
   const authStore = useAuthStore()
   const hasStoredToken = Boolean(localStorage.getItem('auth_token'))
   const title = to.meta?.title as string | undefined
+  const description = to.meta?.description as string | undefined
+  const ogImage = to.meta?.ogImage as string | undefined
+  const siteName = 'Peptide Vendors'
+
   if (title) {
-    document.title = `${title} | Peptide Vendors`
+    document.title = `${title} | ${siteName}`
+  }
+
+  // Update meta description
+  let descEl = document.querySelector('meta[name="description"]')
+  if (description) {
+    if (!descEl) {
+      descEl = document.createElement('meta')
+      descEl.setAttribute('name', 'description')
+      document.head.appendChild(descEl)
+    }
+    descEl.setAttribute('content', description)
+  } else if (descEl) {
+    descEl.remove()
+  }
+
+  // Update OG title
+  let ogTitle = document.querySelector('meta[property="og:title"]')
+  if (title) {
+    if (!ogTitle) {
+      ogTitle = document.createElement('meta')
+      ogTitle.setAttribute('property', 'og:title')
+      document.head.appendChild(ogTitle)
+    }
+    ogTitle.setAttribute('content', `${title} | ${siteName}`)
+  }
+
+  // Update OG description
+  let ogDesc = document.querySelector('meta[property="og:description"]')
+  if (description) {
+    if (!ogDesc) {
+      ogDesc = document.createElement('meta')
+      ogDesc.setAttribute('property', 'og:description')
+      document.head.appendChild(ogDesc)
+    }
+    ogDesc.setAttribute('content', description)
+  }
+
+  // Update OG image
+  let ogImg = document.querySelector('meta[property="og:image"]')
+  if (ogImage) {
+    if (!ogImg) {
+      ogImg = document.createElement('meta')
+      ogImg.setAttribute('property', 'og:image')
+      document.head.appendChild(ogImg)
+    }
+    ogImg.setAttribute('content', ogImage)
+  } else if (ogImg) {
+    ogImg.remove()
+  }
+
+  // Set OG url
+  let ogUrl = document.querySelector('meta[property="og:url"]')
+  if (!ogUrl) {
+    ogUrl = document.createElement('meta')
+    ogUrl.setAttribute('property', 'og:url')
+    document.head.appendChild(ogUrl)
+  }
+  ogUrl.setAttribute('content', window.location.href)
+
+  // Ensure og:type
+  let ogType = document.querySelector('meta[property="og:type"]')
+  if (!ogType) {
+    ogType = document.createElement('meta')
+    ogType.setAttribute('property', 'og:type')
+    ogType.setAttribute('content', 'website')
+    document.head.appendChild(ogType)
   }
 
   if (to.meta.requiresAuth && !authStore.isAuthenticated && !hasStoredToken) {
