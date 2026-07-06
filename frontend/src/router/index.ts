@@ -55,18 +55,13 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Community Rules', page: 'legalRules' } satisfies RouteMeta,
   },
   {
-    path: '/pricing',
-    name: 'pricing',
-    component: peptidePage,
-    meta: { title: 'Pricing', page: 'pricing' } satisfies RouteMeta,
-  },
-  {
     path: '/',
     component: () => import('@/layouts/CoreLayout.vue'),
     meta: {} satisfies RouteMeta,
     children: [
       { path: 'dashboard', name: 'dashboard', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
       { path: 'home', name: 'home', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
+      { path: 'pricing', name: 'pricing', component: peptidePage, meta: { title: 'Pricing', page: 'pricing' } satisfies RouteMeta },
       { path: 'discussions', name: 'discussions', component: peptidePage, meta: { title: 'Discussions', page: 'discussions' } satisfies RouteMeta },
       { path: 'discussions/:slug', name: 'discussion-detail', component: peptidePage, meta: { title: 'Discussion', page: 'discussionDetail' } satisfies RouteMeta },
       { path: 'lab-results', name: 'lab-results', component: peptidePage, meta: { title: 'Lab Results', page: 'labResults' } satisfies RouteMeta },
