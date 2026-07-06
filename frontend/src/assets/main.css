@@ -8179,3 +8179,9 @@ a[target="_blank"] {
 .pv-small-button--danger:hover {
   background: rgba(239, 68, 68, 0.1) !important;
 }
+
+@media (max-width: 650px) {
+  .pv-pricing-grid {
+    grid-template-columns: 1fr;
+  }
+}
