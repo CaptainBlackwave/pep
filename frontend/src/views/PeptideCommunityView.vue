@@ -1194,7 +1194,7 @@
           </div>
           <p v-if="vendorReviewStatusMessage" class="pv-alert pv-alert--compact">{{ vendorReviewStatusMessage }}</p>
           <p v-if="reviews.length === 0" class="pv-muted">No published reviews yet.</p>
-          <article v-for="review in reviews" :key="review.author" class="pv-review-row">
+          <article v-for="review in reviews" :key="review.id ?? review.author" class="pv-review-row">
             <span class="pv-avatar" :class="review.color">{{ review.initial }}</span>
             <div>
               <div class="pv-reply-head"><strong>{{ review.author }}</strong><span class="pv-tag" :class="review.verifiedBuyer ? 'trusted' : 'caution'">{{ review.verifiedBuyer ? 'Verified Buyer' : 'Community Review' }}</span><span>{{ review.date }}</span></div>
@@ -1206,6 +1206,21 @@
                 <a v-for="photo in review.photoUrls" :key="photo" :href="photo" target="_blank" rel="noreferrer">
                   <img :src="photo" alt="Review photo">
                 </a>
+              </div>
+              <div v-if="review.vendorResponse" class="pv-vendor-response">
+                <strong>Vendor Response</strong>
+                <p>{{ review.vendorResponse }}</p>
+                <small v-if="review.respondedAt">Responded {{ formatDate(review.respondedAt) }}</small>
+              </div>
+              <div v-if="detailVendor?.isOwnedByViewer && !review.vendorResponse && respondingReviewId !== review.id" style="margin-top:8px">
+                <button class="pv-small-button" type="button" @click="respondingReviewId = review.id; reviewResponseText = ''">Respond</button>
+              </div>
+              <div v-if="respondingReviewId === review.id" class="pv-vendor-respond-form">
+                <textarea v-model="reviewResponseText" maxlength="2000" rows="3" placeholder="Write your public response..." class="pv-vendor-response-textarea"></textarea>
+                <div style="display:flex;gap:6px;margin-top:6px">
+                  <button class="pv-primary-button" :disabled="submittingReviewResponse" @click="respondToReview(review)">{{ submittingReviewResponse ? 'Posting...' : 'Submit Response' }}</button>
+                  <button class="pv-small-button" type="button" @click="cancelVendorResponse">Cancel</button>
+                </div>
               </div>
             </div>
             <button class="pv-small-button" :disabled="markingReviewHelpful === review.id" @click="markReviewHelpful(review)"><PvIcon name="thumbs" /> Helpful ({{ review.helpful }})</button>
@@ -2093,6 +2108,8 @@ interface UiVendorReview {
   photoUrls: string[]
   helpful: number
   verifiedBuyer: boolean
+  vendorResponse?: string | null
+  respondedAt?: string | null
 }
 
 interface ApiVendorReview {
@@ -2102,6 +2119,8 @@ interface ApiVendorReview {
   rating: number
   product_name?: string | null
   helpful_count?: number
+  vendor_response?: string | null
+  responded_at?: string | null
   is_verified_buyer?: boolean
   tags?: string[]
   photo_urls?: string[]
@@ -2828,6 +2847,9 @@ const vendorReviewPhotoInput = ref<HTMLInputElement | null>(null)
 const vendorReviewPhotos = ref<File[]>([])
 const vendorReviewPhotoPreviews = ref<string[]>([])
 const markingReviewHelpful = ref<number | undefined>()
+const respondingReviewId = ref<number | undefined>()
+const reviewResponseText = ref('')
+const submittingReviewResponse = ref(false)
 const vendorSort = ref<'rating' | 'reviews' | 'name'>('rating')
 const vendorReviewRatingFilter = ref('')
 const vendorReviewProductFilter = ref('')
@@ -5717,6 +5739,8 @@ function mapVendorReview(item: ApiVendorReview): UiVendorReview {
     photoUrls: (item.photo_urls ?? []).map(assetUrl).filter(Boolean),
     helpful: item.helpful_count ?? 0,
     verifiedBuyer: Boolean(item.is_verified_buyer),
+    vendorResponse: item.vendor_response ?? null,
+    respondedAt: item.responded_at ?? null,
   }
 }
 
@@ -6026,6 +6050,44 @@ function clearVendorReviewPhotos(): void {
   vendorReviewPhotoPreviews.value.forEach(url => URL.revokeObjectURL(url))
   vendorReviewPhotos.value = []
   vendorReviewPhotoPreviews.value = []
+}
+
+function cancelVendorResponse(): void {
+  respondingReviewId.value = undefined
+  reviewResponseText.value = ''
+  submittingReviewResponse.value = false
+}
+
+async function respondToReview(review: UiVendorReview): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    vendorReviewStatusMessage.value = 'Please log in to respond to reviews.'
+    return
+  }
+
+  if (!review.id) return
+
+  const text = reviewResponseText.value.trim()
+  if (!text) {
+    vendorReviewStatusMessage.value = 'Enter a response before submitting.'
+    return
+  }
+
+  submittingReviewResponse.value = true
+  vendorReviewStatusMessage.value = ''
+
+  try {
+    const response = await api.post<{ data: ApiVendorReview }>(`/api/v1/community/vendor-reviews/${review.id}/respond`, {
+      vendor_response: text,
+    })
+    const updated = mapVendorReview(response.data.data)
+    apiVendorReviews.value = apiVendorReviews.value.map(item => item.id === updated.id ? updated : item)
+    vendorReviewStatusMessage.value = 'Response posted.'
+    cancelVendorResponse()
+  } catch {
+    vendorReviewStatusMessage.value = 'Unable to post response.'
+  } finally {
+    submittingReviewResponse.value = false
+  }
 }
 
 function setVendorStatusFilter(status: string): void {

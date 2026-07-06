@@ -16,6 +16,8 @@ class CommunityVendorReview extends Model
         'rating',
         'product_name',
         'helpful_count',
+        'vendor_response',
+        'responded_at',
         'would_buy_again',
         'is_verified_buyer',
         'tags',
@@ -34,6 +36,7 @@ class CommunityVendorReview extends Model
             'tags' => 'array',
             'photo_urls' => 'array',
             'reviewed_at' => 'date',
+            'responded_at' => 'datetime',
         ];
     }
 

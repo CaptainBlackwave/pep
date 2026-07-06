@@ -159,6 +159,7 @@ Route::prefix('v1')->group(function () {
             Route::post('/vendors/{vendor}/claim', [CommunityVendorController::class, 'claimVendor']);
             Route::post('/vendors/{vendor}/reviews', [CommunityVendorController::class, 'storeReview']);
             Route::post('/vendor-reviews/{review}/helpful', [CommunityVendorController::class, 'markReviewHelpful']);
+            Route::post('/vendor-reviews/{review}/respond', [CommunityVendorController::class, 'respondToReview']);
             Route::post('/messages', [CommunityMessageController::class, 'storeThread']);
             Route::post('/messages/{thread}/messages', [CommunityMessageController::class, 'store']);
             Route::post('/notifications/{notification}/read', [CommunityNotificationController::class, 'markAsRead']);

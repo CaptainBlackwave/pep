@@ -392,6 +392,26 @@ class CommunityVendorController extends Controller
             ->setStatusCode(201);
     }
 
+    public function respondToReview(Request $request, CommunityVendorReview $review)
+    {
+        $vendor = CommunityVendor::query()
+            ->where('owner_user_id', $request->user()->id)
+            ->firstOrFail();
+
+        abort_unless((int) $review->vendor_id === (int) $vendor->id, 403, 'You do not own the vendor associated with this review.');
+
+        $validated = $request->validate([
+            'vendor_response' => ['required', 'string', 'max:2000'],
+        ]);
+
+        $review->update([
+            'vendor_response' => $validated['vendor_response'],
+            'responded_at' => now(),
+        ]);
+
+        return new CommunityVendorReviewResource($review->load('user'));
+    }
+
     public function markReviewHelpful(string $review)
     {
         $reviewModel = CommunityVendorReview::query()

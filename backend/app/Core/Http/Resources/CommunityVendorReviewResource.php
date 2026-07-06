@@ -23,6 +23,8 @@ class CommunityVendorReviewResource extends JsonResource
             'rating' => $this->rating,
             'product_name' => $this->product_name,
             'helpful_count' => $this->helpful_count,
+            'vendor_response' => $this->vendor_response,
+            'responded_at' => $this->responded_at?->toIso8601String(),
             'would_buy_again' => $this->would_buy_again,
             'is_verified_buyer' => $this->is_verified_buyer,
             'tags' => $this->tags ?? [],
