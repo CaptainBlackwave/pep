@@ -281,7 +281,7 @@
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
             <article
-              v-for="topic in discussions"
+              v-for="(topic, index) in discussions"
               :key="topic.title"
               class="topic-card"
               role="link"
@@ -4453,7 +4453,7 @@ async function deleteDiscussionFromList(topic: UiDiscussion): Promise<void> {
 
 function startEditDiscussionFromList(topic: UiDiscussion): void {
   if (topic.href) {
-    void router.push(topic.href)
+    void router.push(topic.href + '?edit=1')
   }
 }
 
@@ -4931,6 +4931,10 @@ async function loadDiscussionDetail(): Promise<void> {
     apiReplies.value = (response.data.data.reply_items ?? []).map(mapReply)
     apiDiscussionParticipants.value = (response.data.data.participants ?? []).map(mapMember)
     apiSimilarDiscussions.value = (response.data.data.similar_discussions ?? []).map(mapDiscussion)
+  if (route.query.edit === '1' && !isEditingDiscussion.value && authStore.user?.id === apiDetailDiscussion.value?.authorId) {
+    startEditDiscussion()
+    await router.replace({ query: {} })
+  }
   } catch {
     apiDetailDiscussion.value = null
     apiReplies.value = []
