@@ -186,7 +186,9 @@ class MembershipController extends Controller
         $price = $request->interval === 'year' ? $plan->price_yearly : $plan->price_monthly;
         $clientId = config('services.paypal.client_id');
         $secret = config('services.paypal.client_secret');
-        $base = config('app.env') === 'production'
+        $clientId = config('services.paypal.client_id');
+        $secret = config('services.paypal.client_secret');
+        $base = config('services.paypal.mode') === 'live'
             ? 'https://api-m.paypal.com'
             : 'https://api-m.sandbox.paypal.com';
 
