@@ -4545,13 +4545,16 @@ async function handleDiscussionFileUpload(event: Event): Promise<void> {
     if (url) {
       const isImage = file.type.startsWith('image/')
       const isVideo = file.type.startsWith('video/')
-      if (isVideo) {
-        appendNewDiscussionHtml(`<p><a href="${escapeHtml(url)}">${escapeHtml(file.name)}</a></p>`)
+      const isPdf = file.type === 'application/pdf'
+      if (isPdf) {
+        appendNewDiscussionHtml(`<p class="pv-file-embed"><embed src="${escapeHtml(url)}" type="application/pdf" width="100%" height="500px"></p>`)
+      } else if (isVideo) {
+        appendNewDiscussionHtml(`<p><a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(file.name)}</a></p>`)
       } else if (isImage) {
         appendNewDiscussionHtml(`<figure><img src="${escapeHtml(url)}" alt="${escapeHtml(file.name)}"></figure>`)
       } else {
-        appendNewDiscussionHtml(`<p><a href="${escapeHtml(url)}">${escapeHtml(file.name)}</a></p>`)
-      }
+        appendNewDiscussionHtml(`<p><a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(file.name)}</a></p>`)
+    }
     }
   } catch {
     alert('Failed to upload file.')
