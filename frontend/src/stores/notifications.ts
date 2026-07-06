@@ -1,6 +1,7 @@
 import { defineStore } from 'pinia'
 import { ref, computed } from 'vue'
 import api from '@/services/api'
+import { useAuthStore } from '@/stores/auth'
 import { websocketService } from '@/services/websocket'
 import type { NotificationEvent } from '@/types/websocket'
 import type { Notification } from '@/types/notification'
@@ -79,6 +80,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
    * Fetch all notifications
    */
   async function fetchNotifications(): Promise<void> {
+    if (!useAuthStore().isAuthenticated) return
     loading.value = true
     error.value = null
 
@@ -107,6 +109,7 @@ export const useNotificationsStore = defineStore('notifications', () => {
    * Fetch unread count only
    */
   async function fetchUnreadCount(): Promise<void> {
+    if (!useAuthStore().isAuthenticated) return
     try {
       const response = await api.get('/api/v1/community/notifications', {
         cacheTTL: 0,

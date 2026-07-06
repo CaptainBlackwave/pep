@@ -20,7 +20,7 @@
       </form>
 
       <div class="pv-account">
-        <router-link v-if="authStore.isAuthenticated" to="/notifications" class="pv-icon-button" aria-label="Notifications">
+        <router-link to="/notifications" class="pv-icon-button" aria-label="Notifications">
           <PvIcon name="bell" />
           <span v-if="notificationCount > 0" class="pv-badge">{{ notificationCount }}</span>
         </router-link>
