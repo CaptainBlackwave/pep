@@ -19,6 +19,7 @@
         "simplesoftwareio/simple-qrcode": "^4.2",
         "socialiteproviders/discord": "^4.2",
         "spatie/laravel-permission": "^6.24",
+        "stripe/stripe-php": "^20.3",
         "symfony/http-client": "^7.4",
         "symfony/mailgun-mailer": "^7.4"
     },

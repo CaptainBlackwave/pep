@@ -501,7 +501,15 @@
   </section>
 
   <section v-else-if="page === 'labResults'" class="pv-page">
-    <div class="pv-content-grid">
+    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
+      <div class="pv-upgrade-card">
+        <PvIcon name="flask" />
+        <h2>Premium Feature</h2>
+        <p>Upgrade to Premium to access independent lab testing reports, COAs, purity analysis, and batch data.</p>
+        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+      </div>
+    </div>
+    <div v-else class="pv-content-grid">
       <main class="pv-stack">
         <header class="pv-page-header">
           <div><h1>Lab Results</h1><p>Independent lab testing and analysis from community members.</p></div>
@@ -621,7 +629,15 @@
   </section>
 
   <section v-else-if="page === 'vendorReviews'" class="pv-page">
-    <div class="pv-content-grid pv-content-grid--vendor-index">
+    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
+      <div class="pv-upgrade-card">
+        <PvIcon name="shield" />
+        <h2>Premium Feature</h2>
+        <p>Upgrade to Premium to read and write vendor reviews with ratings, photos, and detailed feedback.</p>
+        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+      </div>
+    </div>
+    <div v-else class="pv-content-grid pv-content-grid--vendor-index">
       <main class="pv-stack">
         <header class="pv-page-header">
           <div><h1>Vendors</h1><p>Browse vendor profiles, compare community feedback, and write a review from the vendor row.</p></div>
@@ -1415,7 +1431,15 @@
   </section>
 
    <section v-else-if="page === 'members'" class="pv-page">
-    <div class="pv-content-grid">
+    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
+      <div class="pv-upgrade-card">
+        <PvIcon name="users" />
+        <h2>Premium Feature</h2>
+        <p>Upgrade to Premium to browse detailed member profiles with activity history and reputation scores.</p>
+        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+      </div>
+    </div>
+    <div v-else class="pv-content-grid">
       <main class="pv-stack">
         <header class="pv-page-header"><div><h1>Members</h1><p>Find contributors, moderators, reviewers, and active community voices.</p></div><router-link to="/settings/profile" class="pv-small-button"><PvIcon name="user" /> Edit Profile</router-link></header>
         <div class="pv-metrics pv-metrics--member">
@@ -1486,7 +1510,15 @@
   </section>
 
   <section v-else-if="page === 'messages'" class="pv-page pv-messages-page">
-    <div class="pv-messages" :class="{ 'pv-messages--thread-active': !!currentThread }">
+    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
+      <div class="pv-upgrade-card">
+        <PvIcon name="message" />
+        <h2>Premium Feature</h2>
+        <p>Upgrade to Premium to send direct messages to other members for private discussions and collaboration.</p>
+        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+      </div>
+    </div>
+    <div v-else class="pv-messages" :class="{ 'pv-messages--thread-active': !!currentThread }">
       <aside class="pv-message-list">
         <header><h1>Messages</h1><span class="pv-icon-button active pv-mode-indicator" aria-label="Primary messages"><PvIcon name="document" /></span></header>
         <label class="pv-input-search"><input v-model="messageSearch" placeholder="Search messages..."><PvIcon name="search" /></label>
@@ -1648,6 +1680,125 @@
       <main v-if="primaryNotification" class="pv-stack"><router-link to="/notifications" class="pv-purple-link">Back</router-link><header class="pv-page-header"><div><h1>Notification</h1><router-link to="/notifications" class="pv-purple-link">Back to all notifications</router-link></div><button v-if="authStore.isAuthenticated && primaryNotification.unread" class="pv-small-button" :disabled="markingNotificationsRead" @click="markNotificationRead(primaryNotification.slug)"><PvIcon name="mail" /> Mark as read</button><router-link v-if="previousNotification" class="pv-icon-button pv-icon-button--static" :to="previousNotification.detailHref" aria-label="Previous notification"><PvIcon name="chevron" /></router-link><router-link v-if="nextNotification" class="pv-icon-button pv-icon-button--static" :to="nextNotification.detailHref" aria-label="Next notification"><PvIcon name="chevron" /></router-link></header><article class="pv-notification-hero"><span class="pv-large-icon" :class="primaryNotification.tone"><PvIcon :name="primaryNotification.icon" /></span><div><div class="pv-author-line"><span class="pv-tag">{{ primaryNotification.category }}</span><strong>{{ primaryNotification.author }}</strong><span>{{ primaryNotification.time }}</span></div><h2>{{ primaryNotification.title }}</h2><p>{{ primaryNotification.text }}</p><router-link :to="primaryNotification.href" class="pv-primary-button">Open {{ primaryNotification.category }} <PvIcon name="share" /></router-link></div></article><article class="pv-panel pv-prose"><h2>Full Message</h2><p v-for="paragraph in primaryNotification.bodyParagraphs" :key="paragraph">{{ paragraph }}</p><hr><h2>What you can do</h2><router-link :to="primaryNotification.href" class="pv-action-card"><PvIcon :name="primaryNotification.icon" /><span><strong>Open related content</strong><small>View the full source item for this notification.</small></span><PvIcon name="chevron" /></router-link><router-link to="/discussions" class="pv-action-card"><PvIcon name="message" /><span><strong>Join the discussion</strong><small>Discuss updates with the community.</small></span><PvIcon name="chevron" /></router-link></article></main>
       <main v-else class="pv-stack"><router-link to="/notifications" class="pv-purple-link">Back</router-link><article class="pv-panel"><h1>Notification not found</h1><p class="pv-muted">There are no live notifications to show yet.</p></article></main>
       <aside class="pv-stack"><article class="pv-panel"><h2>Notification Details</h2><dl class="pv-data-list"><div><dt>Type</dt><dd>{{ primaryNotification?.category ?? '' }}</dd></div><div><dt>From</dt><dd>{{ primaryNotification?.author ?? '' }}</dd></div><div><dt>Received</dt><dd>{{ primaryNotification?.time ?? '' }}</dd></div><div><dt>Status</dt><dd><span class="pv-dot purple"></span> {{ primaryNotification?.unread ? 'Unread' : 'Read' }}</dd></div></dl><hr><h2>Related Links</h2><div class="pv-filter-list"><router-link to="/lab-results"><PvIcon name="flask" /> Lab Results <PvIcon name="chevron" /></router-link><router-link to="/announcements"><PvIcon name="megaphone" /> Announcements <PvIcon name="chevron" /></router-link><router-link to="/discussions"><PvIcon name="message" /> Community Discussions <PvIcon name="chevron" /></router-link></div></article></aside>
+    </div>
+  </section>
+
+  <section v-else-if="page === 'pricing'" class="pv-page">
+    <div class="pv-content-grid">
+      <main class="pv-stack">
+        <header class="pv-page-header">
+          <div>
+            <h1>Choose Your Plan</h1>
+            <p>Upgrade to Premium for full access to vendor reviews, lab results, and member messaging.</p>
+          </div>
+          <label class="pv-toggle-switch">
+            <span :class="{ active: billingInterval === 'month' }" @click="billingInterval = 'month'">Monthly</span>
+            <span class="pv-toggle-track" @click="toggleBillingInterval">
+              <span class="pv-toggle-thumb" :class="{ right: billingInterval === 'year' }"></span>
+            </span>
+            <span :class="{ active: billingInterval === 'year' }" @click="billingInterval = 'year'">Yearly <small class="pv-save-badge">Save 17%</small></span>
+          </label>
+        </header>
+
+        <div class="pv-pricing-grid">
+          <article class="pv-pricing-card pv-pricing-card--free">
+            <header>
+              <h2>Free</h2>
+              <p class="pv-price"><sup>$</sup>0</p>
+              <small>Forever free</small>
+            </header>
+            <ul class="pv-check-list">
+              <li>Community Discussions</li>
+              <li>Guides &amp; FAQ</li>
+              <li>Announcements</li>
+              <li>Research Library</li>
+              <li class="pv-check-list--disabled">Vendor Reviews</li>
+              <li class="pv-check-list--disabled">Lab Results</li>
+              <li class="pv-check-list--disabled">Member Messaging</li>
+              <li class="pv-check-list--disabled">Member Profiles</li>
+              <li class="pv-check-list--disabled">Unlimited Discussions</li>
+            </ul>
+            <div class="pv-pricing-footer">
+              <span v-if="authStore.isAuthenticated && membershipTier === 'free'" class="pv-tag trusted">Current Plan</span>
+              <span v-else-if="!authStore.isAuthenticated" class="pv-tag">Always Free</span>
+            </div>
+          </article>
+
+          <article class="pv-pricing-card pv-pricing-card--premium">
+            <header>
+              <span class="pv-badge">Popular</span>
+              <h2>Premium</h2>
+              <p class="pv-price"><sup>$</sup>{{ billingInterval === 'year' ? '99.99' : '9.99' }}</p>
+              <small>per {{ billingInterval === 'year' ? 'year' : 'month' }}</small>
+            </header>
+            <ul class="pv-check-list">
+              <li>Community Discussions</li>
+              <li>Guides &amp; FAQ</li>
+              <li>Announcements</li>
+              <li>Research Library</li>
+              <li>Vendor Reviews</li>
+              <li>Lab Results</li>
+              <li>Member Messaging</li>
+              <li>Member Profiles</li>
+              <li>Unlimited Discussions</li>
+            </ul>
+            <div class="pv-pricing-footer">
+              <template v-if="authStore.isAuthenticated">
+                <span v-if="membershipTier === 'paid'" class="pv-tag trusted">Active</span>
+                <div v-else class="pv-pricing-buttons">
+                  <button class="pv-primary-button pv-full" @click="subscribeWith('stripe')">
+                    <PvIcon name="lock" /> Subscribe with Card
+                  </button>
+                  <button class="pv-paypal-button pv-full" @click="subscribeWith('paypal')">
+                    Subscribe with PayPal
+                  </button>
+                </div>
+              </template>
+              <router-link v-else to="/login?redirect=/pricing" class="pv-primary-button pv-full">
+                Log In to Subscribe
+              </router-link>
+            </div>
+          </article>
+        </div>
+
+        <article class="pv-panel">
+          <h2>All Premium Features</h2>
+          <div class="pv-feature-grid">
+            <div class="pv-feature-item">
+              <PvIcon name="shield" />
+              <strong>Vendor Reviews</strong>
+              <small>Read and write verified vendor reviews with ratings, photos, and detailed feedback.</small>
+            </div>
+            <div class="pv-feature-item">
+              <PvIcon name="flask" />
+              <strong>Lab Results</strong>
+              <small>Access independent lab testing reports including COAs, purity analysis, and batch data.</small>
+            </div>
+            <div class="pv-feature-item">
+              <PvIcon name="message" />
+              <strong>Messaging</strong>
+              <small>Direct message other premium members for private discussions and collaboration.</small>
+            </div>
+            <div class="pv-feature-item">
+              <PvIcon name="users" />
+              <strong>Member Profiles</strong>
+              <small>Browse detailed member profiles with activity history and reputation scores.</small>
+            </div>
+            <div class="pv-feature-item">
+              <PvIcon name="discussions" />
+              <strong>Unlimited Discussions</strong>
+              <small>Create and participate in unlimited community discussions with no daily limits.</small>
+            </div>
+            <div class="pv-feature-item">
+              <PvIcon name="upload" />
+              <strong>File Uploads</strong>
+              <small>Attach files, images, and documents to your discussions and messages.</small>
+            </div>
+          </div>
+        </article>
+
+        <p v-if="paymentStatusMessage" class="pv-alert pv-alert--compact">{{ paymentStatusMessage }}</p>
+      </main>
     </div>
   </section>
 
@@ -2816,6 +2967,25 @@ const vendorPortalForm = ref({
   public_contact_notes: '',
   tags: '',
 })
+const membershipPlans = ref<MembershipPlan[]>([])
+const membershipTier = ref('free')
+const membershipStatus = ref<Record<string, unknown> | null>(null)
+const billingInterval = ref<'month' | 'year'>('month')
+const paymentStatusMessage = ref('')
+const subscribing = ref(false)
+
+const showUpgradePrompt = computed(() => authStore.isAuthenticated && membershipTier.value !== 'paid')
+
+interface MembershipPlan {
+  id: number
+  name: string
+  slug: string
+  description: string
+  price_monthly: number
+  price_yearly: number
+  features: string[]
+}
+
 const vendorProductFormError = ref('')
 const vendorProductStatusMessage = ref('')
 const savingVendorProduct = ref(false)
@@ -5054,9 +5224,88 @@ function goToDiscussion(topic: UiDiscussion): void {
   void router.push(topic.href)
 }
 
+async function loadMembershipPlans(): Promise<void> {
+  try {
+    const response = await api.get<{ data: MembershipPlan[] }>('/api/v1/membership/plans', { cacheTTL: 300000 })
+    membershipPlans.value = response.data.data
+  } catch {
+    // silent
+  }
+}
+
+async function loadMembershipStatus(): Promise<void> {
+  if (!authStore.isAuthenticated) return
+  try {
+    const response = await api.get<{ tier: string; subscription: Record<string, unknown> | null }>('/api/v1/membership/status')
+    membershipTier.value = response.data.tier
+    membershipStatus.value = response.data.subscription
+  } catch {
+    // silent
+  }
+}
+
+function toggleBillingInterval(): void {
+  billingInterval.value = billingInterval.value === 'month' ? 'year' : 'month'
+}
+
+async function subscribeWith(provider: 'stripe' | 'paypal'): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    void router.push('/login?redirect=/pricing')
+    return
+  }
+
+  const plan = membershipPlans.value[0]
+  if (!plan) {
+    paymentStatusMessage.value = 'No membership plans available.'
+    return
+  }
+
+  subscribing.value = true
+  paymentStatusMessage.value = ''
+
+  try {
+    if (provider === 'stripe') {
+      const response = await api.post<{ url: string }>('/api/v1/membership/stripe/create-checkout', {
+        plan_id: plan.id,
+        interval: billingInterval.value,
+      })
+      window.location.href = response.data.url
+    } else {
+      const response = await api.post<{ id: string; approval_url: string | null }>('/api/v1/membership/paypal/create-order', {
+        plan_id: plan.id,
+        interval: billingInterval.value,
+      })
+      if (response.data.approval_url) {
+        window.location.href = response.data.approval_url
+      } else {
+        paymentStatusMessage.value = 'PayPal subscription created. Please check your PayPal account to approve.'
+      }
+    }
+  } catch (error) {
+    const apiError = error as { response?: { data?: { error?: string } } }
+    paymentStatusMessage.value = apiError.response?.data?.error ?? `Failed to create ${provider} subscription.`
+  } finally {
+    subscribing.value = false
+  }
+}
+
+async function cancelSubscription(): Promise<void> {
+  if (!confirm('Are you sure you want to cancel your subscription?')) return
+  try {
+    await api.post('/api/v1/membership/cancel')
+    await loadMembershipStatus()
+    paymentStatusMessage.value = 'Subscription cancelled.'
+  } catch (error) {
+    const apiError = error as { response?: { data?: { error?: string } } }
+    paymentStatusMessage.value = apiError.response?.data?.error ?? 'Failed to cancel subscription.'
+  }
+}
+
 onMounted(() => {
   loadLocalActionState()
   void syncCommunityContent()
+  void loadMembershipPlans()
+  void loadMembershipStatus()
 
   if (authStore.isAuthenticated && authStore.user?.id) {
     import('@/composables/usePushNotifications').then(({ usePushNotifications }) => {
@@ -7673,7 +7922,7 @@ const MessageBubble = defineComponent({
 const SettingsScreens = defineComponent({
   props: { page: { type: String, required: true } },
   setup(props) {
-     const tabs: Array<[string, string, string, string]> = [['settingsProfile', '/settings', 'Profile', 'user'], ['settingsAccount', '/settings/account', 'Account', 'users'], ['settingsSecurity', '/settings/security', 'Security', 'shield'], ['settingsPrivacy', '/settings/privacy', 'Privacy', 'lock'], ['settingsNotifications', '/settings/notifications', 'Notifications', 'bell'], ['settingsPreferences', '/settings/preferences', 'Preferences', 'settings'], ['settingsBlocked', '/settings/blocked-users', 'Blocked Users', 'close'], ['settingsSessions', '/settings/sessions', 'Sessions', 'document'], ['settingsDanger', '/settings/danger-zone', 'Danger Zone', 'shield']]
+     const tabs: Array<[string, string, string, string]> = [['settingsProfile', '/settings', 'Profile', 'user'], ['settingsAccount', '/settings/account', 'Account', 'users'], ['settingsSecurity', '/settings/security', 'Security', 'shield'], ['settingsPrivacy', '/settings/privacy', 'Privacy', 'lock'], ['settingsBilling', '/settings/billing', 'Billing', 'credit-card'], ['settingsNotifications', '/settings/notifications', 'Notifications', 'bell'], ['settingsPreferences', '/settings/preferences', 'Preferences', 'settings'], ['settingsBlocked', '/settings/blocked-users', 'Blocked Users', 'close'], ['settingsSessions', '/settings/sessions', 'Sessions', 'document'], ['settingsDanger', '/settings/danger-zone', 'Danger Zone', 'shield']]
      return () => h('div', { class: 'pv-settings-grid' }, [
       h('aside', { class: 'pv-settings-nav' }, [h('small', 'ACCOUNT SETTINGS'), ...tabs.map(tab => h(RouterLink, { to: tab[1], class: props.page === tab[0] ? 'active' : '' }, () => [h(PvIcon, { name: tab[3] }), tab[2]]))]),
       h('main', { class: 'pv-stack' }, [h('header', { class: 'pv-page-header' }, [h('div', [h('h1', settingsPageTitle(props.page)), h('p', settingsPageDescription(props.page))])]), settingsMain(props.page)]),
@@ -7688,6 +7937,7 @@ function settingsPageTitle(pageName: string): string {
     settingsAccount: 'Account',
     settingsSecurity: 'Security',
     settingsPrivacy: 'Privacy',
+    settingsBilling: 'Billing',
     settingsNotifications: 'Notifications',
     settingsPreferences: 'Preferences',
     settingsBlocked: 'Blocked Users',
@@ -7704,6 +7954,7 @@ function settingsPageDescription(pageName: string): string {
     settingsAccount: 'Manage your username, email status, timezone and language.',
     settingsSecurity: 'Manage your password, two-factor authentication and active sessions.',
     settingsPrivacy: 'Control profile visibility, direct messages and activity signals.',
+    settingsBilling: 'Manage your membership plan, payment methods, and billing history.',
     settingsNotifications: 'Choose how community alerts reach you.',
     settingsPreferences: 'Tune display, language and browsing preferences.',
     settingsBlocked: 'Manage members you do not want to interact with.',
@@ -7778,6 +8029,47 @@ function settingsMain(pageName: string) {
         settingsSelect('Language', userSettings.value.language, value => { userSettings.value.language = value }, [['en', 'English'], ['en-GB', 'English (UK)'], ['en-US', 'English (US)']]),
       ]),
       h('button', { class: 'pv-primary-button', disabled: savingSettings.value, onClick: async () => { await saveAccountProfile(); await saveUserSettings({ language: userSettings.value.language }) } }, savingSettings.value ? 'Saving...' : 'Save Account'),
+    ])
+  }
+  if (pageName === 'settingsBilling') {
+    return h('div', { class: 'pv-stack' }, [
+      status,
+      h('article', { class: 'pv-panel pv-settings-card' }, [
+        h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'credit-card' })]),
+        h('div', [
+          h('h2', 'Current Plan'),
+          h('div', { class: 'pv-settings-meta-grid' }, [
+            h('span', [h('small', 'Tier'), h('strong', membershipTier.value === 'paid' ? 'Premium' : 'Free')]),
+            h('span', [h('small', 'Status'), h('strong', membershipStatus.value?.status ?? (membershipTier.value === 'paid' ? 'Active' : 'N/A'))]),
+            h('span', [h('small', 'Next Billing'), h('strong', membershipStatus.value?.current_period_end ? formatDate(String(membershipStatus.value.current_period_end)) : 'N/A')]),
+          ]),
+          membershipTier.value === 'paid'
+            ? h('button', { class: 'pv-small-button pv-small-button--danger', onClick: cancelSubscription }, 'Cancel Subscription')
+            : h(RouterLink, { to: '/pricing', class: 'pv-primary-button' }, () => 'Upgrade to Premium'),
+        ]),
+      ]),
+      h('article', { class: 'pv-panel pv-settings-card' }, [
+        h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'shield' })]),
+        h('div', [
+          h('h2', 'Payment Methods'),
+          h('p', 'Manage your payment methods through your payment provider.'),
+          h('div', { class: 'pv-two-col' }, [
+            h('a', { href: 'https://dashboard.stripe.com', target: '_blank', rel: 'noreferrer', class: 'pv-small-button' }, 'Stripe Dashboard'),
+            h('a', { href: 'https://www.paypal.com/myaccount/autopay/', target: '_blank', rel: 'noreferrer', class: 'pv-small-button' }, 'PayPal Pre-Approved'),
+          ]),
+        ]),
+      ]),
+      h('article', { class: 'pv-panel' }, [
+        h('h2', 'Premium Features'),
+        h('div', { class: 'pv-badge-grid' }, [
+          h('span', [h(PvIcon, { name: 'shield' }), h('small', 'Vendor Reviews')]),
+          h('span', [h(PvIcon, { name: 'flask' }), h('small', 'Lab Results')]),
+          h('span', [h(PvIcon, { name: 'message' }), h('small', 'Messaging')]),
+          h('span', [h(PvIcon, { name: 'users' }), h('small', 'Member Profiles')]),
+          h('span', [h(PvIcon, { name: 'discussions' }), h('small', 'Unlimited Discussions')]),
+          h('span', [h(PvIcon, { name: 'upload' }), h('small', 'File Uploads')]),
+        ]),
+      ]),
     ])
   }
   if (pageName === 'settingsNotifications') {

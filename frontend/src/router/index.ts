@@ -55,6 +55,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Community Rules', page: 'legalRules' } satisfies RouteMeta,
   },
   {
+    path: '/pricing',
+    name: 'pricing',
+    component: peptidePage,
+    meta: { title: 'Pricing', page: 'pricing' } satisfies RouteMeta,
+  },
+  {
     path: '/',
     component: () => import('@/layouts/CoreLayout.vue'),
     meta: { requiresAuth: true } satisfies RouteMeta,
@@ -91,6 +97,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'settings/blocked-users', name: 'settings-blocked-users', component: peptidePage, meta: { title: 'Blocked Users', page: 'settingsBlocked' } satisfies RouteMeta },
       { path: 'settings/api-tokens', name: 'settings-api-tokens', component: peptidePage, meta: { title: 'API Tokens', page: 'settingsApi' } satisfies RouteMeta },
       { path: 'settings/sessions', name: 'settings-sessions', component: peptidePage, meta: { title: 'Sessions', page: 'settingsSessions' } satisfies RouteMeta },
+      { path: 'settings/billing', name: 'settings-billing', component: peptidePage, meta: { title: 'Billing', page: 'settingsBilling' } satisfies RouteMeta },
       { path: 'settings/danger-zone', name: 'settings-danger-zone', component: peptidePage, meta: { title: 'Danger Zone', page: 'settingsDanger' } satisfies RouteMeta },
       { path: 'settings/:section', name: 'settings-placeholder', component: peptidePage, meta: { title: 'Account Settings', page: 'settingsProfile' } satisfies RouteMeta },
       { path: 'telegram-updates', name: 'telegram-updates', component: peptidePage, meta: { title: 'Telegram Updates', page: 'telegramUpdates' } satisfies RouteMeta },

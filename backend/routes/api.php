@@ -566,6 +566,15 @@ Route::prefix('v1')->group(function () {
             Route::delete('/read/clear', 'deleteRead');
         });
 
+        // Membership routes
+        Route::prefix('membership')->controller(\App\Core\Http\Controllers\MembershipController::class)->group(function () {
+            Route::get('/plans', 'plans');
+            Route::get('/status', 'status');
+            Route::post('/stripe/create-checkout', 'createStripeCheckout');
+            Route::post('/paypal/create-order', 'createPayPalOrder');
+            Route::post('/cancel', 'cancel');
+        });
+
         // NOTE: Gaming routes (crimes, gym, hospital, bank, drugs, jail, inventory,
         // combat, theft, racing, properties, bounties, missions, detective, gangs,
         // organized-crime, travel, shop) are now provided by plugins.
@@ -573,3 +582,7 @@ Route::prefix('v1')->group(function () {
     });
 
 }); // end prefix('v1')
+
+// Webhook routes (no auth — Stripe/PayPal call these)
+Route::post('stripe/webhook', [\App\Core\Http\Controllers\MembershipController::class, 'handleStripeWebhook']);
+Route::post('paypal/webhook', [\App\Core\Http\Controllers\MembershipController::class, 'handlePayPalWebhook']);

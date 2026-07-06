@@ -25,6 +25,10 @@ class DatabaseSeeder extends Seeder
             CommunityContentSeeder::class,
         ]);
 
+        $this->call([
+            MembershipPlanSeeder::class,
+        ]);
+
         if ((bool) env('SEED_DEVELOPMENT_USERS', false)) {
             $this->call([
                 // User accounts for development/testing

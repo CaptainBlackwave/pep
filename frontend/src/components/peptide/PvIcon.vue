@@ -67,6 +67,7 @@ const icons: Record<string, string[]> = {
   'vote-down': ['M12 19 5 12h4V5h6v7h4l-7 7Z'],
   reply: ['M9 17 4 12l5-5', 'M20 18v-2a4 4 0 0 0-4-4H4'],
   quote: ['M7 7h5v5c0 4-2 6-6 7', 'M17 7h4v5c0 4-2 6-6 7'],
+  'credit-card': ['M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8Z', 'M2 11h20', 'M6 15h2', 'M10 15h1'],
 }
 
 const iconPaths = computed(() => icons[props.name] ?? icons.question)

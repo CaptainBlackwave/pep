@@ -7845,3 +7845,319 @@ a[target="_blank"] {
 .pv-star-rating button:hover {
   color: #fcd34d;
 }
+
+/* ── Pricing Page ─────────────────────────────────────────────────────── */
+
+.pv-toggle-switch {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  font-size: 0.9rem;
+  color: var(--pv-muted);
+}
+
+.pv-toggle-switch span.active {
+  color: var(--pv-text);
+  font-weight: 600;
+}
+
+.pv-toggle-switch .pv-save-badge {
+  background: rgba(33, 197, 107, 0.15);
+  color: var(--pv-green);
+  padding: 1px 6px;
+  border-radius: 4px;
+  font-size: 0.7rem;
+  margin-left: 4px;
+}
+
+.pv-toggle-track {
+  width: 44px;
+  height: 22px;
+  background: var(--pv-border);
+  border-radius: 12px;
+  cursor: pointer;
+  position: relative;
+  transition: background 0.2s;
+}
+
+.pv-toggle-track:hover {
+  background: var(--pv-border-strong);
+}
+
+.pv-toggle-thumb {
+  position: absolute;
+  top: 2px;
+  left: 2px;
+  width: 18px;
+  height: 18px;
+  background: var(--pv-purple);
+  border-radius: 50%;
+  transition: transform 0.2s;
+}
+
+.pv-toggle-thumb.right {
+  transform: translateX(22px);
+}
+
+.pv-pricing-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 24px;
+  margin-bottom: 32px;
+}
+
+.pv-pricing-card {
+  background: var(--pv-panel);
+  border: 1px solid var(--pv-border);
+  border-radius: 12px;
+  padding: 28px;
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.pv-pricing-card--premium {
+  border-color: var(--pv-purple);
+  position: relative;
+}
+
+.pv-pricing-card header {
+  text-align: center;
+}
+
+.pv-pricing-card header h2 {
+  margin: 0 0 8px;
+  font-size: 1.3rem;
+}
+
+.pv-pricing-card .pv-price {
+  font-size: 2.5rem;
+  font-weight: 700;
+  margin: 0;
+  color: var(--pv-text);
+}
+
+.pv-pricing-card .pv-price sup {
+  font-size: 1rem;
+  font-weight: 400;
+  vertical-align: super;
+}
+
+.pv-pricing-card header small {
+  color: var(--pv-muted);
+  font-size: 0.8rem;
+}
+
+.pv-pricing-card .pv-badge {
+  position: absolute;
+  top: -12px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: var(--pv-purple);
+  color: #fff;
+  padding: 3px 14px;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.pv-check-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pv-check-list li {
+  padding-left: 22px;
+  position: relative;
+  font-size: 0.88rem;
+  color: var(--pv-text);
+}
+
+.pv-check-list li::before {
+  content: "✓";
+  position: absolute;
+  left: 0;
+  color: var(--pv-green);
+  font-weight: 700;
+}
+
+.pv-check-list--disabled {
+  opacity: 0.4;
+}
+
+.pv-check-list--disabled::before {
+  content: "—" !important;
+  color: var(--pv-muted) !important;
+}
+
+.pv-pricing-footer {
+  margin-top: auto;
+  text-align: center;
+}
+
+.pv-pricing-buttons {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pv-paypal-button {
+  background: #0070ba;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px 16px;
+  font-weight: 600;
+  font-size: 0.88rem;
+  cursor: pointer;
+  transition: background 0.2s;
+}
+
+.pv-paypal-button:hover {
+  background: #005ea6;
+}
+
+.pv-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  gap: 16px;
+  margin-top: 16px;
+}
+
+.pv-feature-item {
+  background: var(--pv-panel-muted);
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  padding: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.pv-feature-item .pv-icon {
+  width: 24px;
+  height: 24px;
+  color: var(--pv-purple);
+}
+
+.pv-feature-item strong {
+  font-size: 0.9rem;
+}
+
+.pv-feature-item small {
+  font-size: 0.8rem;
+  color: var(--pv-muted);
+  line-height: 1.4;
+}
+
+/* ── Upgrade Prompt ───────────────────────────────────────────────────── */
+
+.pv-upgrade-overlay {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 60vh;
+  padding: 40px 20px;
+}
+
+.pv-upgrade-card {
+  background: var(--pv-panel);
+  border: 1px solid var(--pv-border-strong);
+  border-radius: 12px;
+  padding: 40px;
+  text-align: center;
+  max-width: 420px;
+  width: 100%;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 12px;
+}
+
+.pv-upgrade-card .pv-icon {
+  width: 40px;
+  height: 40px;
+  color: var(--pv-purple);
+}
+
+.pv-upgrade-card h2 {
+  margin: 0;
+  font-size: 1.3rem;
+}
+
+.pv-upgrade-card p {
+  color: var(--pv-muted);
+  font-size: 0.9rem;
+  margin: 0;
+  line-height: 1.5;
+}
+
+/* ── Billing Settings ─────────────────────────────────────────────────── */
+
+.pv-settings-meta-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+  gap: 12px;
+  margin: 12px 0;
+}
+
+.pv-settings-meta-grid span {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.pv-settings-meta-grid small {
+  font-size: 0.75rem;
+  color: var(--pv-muted);
+}
+
+.pv-settings-meta-grid strong {
+  font-size: 0.95rem;
+  color: var(--pv-text);
+}
+
+.pv-badge-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.pv-badge-grid span {
+  background: var(--pv-panel-muted);
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  padding: 10px 14px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  min-width: 90px;
+}
+
+.pv-badge-grid span .pv-icon {
+  width: 22px;
+  height: 22px;
+  color: var(--pv-purple);
+}
+
+.pv-badge-grid small {
+  font-size: 0.75rem;
+  color: var(--pv-muted);
+}
+
+.pv-small-button--danger {
+  border-color: rgba(239, 68, 68, 0.3) !important;
+  color: var(--pv-red) !important;
+}
+
+.pv-small-button--danger:hover {
+  background: rgba(239, 68, 68, 0.1) !important;
+}
