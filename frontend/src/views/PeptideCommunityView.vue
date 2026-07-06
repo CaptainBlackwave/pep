@@ -49,7 +49,7 @@
         <div class="pv-compose-section-head">
           <strong>Discussion <b>*</b></strong>
         </div>
-        <TipTapComposer v-model="newDiscussion.body" placeholder="Write your discussion..." :max-length="10000" />
+        <TipTapComposer :key="'new-disc-' + newDiscussionKey" v-model="newDiscussion.body" placeholder="Write your discussion..." :max-length="10000" />
       </section>
       <div class="pv-compose-lower">
         <section class="pv-compose-attachments" aria-label="Add attachments">
@@ -77,7 +77,7 @@
         <span><PvIcon name="upload" /> {{ discussionDraftStatus }}</span>
         <div>
           <button type="button" class="pv-small-button" @click="closeNewDiscussion">Cancel</button>
-          <button type="button" class="pv-small-button" @click="newDiscussion.value = { title: '', body: '', category_slug: '', tag: '' }">Clear</button>
+          <button type="button" class="pv-small-button" @click="clearNewDiscussion">Clear</button>
           <button type="submit" class="pv-primary-button" :disabled="creatingDiscussion">
             <PvIcon name="send" />
             {{ creatingDiscussion ? 'Posting...' : 'Post Discussion' }}
@@ -2870,6 +2870,7 @@ const revokingSessionId = ref('')
 const discussionTags = ['Discussion', 'Question', 'Guide', 'Review', 'Showcase', 'Tutorial', 'News', 'Tip']
 const discussionFileInput = ref<HTMLInputElement | null>(null)
 const discussionUploading = ref(false)
+const newDiscussionKey = ref(0)
 const newDiscussion = ref({
   title: '',
   body: '',
@@ -4676,6 +4677,11 @@ function openNewDiscussion(): void {
     newDiscussion.value.category_slug = discussionCategories.value[0]?.slug ?? ''
   }
   showNewDiscussion.value = true
+}
+
+function clearNewDiscussion(): void {
+  newDiscussion.value = { title: '', body: '', category_slug: '', tag: '' }
+  newDiscussionKey.value++
 }
 
 function closeNewDiscussion(): void {
