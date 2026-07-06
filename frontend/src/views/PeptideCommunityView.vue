@@ -237,7 +237,6 @@
             </router-link>
             <span class="pv-more">+{{ Math.max(0, memberStats.online - onlineMembers.length) }}</span>
           </div>
-          <p class="pv-muted">Active members in the last 15 minutes</p>
         </article>
         <article class="pv-panel">
           <header class="pv-panel-header">
