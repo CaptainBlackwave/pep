@@ -1713,11 +1713,9 @@
               <li>Guides &amp; FAQ</li>
               <li>Announcements</li>
               <li>Research Library</li>
-              <li class="pv-check-list--disabled">Vendor Reviews</li>
-              <li class="pv-check-list--disabled">Lab Results</li>
-              <li class="pv-check-list--disabled">Member Messaging</li>
-              <li class="pv-check-list--disabled">Member Profiles</li>
-              <li class="pv-check-list--disabled">Unlimited Discussions</li>
+              <li class="pv-check-list--disabled">Vendor Reviews &amp; Lab Results</li>
+              <li class="pv-check-list--disabled">Member Messaging &amp; Profiles</li>
+              <li class="pv-check-list--disabled">5 discussions per day</li>
             </ul>
             <div class="pv-pricing-footer">
               <span v-if="authStore.isAuthenticated && membershipTier === 'free'" class="pv-tag trusted">Current Plan</span>
