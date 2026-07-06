@@ -7521,6 +7521,10 @@ a[target="_blank"] {
     padding: 0 10px;
   }
 
+  .thread-wrap .pv-alert {
+    display: none;
+  }
+
   .post-card {
     grid-template-columns: 50px minmax(0, 1fr);
     gap: 10px;
