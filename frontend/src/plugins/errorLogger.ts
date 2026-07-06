@@ -5,7 +5,7 @@
 import axios, { type AxiosError, type AxiosInstance } from 'axios'
 import type { App } from 'vue'
 
-const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api` : '/api'
+const API_BASE = import.meta.env.VITE_API_URL ? `${import.meta.env.VITE_API_URL.replace(/\/$/, '')}/api/v1` : '/api/v1'
 
 /**
  * Error payload for logging
