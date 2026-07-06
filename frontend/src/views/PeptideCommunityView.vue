@@ -934,6 +934,73 @@
             </article>
           </div>
         </article>
+
+        <article v-if="vendorPortalAccessApproved && apiMyVendor" class="pv-form-card pv-vendor-document-manager">
+          <header class="pv-panel-header">
+            <div>
+              <h2>Documents</h2>
+              <p class="pv-muted">Upload COAs, quality reports, and other supporting documents. These will be publicly visible once published.</p>
+            </div>
+            <span class="pv-count">{{ apiMyVendor.documents.length }} uploaded</span>
+          </header>
+          <p v-if="vendorDocumentStatusMessage" class="pv-alert pv-alert--compact">{{ vendorDocumentStatusMessage }}</p>
+          <p v-if="vendorDocumentFormError" class="pv-alert pv-alert--compact">{{ vendorDocumentFormError }}</p>
+          <form class="pv-document-form" @submit.prevent="saveVendorDocument">
+            <div class="pv-two-col">
+              <label>
+                Document Title *
+                <input v-model="vendorDocumentForm.title" required maxlength="200" placeholder="Certificate of Analysis - Batch 001">
+              </label>
+              <label>
+                Category
+                <select v-model="vendorDocumentForm.category">
+                  <option value="">Select category</option>
+                  <option value="coa">Certificate of Analysis (COA)</option>
+                  <option value="quality">Quality Report</option>
+                  <option value="other">Other</option>
+                </select>
+              </label>
+            </div>
+            <label>
+              Description
+              <textarea v-model="vendorDocumentForm.description" maxlength="1000" rows="2" placeholder="Brief description of the document..."></textarea>
+            </label>
+            <label>
+              File (PDF or image, max 10 MB) *
+              <input ref="vendorDocumentFileInput" type="file" accept=".pdf,image/*" class="pv-sr-only" @change="selectVendorDocumentFile">
+              <div class="pv-upload-box" role="button" @click="vendorDocumentFileInput?.click()">
+                <PvIcon name="upload" />
+                <span>{{ vendorDocumentFilePreview ? vendorDocumentFilePreview : 'Click to choose a file' }}</span>
+                <small>PDF, PNG, JPG, WebP up to 10 MB</small>
+              </div>
+            </label>
+            <footer class="pv-form-actions">
+              <button class="pv-primary-button" type="submit" :disabled="savingVendorDocument">
+                {{ savingVendorDocument ? 'Uploading...' : 'Upload Document' }}
+              </button>
+              <button class="pv-small-button" type="button" @click="resetVendorDocumentForm">Clear</button>
+            </footer>
+          </form>
+          <div class="pv-doc-manage-list">
+            <p v-if="apiMyVendor.documents.length === 0" class="pv-muted">No documents uploaded yet.</p>
+            <article v-for="doc in documentManageList" :key="doc.id" class="pv-doc-manage-row">
+              <span class="pv-doc-icon">
+                <PvIcon :name="doc.fileType === 'image' ? 'image' : 'document'" />
+              </span>
+              <span>
+                <strong>{{ doc.title }}</strong>
+                <small>
+                  {{ doc.category ? doc.category.toUpperCase() + ' · ' : '' }}
+                  {{ doc.fileType.toUpperCase() }}
+                  {{ doc.description ? ' · ' + doc.description : '' }}
+                </small>
+              </span>
+              <a :href="doc.url" target="_blank" rel="noreferrer" class="pv-small-button">View</a>
+              <button class="pv-small-button pv-small-button--danger" type="button" @click="deleteVendorDocument(doc)">Delete</button>
+            </article>
+          </div>
+        </article>
+
         <article v-else-if="!vendorPortalAccessApproved" class="pv-panel">
           <h2>Vendor Access Required</h2>
           <p class="pv-muted">An admin needs to approve this account as a vendor before you can create or edit a vendor profile.</p>
@@ -1010,7 +1077,7 @@
             <a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="secondary">Website</a>
           </div>
         </article>
-        <div class="pv-tabs pv-tabs--line"><button :class="{ active: vendorDetailTab === 'overview' }" @click="vendorDetailTab = 'overview'">Overview</button><button :class="{ active: vendorDetailTab === 'reviews' }" @click="vendorDetailTab = 'reviews'">Reviews ({{ detailVendor.reviews }})</button><button :class="{ active: vendorDetailTab === 'products' }" @click="vendorDetailTab = 'products'">Products ({{ detailVendor.productCount }})</button><button :class="{ active: vendorDetailTab === 'about' }" @click="vendorDetailTab = 'about'">About</button></div>
+        <div class="pv-tabs pv-tabs--line"><button :class="{ active: vendorDetailTab === 'overview' }" @click="vendorDetailTab = 'overview'">Overview</button><button :class="{ active: vendorDetailTab === 'reviews' }" @click="vendorDetailTab = 'reviews'">Reviews ({{ detailVendor.reviews }})</button><button :class="{ active: vendorDetailTab === 'products' }" @click="vendorDetailTab = 'products'">Products ({{ detailVendor.productCount }})</button><button :class="{ active: vendorDetailTab === 'documents' }" @click="vendorDetailTab = 'documents'">Documents ({{ detailVendor.documents.length }})</button><button :class="{ active: vendorDetailTab === 'about' }" @click="vendorDetailTab = 'about'">About</button></div>
         <article v-if="vendorDetailTab === 'overview'" class="pv-panel pv-review-summary">
           <div class="pv-score-block"><strong>{{ detailVendor.rating }}</strong><span class="pv-stars">★★★★★</span><small>{{ detailVendor.reviews }} reviews</small></div>
           <div class="pv-bars pv-bars--wide"><span v-for="row in detailVendor.ratingDistribution" :key="row.rating">{{ row.rating }} stars <b :style="{ '--w': `${row.percent}%` }"></b><em>{{ row.percent }}% ({{ row.count }})</em></span></div>
@@ -1083,6 +1150,35 @@
             </div>
           </article>
           <article class="pv-alert pv-alert--compact"><PvIcon name="shield" /> Product listings are informational only. This site does not process orders, carts, payments, shipping, refunds, or transactions.</article>
+        </template>
+        <template v-if="vendorDetailTab === 'documents'">
+          <article class="pv-panel pv-doc-list-panel">
+            <header class="pv-panel-header">
+              <div>
+                <h2>Documents</h2>
+                <p class="pv-muted">Certificates of analysis, quality reports, and other supporting documents from {{ detailVendor.name }}.</p>
+              </div>
+            </header>
+            <p v-if="detailVendor.documents.length === 0" class="pv-muted">No documents have been published yet.</p>
+            <div v-else class="pv-doc-list">
+              <article v-for="doc in detailVendor.documents" :key="doc.id" class="pv-doc-row">
+                <span class="pv-doc-type-icon">
+                  <PvIcon :name="doc.fileType === 'image' ? 'image' : 'document'" />
+                </span>
+                <div class="pv-doc-info">
+                  <strong>{{ doc.title }}</strong>
+                  <span class="pv-doc-meta">
+                    <span v-if="doc.category" class="pv-tag" :class="doc.category === 'coa' ? 'trusted' : 'caution'">{{ doc.category.toUpperCase() }}</span>
+                    <span>{{ doc.fileType.toUpperCase() }}</span>
+                    <span v-if="doc.description">{{ doc.description }}</span>
+                  </span>
+                </div>
+                <a :href="doc.url" target="_blank" rel="noreferrer" class="pv-primary-button">
+                  <PvIcon name="download" /> Download
+                </a>
+              </article>
+            </div>
+          </article>
         </template>
         <template v-if="vendorDetailTab === 'reviews'">
           <div class="pv-toolbar pv-vendor-review-toolbar">
@@ -1906,6 +2002,34 @@ interface ApiVendorProduct {
   href?: string | null
 }
 
+interface VendorDocument {
+  id?: number
+  vendorId?: number
+  title: string
+  filePath: string
+  fileType: string
+  category?: string | null
+  description?: string | null
+  status: string
+  url: string
+  createdAt?: string
+  updatedAt?: string
+}
+
+interface ApiVendorDocument {
+  id?: number
+  vendor_id?: number
+  title: string
+  file_path: string
+  file_type: string
+  category?: string | null
+  description?: string | null
+  status: string
+  url: string
+  created_at?: string
+  updated_at?: string
+}
+
 interface VendorContact {
   email?: string | null
   telegram?: string | null
@@ -1947,6 +2071,7 @@ interface UiVendor {
   productCount: number
   products: VendorProduct[]
   topProducts: VendorProduct[]
+  documents: VendorDocument[]
   ratingDistribution: RatingDistributionRow[]
 }
 
@@ -2023,6 +2148,7 @@ interface ApiVendor {
   href?: string
   rating_distribution?: RatingDistributionRow[]
   review_items?: ApiVendorReview[]
+  documents?: ApiVendorDocument[]
 }
 
 interface VendorStats {
@@ -2641,6 +2767,16 @@ const vendorPortalFormError = ref('')
 const savingVendorProfile = ref(false)
 const vendorImageFileInput = ref<HTMLInputElement | null>(null)
 const uploadingVendorImage = ref(false)
+const savingVendorDocument = ref(false)
+const vendorDocumentFormError = ref('')
+const vendorDocumentStatusMessage = ref('')
+const vendorDocumentFileInput = ref<HTMLInputElement | null>(null)
+const vendorDocumentFilePreview = ref('')
+const vendorDocumentForm = ref({
+  title: '',
+  category: '',
+  description: '',
+})
 const vendorPortalForm = ref({
   name: '',
   slug: '',
@@ -2696,7 +2832,7 @@ const vendorProductSearch = ref('')
 const vendorProductCategoryFilter = ref('')
 const vendorProductAvailabilityFilter = ref('')
 const vendorProductSort = ref<'featured' | 'price-low' | 'price-high' | 'name'>('featured')
-const vendorDetailTab = ref<'overview' | 'reviews' | 'products' | 'about'>('products')
+const vendorDetailTab = ref<'overview' | 'reviews' | 'products' | 'documents' | 'about'>('products')
 const vendorStats = ref<VendorStats>({
   vendors_reviewed: 0,
   total_reviews: 0,
@@ -5157,6 +5293,7 @@ const filteredVendorProducts = computed(() => {
   })
 })
 const vendorProductManageList = computed(() => [...(apiMyVendor.value?.products ?? [])].sort((a, b) => a.sortOrder - b.sortOrder || a.name.localeCompare(b.name)))
+const documentManageList = computed(() => [...(apiMyVendor.value?.documents ?? [])].sort((a, b) => (a.createdAt ?? '').localeCompare(b.createdAt ?? '')).reverse())
 
 function mapVendorProduct(item: ApiVendorProduct): VendorProduct {
   return {
@@ -5212,6 +5349,22 @@ function variantAvailability(variant: ProductVariant): string {
 function mapVendor(item: ApiVendor): UiVendor {
   const products = (item.products ?? []).map(mapVendorProduct)
 
+  function mapVendorDocument(doc: ApiVendorDocument): VendorDocument {
+    return {
+      id: doc.id,
+      vendorId: doc.vendor_id,
+      title: doc.title,
+      filePath: doc.file_path,
+      fileType: doc.file_type,
+      category: doc.category ?? null,
+      description: doc.description ?? null,
+      status: doc.status,
+      url: doc.url,
+      createdAt: doc.created_at,
+      updatedAt: doc.updated_at,
+    }
+  }
+
   return {
     id: item.id,
     ownerUserId: item.owner_user_id ?? null,
@@ -5251,6 +5404,7 @@ function mapVendor(item: ApiVendor): UiVendor {
     productCount: item.product_count ?? products.filter(product => product.status === 'published').length,
     products,
     topProducts: (item.top_products ?? []).map(mapVendorProduct),
+    documents: (item.documents ?? []).map(mapVendorDocument),
     ratingDistribution: item.rating_distribution ?? [],
   }
 }
@@ -5744,6 +5898,96 @@ async function uploadVendorImage(event: Event): Promise<void> {
   } finally {
     uploadingVendorImage.value = false
     input.value = ''
+  }
+}
+
+function selectVendorDocumentFile(event: Event): void {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) {
+    vendorDocumentFilePreview.value = file.name
+  }
+  input.value = ''
+}
+
+function resetVendorDocumentForm(): void {
+  vendorDocumentForm.value = { title: '', category: '', description: '' }
+  vendorDocumentFilePreview.value = ''
+  vendorDocumentFormError.value = ''
+  vendorDocumentStatusMessage.value = ''
+}
+
+async function saveVendorDocument(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    vendorDocumentFormError.value = 'Please log in to upload documents.'
+    return
+  }
+  if (!vendorPortalAccessApproved.value || !apiMyVendor.value) {
+    vendorDocumentFormError.value = 'Create an approved vendor profile before uploading documents.'
+    return
+  }
+  const fileInput = vendorDocumentFileInput.value
+  if (!fileInput?.files?.length) {
+    vendorDocumentFormError.value = 'Please select a file to upload.'
+    return
+  }
+  savingVendorDocument.value = true
+  vendorDocumentFormError.value = ''
+  vendorDocumentStatusMessage.value = ''
+  try {
+    const form = new FormData()
+    form.append('title', vendorDocumentForm.value.title)
+    form.append('category', vendorDocumentForm.value.category)
+    form.append('description', vendorDocumentForm.value.description)
+    form.append('file', fileInput.files[0])
+    const response = await api.post<{ data: ApiVendorDocument }>('/api/v1/community/vendor-profile/documents', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+      skipDeduplication: true,
+    })
+    const savedDoc: VendorDocument = {
+      id: response.data.data.id,
+      vendorId: response.data.data.vendor_id,
+      title: response.data.data.title,
+      filePath: response.data.data.file_path,
+      fileType: response.data.data.file_type,
+      category: response.data.data.category ?? null,
+      description: response.data.data.description ?? null,
+      status: response.data.data.status,
+      url: response.data.data.url,
+      createdAt: response.data.data.created_at,
+      updatedAt: response.data.data.updated_at,
+    }
+    if (apiMyVendor.value) {
+      apiMyVendor.value = {
+        ...apiMyVendor.value,
+        documents: [...apiMyVendor.value.documents, savedDoc],
+      }
+    }
+    vendorDocumentStatusMessage.value = 'Document uploaded.'
+    resetVendorDocumentForm()
+    await loadVendorProfile()
+    if (detailVendor.value?.isOwnedByViewer) {
+      await loadVendorDetail()
+    }
+  } catch (error) {
+    vendorDocumentFormError.value = vendorPortalError(error, 'Unable to upload document.')
+  } finally {
+    savingVendorDocument.value = false
+  }
+}
+
+async function deleteVendorDocument(doc: VendorDocument): Promise<void> {
+  if (!doc.id || !window.confirm(`Remove "${doc.title}" from your documents?`)) {
+    return
+  }
+  vendorDocumentStatusMessage.value = ''
+  vendorDocumentFormError.value = ''
+  try {
+    await api.delete(`/api/v1/community/vendor-profile/documents/${doc.id}`)
+    vendorDocumentStatusMessage.value = 'Document removed.'
+    await loadVendorProfile()
+  } catch (error) {
+    vendorDocumentFormError.value = vendorPortalError(error, 'Unable to remove document.')
   }
 }
 

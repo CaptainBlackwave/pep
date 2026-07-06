@@ -4022,6 +4022,122 @@ table {
   color: var(--pv-muted);
 }
 
+.pv-doc-manage-list {
+  display: grid;
+  gap: 10px;
+}
+
+.pv-doc-manage-row {
+  display: grid;
+  grid-template-columns: 44px minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 10px;
+  padding: 10px;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pv-doc-manage-row strong,
+.pv-doc-manage-row small {
+  display: block;
+}
+
+.pv-doc-manage-row small {
+  color: var(--pv-muted);
+}
+
+.pv-doc-icon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--pv-muted);
+}
+
+.pv-doc-list {
+  display: grid;
+  gap: 12px;
+}
+
+.pv-doc-row {
+  display: grid;
+  grid-template-columns: 48px minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 14px;
+  padding: 14px;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pv-doc-type-icon {
+  display: grid;
+  place-items: center;
+  width: 48px;
+  height: 48px;
+  border-radius: 10px;
+  background: rgba(255, 255, 255, 0.04);
+  color: var(--pv-primary);
+}
+
+.pv-doc-info strong {
+  display: block;
+  color: #fff;
+  margin-bottom: 4px;
+}
+
+.pv-doc-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+  color: var(--pv-muted);
+  font-size: 12px;
+}
+
+.pv-doc-meta .pv-tag {
+  font-size: 11px;
+  padding: 2px 8px;
+}
+
+.pv-document-form {
+  display: grid;
+  gap: 14px;
+  padding: 16px;
+  border: 1px solid var(--pv-border);
+  border-radius: 8px;
+  background: rgba(255, 255, 255, 0.02);
+}
+
+.pv-upload-box {
+  display: grid;
+  place-items: center;
+  gap: 6px;
+  padding: 20px;
+  border: 2px dashed var(--pv-border);
+  border-radius: 8px;
+  cursor: pointer;
+  color: var(--pv-muted);
+  text-align: center;
+  transition: border-color 0.2s;
+}
+
+.pv-upload-box:hover {
+  border-color: var(--pv-primary);
+  color: #fff;
+}
+
+.pv-upload-box small {
+  font-size: 11px;
+}
+
+.pv-doc-list-panel .pv-panel-header {
+  margin-bottom: 0;
+}
+
 .pv-modal-backdrop {
   position: fixed;
   z-index: 90;
@@ -6205,7 +6321,8 @@ summary {
   .pv-product-specs,
   .pv-product-variant-tiles,
   .pv-product-trust-strip,
-  .pv-product-manage-row {
+  .pv-product-manage-row,
+  .pv-doc-manage-row {
     grid-template-columns: minmax(0, 1fr);
   }
 
@@ -6271,7 +6388,8 @@ summary {
     height: 36px;
   }
 
-  .pv-product-manage-row {
+  .pv-product-manage-row,
+  .pv-doc-manage-row {
     justify-items: stretch;
   }
 

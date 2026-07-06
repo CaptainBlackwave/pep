@@ -61,6 +61,7 @@ class CommunityVendorResource extends JsonResource
             'href' => "/vendor-reviews/{$this->slug}",
             'rating_distribution' => $this->ratingDistribution(),
             'review_items' => CommunityVendorReviewResource::collection($this->whenLoaded('publishedReviews')),
+            'documents' => CommunityVendorDocumentResource::collection($this->whenLoaded('publishedDocuments')),
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),
         ];

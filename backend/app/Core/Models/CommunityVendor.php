@@ -81,4 +81,14 @@ class CommunityVendor extends Model
     {
         return $this->products()->where('status', 'published');
     }
+
+    public function documents(): HasMany
+    {
+        return $this->hasMany(CommunityVendorDocument::class, 'vendor_id');
+    }
+
+    public function publishedDocuments(): HasMany
+    {
+        return $this->documents()->where('status', 'published');
+    }
 }

@@ -154,6 +154,8 @@ Route::prefix('v1')->group(function () {
             Route::post('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
             Route::patch('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
             Route::delete('/vendor-profile/products/{product}', [CommunityVendorController::class, 'destroyVendorProduct']);
+            Route::post('/vendor-profile/documents', [CommunityVendorController::class, 'storeVendorDocument']);
+            Route::delete('/vendor-profile/documents/{document}', [CommunityVendorController::class, 'destroyVendorDocument']);
             Route::post('/vendors/{vendor}/claim', [CommunityVendorController::class, 'claimVendor']);
             Route::post('/vendors/{vendor}/reviews', [CommunityVendorController::class, 'storeReview']);
             Route::post('/vendor-reviews/{review}/helpful', [CommunityVendorController::class, 'markReviewHelpful']);

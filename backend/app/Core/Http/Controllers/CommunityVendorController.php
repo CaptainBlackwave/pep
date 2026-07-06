@@ -2,11 +2,13 @@
 
 namespace App\Core\Http\Controllers;
 
+use App\Core\Http\Resources\CommunityVendorDocumentResource;
 use App\Core\Http\Resources\CommunityVendorResource;
 use App\Core\Http\Resources\CommunityVendorProductResource;
 use App\Core\Http\Resources\CommunityVendorReviewResource;
 use App\Core\Models\CommunityVendor;
 use App\Core\Models\CommunityVendorClaim;
+use App\Core\Models\CommunityVendorDocument;
 use App\Core\Models\CommunityVendorProduct;
 use App\Core\Models\CommunityVendorReview;
 use App\Core\Models\User;
@@ -82,6 +84,7 @@ class CommunityVendorController extends Controller
             ->load([
                 'publishedReviews' => fn ($query) => $query->with('user')->latest('reviewed_at')->latest(),
                 'publishedProducts' => fn ($query) => $query->orderBy('sort_order')->orderBy('name'),
+                'publishedDocuments',
             ]);
         $this->hydrateRatingDistributions(collect([$vendorModel]));
 
@@ -91,7 +94,10 @@ class CommunityVendorController extends Controller
     public function myVendorProfile(Request $request)
     {
         $vendor = CommunityVendor::query()
-            ->with(['products' => fn ($query) => $query->orderBy('sort_order')->orderBy('name')])
+            ->with([
+                'products' => fn ($query) => $query->orderBy('sort_order')->orderBy('name'),
+                'documents',
+            ])
             ->where('owner_user_id', $request->user()->id)
             ->latest('updated_at')
             ->first();
@@ -398,6 +404,49 @@ class CommunityVendorController extends Controller
         $reviewModel->refresh()->load('user');
 
         return new CommunityVendorReviewResource($reviewModel);
+    }
+
+    public function storeVendorDocument(Request $request)
+    {
+        $vendor = $this->ownedVendor($request);
+
+        $validated = $request->validate([
+            'title' => ['required', 'string', 'max:200'],
+            'file' => ['required', 'file', 'mimes:pdf,png,jpg,jpeg,gif,webp', 'max:10240'],
+            'category' => ['nullable', 'string', 'max:80'],
+            'description' => ['nullable', 'string', 'max:1000'],
+        ]);
+
+        $file = $request->file('file');
+        $path = $file->store('vendor-documents', 'public');
+
+        $document = $vendor->documents()->create([
+            'title' => $validated['title'],
+            'file_path' => $path,
+            'file_type' => in_array($file->getMimeType(), ['image/png', 'image/jpeg', 'image/gif', 'image/webp']) ? 'image' : 'pdf',
+            'category' => $validated['category'] ?? null,
+            'description' => $validated['description'] ?? null,
+            'status' => 'published',
+        ]);
+
+        $vendor->forceFill(['last_active_at' => now()])->save();
+
+        return (new CommunityVendorDocumentResource($document))
+            ->response()
+            ->setStatusCode(201);
+    }
+
+    public function destroyVendorDocument(Request $request, CommunityVendorDocument $document)
+    {
+        $vendor = $this->ownedVendor($request);
+
+        abort_if((int) $document->vendor_id !== (int) $vendor->id, 403, 'This document does not belong to your vendor profile.');
+
+        $document->forceFill(['status' => 'hidden'])->save();
+
+        $vendor->forceFill(['last_active_at' => now()])->save();
+
+        return response()->json(['message' => 'Document removed.']);
     }
 
     private function findPublishedVendor(string $value): CommunityVendor
