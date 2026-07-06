@@ -7038,6 +7038,15 @@ function mapNotification(item: ApiNotification): UiNotification {
 }
 
 async function loadNotifications(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    apiNotifications.value = []
+    notificationStats.value = { total: 0, unread: 0, read: 0 }
+    notificationCategories.value = ['all']
+    notificationPagination.value = null
+    notificationsLoaded.value = true
+    notificationStatusMessage.value = ''
+    return
+  }
   try {
     const category = ['all', 'unread'].includes(activeNotificationFilter.value) ? undefined : activeNotificationFilter.value
     const status = activeNotificationFilter.value === 'unread' ? 'unread' : undefined
