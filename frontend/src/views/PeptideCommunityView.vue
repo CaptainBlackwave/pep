@@ -4547,7 +4547,7 @@ async function handleDiscussionFileUpload(event: Event): Promise<void> {
       const isVideo = file.type.startsWith('video/')
       const isPdf = file.type === 'application/pdf'
       if (isPdf) {
-        appendNewDiscussionHtml(`<p class="pv-file-embed"><embed src="${escapeHtml(url)}" type="application/pdf" width="100%" height="500px"></p>`)
+        appendNewDiscussionHtml(`<p><a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">📄 ${escapeHtml(file.name)}</a></p>`)
       } else if (isVideo) {
         appendNewDiscussionHtml(`<p><a href="${escapeHtml(url)}" target="_blank" rel="noreferrer">${escapeHtml(file.name)}</a></p>`)
       } else if (isImage) {
