@@ -8,6 +8,10 @@ use Illuminate\Support\Collection;
 
 class NotificationService
 {
+    public function __construct(
+        private WebSocketService $websocket
+    ) {}
+
     /**
      * Create a new notification for a user.
      */
@@ -346,7 +350,18 @@ class NotificationService
         
         User::chunk(100, function ($users) use ($title, $message, $link, &$count) {
             foreach ($users as $user) {
-                $this->announcement($user, $title, $message, $link);
+                $notification = $this->announcement($user, $title, $message, $link);
+
+                $this->websocket->toUser($user, 'notification', [
+                    'id' => $notification->id,
+                    'title' => $notification->title,
+                    'message' => $notification->message,
+                    'type' => $notification->type,
+                    'icon' => $notification->icon,
+                    'link' => $notification->link,
+                    'created_at' => $notification->created_at?->toIso8601String(),
+                ]);
+
                 $count++;
             }
         });
