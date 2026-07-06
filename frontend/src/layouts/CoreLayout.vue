@@ -132,19 +132,29 @@ const notificationsStore = useNotificationsStore()
 const currentYear = new Date().getFullYear()
 const telegramUrl = ref('https://t.me/peptidevendors')
 
-const navItems = [
-  { to: '/home', label: 'Home', icon: 'home', match: ['/home', '/dashboard'] },
-  { to: '/discussions', label: 'Discussions', icon: 'discussions', match: ['/discussions'] },
-  { to: '/lab-results', label: 'Lab Results', icon: 'flask', match: ['/lab-results'] },
-  { to: '/vendor-reviews', label: 'Vendor Reviews', icon: 'star', match: ['/vendor-reviews'] },
-  { to: '/vendor-portal', label: 'Vendor Portal', icon: 'box', match: ['/vendor-portal'] },
-  { to: '/research-library', label: 'Research Library', icon: 'library', match: ['/research-library'] },
-  { to: '/guides', label: 'Guides & FAQ', icon: 'question', match: ['/guides'] },
-  { to: '/members', label: 'Members', icon: 'users', match: ['/members'] },
-  { to: '/announcements', label: 'Announcements', icon: 'megaphone', match: ['/announcements'] },
-  { to: '/telegram-updates', label: 'Telegram Updates', icon: 'send', match: ['/telegram-updates'] },
-  { to: '/notifications', label: 'Notifications', icon: 'bell', match: ['/notifications'] },
-]
+const authStore = useAuthStore()
+const navItems = computed(() => {
+  const isAuth = authStore.isAuthenticated
+  const allItems = [
+    { to: '/home', label: 'Home', icon: 'home', match: ['/home', '/dashboard'] },
+    { to: '/discussions', label: 'Discussions', icon: 'discussions', match: ['/discussions'] },
+    { to: '/lab-results', label: 'Lab Results', icon: 'flask', match: ['/lab-results'] },
+    { to: '/vendor-reviews', label: 'Vendors', icon: 'star', match: ['/vendor-reviews'] },
+    { to: '/vendor-portal', label: 'Vendor Portal', icon: 'box', match: ['/vendor-portal'] },
+    { to: '/research-library', label: 'Research Library', icon: 'library', match: ['/research-library'] },
+    { to: '/guides', label: 'Guides & FAQ', icon: 'question', match: ['/guides'] },
+    { to: '/members', label: 'Members', icon: 'users', match: ['/members'] },
+    { to: '/announcements', label: 'Announcements', icon: 'megaphone', match: ['/announcements'] },
+    { to: '/telegram-updates', label: 'Telegram Updates', icon: 'send', match: ['/telegram-updates'] },
+    { to: '/notifications', label: 'Notifications', icon: 'bell', match: ['/notifications'] },
+  ]
+  return allItems.filter(item => {
+    if (!isAuth && ['/lab-results', '/vendor-reviews', '/vendor-portal', '/members', '/notifications'].includes(item.to)) {
+      return false
+    }
+    return true
+  })
+})
 
 const isActive = (item: { match: string[] }) => {
   return item.match.some(path => route.path === path || route.path.startsWith(`${path}/`))
