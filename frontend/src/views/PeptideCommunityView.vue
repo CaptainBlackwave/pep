@@ -290,10 +290,15 @@
               @keydown.enter.prevent="goToDiscussion(topic)"
               @keydown.space.prevent="goToDiscussion(topic)"
             >
-              <div class="topic-menu">
-                <span>{{ topic.time }}</span>
-                <button>⋮</button>
-              </div>
+               <div class="topic-menu">
+                 <span>{{ topic.time }}</span>
+                 <button class="dots" @click.stop="toggleTopicMenu(topic.id ?? index)">⋮</button>
+                 <div v-if="activeTopicMenu === (topic.id ?? index)" class="dots-dropdown" @click.stop>
+                   <button @click="reportDiscussion(topic); activeTopicMenu = null">Report</button>
+                   <button v-if="authStore.user?.id === topic.authorId" @click="startEditDiscussionFromList(topic); activeTopicMenu = null">Edit</button>
+                   <button v-if="authStore.user?.id === topic.authorId" @click="deleteDiscussionFromList(topic); activeTopicMenu = null">Delete</button>
+                 </div>
+               </div>
               <aside class="author-panel">
                 <router-link class="avatar-wrap pv-author-link" :to="memberHref(topic.authorUsername)" :aria-label="`View ${topic.author}'s profile`" @click.stop>
                   <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
@@ -2859,7 +2864,7 @@ const discussionEditError = ref('')
 const discussionEditSaving = ref(false)
 const replyVoteLoading = ref('')
 const showReportModal = ref(false)
-const reportTarget = ref<{ type: 'discussion' } | { type: 'reply'; reply: UiReply } | null>(null)
+const reportTarget = ref<{ type: 'discussion' } | { type: 'discussion-list'; slug?: string } | { type: 'reply'; reply: UiReply } | null>(null)
 const reportReason = ref('source-discussion')
 const reportDetails = ref('')
 const reportSubmitting = ref(false)
@@ -4394,6 +4399,7 @@ async function toggleDiscussionFollow(): Promise<void> {
 
 const showPostMenu = ref(false)
 const activeReplyMenu = ref<number | null>(null)
+const activeTopicMenu = ref<number | string | null>(null)
 
 function togglePostMenu() {
   showPostMenu.value = !showPostMenu.value
@@ -4403,6 +4409,10 @@ function toggleReplyMenu(index: number) {
   activeReplyMenu.value = activeReplyMenu.value === index ? null : index
 }
 
+function toggleTopicMenu(id: number | string) {
+  activeTopicMenu.value = activeTopicMenu.value === id ? null : id
+}
+
 // Close menus on click outside
 if (typeof document !== 'undefined') {
   document.addEventListener('click', (e) => {
@@ -4410,6 +4420,7 @@ if (typeof document !== 'undefined') {
     if (!target.closest('.dots-dropdown') && !target.closest('.dots') && !target.closest('.op-dots')) {
       showPostMenu.value = false
       activeReplyMenu.value = null
+      activeTopicMenu.value = null
     }
   })
 }
@@ -4427,6 +4438,22 @@ async function deleteDiscussion(): Promise<void> {
     alert('Failed to delete discussion.')
   } finally {
     deletingDiscussion.value = false
+  }
+}
+
+async function deleteDiscussionFromList(topic: UiDiscussion): Promise<void> {
+  if (!topic.id || !confirm('Delete this discussion? This cannot be undone.')) return
+  try {
+    await api.delete(`/api/v1/community/discussions/${topic.id}`)
+    apiDiscussions.value = apiDiscussions.value.filter(t => t.id !== topic.id)
+  } catch {
+    alert('Failed to delete discussion.')
+  }
+}
+
+function startEditDiscussionFromList(topic: UiDiscussion): void {
+  if (topic.href) {
+    void router.push(topic.href)
   }
 }
 
@@ -4617,6 +4644,14 @@ function openDiscussionReport(): void {
   showReportModal.value = true
 }
 
+function reportDiscussion(topic: UiDiscussion): void {
+  if (!ensureAuthenticated('report content')) return
+  reportTarget.value = { type: 'discussion-list', slug: topic.slug }
+  reportReason.value = 'source-discussion'
+  reportDetails.value = ''
+  showReportModal.value = true
+}
+
 function openReplyReport(reply: UiReply): void {
   if (!ensureAuthenticated('report content')) return
   reportTarget.value = { type: 'reply', reply }
@@ -4639,6 +4674,8 @@ async function submitReport(): Promise<void> {
     const payload = { reason: reportReason.value, details: reportDetails.value || undefined }
     if (reportTarget.value.type === 'discussion') {
       await api.post(`/api/v1/community/discussions/${currentDiscussionSlug.value}/report`, payload)
+    } else if (reportTarget.value.type === 'discussion-list' && reportTarget.value.slug) {
+      await api.post(`/api/v1/community/discussions/${reportTarget.value.slug}/report`, payload)
     } else if (reportTarget.value.reply.id) {
       await api.post(`/api/v1/community/discussion-replies/${reportTarget.value.reply.id}/report`, payload)
     }
