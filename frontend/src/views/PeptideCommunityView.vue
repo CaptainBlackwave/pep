@@ -277,9 +277,6 @@
           </button>
         </div>
         <article class="pv-panel">
-          <div style="display:flex;justify-content:flex-end;margin-bottom:12px">
-            <button class="pv-primary-button" @click="openNewDiscussion"><PvIcon name="plus" /> New Discussion</button>
-          </div>
           <p v-if="discussionStatusMessage" class="pv-alert pv-alert--compact">{{ discussionStatusMessage }}</p>
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
