@@ -75,13 +75,18 @@ Route::prefix('v1')->group(function () {
     // Public push VAPID key (needed before subscribing)
     Route::get('/push/vapid-key', [PushSubscriptionController::class, 'vapidPublicKey']);
 
-    // Public community routes (no auth required — tier middleware gates access)
+    // Public community routes (guests and members)
     Route::prefix('community')->group(function () {
-        Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories'])->middleware('tier:free,paid');
-        Route::get('/discussions', [CommunityDiscussionController::class, 'index'])->middleware('tier:free,paid');
-        Route::get('/discussions/{discussion}', [CommunityDiscussionController::class, 'show'])->middleware('tier:free,paid')->middleware(\App\Core\Middleware\CheckDailyLimit::class);
+        Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories']);
+        Route::get('/discussions', [CommunityDiscussionController::class, 'index']);
+        Route::get('/discussions/{discussion}', [CommunityDiscussionController::class, 'show'])->middleware(\App\Core\Middleware\CheckDailyLimit::class);
         Route::get('/announcements', [CommunityAnnouncementController::class, 'index']);
         Route::get('/announcements/{announcement}', [CommunityAnnouncementController::class, 'show']);
+        Route::get('/research-library', [CommunityContentController::class, 'researchIndex']);
+        Route::get('/research-library/{content}', [CommunityContentController::class, 'researchShow']);
+        Route::get('/guides', [CommunityContentController::class, 'guideIndex']);
+        Route::get('/guides/{content}', [CommunityContentController::class, 'guideShow']);
+        Route::get('/faqs', [CommunityContentController::class, 'faqIndex']);
     });
 
     // Authenticated community content (some routes require paid tier)
@@ -97,11 +102,6 @@ Route::prefix('v1')->group(function () {
 
         Route::get('/notifications', [CommunityNotificationController::class, 'index']);
         Route::get('/notifications/{notification}', [CommunityNotificationController::class, 'show']);
-        Route::get('/research-library', [CommunityContentController::class, 'researchIndex']);
-        Route::get('/research-library/{content}', [CommunityContentController::class, 'researchShow']);
-        Route::get('/guides', [CommunityContentController::class, 'guideIndex']);
-        Route::get('/guides/{content}', [CommunityContentController::class, 'guideShow']);
-        Route::get('/faqs', [CommunityContentController::class, 'faqIndex']);
     });
 
     // Protected authentication routes
