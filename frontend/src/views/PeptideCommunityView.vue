@@ -7609,6 +7609,7 @@ const TipTapComposer = defineComponent({
   },
   setup(props, { emit }) {
     const preview = ref(false)
+    const tiptapFileInput = ref<HTMLInputElement | null>(null)
     const editor = useEditor({
       content: props.modelValue || '<p></p>',
       extensions: [
@@ -7640,6 +7641,29 @@ const TipTapComposer = defineComponent({
         attributes: {
           class: 'pv-tiptap-prose',
           spellcheck: 'true',
+        },
+        handleDrop: (view, event, slice, moved) => {
+          if (!moved && event.dataTransfer?.files?.length) {
+            uploadToEditor(event.dataTransfer.files[0], editor.value)
+            return true
+          }
+          return false
+        },
+        handlePaste: (view, event) => {
+          const items = event.clipboardData?.items
+          if (items) {
+            for (const item of Array.from(items)) {
+              if (item.type.startsWith('image/')) {
+                const file = item.getAsFile()
+                if (file) {
+                  uploadToEditor(file, editor.value)
+                  event.preventDefault()
+                  return true
+                }
+              }
+            }
+          }
+          return false
         },
       },
       onUpdate: ({ editor: activeEditor }) => {
@@ -7681,10 +7705,36 @@ const TipTapComposer = defineComponent({
       activeEditor.chain().focus().extendMarkRange('link').setLink({ href: safeExternalUrl(url) }).run()
     })
 
+    const uploadToEditor = async (file: File, activeEditor: typeof editor.value) => {
+      if (!activeEditor) return
+      const formData = new FormData()
+      formData.append('image', file)
+      try {
+        const res = await api.post<{ url?: string; path?: string }>('/api/v1/upload/image', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' },
+        })
+        const url = res.data.url || res.data.path
+        if (url) {
+          if (file.type.startsWith('image/')) {
+            activeEditor.chain().focus().setImage({ src: url, alt: file.name }).run()
+          } else {
+            activeEditor.chain().focus().insertContent(`<p><a href="${url}" target="_blank" rel="noreferrer">${file.name}</a></p>`).run()
+          }
+        }
+      } catch {
+        // silent
+      }
+    }
+
+    const tiptapFileChange = (event: Event) => {
+      const input = event.target as HTMLInputElement
+      const file = input.files?.[0]
+      if (file) uploadToEditor(file, editor.value)
+      input.value = ''
+    }
+
     const setImage = () => withEditor(activeEditor => {
-      const url = window.prompt('Image URL', 'https://')
-      if (!url) return
-      activeEditor.chain().focus().setImage({ src: safeExternalUrl(url), alt: 'Attached image' }).run()
+      tiptapFileInput.value?.click()
     })
 
     const setVideo = () => withEditor(activeEditor => {
@@ -7760,6 +7810,7 @@ const TipTapComposer = defineComponent({
             }, 'Redo'),
           ]),
           h(EditorContent, { editor: editor.value, class: 'pv-tiptap-editor' }),
+          h('input', { type: 'file', ref: 'tiptapFileInput', accept: 'image/*,video/*,application/pdf', style: 'display:none', onChange: tiptapFileChange }),
           h('div', { class: 'pv-tiptap-foot' }, [
             h('span', 'Use formatting, drag images in, or paste links.'),
             h('small', `${characterCount()} characters`),
