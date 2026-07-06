@@ -59,6 +59,7 @@ class CommunityDiscussionModerationController extends Controller
             'status' => ['nullable', Rule::in(['published', 'hidden'])],
             'is_pinned' => ['nullable', 'boolean'],
             'is_locked' => ['nullable', 'boolean'],
+            'premium_only' => ['nullable', 'boolean'],
         ]);
 
         $discussionModel = $this->findDiscussion($discussion);

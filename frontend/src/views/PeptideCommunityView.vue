@@ -319,6 +319,7 @@
                 <span v-if="topic.tag" class="topic-type">▱ {{ topic.tag }}</span>
                 <span v-if="topic.isPinned" class="topic-type topic-type--pinned">📌 Pinned</span>
                 <span v-if="topic.isLocked" class="topic-type topic-type--locked">🔒 Locked</span>
+                <span v-if="topic.premiumOnly" class="topic-type topic-type--premium">⭐ Premium</span>
                 <h2>{{ topic.title }}</h2>
                 <p class="topic-excerpt">{{ topic.excerpt }}</p>
                 <div class="divider"></div>
@@ -391,6 +392,7 @@
         <div v-if="detailDiscussion.isPinned || detailDiscussion.isLocked" class="op-flags">
           <span v-if="detailDiscussion.isPinned" class="flag-pinned">📌 Pinned</span>
           <span v-if="detailDiscussion.isLocked" class="flag-locked">🔒 Locked</span>
+          <span v-if="detailDiscussion.premiumOnly" class="flag-premium">⭐ Premium</span>
         </div>
         <div v-if="!isEditingDiscussion" class="op-content">
           <div class="pv-rich-text" v-html="renderFormattedText(detailDiscussion.body ?? detailDiscussion.excerpt)"></div>
@@ -1914,6 +1916,7 @@ interface UiDiscussion {
   lastActivity?: string
   isPinned: boolean
   isLocked: boolean
+  premiumOnly: boolean
   voteScore: number
   viewerVote: -1 | 0 | 1
   avatarUrl?: string | null
@@ -4838,6 +4841,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     lastActivity: item.last_activity ?? undefined,
     isPinned: Boolean(item.is_pinned),
     isLocked: Boolean(item.is_locked),
+    premiumOnly: Boolean(item.premium_only),
     voteScore: Number(item.vote_score ?? 0),
     viewerVote: normalizedVote(item.viewer_vote),
     latestReply: item.last_reply

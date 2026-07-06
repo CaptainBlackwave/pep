@@ -24,6 +24,7 @@ class CommunityDiscussion extends Model
         'views_count',
         'replies_count',
         'last_reply_at',
+        'premium_only',
     ];
 
     protected function casts(): array
@@ -31,6 +32,7 @@ class CommunityDiscussion extends Model
         return [
             'is_pinned' => 'boolean',
             'is_locked' => 'boolean',
+            'premium_only' => 'boolean',
             'last_reply_at' => 'datetime',
         ];
     }

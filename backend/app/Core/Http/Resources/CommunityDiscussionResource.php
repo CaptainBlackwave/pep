@@ -40,6 +40,7 @@ class CommunityDiscussionResource extends JsonResource
             'status' => $this->status,
             'is_pinned' => $this->is_pinned,
             'is_locked' => $this->is_locked,
+            'premium_only' => $this->premium_only ?? false,
             'replies' => $this->replies_count,
             'views' => $this->views_count,
             'vote_score' => (int) $voteScore,
