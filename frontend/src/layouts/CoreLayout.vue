@@ -131,8 +131,6 @@ const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
 const currentYear = new Date().getFullYear()
 const telegramUrl = ref('https://t.me/peptidevendors')
-
-const authStore = useAuthStore()
 const navItems = computed(() => {
   const isAuth = authStore.isAuthenticated
   const allItems = [
