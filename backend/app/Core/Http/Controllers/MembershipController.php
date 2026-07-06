@@ -197,15 +197,7 @@ class MembershipController extends Controller
         if (!$productId) return response()->json(['error' => 'Failed to create PayPal product'], 500);
 
         $planId = $this->payPalCreatePlan($token, $base, $productId, $plan, $request->interval, (float) $price);
-        if (!$planId) {
-            \Illuminate\Support\Facades\Log::error('PayPal plan creation failed', [
-                'product_id' => $productId,
-                'plan_name' => $plan->name,
-                'interval' => $request->interval,
-                'price' => $price,
-            ]);
-            return response()->json(['error' => 'Failed to create PayPal billing plan'], 500);
-        }
+        if (!$planId) return response()->json(['error' => 'Failed to create PayPal billing plan'], 500);
 
         return $this->payPalCreateSubscription($token, $base, $planId, $request);
     }
