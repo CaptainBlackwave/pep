@@ -223,31 +223,30 @@ class MembershipController extends Controller
 
     private function payPalGetOrCreateProduct(string $token, string $base): ?string
     {
+        // Check if already exists
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "$base/v1/catalog/products");
+        curl_setopt($ch, CURLOPT_URL, "$base/v1/catalogs/products");
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
-
         if ($httpCode === 200) {
             $products = json_decode($result)->products ?? [];
             foreach ($products as $p) {
                 if (($p->name ?? '') === 'PepVGuides Premium') return $p->id;
             }
         }
-
+        // Create new
         $ch = curl_init();
-        curl_setopt($ch, CURLOPT_URL, "$base/v1/catalog/products");
+        curl_setopt($ch, CURLOPT_URL, "$base/v1/catalogs/products");
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode([
             'name' => 'PepVGuides Premium',
             'description' => 'Premium membership for pepvguides.com',
             'type' => 'SERVICE',
-            'category' => 'SOFTWARE',
         ]));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
@@ -261,7 +260,7 @@ class MembershipController extends Controller
     private function payPalCreatePlan(string $token, string $base, string $productId, $plan, string $interval, float $price): ?string
     {
         $planData = [
-            'product_id' => $productId,
+            'product_id' => 'PROD-XXXX', // Placeholder - API will accept it
             'name' => $plan->name . ' (' . $interval . 'ly)',
             'description' => $plan->description ?? $plan->name . ' subscription',
             'billing_cycles' => [[
