@@ -14,6 +14,7 @@ class CommunityDiscussionCategory extends Model
         'icon',
         'color',
         'sort_order',
+        'premium_only',
     ];
 
     /**

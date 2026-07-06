@@ -1990,6 +1990,7 @@ interface ApiCategory {
   slug: string
   icon: string
   color?: string
+  premium_only?: boolean
   count: number
 }
 

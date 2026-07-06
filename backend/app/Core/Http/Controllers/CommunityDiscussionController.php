@@ -40,6 +40,13 @@ class CommunityDiscussionController extends Controller
             ->with(['category', 'user', 'lastReplyUser'])
             ->where('status', 'published');
 
+        $user = $request->user();
+        $query->whereHas('category', function ($q) use ($user) {
+            if (!$user || $user->tier !== 'paid') {
+                $q->where('premium_only', false);
+            }
+        });
+
         if (!empty($validated['search'])) {
             $search = $validated['search'];
             $query->where(function ($inner) use ($search) {
@@ -561,10 +568,16 @@ class CommunityDiscussionController extends Controller
      */
     private function categorySummary(): array
     {
+        $user = request()->user();
+
         return CommunityDiscussionCategory::query()
             ->withCount([
                 'discussions' => fn ($query) => $query->where('status', 'published'),
             ])
+            ->when(
+                !$user || $user->tier !== 'paid',
+                fn ($query) => $query->where('premium_only', false)
+            )
             ->orderBy('sort_order')
             ->get()
             ->map(fn (CommunityDiscussionCategory $category) => [
@@ -574,6 +587,7 @@ class CommunityDiscussionController extends Controller
                 'description' => $category->description,
                 'icon' => $category->icon,
                 'color' => $category->color,
+                'premium_only' => (bool) $category->premium_only,
                 'count' => $category->discussions_count,
             ])
             ->all();
@@ -611,9 +625,16 @@ class CommunityDiscussionController extends Controller
 
     private function trendingDiscussions(?int $userId = null)
     {
+        $user = $userId ? \App\Core\Models\User::find($userId) : null;
+
         $discussions = CommunityDiscussion::query()
             ->with(['category', 'user', 'lastReplyUser'])
             ->where('status', 'published')
+            ->whereHas('category', function ($q) use ($user) {
+                if (!$user || $user->tier !== 'paid') {
+                    $q->where('premium_only', false);
+                }
+            })
             ->orderByDesc('replies_count')
             ->orderByDesc('views_count')
             ->limit(5)

@@ -26,6 +26,7 @@ class CommunityCategoryAdminController extends Controller
                 'icon' => $cat->icon,
                 'color' => $cat->color,
                 'sort_order' => $cat->sort_order,
+                'premium_only' => (bool) $cat->premium_only,
                 'discussions_count' => $cat->discussions_count,
                 'created_at' => $cat->created_at,
             ]);
@@ -40,16 +41,18 @@ class CommunityCategoryAdminController extends Controller
             'icon' => ['nullable', 'string', 'max:40'],
             'color' => ['nullable', 'string', 'max:40'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'premium_only' => ['nullable', 'boolean'],
         ]);
 
         $validated['slug'] ??= Str::slug($validated['name']);
         $validated['icon'] ??= 'discussions';
         $validated['color'] ??= 'purple';
         $validated['sort_order'] ??= 0;
+        $validated['premium_only'] ??= false;
 
         return CommunityDiscussionCategory::create($validated)
             ->fresh()
-            ->only(['id', 'name', 'slug', 'description', 'icon', 'color', 'sort_order']);
+            ->only(['id', 'name', 'slug', 'description', 'icon', 'color', 'sort_order', 'premium_only']);
     }
 
     public function update(Request $request, CommunityDiscussionCategory $category)
@@ -61,12 +64,13 @@ class CommunityCategoryAdminController extends Controller
             'icon' => ['nullable', 'string', 'max:40'],
             'color' => ['nullable', 'string', 'max:40'],
             'sort_order' => ['nullable', 'integer', 'min:0', 'max:999'],
+            'premium_only' => ['nullable', 'boolean'],
         ]);
 
         $category->update($validated);
         $category->refresh();
 
-        return $category->only(['id', 'name', 'slug', 'description', 'icon', 'color', 'sort_order']);
+        return $category->only(['id', 'name', 'slug', 'description', 'icon', 'color', 'sort_order', 'premium_only']);
     }
 
     public function destroy(CommunityDiscussionCategory $category)

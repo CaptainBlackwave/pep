@@ -33,7 +33,10 @@
         <tbody>
           <tr v-for="cat in categories" :key="cat.id" class="border-b border-slate-700/30 text-white hover:bg-slate-700/20">
             <td class="px-5 py-4 text-slate-400">{{ cat.sort_order }}</td>
-            <td class="px-5 py-4 font-medium">{{ cat.name }}</td>
+            <td class="px-5 py-4 font-medium">
+              {{ cat.name }}
+              <span v-if="cat.premium_only" class="inline-flex items-center gap-1 ml-2 text-xs bg-amber-500/20 text-amber-400 px-2 py-0.5 rounded-full font-medium">Premium</span>
+            </td>
             <td class="px-5 py-4 text-slate-400 font-mono text-sm">{{ cat.slug }}</td>
             <td class="px-5 py-4">
               <code class="text-xs bg-slate-900/60 px-2 py-1 rounded">{{ cat.icon }}</code>
@@ -89,6 +92,11 @@
               class="w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50">
           </label>
         </div>
+
+        <label class="flex items-center gap-3 py-2">
+          <input v-model="form.premium_only" type="checkbox" class="w-5 h-5 rounded bg-slate-900/60 border border-slate-700 text-amber-500 focus:ring-amber-500/50">
+          <span class="text-sm text-slate-300">Premium Only <span class="text-amber-400 text-xs">(Premium)</span></span>
+        </label>
 
         <div class="grid grid-cols-2 gap-4">
           <label class="block">
@@ -153,7 +161,7 @@ const editing = ref(null)
 const deleting = ref(null)
 const saving = ref(false)
 const formError = ref('')
-const form = ref({ name: '', slug: '', description: '', icon: 'discussions', color: 'purple', sort_order: 0 })
+const form = ref({ name: '', slug: '', description: '', icon: 'discussions', color: 'purple', sort_order: 0, premium_only: false })
 
 async function fetchCategories() {
   loading.value = true
@@ -169,14 +177,14 @@ async function fetchCategories() {
 
 function openCreate() {
   editing.value = null
-  form.value = { name: '', slug: '', description: '', icon: 'discussions', color: 'purple', sort_order: 0 }
+  form.value = { name: '', slug: '', description: '', icon: 'discussions', color: 'purple', sort_order: 0, premium_only: false }
   formError.value = ''
   showForm.value = true
 }
 
 function openEdit(cat) {
   editing.value = cat
-  form.value = { name: cat.name, slug: cat.slug, description: cat.description ?? '', icon: cat.icon, color: cat.color, sort_order: cat.sort_order }
+  form.value = { name: cat.name, slug: cat.slug, description: cat.description ?? '', icon: cat.icon, color: cat.color, sort_order: cat.sort_order, premium_only: Boolean(cat.premium_only) }
   formError.value = ''
   showForm.value = true
 }
