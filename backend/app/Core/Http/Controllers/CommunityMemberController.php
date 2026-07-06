@@ -21,7 +21,7 @@ class CommunityMemberController extends Controller
             'limit' => ['nullable', 'integer', 'min:1', 'max:80'],
         ]);
 
-        $query = $this->memberQuery();
+        $query = $this->memberQuery($request->user());
 
         if (array_key_exists('online', $validated)) {
             $this->applyOnlineFilter($query, (bool) $validated['online']);
@@ -88,9 +88,9 @@ class CommunityMemberController extends Controller
         ]);
     }
 
-    public function show(string $member)
+    public function show(Request $request, string $member)
     {
-        $user = $this->memberQuery()
+        $user = $this->memberQuery($request->user())
             ->where(function ($query) use ($member) {
                 $query->where('username', $member)->orWhere('name', $member);
 
@@ -106,23 +106,28 @@ class CommunityMemberController extends Controller
         return new CommunityMemberResource($user);
     }
 
-    private function memberQuery()
+    private function memberQuery(?User $viewer = null)
     {
-        return User::query()
+        $query = User::query()
             ->with(['roles', 'settings'])
             ->withCount([
                 'communityDiscussions',
                 'communityDiscussionReplies',
                 'communityLabResults',
                 'communityVendorReviews',
-            ])
-            ->where(function ($query) {
-                $query
+            ]);
+
+        if (!$viewer?->hasRole('admin')) {
+            $query->where(function ($q) {
+                $q
                     ->whereDoesntHave('settings')
                     ->orWhereHas('settings', fn ($settings) => $settings
                         ->where('public_profile', true)
                         ->where('profile_visibility', '!=', 'nobody'));
             });
+        }
+
+        return $query;
     }
 
     private function applyOnlineFilter($query, bool $online): void
