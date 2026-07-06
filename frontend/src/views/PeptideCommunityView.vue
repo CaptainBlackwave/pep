@@ -7843,15 +7843,10 @@ function settingsMain(pageName: string) {
   if (pageName === 'settingsSessions') {
     return h('article', { class: 'pv-panel' }, [h('h2', 'Sessions'), status, sessionList(20, true)])
   }
-  if (pageName === 'settingsDanger') {
-    return h('div', { class: 'pv-stack' }, [
-      status,
-      h('article', { class: 'pv-panel pv-settings-card' }, [
-        h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'download' })]),
-        h('div', [h('h2', 'Export Account Data'), h('p', 'Download your profile, preferences, sessions, and API token metadata as a JSON file.')]),
-        h('button', { class: 'pv-small-button', disabled: exportingAccountData.value, onClick: exportAccountData }, exportingAccountData.value ? 'Exporting...' : 'Download Data'),
-      ]),
-      h('article', { class: 'pv-alert pv-alert--danger' }, [
+   if (pageName === 'settingsDanger') {
+     return h('div', { class: 'pv-stack' }, [
+       status,
+       h('article', { class: 'pv-alert pv-alert--danger' }, [
         h(PvIcon, { name: 'shield' }),
         h('div', [
           h('h2', 'Sign Out Everywhere'),
