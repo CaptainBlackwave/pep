@@ -60,7 +60,7 @@
             <button type="button" @click="insertDiscussionAttachment('link')"><PvIcon name="share" />Link</button>
             <button type="button" @click="insertDiscussionAttachment('poll')"><PvIcon name="chart" />Poll</button>
             <button type="button" @click="insertDiscussionAttachment('file')"><PvIcon name="document" />File</button>
-            <input ref="discussionFileInput" type="file" accept="image/png,image/jpeg,image/webp,image/gif,application/pdf" class="pv-sr-only" @change="handleDiscussionFileUpload">
+            <input ref="discussionFileInput" type="file" accept="image/*,video/*,application/pdf" class="pv-sr-only" @change="handleDiscussionFileUpload">
           </div>
         </section>
         <aside class="pv-compose-tips">
@@ -4372,9 +4372,14 @@ async function handleDiscussionFileUpload(event: Event): Promise<void> {
     const url = res.data.url || res.data.path
     if (url) {
       const isImage = file.type.startsWith('image/')
-      appendNewDiscussionHtml(isImage
-        ? `<figure><img src="${escapeHtml(url)}" alt="${escapeHtml(file.name)}"></figure>`
-        : `<p><a href="${escapeHtml(url)}">${escapeHtml(file.name)}</a></p>`)
+      const isVideo = file.type.startsWith('video/')
+      if (isVideo) {
+        appendNewDiscussionHtml(`<p><a href="${escapeHtml(url)}">${escapeHtml(file.name)}</a></p>`)
+      } else if (isImage) {
+        appendNewDiscussionHtml(`<figure><img src="${escapeHtml(url)}" alt="${escapeHtml(file.name)}"></figure>`)
+      } else {
+        appendNewDiscussionHtml(`<p><a href="${escapeHtml(url)}">${escapeHtml(file.name)}</a></p>`)
+      }
     }
   } catch {
     alert('Failed to upload file.')
@@ -4737,14 +4742,8 @@ function appendNewDiscussionHtml(html: string): void {
 }
 
 function insertDiscussionAttachment(type: ComposeAttachmentType): void {
-  if (type === 'image' || type === 'file') {
+  if (type === 'image' || type === 'video' || type === 'file') {
     discussionFileInput.value?.click()
-    return
-  }
-
-  if (type === 'video') {
-    const url = window.prompt('YouTube or Vimeo URL')
-    if (url) appendNewDiscussionHtml(`<p>${escapeHtml(url)}</p>`)
     return
   }
 
