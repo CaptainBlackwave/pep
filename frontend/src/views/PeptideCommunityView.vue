@@ -404,7 +404,6 @@
             </select>
             <small class="pv-edit-label">Tag — select a topic type</small>
             <select v-model="editDiscussionCategory" class="pv-edit-select">
-              <option value="">No category</option>
               <option v-for="cat in discussionCategories" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
             </select>
             <small class="pv-edit-label">Category — select a category</small>

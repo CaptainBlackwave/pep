@@ -177,7 +177,7 @@ class CommunityDiscussionController extends Controller
             'title' => ['required', 'string', 'max:160'],
             'body' => ['required', 'string', 'max:10000'],
             'tag' => ['nullable', 'string', 'max:40'],
-            'category_slug' => ['nullable', 'string', 'exists:community_discussion_categories,slug'],
+            'category_slug' => ['required', 'string', 'exists:community_discussion_categories,slug'],
         ]);
 
         $discussionModel = $this->findOwnDiscussion($request, $discussion);
@@ -190,9 +190,7 @@ class CommunityDiscussionController extends Controller
             'tag' => $validated['tag'] ?? $discussionModel->tag,
         ];
 
-        if (!empty($validated['category_slug'])) {
-            $updateData['category_id'] = CommunityDiscussionCategory::where('slug', $validated['category_slug'])->value('id');
-        }
+        $updateData['category_id'] = CommunityDiscussionCategory::where('slug', $validated['category_slug'])->value('id');
 
         $discussionModel->update($updateData);
 
