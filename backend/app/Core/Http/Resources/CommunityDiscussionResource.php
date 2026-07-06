@@ -61,6 +61,9 @@ class CommunityDiscussionResource extends JsonResource
                 'avatar' => $this->user?->profile_picture ?? $this->user?->profile_photo_path ?? null,
                 'post_count' => $this->user ? (clone $this->user->communityDiscussions())->where('status', 'published')->count() : 0,
                 'is_online' => $this->user?->last_active && $this->user->last_active->gt(now()->subMinutes(15)),
+                'badge' => $this->user && $this->user->relationLoaded('roles') && $this->user->roles->isNotEmpty()
+                    ? Str::headline($this->user->roles->first()->name)
+                    : null,
             ],
             'created_at' => $this->created_at?->toIso8601String(),
             'updated_at' => $this->updated_at?->toIso8601String(),

@@ -300,8 +300,7 @@
                   <span v-else class="avatar" :class="topic.color">{{ topic.initial }}</span>
                 </router-link>
                 <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>{{ topic.authorUsername }}</h4></router-link>
-                <div class="author-badge">🛡 Trusted Member</div>
-                <div class="level-badge">✪ Level 12</div>
+                <div class="author-badge">{{ topic.authorBadge }}</div>
                 <div class="author-posts">💬 {{ topic.authorPostCount }} posts</div>
               </aside>
               <main class="topic-body">
@@ -4801,6 +4800,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     author,
     authorUsername: item.author?.username ?? author,
     authorOnline: item.author?.is_online ?? false,
+    authorBadge: item.author?.badge ?? null,
     authorPostCount: item.author?.post_count ?? 0,
     authorId: item.author?.id,
     avatarUrl,

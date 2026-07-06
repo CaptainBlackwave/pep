@@ -37,7 +37,7 @@ class CommunityDiscussionController extends Controller
         ]);
 
         $query = CommunityDiscussion::query()
-            ->with(['category', 'user', 'lastReplyUser'])
+            ->with(['category', 'user.roles', 'lastReplyUser'])
             ->where('status', 'published');
 
         $user = $request->user();
