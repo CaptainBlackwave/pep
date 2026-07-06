@@ -5364,7 +5364,7 @@ summary {
 
 .pv-embed,
 .pv-rich-text div[data-youtube-video] {
-  width: min(100%, 720px);
+  width: min(100%, 480px);
   overflow: hidden;
   border: 1px solid var(--pv-border);
   border-radius: 8px;
