@@ -313,7 +313,7 @@
                 <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>{{ topic.authorUsername }}</h4></router-link>
                 <div class="author-badge">🛡 Trusted Member</div>
                 <div class="level-badge">✪ Level 12</div>
-                <div class="author-posts">💬 {{ topic.replies }} posts</div>
+                <div class="author-posts">💬 {{ topic.authorPostCount }} posts</div>
               </aside>
               <main class="topic-body">
                 <span v-if="topic.tag" class="topic-type">▱ {{ topic.tag }}</span>
@@ -1887,6 +1887,7 @@ interface UiDiscussion {
   author: string
   authorUsername: string
   authorOnline: boolean
+  authorPostCount: number
   authorId?: number
   time: string
   replies: number
@@ -1958,7 +1959,7 @@ interface ApiDiscussion {
   is_pinned?: boolean
   is_locked?: boolean
   category?: { name?: string | null; slug?: string | null; color?: string | null } | null
-  author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; avatar?: string | null; is_online?: boolean } | null
+  author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; avatar?: string | null; is_online?: boolean; post_count?: number } | null
   vote_score?: number
   viewer_vote?: number
   reply_items?: ApiReply[]
@@ -4811,6 +4812,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     author,
     authorUsername: item.author?.username ?? author,
     authorOnline: item.author?.is_online ?? false,
+    authorPostCount: item.author?.post_count ?? 0,
     authorId: item.author?.id,
     avatarUrl,
     time: item.time_ago ?? '',
