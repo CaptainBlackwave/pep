@@ -1,57 +1,89 @@
 <template>
-  <div v-if="showNewDiscussion" class="pv-modal-backdrop" @click.self="closeNewDiscussion">
-    <form class="pv-modal" @submit.prevent="submitNewDiscussion">
-      <header class="pv-panel-header">
+  <div v-if="showNewDiscussion" class="pv-modal-backdrop pv-compose-backdrop" @click.self="closeNewDiscussion">
+    <form class="pv-modal pv-discussion-modal" @submit.prevent="submitNewDiscussion">
+      <header class="pv-compose-header">
+        <span class="pv-compose-header-icon"><PvIcon name="message" /></span>
         <div>
           <h2>New Discussion</h2>
-          <p class="pv-muted">Start a community topic.</p>
+          <p>Start a conversation with the community.</p>
         </div>
-        <button type="button" class="pv-icon-button" aria-label="Close" @click="closeNewDiscussion">
+        <button type="button" class="pv-icon-button pv-compose-close" aria-label="Close" @click="closeNewDiscussion">
           <PvIcon name="close" />
         </button>
       </header>
       <p v-if="discussionFormError" class="pv-alert pv-alert--compact">{{ discussionFormError }}</p>
-      <label>
-        Title
-        <input v-model="newDiscussion.title" required maxlength="160" placeholder="What would you like to discuss?">
+      <label class="pv-compose-field">
+        <span>Title <b>*</b></span>
+        <span class="pv-compose-input-shell">
+          <input v-model="newDiscussion.title" required maxlength="100" placeholder="Summarise your discussion in one sentence...">
+          <small>{{ newDiscussion.title.length }} / 100</small>
+        </span>
       </label>
-      <div class="pv-form-row">
-        <label>
-          Category
-          <select v-model="newDiscussion.category_slug">
-            <option value="">None</option>
-            <option v-for="category in discussionCategories" :key="category.slug" :value="category.slug">
-              {{ category.name }}
-            </option>
-          </select>
+      <div class="pv-compose-select-grid">
+        <label class="pv-compose-field">
+          <span>Category <b>*</b></span>
+          <span class="pv-select-card">
+            <PvIcon name="discussions" />
+            <select v-model="newDiscussion.category_slug" required>
+              <option value="">Choose category</option>
+              <option v-for="category in discussionCategories" :key="category.slug" :value="category.slug">
+                {{ category.name }}
+              </option>
+            </select>
+          </span>
+          <small>Choose the most relevant category.</small>
         </label>
-        <label>
-          Tag
-          <select v-model="newDiscussion.tag">
-            <option value="">None</option>
-            <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
-          </select>
+        <label class="pv-compose-field">
+          <span>Tag</span>
+          <span class="pv-select-card">
+            <PvIcon name="tag" />
+            <select v-model="newDiscussion.tag">
+              <option value="">No tag</option>
+              <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
+            </select>
+          </span>
+          <small>Add a tag to help others find your discussion.</small>
         </label>
       </div>
-      <label>
-        Message
-        <div class="pv-textarea-with-emoji">
-          <EditorToolbar target="newDiscussion" />
-          <textarea id="new-discussion-editor" v-model="newDiscussion.body" required rows="7" maxlength="10000" placeholder="Share the details, context, and what kind of help or feedback you want."></textarea>
-          <EmojiPicker v-model="newDiscussion.body" />
+      <section class="pv-compose-section">
+        <div class="pv-compose-section-head">
+          <strong>Discussion <b>*</b></strong>
         </div>
-        <small>{{ newDiscussion.body.length }}/10000</small>
-      </label>
-      <footer>
-        <button type="button" class="pv-small-button" @click="closeNewDiscussion">Cancel</button>
-        <button type="submit" class="pv-primary-button" :disabled="creatingDiscussion">
-          <PvIcon name="send" />
-          {{ creatingDiscussion ? 'Posting...' : 'Post Discussion' }}
-        </button>
+        <TipTapComposer v-model="newDiscussion.body" placeholder="Write your discussion..." :max-length="10000" />
+      </section>
+      <div class="pv-compose-lower">
+        <section class="pv-compose-attachments" aria-label="Add attachments">
+          <p>Drag and drop files here or click to browse</p>
+          <div>
+            <button type="button" @click="insertDiscussionAttachment('image')"><PvIcon name="image" />Image</button>
+            <button type="button" @click="insertDiscussionAttachment('video')"><PvIcon name="list" />Video</button>
+            <button type="button" @click="insertDiscussionAttachment('link')"><PvIcon name="share" />Link</button>
+            <button type="button" @click="insertDiscussionAttachment('poll')"><PvIcon name="chart" />Poll</button>
+            <button type="button" @click="insertDiscussionAttachment('file')"><PvIcon name="document" />File</button>
+          </div>
+        </section>
+        <aside class="pv-compose-tips">
+          <strong>Tips</strong>
+          <ul>
+            <li>Be respectful and follow our guidelines</li>
+            <li>Search before posting to avoid duplicates</li>
+            <li>Use @ to mention members</li>
+            <li>You can preview your post anytime</li>
+          </ul>
+        </aside>
+      </div>
+      <footer class="pv-compose-footer">
+        <span><PvIcon name="upload" /> {{ discussionDraftStatus }}</span>
+        <div>
+          <button type="button" class="pv-small-button" @click="closeNewDiscussion">Cancel</button>
+          <button type="submit" class="pv-primary-button" :disabled="creatingDiscussion">
+            <PvIcon name="send" />
+            {{ creatingDiscussion ? 'Posting...' : 'Post Discussion' }}
+          </button>
+        </div>
       </footer>
     </form>
   </div>
-
   <div v-if="showSubmitLabResult" class="pv-modal-backdrop" @click.self="closeSubmitLabResult">
     <form class="pv-modal" @submit.prevent="submitLabResult">
       <header class="pv-panel-header">
@@ -365,8 +397,7 @@
         <div v-else class="thread-edit-form">
           <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
           <input v-model="editDiscussionTitle" required maxlength="160">
-          <EditorToolbar target="editDiscussion" />
-          <textarea id="edit-discussion-editor" v-model="editDiscussionBody" required rows="6" maxlength="10000"></textarea>
+          <TipTapComposer v-model="editDiscussionBody" placeholder="Update your discussion..." :max-length="10000" compact />
           <div class="pv-form-actions">
             <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
             <button type="button" class="pv-primary-button" :disabled="discussionEditSaving" @click="saveEditDiscussion">{{ discussionEditSaving ? 'Saving...' : 'Save Changes' }}</button>
@@ -436,17 +467,15 @@
       <form id="reply-composer" class="reply-composer" @submit.prevent="submitReply">
         <div class="reply-composer-head">
           <strong>Reply as {{ accountName() }}</strong>
-          <small>{{ replyBody.length }}/8000</small>
+          <small>{{ plainTextFromRichText(replyBody).length }}/8000</small>
         </div>
-        <EditorToolbar target="reply" />
-        <textarea id="reply-editor" v-model="replyBody" maxlength="8000" placeholder="Write a reply..." rows="4"></textarea>
+        <TipTapComposer v-model="replyBody" placeholder="Write a reply..." :max-length="8000" compact />
         <div v-if="replyAttachmentFile || replyAttachmentGifUrl" class="pv-attachment-preview">
           <img v-if="replyAttachmentPreviewUrl || replyAttachmentGifUrl" :src="replyAttachmentPreviewUrl || replyAttachmentGifUrl" alt="Attachment preview">
           <span><strong>{{ replyAttachmentName() }}</strong><small>{{ replyAttachmentFile ? 'Image' : 'GIF' }}</small></span>
           <button type="button" class="pv-icon-button" aria-label="Remove" @click="clearReplyAttachment"><PvIcon name="close" /></button>
         </div>
         <div class="reply-composer-tools">
-          <EmojiPicker v-model="replyBody" />
           <label class="pv-icon-button" for="reply-image-upload" aria-label="Attach image"><PvIcon name="image" /></label>
           <input id="reply-image-upload" class="pv-sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" @change="handleReplyAttachment">
           <GiphyPicker @select="onGifSelect" />
@@ -1568,6 +1597,14 @@
 <script setup lang="ts">
 import { computed, defineComponent, h, onMounted, onUnmounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
+import { EditorContent, useEditor } from '@tiptap/vue-3'
+import CharacterCount from '@tiptap/extension-character-count'
+import Image from '@tiptap/extension-image'
+import Link from '@tiptap/extension-link'
+import Placeholder from '@tiptap/extension-placeholder'
+import { Table, TableCell, TableHeader, TableRow } from '@tiptap/extension-table'
+import Youtube from '@tiptap/extension-youtube'
+import StarterKit from '@tiptap/starter-kit'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import GiphyPicker from '@/components/ui/GiphyPicker.vue'
@@ -2504,8 +2541,7 @@ interface BlockedUsersResponse {
   data: ApiMemberProfile[]
 }
 
-type EditorTarget = 'newDiscussion' | 'editDiscussion' | 'reply'
-type EditorAction = 'bold' | 'italic' | 'heading' | 'quote' | 'code' | 'codeBlock' | 'bulletList' | 'numberedList' | 'link' | 'image' | 'mention' | 'embed'
+type ComposeAttachmentType = 'image' | 'video' | 'link' | 'poll' | 'file'
 
 const avatarColors = ['purple', 'blue', 'green', 'pink', 'orange', 'teal']
 
@@ -2836,6 +2872,8 @@ const newDiscussion = ref({
   category_slug: '',
   tag: '',
 })
+const newDiscussionDraftKey = 'pv:new-discussion-draft:v1'
+const discussionDraftStatus = ref('Draft auto-saved locally')
 const newLabResult = ref({
   compound_name: '',
   compound_type: '',
@@ -3998,8 +4036,8 @@ function cancelEditDiscussion(): void {
 async function saveEditDiscussion(): Promise<void> {
   if (!detailDiscussion.value?.slug) return
   const title = editDiscussionTitle.value.trim()
-  const body = editDiscussionBody.value.trim()
-  if (!title || !body) {
+  const body = normalizeRichText(editDiscussionBody.value)
+  if (!title || isRichTextEmpty(body)) {
     discussionEditError.value = 'Title and body are required.'
     return
   }
@@ -4198,13 +4236,13 @@ function jumpToReplyComposer(): void {
 
 function prepareReply(reply: UiReply | null, quote = false): void {
   if (!reply) {
-    const text = detailParagraphs.value.join('\n') || detailDiscussion.value?.title || ''
-    replyBody.value = quote && text ? `> ${text}\n\n` : ''
+    const text = plainTextFromRichText(detailDiscussion.value?.body ?? '') || detailParagraphs.value.join('\n') || detailDiscussion.value?.title || ''
+    replyBody.value = quote && text ? quoteHtml(text) : ''
     jumpToReplyComposer()
     return
   }
 
-  replyBody.value = quote ? `> ${reply.text}\n\n` : `@${reply.author} `
+  replyBody.value = quote ? quoteHtml(plainTextFromRichText(reply.text)) : `<p>@${escapeHtml(reply.authorUsername || reply.author)}&nbsp;</p>`
   jumpToReplyComposer()
 }
 
@@ -4599,6 +4637,11 @@ function ensureAuthenticated(action: string): boolean {
 
 function openNewDiscussion(): void {
   discussionFormError.value = ''
+  const savedDraft = loadNewDiscussionDraft()
+  if (!newDiscussion.value.title && !newDiscussion.value.body && savedDraft) {
+    newDiscussion.value = savedDraft
+    discussionDraftStatus.value = 'Draft restored'
+  }
   if (!newDiscussion.value.category_slug) {
     newDiscussion.value.category_slug = discussionCategories.value[0]?.slug ?? ''
   }
@@ -4610,82 +4653,92 @@ function closeNewDiscussion(): void {
   discussionFormError.value = ''
 }
 
-function editorElementId(target: EditorTarget): string {
-  if (target === 'newDiscussion') return 'new-discussion-editor'
-  if (target === 'editDiscussion') return 'edit-discussion-editor'
-  return 'reply-editor'
+function loadNewDiscussionDraft(): typeof newDiscussion.value | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = window.localStorage.getItem(newDiscussionDraftKey)
+    if (!raw) return null
+    const parsed = JSON.parse(raw) as Partial<typeof newDiscussion.value>
+    return {
+      title: String(parsed.title || ''),
+      body: String(parsed.body || ''),
+      category_slug: String(parsed.category_slug || ''),
+      tag: String(parsed.tag || ''),
+    }
+  } catch {
+    return null
+  }
 }
 
-function editorValue(target: EditorTarget): string {
-  if (target === 'newDiscussion') return newDiscussion.value.body
-  if (target === 'editDiscussion') return editDiscussionBody.value
-  return replyBody.value
-}
-
-function setEditorValue(target: EditorTarget, value: string): void {
-  if (target === 'newDiscussion') {
-    newDiscussion.value.body = value
+function saveNewDiscussionDraft(): void {
+  if (typeof window === 'undefined') return
+  const draft = newDiscussion.value
+  const hasDraft = Boolean(draft.title.trim() || plainTextFromRichText(draft.body).trim() || draft.tag)
+  if (!hasDraft) {
+    window.localStorage.removeItem(newDiscussionDraftKey)
+    discussionDraftStatus.value = 'Draft auto-saved locally'
     return
   }
 
-  if (target === 'editDiscussion') {
-    editDiscussionBody.value = value
+  window.localStorage.setItem(newDiscussionDraftKey, JSON.stringify(draft))
+  discussionDraftStatus.value = 'Draft saved just now'
+}
+
+function clearNewDiscussionDraft(): void {
+  if (typeof window === 'undefined') return
+  window.localStorage.removeItem(newDiscussionDraftKey)
+  discussionDraftStatus.value = 'Draft auto-saved locally'
+}
+
+watch(newDiscussion, () => {
+  if (!showNewDiscussion.value) return
+  saveNewDiscussionDraft()
+}, { deep: true })
+
+function appendNewDiscussionHtml(html: string): void {
+  const current = newDiscussion.value.body.trim()
+  newDiscussion.value.body = current ? `${current}${html}` : html
+}
+
+function insertDiscussionAttachment(type: ComposeAttachmentType): void {
+  if (type === 'image') {
+    const url = window.prompt('Image URL')
+    if (url) appendNewDiscussionHtml(`<figure><img src="${escapeHtml(safeExternalUrl(url))}" alt="Discussion image"></figure>`)
     return
   }
 
-  replyBody.value = value
-}
+  if (type === 'video') {
+    const url = window.prompt('YouTube or Vimeo URL')
+    if (url) appendNewDiscussionHtml(`<p>${escapeHtml(url)}</p>`)
+    return
+  }
 
-function insertEditorText(target: EditorTarget, before: string, after = '', fallback = 'text'): void {
-  const textarea = document.getElementById(editorElementId(target)) as HTMLTextAreaElement | null
-  const current = editorValue(target)
-  const start = textarea?.selectionStart ?? current.length
-  const end = textarea?.selectionEnd ?? current.length
-  const selected = current.slice(start, end) || fallback
-  const next = `${current.slice(0, start)}${before}${selected}${after}${current.slice(end)}`
-  setEditorValue(target, next)
+  if (type === 'link') {
+    const url = window.prompt('Link URL')
+    const label = url ? window.prompt('Link label', 'Related link') || 'Related link' : ''
+    if (url) appendNewDiscussionHtml(`<p><a href="${escapeHtml(safeExternalUrl(url))}">${escapeHtml(label)}</a></p>`)
+    return
+  }
 
-  window.setTimeout(() => {
-    textarea?.focus()
-    const cursorStart = start + before.length
-    const cursorEnd = cursorStart + selected.length
-    textarea?.setSelectionRange(cursorStart, cursorEnd)
-  })
-}
+  if (type === 'poll') {
+    appendNewDiscussionHtml('<blockquote><p><strong>Poll:</strong> Add your question here</p><ul><li>Option 1</li><li>Option 2</li></ul></blockquote>')
+    return
+  }
 
-function insertEditorBlock(target: EditorTarget, block: string): void {
-  const textarea = document.getElementById(editorElementId(target)) as HTMLTextAreaElement | null
-  const current = editorValue(target)
-  const start = textarea?.selectionStart ?? current.length
-  const prefix = start > 0 && current[start - 1] !== '\n' ? '\n' : ''
-  const suffix = block.endsWith('\n') ? '' : '\n'
-  const next = `${current.slice(0, start)}${prefix}${block}${suffix}${current.slice(start)}`
-  setEditorValue(target, next)
-
-  window.setTimeout(() => {
-    textarea?.focus()
-    const cursor = start + prefix.length + block.length + suffix.length
-    textarea?.setSelectionRange(cursor, cursor)
-  })
-}
-
-function applyEditorAction(target: EditorTarget, action: EditorAction): void {
-  if (action === 'bold') return insertEditorText(target, '**', '**', 'bold text')
-  if (action === 'italic') return insertEditorText(target, '*', '*', 'italic text')
-  if (action === 'heading') return insertEditorBlock(target, '## Heading')
-  if (action === 'quote') return insertEditorBlock(target, '> Quoted text')
-  if (action === 'code') return insertEditorText(target, '`', '`', 'code')
-  if (action === 'codeBlock') return insertEditorBlock(target, '```\ncode block\n```')
-  if (action === 'bulletList') return insertEditorBlock(target, '- First item\n- Second item')
-  if (action === 'numberedList') return insertEditorBlock(target, '1. First item\n2. Second item')
-  if (action === 'link') return insertEditorText(target, '[', '](https://example.com)', 'link text')
-  if (action === 'image') return insertEditorBlock(target, '![Image description](https://example.com/image.png)')
-  if (action === 'mention') return insertEditorText(target, '@', '', 'username')
-  if (action === 'embed') return insertEditorBlock(target, 'https://www.youtube.com/watch?v=VIDEO_ID')
+  const url = window.prompt('File URL')
+  const label = url ? window.prompt('File label', 'Attached file') || 'Attached file' : ''
+  if (url) appendNewDiscussionHtml(`<p><a href="${escapeHtml(safeExternalUrl(url))}">${escapeHtml(label)}</a></p>`)
 }
 
 async function submitNewDiscussion(): Promise<void> {
   if (!ensureAuthenticated('post a discussion')) {
+    return
+  }
+
+  const title = newDiscussion.value.title.trim()
+  const body = normalizeRichText(newDiscussion.value.body)
+  if (!title || isRichTextEmpty(body)) {
+    discussionFormError.value = 'Title and discussion body are required.'
     return
   }
 
@@ -4694,14 +4747,15 @@ async function submitNewDiscussion(): Promise<void> {
 
   try {
     const response = await api.post<DiscussionDetailResponse>('/api/v1/community/discussions', {
-      title: newDiscussion.value.title,
-      body: newDiscussion.value.body,
+      title,
+      body,
       category_slug: newDiscussion.value.category_slug || undefined,
       tag: newDiscussion.value.tag || undefined,
     })
     const created = mapDiscussion(response.data.data)
     apiDiscussions.value = [created, ...apiDiscussions.value.filter(topic => topic.slug !== created.slug)]
     newDiscussion.value = { title: '', body: '', category_slug: '', tag: '' }
+    clearNewDiscussionDraft()
     showNewDiscussion.value = false
     discussionStatusMessage.value = 'Discussion posted.'
     await router.push(created.href)
@@ -4719,8 +4773,8 @@ async function submitReply(): Promise<void> {
     return
   }
 
-  const body = replyBody.value.trim()
-  if (!body) {
+  const body = normalizeRichText(replyBody.value)
+  if (isRichTextEmpty(body)) {
     replyStatusMessage.value = 'Write a reply first.'
     return
   }
@@ -6561,7 +6615,167 @@ function memberHref(value?: string | null): string {
 
 function safeExternalUrl(value: string): string {
   const decoded = value.replace(/&amp;/g, '&')
-  return /^https?:\/\//i.test(decoded) ? decoded : '#'
+  return /^https?:\/\//i.test(decoded) || /^\/(?!\/)/.test(decoded) ? decoded : '#'
+}
+
+function looksLikeRichHtml(value: string): boolean {
+  return /<\/?(p|h[1-6]|ul|ol|li|blockquote|pre|code|strong|em|a|img|figure|table|thead|tbody|tr|th|td|iframe|div|hr)\b/i.test(value)
+}
+
+function normalizeRichText(value?: string | null): string {
+  const raw = String(value || '').trim()
+  if (!raw || /^<p>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>$/i.test(raw)) {
+    return ''
+  }
+
+  return looksLikeRichHtml(raw) ? sanitizeRichHtml(raw) : raw
+}
+
+function plainTextFromRichText(value?: string | null): string {
+  const raw = String(value || '')
+  if (!raw) return ''
+
+  if (looksLikeRichHtml(raw) && typeof DOMParser !== 'undefined') {
+    const doc = new DOMParser().parseFromString(raw, 'text/html')
+    return (doc.body.textContent || '').replace(/\u00a0/g, ' ').trim()
+  }
+
+  return raw
+    .replace(/<br\s*\/?>/gi, '\n')
+    .replace(/<\/(p|li|blockquote|h[1-6])>/gi, '\n')
+    .replace(/<[^>]+>/g, '')
+    .replace(/&nbsp;/g, ' ')
+    .replace(/&amp;/g, '&')
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .trim()
+}
+
+function isRichTextEmpty(value?: string | null): boolean {
+  const raw = String(value || '')
+  return !plainTextFromRichText(raw).trim() && !/<(img|iframe|table)\b/i.test(raw)
+}
+
+function quoteHtml(value: string): string {
+  const text = plainTextFromRichText(value).trim()
+  return text ? `<blockquote><p>${escapeHtml(text).replace(/\n+/g, '<br>')}</p></blockquote><p></p>` : ''
+}
+
+function linkifyMentions(root: ParentNode): void {
+  if (typeof document === 'undefined') return
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT)
+  const nodes: Text[] = []
+  let current = walker.nextNode()
+  while (current) {
+    if (current.parentElement?.closest('a, code, pre')) {
+      current = walker.nextNode()
+      continue
+    }
+    nodes.push(current as Text)
+    current = walker.nextNode()
+  }
+
+  nodes.forEach(node => {
+    const value = node.nodeValue || ''
+    const regex = /(^|[^\w@])@([A-Za-z0-9_]{3,40})/g
+    let match: RegExpExecArray | null
+    let lastIndex = 0
+    const fragment = document.createDocumentFragment()
+    let changed = false
+
+    while ((match = regex.exec(value))) {
+      const full = match[0] || ''
+      const prefix = match[1] || ''
+      const username = match[2] || ''
+      const atIndex = match.index + prefix.length
+      fragment.append(value.slice(lastIndex, atIndex))
+      const link = document.createElement('a')
+      link.href = memberHref(username)
+      link.className = 'pv-mention'
+      link.textContent = `@${username}`
+      fragment.append(link)
+      lastIndex = match.index + full.length
+      changed = true
+    }
+
+    if (!changed) return
+    fragment.append(value.slice(lastIndex))
+    node.parentNode?.replaceChild(fragment, node)
+  })
+}
+
+function sanitizeRichHtml(value: string): string {
+  if (typeof document === 'undefined') {
+    return escapeHtml(value)
+  }
+
+  const template = document.createElement('template')
+  template.innerHTML = value
+  const allowedTags = new Set(['P', 'BR', 'STRONG', 'B', 'EM', 'I', 'U', 'S', 'BLOCKQUOTE', 'UL', 'OL', 'LI', 'PRE', 'CODE', 'H2', 'H3', 'A', 'IMG', 'FIGURE', 'DIV', 'IFRAME', 'TABLE', 'THEAD', 'TBODY', 'TR', 'TH', 'TD', 'HR'])
+
+  const cleanNode = (node: Node): void => {
+    if (node.nodeType !== Node.ELEMENT_NODE) return
+    const element = node as HTMLElement
+    const tag = element.tagName
+
+    if (tag === 'SCRIPT' || tag === 'STYLE') {
+      element.remove()
+      return
+    }
+
+    if (!allowedTags.has(tag)) {
+      element.replaceWith(...Array.from(element.childNodes))
+      return
+    }
+
+    Array.from(element.attributes).forEach(attribute => {
+      const name = attribute.name.toLowerCase()
+      const keepClass = name === 'class' && /^(pv-|ProseMirror)/.test(attribute.value)
+      const keepTableSpan = ['colspan', 'rowspan'].includes(name) && ['TD', 'TH'].includes(tag)
+      const keepEmbedData = name.startsWith('data-') && tag === 'DIV'
+      const keepFrameAttr = ['frameborder', 'allowfullscreen', 'allow', 'title', 'width', 'height'].includes(name) && tag === 'IFRAME'
+      if (!keepClass && !keepTableSpan && !keepEmbedData && !keepFrameAttr && !['href', 'src', 'alt', 'target', 'rel'].includes(name)) {
+        element.removeAttribute(attribute.name)
+      }
+    })
+
+    if (tag === 'A') {
+      const href = safeExternalUrl(element.getAttribute('href') || '')
+      element.setAttribute('href', href)
+      element.setAttribute('target', '_blank')
+      element.setAttribute('rel', 'noreferrer')
+      element.classList.add('pv-link')
+    }
+
+    if (tag === 'IMG') {
+      const src = safeExternalUrl(element.getAttribute('src') || '')
+      if (src === '#') {
+        element.remove()
+        return
+      }
+      element.setAttribute('src', src)
+      element.setAttribute('alt', element.getAttribute('alt') || 'Attached image')
+    }
+
+    if (tag === 'IFRAME') {
+      const src = safeExternalUrl(element.getAttribute('src') || '')
+      const allowedEmbed = /^(https:\/\/(?:www\.)?youtube(?:-nocookie)?\.com\/embed\/[a-zA-Z0-9_-]+|https:\/\/player\.vimeo\.com\/video\/\d+)/i.test(src)
+      if (!allowedEmbed) {
+        element.remove()
+        return
+      }
+      element.setAttribute('src', src)
+      element.setAttribute('frameborder', '0')
+      element.setAttribute('allowfullscreen', 'true')
+    }
+
+    Array.from(element.childNodes).forEach(cleanNode)
+  }
+
+  Array.from(template.content.childNodes).forEach(cleanNode)
+  linkifyMentions(template.content)
+  return template.innerHTML
 }
 
 function mediaEmbed(url: string): string | null {
@@ -6625,7 +6839,11 @@ function formatInlineText(value: string): string {
 }
 
 function renderFormattedText(text?: string | null): string {
-  const lines = String(text || '').replace(/\r\n/g, '\n').split('\n')
+  const raw = String(text || '').trim()
+  if (!raw) return ''
+  if (looksLikeRichHtml(raw)) return sanitizeRichHtml(raw)
+
+  const lines = raw.replace(/\r\n/g, '\n').split('\n')
   const html: string[] = []
   let index = 0
 
@@ -6734,32 +6952,175 @@ function contentThumbnailStyle(item: UiContentItem, fallbackIndex = 0) {
   return thumbnailStyle(item.imageIndex || fallbackIndex, item.imageUrl)
 }
 
-const EditorToolbar = defineComponent({
+const TipTapComposer = defineComponent({
   props: {
-    target: { type: String as PropType<EditorTarget>, required: true },
+    modelValue: { type: String, default: '' },
+    placeholder: { type: String, default: 'Write...' },
+    maxLength: { type: Number, default: 10000 },
+    compact: { type: Boolean, default: false },
   },
-  setup(props) {
-    const actions: Array<{ action: EditorAction; label: string; title: string }> = [
-      { action: 'bold', label: 'B', title: 'Bold' },
-      { action: 'italic', label: 'I', title: 'Italic' },
-      { action: 'heading', label: 'H', title: 'Heading' },
-      { action: 'quote', label: '“”', title: 'Quote' },
-      { action: 'code', label: '<>', title: 'Inline code' },
-      { action: 'codeBlock', label: '{ }', title: 'Code block' },
-      { action: 'bulletList', label: '•', title: 'Bullet list' },
-      { action: 'numberedList', label: '1.', title: 'Numbered list' },
-      { action: 'link', label: 'Link', title: 'Link' },
-      { action: 'image', label: 'Image', title: 'Image or GIF URL' },
-      { action: 'mention', label: '@', title: 'Mention member' },
-      { action: 'embed', label: 'Video', title: 'YouTube or Vimeo embed' },
+  emits: {
+    'update:modelValue': (value: string) => typeof value === 'string',
+  },
+  setup(props, { emit }) {
+    const preview = ref(false)
+    const editor = useEditor({
+      content: props.modelValue || '<p></p>',
+      extensions: [
+        StarterKit.configure({
+          heading: { levels: [2, 3] },
+          link: false,
+        }),
+        Link.configure({
+          openOnClick: false,
+          autolink: true,
+          linkOnPaste: true,
+          defaultProtocol: 'https',
+        }),
+        Image.configure({ allowBase64: false }),
+        Placeholder.configure({ placeholder: props.placeholder }),
+        CharacterCount.configure({ limit: props.maxLength }),
+        Table.configure({ resizable: true }),
+        TableRow,
+        TableHeader,
+        TableCell,
+        Youtube.configure({
+          controls: true,
+          nocookie: true,
+          width: 720,
+          height: 405,
+        }),
+      ],
+      editorProps: {
+        attributes: {
+          class: 'pv-tiptap-prose',
+          spellcheck: 'true',
+        },
+      },
+      onUpdate: ({ editor: activeEditor }) => {
+        emit('update:modelValue', activeEditor.isEmpty ? '' : activeEditor.getHTML())
+      },
+    })
+
+    watch(() => props.modelValue, value => {
+      const activeEditor = editor.value
+      if (!activeEditor) return
+      const next = value || '<p></p>'
+      if (activeEditor.getHTML() === next) return
+      activeEditor.commands.setContent(next, { emitUpdate: false })
+    })
+
+    onUnmounted(() => {
+      editor.value?.destroy()
+    })
+
+    const withEditor = (callback: (activeEditor: NonNullable<typeof editor.value>) => void) => {
+      const activeEditor = editor.value
+      if (!activeEditor) return
+      callback(activeEditor)
+    }
+
+    const characterCount = () => {
+      const storage = editor.value?.storage.characterCount as { characters?: () => number } | undefined
+      return storage?.characters?.() ?? plainTextFromRichText(props.modelValue).length
+    }
+
+    const setLink = () => withEditor(activeEditor => {
+      const previous = String(activeEditor.getAttributes('link').href || '')
+      const url = window.prompt('Link URL', previous || 'https://')
+      if (url === null) return
+      if (!url.trim()) {
+        activeEditor.chain().focus().extendMarkRange('link').unsetLink().run()
+        return
+      }
+      activeEditor.chain().focus().extendMarkRange('link').setLink({ href: safeExternalUrl(url) }).run()
+    })
+
+    const setImage = () => withEditor(activeEditor => {
+      const url = window.prompt('Image URL', 'https://')
+      if (!url) return
+      activeEditor.chain().focus().setImage({ src: safeExternalUrl(url), alt: 'Attached image' }).run()
+    })
+
+    const setVideo = () => withEditor(activeEditor => {
+      const url = window.prompt('YouTube URL', 'https://')
+      if (!url) return
+      activeEditor.chain().focus().setYoutubeVideo({ src: safeExternalUrl(url) }).run()
+    })
+
+    const setEmoji = () => withEditor(activeEditor => {
+      const emoji = window.prompt('Emoji', ':)')
+      if (!emoji) return
+      activeEditor.chain().focus().insertContent(emoji).run()
+    })
+
+    const actions = [
+      { key: 'bold', label: 'B', title: 'Bold', active: () => editor.value?.isActive('bold'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBold().run()) },
+      { key: 'italic', label: 'I', title: 'Italic', active: () => editor.value?.isActive('italic'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleItalic().run()) },
+      { key: 'heading', label: 'H', title: 'Heading', active: () => editor.value?.isActive('heading', { level: 2 }), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleHeading({ level: 2 }).run()) },
+      { key: 'quote', label: '""', title: 'Quote', active: () => editor.value?.isActive('blockquote'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBlockquote().run()) },
+      { key: 'bullet', label: 'List', title: 'Bullet list', active: () => editor.value?.isActive('bulletList'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBulletList().run()) },
+      { key: 'numbered', label: '1.', title: 'Numbered list', active: () => editor.value?.isActive('orderedList'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleOrderedList().run()) },
+      { key: 'code', label: '</>', title: 'Code block', active: () => editor.value?.isActive('codeBlock'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleCodeBlock().run()) },
+      { key: 'link', label: 'Link', title: 'Link', run: setLink },
+      { key: 'image', label: 'Image', title: 'Image', run: setImage },
+      { key: 'table', label: 'Table', title: 'Table', active: () => editor.value?.isActive('table'), run: () => withEditor(activeEditor => activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()) },
+      { key: 'emoji', label: 'Smile', title: 'Emoji', run: setEmoji },
+      { key: 'video', label: 'Video', title: 'YouTube embed', run: setVideo },
     ]
 
-    return () => h('div', { class: 'pv-editor-toolbar', 'aria-label': 'Text formatting toolbar' }, actions.map(item => h('button', {
-      type: 'button',
-      title: item.title,
-      'aria-label': item.title,
-      onClick: () => applyEditorAction(props.target, item.action),
-    }, item.label)))
+    return () => h('div', { class: ['pv-tiptap', props.compact ? 'pv-tiptap--compact' : ''] }, [
+      h('div', { class: 'pv-tiptap-modebar' }, [
+        h('button', {
+          type: 'button',
+          class: { active: !preview.value },
+          onClick: () => { preview.value = false },
+        }, [h(PvIcon, { name: 'edit' }), 'Write']),
+        h('button', {
+          type: 'button',
+          class: { active: preview.value },
+          onClick: () => { preview.value = true },
+        }, [h(PvIcon, { name: 'eye' }), 'Preview']),
+      ]),
+      preview.value
+        ? h('div', {
+          class: 'pv-tiptap-preview pv-rich-text',
+          innerHTML: renderFormattedText(editor.value?.getHTML() || props.modelValue),
+        })
+        : h('div', { class: 'pv-tiptap-shell' }, [
+          h('div', { class: 'pv-tiptap-toolbar', 'aria-label': 'Text formatting toolbar' }, [
+            ...actions.map(action => h('button', {
+              key: action.key,
+              type: 'button',
+              title: action.title,
+              'aria-label': action.title,
+              class: { active: Boolean(action.active?.()) },
+              disabled: !editor.value,
+              onClick: action.run,
+            }, action.label)),
+            h('span', { class: 'pv-tiptap-spacer' }),
+            h('button', {
+              type: 'button',
+              title: 'Undo',
+              'aria-label': 'Undo',
+              disabled: !editor.value?.can().undo(),
+              onClick: () => withEditor(activeEditor => activeEditor.chain().focus().undo().run()),
+            }, 'Undo'),
+            h('button', {
+              type: 'button',
+              title: 'Redo',
+              'aria-label': 'Redo',
+              disabled: !editor.value?.can().redo(),
+              onClick: () => withEditor(activeEditor => activeEditor.chain().focus().redo().run()),
+            }, 'Redo'),
+          ]),
+          h(EditorContent, { editor: editor.value, class: 'pv-tiptap-editor' }),
+          h('div', { class: 'pv-tiptap-foot' }, [
+            h('span', 'Use formatting, drag images in, or paste links.'),
+            h('small', `${characterCount()} characters`),
+          ]),
+        ]),
+    ])
   },
 })
 
