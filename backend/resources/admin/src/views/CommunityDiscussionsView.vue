@@ -166,6 +166,12 @@
                     {{ discussion.is_locked ? 'Unlock' : 'Lock' }}
                   </button>
                   <button
+                    class="px-3 py-1.5 rounded-lg text-xs font-medium bg-purple-500/15 text-purple-300 hover:bg-purple-500/25"
+                    @click="togglePremium(discussion)"
+                  >
+                    {{ discussion.premium_only ? 'Premium' : 'Public' }}
+                  </button>
+                  <button
                     class="px-3 py-1.5 rounded-lg text-xs font-medium bg-red-500/15 text-red-300 hover:bg-red-500/25"
                     @click="toggleStatus(discussion)"
                   >
@@ -247,6 +253,10 @@ function togglePinned(discussion) {
 
 function toggleLocked(discussion) {
   void updateDiscussion(discussion, { is_locked: !discussion.is_locked })
+}
+
+function togglePremium(discussion) {
+  void updateDiscussion(discussion, { premium_only: !discussion.premium_only })
 }
 
 function toggleStatus(discussion) {
