@@ -183,9 +183,7 @@ class MembershipController extends Controller
         ]);
 
         $plan = MembershipPlan::findOrFail($request->plan_id);
-        $price = $request->interval === 'year' ? $plan->price_yearly : $plan->price_monthly;
-        $clientId = config('services.paypal.client_id');
-        $secret = config('services.paypal.client_secret');
+        $price = (float) ($request->interval === 'year' ? $plan->price_yearly : $plan->price_monthly);
         $clientId = config('services.paypal.client_id');
         $secret = config('services.paypal.client_secret');
         $base = config('services.paypal.mode') === 'live'
