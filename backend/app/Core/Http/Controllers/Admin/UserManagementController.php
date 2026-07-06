@@ -130,6 +130,7 @@ class UserManagementController extends Controller
             'password'        => 'sometimes|string|min:8',
             'bio'             => 'sometimes|string|nullable',
             'profile_picture' => 'sometimes|string|nullable',
+            'tier'            => 'sometimes|in:free,paid',
         ];
 
         $statsRules = [

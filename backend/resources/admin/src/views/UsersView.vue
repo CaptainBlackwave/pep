@@ -96,6 +96,9 @@
                 Name
               </th>
               <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">
+                Tier
+              </th>
+              <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">
                 Roles
               </th>
               <th class="px-6 py-4 text-left text-sm font-semibold text-slate-300">
@@ -126,6 +129,16 @@
               </td>
               <td class="px-6 py-4 text-sm text-slate-300">
                 {{ item.name }}
+              </td>
+              <td class="px-6 py-4 text-sm">
+                <span
+                  :class="[
+                    'inline-flex items-center px-2.5 py-1 rounded text-xs font-medium',
+                    item.tier === 'paid' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-slate-700/60 text-slate-400'
+                  ]"
+                >
+                  {{ item.tier === 'paid' ? 'Premium' : 'Free' }}
+                </span>
               </td>
               <td class="px-6 py-4 text-sm text-slate-300">
                 <span
@@ -284,6 +297,16 @@
                 <p class="text-xs text-slate-400 mt-1">
                   Leave blank when editing to keep current password
                 </p>
+              </div>
+              <div>
+                <label class="block text-sm font-medium text-gray-300 mb-2">Membership Tier</label>
+                <select
+                  v-model="formData.tier"
+                  class="w-full px-4 py-2.5 bg-slate-700/50 border-2 border-slate-600/50 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-transparent transition-all text-white"
+                >
+                  <option value="free">Free</option>
+                  <option value="paid">Premium</option>
+                </select>
               </div>
             </div>
           </div>
