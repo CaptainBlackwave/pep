@@ -1863,6 +1863,7 @@ import PvIcon from '@/components/peptide/PvIcon.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import GiphyPicker from '@/components/ui/GiphyPicker.vue'
 import api from '@/services/api'
+import { websocketService } from '@/services/websocket'
 import { useAuthStore } from '@/stores/auth'
 import heroImage from '@/assets/peptide/hero-vials.png'
 import researchImage from '@/assets/peptide/research-thumbnails.png'
@@ -5330,6 +5331,7 @@ onMounted(() => {
   void syncCommunityContent()
   void loadMembershipPlans()
   void loadMembershipStatus()
+  setupRealtime()
 
   if (authStore.isAuthenticated && authStore.user?.id) {
     import('@/composables/usePushNotifications').then(({ usePushNotifications }) => {
@@ -5338,6 +5340,55 @@ onMounted(() => {
     })
   }
 })
+
+const wsUnsubscribers: (() => void)[] = []
+
+function setupRealtime(): void {
+  websocketService.connect().then(() => {
+    websocketService.subscribe('discussions')
+    websocketService.subscribe('announcements')
+
+    const unsubCreated = websocketService.on('discussion.created', (data: any) => {
+      if (data?.discussion && page.value === 'discussions') {
+        apiDiscussions.value = [mapDiscussion(data.discussion), ...apiDiscussions.value]
+      }
+    })
+
+    const unsubUpdated = websocketService.on('discussion.updated', (data: any) => {
+      if (data?.discussion) {
+        const updated = mapDiscussion(data.discussion)
+        const idx = apiDiscussions.value.findIndex(d => d.id === updated.id || d.slug === updated.slug)
+        if (idx !== -1) apiDiscussions.value[idx] = updated
+      }
+    })
+
+    const unsubDeleted = websocketService.on('discussion.deleted', (data: any) => {
+      if (data?.slug) {
+        apiDiscussions.value = apiDiscussions.value.filter(d => d.slug !== data.slug)
+      }
+    })
+
+    const unsubReplyCreated = websocketService.on('reply.created', (data: any) => {
+      if (data?.reply && data.discussion_slug === currentDiscussionSlug.value) {
+        apiReplies.value = [...apiReplies.value, mapReply(data.reply)]
+        if (apiDetailDiscussion.value) {
+          apiDetailDiscussion.value = { ...apiDetailDiscussion.value, replies: (apiDetailDiscussion.value.replies ?? 0) + 1 }
+        }
+      }
+    })
+
+    const unsubReplyDeleted = websocketService.on('reply.deleted', (data: any) => {
+      if (data?.reply_id && data.discussion_slug === currentDiscussionSlug.value) {
+        apiReplies.value = apiReplies.value.filter(r => r.id !== data.reply_id)
+        if (apiDetailDiscussion.value) {
+          apiDetailDiscussion.value = { ...apiDetailDiscussion.value, replies: Math.max(0, (apiDetailDiscussion.value.replies ?? 1) - 1) }
+        }
+      }
+    })
+
+    wsUnsubscribers.push(unsubCreated, unsubUpdated, unsubDeleted, unsubReplyCreated, unsubReplyDeleted)
+  }).catch(() => {})
+}
 
 watch(() => route.fullPath, () => {
   void syncCommunityContent()
@@ -5351,6 +5402,8 @@ onUnmounted(() => {
   if (vendorProductImagePreview.value && vendorProductImagePreview.value.startsWith('blob:')) {
     URL.revokeObjectURL(vendorProductImagePreview.value)
   }
+  wsUnsubscribers.forEach(fn => fn())
+  wsUnsubscribers.length = 0
 })
 
 const labResults = computed(() => {

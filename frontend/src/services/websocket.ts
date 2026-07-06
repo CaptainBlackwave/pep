@@ -20,6 +20,11 @@ export type WebSocketEvent =
   | 'unread-count'
   | 'player-action'
   | 'system-alert'
+  | 'discussion.created'
+  | 'discussion.updated'
+  | 'discussion.deleted'
+  | 'reply.created'
+  | 'reply.deleted'
 
 /**
  * WebSocket message structure

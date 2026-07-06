@@ -2,6 +2,7 @@
 
 namespace App\Core\Http\Controllers;
 
+use App\Core\Events\WebSocketBroadcast;
 use App\Core\Http\Resources\CommunityDiscussionReplyResource;
 use App\Core\Http\Resources\CommunityDiscussionResource;
 use App\Core\Http\Resources\CommunityMemberResource;
@@ -173,6 +174,10 @@ class CommunityDiscussionController extends Controller
 
         $this->notifyMentionedUsers($body, $discussion, $user);
 
+        WebSocketBroadcast::dispatch('discussions', 'discussion.created', [
+            'discussion' => (new CommunityDiscussionResource($discussion))->resolve($request),
+        ]);
+
         return (new CommunityDiscussionResource($discussion))
             ->response()
             ->setStatusCode(201);
@@ -203,6 +208,10 @@ class CommunityDiscussionController extends Controller
 
         $discussionModel->load(['category', 'user']);
 
+        WebSocketBroadcast::dispatch('discussions', 'discussion.updated', [
+            'discussion' => (new CommunityDiscussionResource($discussionModel))->resolve($request),
+        ]);
+
         return new CommunityDiscussionResource($discussionModel);
     }
 
@@ -210,6 +219,11 @@ class CommunityDiscussionController extends Controller
     {
         $discussionModel = $this->findOwnDiscussion($request, $discussion);
         $discussionModel->delete();
+
+        WebSocketBroadcast::dispatch('discussions', 'discussion.deleted', [
+            'id' => $discussionModel->id,
+            'slug' => $discussionModel->slug,
+        ]);
 
         return response()->noContent();
     }
@@ -285,6 +299,11 @@ class CommunityDiscussionController extends Controller
         $this->notifyMentionedUsers($validated['body'], $discussionModel, $user);
 
         $reply->load('user.roles');
+
+        WebSocketBroadcast::dispatch('discussions', 'reply.created', [
+            'reply' => (new CommunityDiscussionReplyResource($reply))->resolve($request),
+            'discussion_slug' => $discussionModel->slug,
+        ]);
 
         return (new CommunityDiscussionReplyResource($reply))
             ->response()
@@ -379,6 +398,12 @@ class CommunityDiscussionController extends Controller
             'body' => '[deleted]',
             'user_id' => null,
             'author_name' => null,
+        ]);
+
+        WebSocketBroadcast::dispatch('discussions', 'reply.deleted', [
+            'reply_id' => (int) $replyModel->id,
+            'discussion_id' => $discussion->id,
+            'discussion_slug' => $discussion->slug,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Reply deleted.']);
