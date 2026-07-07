@@ -89,6 +89,7 @@ class WebSocketController extends Controller
     {
         $user = $request->user();
         $this->wsService->setOnline($user);
+        $user->update(['last_active' => now()]);
 
         return response()->json([
             'status' => 'ok',

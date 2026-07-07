@@ -5280,6 +5280,7 @@ onMounted(() => {
   void loadMembershipPlans()
   void loadMembershipStatus()
   setupRealtime()
+  startHeartbeat()
 
   if (authStore.isAuthenticated && authStore.user?.id) {
     import('@/composables/usePushNotifications').then(({ usePushNotifications }) => {
@@ -5344,6 +5345,23 @@ function setupRealtime(): void {
     })
     wsUnsubscribers.push(unsubOnline)
   }).catch(() => {})
+}
+
+let heartbeatInterval: ReturnType<typeof setInterval> | null = null
+
+function startHeartbeat(): void {
+  stopHeartbeat()
+  if (!authStore.isAuthenticated) return
+  const ping = () => api.post('/api/v1/ws/heartbeat').catch(() => {})
+  ping()
+  heartbeatInterval = setInterval(ping, 120000)
+}
+
+function stopHeartbeat(): void {
+  if (heartbeatInterval) {
+    clearInterval(heartbeatInterval)
+    heartbeatInterval = null
+  }
 }
 
 watch(() => route.fullPath, () => {
