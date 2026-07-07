@@ -15,9 +15,30 @@
 
       <form class="pv-search" @submit.prevent="submitTopbarSearch">
         <PvIcon name="search" />
-        <input v-model="topbarSearch" :placeholder="searchPlaceholder" type="search">
+        <input v-model="topbarSearch" :placeholder="searchPlaceholder" type="search" @input="onSearchInput">
         <kbd>/</kbd>
       </form>
+      <div v-if="searchDropdown.length > 0" class="search-dropdown">
+        <div v-for="group in searchGroups" :key="group.label" class="search-group">
+          <div class="search-group-header">
+            <span>{{ group.label }}</span>
+            <router-link :to="{ path: '/search', query: { q: topbarSearch } }">View all</router-link>
+          </div>
+          <router-link v-for="result in group.items" :key="result.type + '-' + result.id" :to="result.url" class="search-item" @click="searchDropdown = []; topbarSearch = ''">
+            <div class="search-icon" :class="result.type">
+              <PvIcon :name="iconForType(result.type)" />
+            </div>
+            <div class="search-content">
+              <div class="search-title">{{ result.title }}</div>
+              <div class="search-meta">{{ result.type_label }}</div>
+            </div>
+          </router-link>
+        </div>
+        <div class="search-footer">
+          <div>Search for <strong>"{{ topbarSearch }}"</strong></div>
+          <div class="keyboard">ENTER</div>
+        </div>
+      </div>
 
       <div v-if="authStore.isAuthenticated" class="pv-account">
         <router-link to="/notifications" class="pv-icon-button" aria-label="Notifications">
@@ -137,6 +158,57 @@ const router = useRouter()
 const sidebarOpen = ref(false)
 const accountMenuOpen = ref(false)
 const topbarSearch = ref('')
+const searchDropdown = ref<{ type: string; type_label: string; id: number | string; title: string; url: string }[]>([])
+let searchTimer: ReturnType<typeof setTimeout> | null = null
+
+interface SearchResult {
+  type: string
+  type_label: string
+  id: number | string
+  title: string
+  url: string
+}
+
+function onSearchInput(): void {
+  if (searchTimer) clearTimeout(searchTimer)
+  const q = topbarSearch.value.trim()
+  if (q.length < 2) {
+    searchDropdown.value = []
+    return
+  }
+  searchTimer = setTimeout(async () => {
+    try {
+      const res = await api.get<{ data: SearchResult[] }>('/api/v1/community/search', { params: { q, limit: 10 } })
+      searchDropdown.value = res.data.data ?? []
+    } catch {
+      searchDropdown.value = []
+    }
+  }, 250)
+}
+
+const searchGroups = computed(() => {
+  const groups: { label: string; items: SearchResult[] }[] = []
+  const order = ['discussion', 'lab_result', 'vendor', 'research', 'guide', 'faq', 'announcement', 'member']
+  const labels: Record<string, string> = {
+    discussion: 'Discussions', lab_result: 'Lab Results', vendor: 'Vendors',
+    research: 'Research', guide: 'Guides', faq: 'FAQ',
+    announcement: 'Announcements', member: 'Members',
+  }
+  for (const type of order) {
+    const items = searchDropdown.value.filter(r => r.type === type)
+    if (items.length) groups.push({ label: labels[type] ?? type, items })
+  }
+  return groups
+})
+
+function iconForType(type: string): string {
+  const icons: Record<string, string> = {
+    discussion: 'message', lab_result: 'flask', vendor: 'star',
+    research: 'library', guide: 'question', faq: 'question',
+    announcement: 'megaphone', member: 'users',
+  }
+  return icons[type] ?? 'search'
+}
 const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
 const currentYear = new Date().getFullYear()
@@ -251,8 +323,16 @@ const submitTopbarSearch = async () => {
   })
 }
 
+function handleSearchClickOutside(event: MouseEvent): void {
+  const target = event.target as HTMLElement
+  if (!target.closest('.pv-search') && !target.closest('.pv-search-dropdown')) {
+    searchDropdown.value = []
+  }
+}
+
 onMounted(() => {
   document.addEventListener('click', handleClickOutside)
+  document.addEventListener('click', handleSearchClickOutside)
 
   if (authStore.isAuthenticated) {
     void notificationsStore.fetchUnreadCount()
