@@ -2,7 +2,6 @@
 
 use App\Core\Http\Controllers\AuthController;
 use App\Core\Http\Controllers\CommunityUserActionController;
-use App\Core\Http\Controllers\EmojiController;
 use App\Core\Http\Controllers\PluginController;
 use App\Core\Http\Controllers\PushSubscriptionController;
 use App\Core\Http\Controllers\UserSettingsController;
@@ -262,24 +261,6 @@ Route::prefix('v1')->group(function () {
             // Route::apiResource('locations', \App\Core\Http\Controllers\Admin\LocationController::class);
             // Route::apiResource('memberships', \App\Core\Http\Controllers\Admin\MembershipController::class);
 
-            // Configurable Type Tables (Core - for plugin extensibility)
-            Route::apiResource('item-rarities', \App\Core\Http\Controllers\Admin\ItemRarityController::class);
-            Route::apiResource('property-types', \App\Core\Http\Controllers\Admin\PropertyTypeController::class);
-            Route::apiResource('announcement-types', \App\Core\Http\Controllers\Admin\AnnouncementTypeController::class);
-            Route::apiResource('crime-difficulties', \App\Core\Http\Controllers\Admin\CrimeDifficultyController::class);
-            Route::apiResource('casino-game-types', \App\Core\Http\Controllers\Admin\CasinoGameTypeController::class);
-            Route::apiResource('company-industries', \App\Core\Http\Controllers\Admin\CompanyIndustryController::class);
-            Route::apiResource('stock-sectors', \App\Core\Http\Controllers\Admin\StockSectorController::class);
-            Route::apiResource('course-skills', \App\Core\Http\Controllers\Admin\CourseSkillController::class);
-            Route::apiResource('course-difficulties', \App\Core\Http\Controllers\Admin\CourseDifficultyController::class);
-            Route::apiResource('achievement-stats', \App\Core\Http\Controllers\Admin\AchievementStatController::class);
-            Route::apiResource('mission-frequencies', \App\Core\Http\Controllers\Admin\MissionFrequencyController::class);
-            Route::apiResource('mission-objective-types', \App\Core\Http\Controllers\Admin\MissionObjectiveTypeController::class);
-            Route::apiResource('bounty-statuses', \App\Core\Http\Controllers\Admin\BountyStatusController::class);
-            Route::apiResource('lottery-statuses', \App\Core\Http\Controllers\Admin\LotteryStatusController::class);
-            Route::apiResource('item-effect-types', \App\Core\Http\Controllers\Admin\ItemEffectTypeController::class);
-            Route::apiResource('item-modifier-types', \App\Core\Http\Controllers\Admin\ItemModifierTypeController::class);
-
             // System Administration
             Route::get('error-logs', [\App\Core\Http\Controllers\Admin\ErrorLogController::class, 'index']);
             Route::get('error-logs/statistics', [\App\Core\Http\Controllers\Admin\ErrorLogController::class, 'statistics']);
@@ -392,9 +373,6 @@ Route::prefix('v1')->group(function () {
                 Route::get('/{id}/logs', 'logs');
             });
 
-            // Account Duplication Detection
-            Route::get('/account-duplication', [\App\Core\Http\Controllers\Admin\AccountDuplicationController::class, 'index']);
-
             // Membership Management
             Route::prefix('membership')->controller(\App\Core\Http\Controllers\Admin\MembershipAdminController::class)->group(function () {
                 Route::get('/settings', 'settings');
@@ -412,86 +390,10 @@ Route::prefix('v1')->group(function () {
     });
 
     // Note: routes/admin.php is no longer needed - all admin routes are now in api.php
-    // require base_path('routes/admin.php');
-
-    Route::middleware('auth:sanctum')->group(function () {
-        // Emoji Routes
-        Route::get('/emojis', [EmojiController::class, 'index']);
-        Route::get('/emojis/quick-reactions', [EmojiController::class, 'quickReactions']);
-        Route::get('/emojis/search', [EmojiController::class, 'search']);
-
-        // Text Formatter Routes (BBCode & JoyPixels)
-        Route::post('/format/preview', [\App\Core\Http\Controllers\TextFormatterController::class, 'preview']);
-        Route::get('/format/bbcodes', [\App\Core\Http\Controllers\TextFormatterController::class, 'bbcodes']);
-        Route::get('/format/emojis', [\App\Core\Http\Controllers\TextFormatterController::class, 'emojis']);
-        Route::post('/format/plain', [\App\Core\Http\Controllers\TextFormatterController::class, 'plain']);
-        Route::get('/format/emoji/search', [\App\Core\Http\Controllers\TextFormatterController::class, 'searchEmoji']);
-
-        // Dashboard
-        Route::get('/dashboard', [\App\Core\Http\Controllers\DashboardController::class, 'index']);
-
-        // Player Profile
-        Route::get('/player/{id}', [\App\Core\Http\Controllers\ProfileController::class, 'show']);
-
-        // Player Statistics
-        Route::prefix('stats')->controller(\App\Core\Http\Controllers\PlayerStatsController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::get('/player/{userId}', 'show');
-            Route::post('/refresh', 'refresh');
-        });
-
-        // Activity Logs (Player's own)
-        Route::get('/activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']);
-        Route::get('/activity/my-activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']);
-
-        // Notifications
-        Route::prefix('notifications')->controller(\App\Core\Http\Controllers\NotificationController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::get('/recent', 'recent');
-            Route::get('/unread-count', 'unreadCount');
-            Route::post('/{id}/read', 'markAsRead');
-            Route::post('/mark-all-read', 'markAllAsRead');
-            Route::delete('/{id}', 'delete');
-            Route::delete('/read/clear', 'deleteRead');
-        });
-
-
-        // NOTE: Gaming routes (crimes, gym, hospital, bank, drugs, jail, inventory,
-        // combat, theft, racing, properties, bounties, missions, detective, gangs,
-        // organized-crime, travel, shop) are now provided by plugins.
-        // Install the gaming bundle to restore these features.
-    });
-
     // Authenticated routes
     Route::middleware('auth:sanctum')->group(function () {
-        // Emoji Routes
-        Route::get('/emojis', [EmojiController::class, 'index']);
-        Route::get('/emojis/quick-reactions', [EmojiController::class, 'quickReactions']);
-        Route::get('/emojis/search', [EmojiController::class, 'search']);
-
-        // Text Formatter Routes (BBCode & JoyPixels)
-        Route::post('/format/preview', [\App\Core\Http\Controllers\TextFormatterController::class, 'preview']);
-        Route::get('/format/bbcodes', [\App\Core\Http\Controllers\TextFormatterController::class, 'bbcodes']);
-        Route::get('/format/emojis', [\App\Core\Http\Controllers\TextFormatterController::class, 'emojis']);
-        Route::post('/format/plain', [\App\Core\Http\Controllers\TextFormatterController::class, 'plain']);
-        Route::get('/format/emoji/search', [\App\Core\Http\Controllers\TextFormatterController::class, 'searchEmoji']);
-
-        // Dashboard
-        Route::get('/dashboard', [\App\Core\Http\Controllers\DashboardController::class, 'index']);
-
         // Player Profile
         Route::get('/player/{id}', [\App\Core\Http\Controllers\ProfileController::class, 'show']);
-
-        // Player Statistics
-        Route::prefix('stats')->controller(\App\Core\Http\Controllers\PlayerStatsController::class)->group(function () {
-            Route::get('/', 'index');
-            Route::get('/player/{userId}', 'show');
-            Route::post('/refresh', 'refresh');
-        });
-
-        // Activity Logs (Player's own)
-        Route::get('/activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']);
-        Route::get('/activity/my-activity', [\App\Core\Http\Controllers\ActivityController::class, 'myActivity']);
 
         // Notifications
         Route::prefix('notifications')->controller(\App\Core\Http\Controllers\NotificationController::class)->group(function () {
