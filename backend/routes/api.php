@@ -84,8 +84,6 @@ Route::prefix('v1')->group(function () {
         Route::get('/search', [\App\Core\Http\Controllers\SearchController::class, 'search']);
     });
 
-    // Community routes are now provided by plugins
-
     // WebSocket routes (public - for guest tracking)
     Route::prefix('ws')->controller(\App\Core\Http\Controllers\WebSocketController::class)->withoutMiddleware('auth:sanctum')->group(function () {
         Route::get('/online-count', 'onlineCount');
@@ -521,6 +519,14 @@ Route::prefix('v1')->group(function () {
     });
 
 }); // end prefix('v1')
+
+// Plugin registry (stub — plugins are managed via admin panel)
+Route::prefix('core')->group(function () {
+    Route::get('/plugins', fn () => response()->json(['success' => true, 'data' => []]));
+    Route::get('/plugins/slots', fn () => response()->json(['success' => true, 'data' => []]));
+    Route::get('/plugins/menus', fn () => response()->json(['success' => true, 'data' => []]));
+    Route::get('/plugins/permissions', fn () => response()->json(['success' => true, 'data' => []]));
+});
 
 // Webhook routes (no auth — Stripe/PayPal call these)
 Route::post('stripe/webhook', [\App\Core\Http\Controllers\MembershipController::class, 'handleStripeWebhook']);
