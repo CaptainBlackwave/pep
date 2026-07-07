@@ -691,6 +691,10 @@ class CommunityDiscussionController extends Controller
 
     private function userHasPaidTier(?User $user): bool
     {
+        if (\App\Core\Models\Setting::where('key', 'membership_enabled')->value('value') !== '1') {
+            return true;
+        }
+
         if (!$user) {
             return false;
         }

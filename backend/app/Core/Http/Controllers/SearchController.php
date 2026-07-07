@@ -156,6 +156,9 @@ class SearchController extends Controller
 
     private function userTier($user): ?string
     {
+        if (\App\Core\Models\Setting::where('key', 'membership_enabled')->value('value') !== '1') {
+            return 'paid';
+        }
         if (!$user) return null;
         return $user->getRawOriginal('tier') ?? $user->tier;
     }

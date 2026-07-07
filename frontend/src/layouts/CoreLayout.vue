@@ -141,7 +141,8 @@ const authStore = useAuthStore()
 const notificationsStore = useNotificationsStore()
 const currentYear = new Date().getFullYear()
 const telegramUrl = ref('https://t.me/peptidevendors')
-const showUpgradePrompt = computed(() => authStore.isAuthenticated && authStore.user?.tier === 'free')
+const membershipDisabled = ref(true)
+const showUpgradePrompt = computed(() => authStore.isAuthenticated && authStore.user?.tier === 'free' && !membershipDisabled.value)
 
 function resetCookieConsent(): void {
   localStorage.removeItem('cookie_consent')
@@ -149,6 +150,7 @@ function resetCookieConsent(): void {
 }
 const navItems = computed(() => {
   const isAuth = authStore.isAuthenticated
+  const isFree = !isAuth || (authStore.user?.tier === 'free' && !membershipDisabled.value)
   const allItems = [
     { to: '/home', label: 'Home', icon: 'home', match: ['/home', '/dashboard'] },
     { to: '/discussions', label: 'Discussions', icon: 'discussions', match: ['/discussions'] },
@@ -162,7 +164,6 @@ const navItems = computed(() => {
     { to: '/notifications', label: 'Notifications', icon: 'bell', match: ['/notifications'] },
   ]
   return allItems.filter(item => {
-    const isFree = !isAuth || authStore.user?.tier === 'free'
     if (isFree && ['/lab-results', '/vendor-reviews', '/vendor-portal', '/members', '/notifications'].includes(item.to)) {
       return false
     }
@@ -256,8 +257,9 @@ onMounted(() => {
   if (authStore.isAuthenticated) {
     void notificationsStore.fetchUnreadCount()
   }
-  api.get<{ telegram_url?: string }>('/api/v1/settings/public').then(r => {
+  api.get<{ telegram_url?: string; membership_enabled?: boolean }>('/api/v1/settings/public').then(r => {
     if (r.data?.telegram_url) telegramUrl.value = r.data.telegram_url
+    membershipDisabled.value = r.data?.membership_enabled === false
   }).catch(() => {})
 })
 

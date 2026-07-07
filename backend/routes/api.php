@@ -88,7 +88,7 @@ Route::prefix('v1')->group(function () {
         return response()->json(['message' => 'Request received. We will process it within 30 days.']);
     });
 
-    // Public community routes (guests and members)
+    // Public community routes (guests and members — tier gating is internal)
     Route::prefix('community')->group(function () {
         Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories']);
         Route::get('/discussions', [CommunityDiscussionController::class, 'index']);
@@ -101,19 +101,18 @@ Route::prefix('v1')->group(function () {
         Route::get('/guides/{content}', [CommunityContentController::class, 'guideShow']);
         Route::get('/faqs', [CommunityContentController::class, 'faqIndex']);
         Route::get('/search', [\App\Core\Http\Controllers\SearchController::class, 'search']);
-    });
-
-    // Authenticated community content (some routes require paid tier)
-    Route::middleware('auth:sanctum')->prefix('community')->group(function () {
         Route::get('/lab-results', [CommunityLabResultController::class, 'index'])->middleware('tier:paid');
         Route::get('/lab-results/{result}', [CommunityLabResultController::class, 'show'])->middleware('tier:paid');
         Route::get('/vendors', [CommunityVendorController::class, 'index'])->middleware('tier:paid');
         Route::get('/vendors/{vendor}', [CommunityVendorController::class, 'show'])->middleware('tier:paid');
+    });
+
+    // Authenticated community content
+    Route::middleware('auth:sanctum')->prefix('community')->group(function () {
         Route::get('/members', [CommunityMemberController::class, 'index'])->middleware('tier:paid');
         Route::get('/members/{member}', [CommunityMemberController::class, 'show'])->middleware('tier:paid');
         Route::get('/messages', [CommunityMessageController::class, 'index'])->middleware('tier:paid');
         Route::get('/messages/{thread}', [CommunityMessageController::class, 'show'])->middleware('tier:paid');
-
         Route::get('/notifications', [CommunityNotificationController::class, 'index']);
         Route::get('/notifications/{notification}', [CommunityNotificationController::class, 'show']);
     });
