@@ -210,6 +210,10 @@
             <span><PvIcon name="users" /> Community Driven</span>
             <span><PvIcon name="lock" /> Private & Secure</span>
           </div>
+          <div v-if="!authStore.isAuthenticated" style="margin-top:16px">
+            <router-link to="/register" class="pv-primary-button" style="margin-right:8px">Join the Community</router-link>
+            <router-link to="/login" class="pv-small-button">Sign In</router-link>
+          </div>
         </article>
 
       </div>
