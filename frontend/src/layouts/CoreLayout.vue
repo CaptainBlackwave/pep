@@ -225,21 +225,7 @@ const assetUrl = (value: string) => {
   return value
 }
 
-const topbarSearchTarget = computed(() => {
-  const path = route.path
-
-  if (path.startsWith('/lab-results')) return '/lab-results'
-  if (path.startsWith('/vendor-reviews')) return '/vendor-reviews'
-  if (path.startsWith('/vendor-portal')) return '/vendor-reviews'
-  if (path.startsWith('/research-library')) return '/research-library'
-  if (path.startsWith('/guides')) return '/guides'
-  if (path.startsWith('/members')) return '/members'
-  if (path.startsWith('/messages')) return '/messages'
-  if (path.startsWith('/announcements')) return '/announcements'
-  if (path.startsWith('/notifications')) return '/notifications'
-
-  return '/discussions'
-})
+const topbarSearchTarget = computed(() => '/search')
 
 const handleClickOutside = (event: MouseEvent) => {
   const target = event.target as HTMLElement

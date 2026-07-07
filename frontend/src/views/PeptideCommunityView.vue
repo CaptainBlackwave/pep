@@ -1687,6 +1687,32 @@
     </div>
   </section>
 
+  <section v-else-if="page === 'search'" class="pv-page">
+    <div class="pv-content-grid">
+      <main class="pv-stack">
+        <header class="pv-page-header">
+          <div>
+            <h1>Search Results</h1>
+            <p v-if="searchQuery">Showing results for "<strong>{{ searchQuery }}</strong>"</p>
+          </div>
+        </header>
+        <article class="pv-panel">
+          <div v-if="searchLoading" class="pv-loading">Searching...</div>
+          <div v-else-if="searchError" class="pv-error">{{ searchError }}</div>
+          <div v-else-if="searchResults.length === 0" class="pv-muted">No results found.</div>
+          <router-link v-for="result in searchResults" :key="result.type + '-' + result.id" :to="result.url" class="pv-search-row">
+            <span class="pv-tag">{{ result.type_label }}<template v-if="result.premium"> 🔒</template></span>
+            <div>
+              <strong>{{ result.title }}</strong>
+              <p>{{ result.text }}</p>
+            </div>
+            <PvIcon name="chevron" />
+          </router-link>
+        </article>
+      </main>
+    </div>
+  </section>
+
   <section v-else-if="page === 'pricing'" class="pv-page">
     <div class="pv-content-grid">
       <main class="pv-stack">
@@ -4922,6 +4948,9 @@ async function syncCommunityContent(): Promise<void> {
     case 'notificationDetail':
       await Promise.all([loadNotificationDetail(), loadNotifications()])
       return
+    case 'search':
+      await loadSearchResults()
+      return
     case 'telegramUpdates':
       await Promise.all([loadAnnouncements(), loadNotifications()])
       return
@@ -7233,6 +7262,42 @@ const currentNotificationSlug = computed(() => String(route.params.slug ?? ''))
 const primaryNotification = computed(() => apiDetailNotification.value ?? notifications.value.find(item => item.slug === currentNotificationSlug.value) ?? null)
 const currentNotificationIndex = computed(() => notifications.value.findIndex(item => item.slug === primaryNotification.value?.slug))
 const previousNotification = computed(() => currentNotificationIndex.value > 0 ? notifications.value[currentNotificationIndex.value - 1] : null)
+interface SearchResult {
+  type: string
+  type_label: string
+  id: number | string
+  slug: string
+  title: string
+  text: string
+  url: string
+  premium: boolean
+}
+
+const searchQuery = computed(() => typeof route.query.q === 'string' ? route.query.q : '')
+const searchResults = ref<SearchResult[]>([])
+const searchLoading = ref(false)
+const searchError = ref('')
+
+async function loadSearchResults(): Promise<void> {
+  const q = searchQuery.value
+  if (!q) {
+    searchResults.value = []
+    searchLoading.value = false
+    return
+  }
+  searchLoading.value = true
+  searchError.value = ''
+  try {
+    const response = await api.get<{ data: SearchResult[] }>('/api/v1/community/search', { params: { q, limit: 30 } })
+    searchResults.value = response.data.data ?? []
+  } catch {
+    searchError.value = 'Search failed. Please try again.'
+    searchResults.value = []
+  } finally {
+    searchLoading.value = false
+  }
+}
+
 function escapeHtml(value: string): string {
   return value
     .replace(/&/g, '&amp;')

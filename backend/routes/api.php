@@ -100,6 +100,7 @@ Route::prefix('v1')->group(function () {
         Route::get('/guides', [CommunityContentController::class, 'guideIndex']);
         Route::get('/guides/{content}', [CommunityContentController::class, 'guideShow']);
         Route::get('/faqs', [CommunityContentController::class, 'faqIndex']);
+        Route::get('/search', [\App\Core\Http\Controllers\SearchController::class, 'search']);
     });
 
     // Authenticated community content (some routes require paid tier)
