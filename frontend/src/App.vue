@@ -17,7 +17,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { RouterView } from 'vue-router'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 import ToastContainer from './components/ToastContainer.vue'
@@ -25,14 +25,21 @@ import ToastContainer from './components/ToastContainer.vue'
 const showCookieConsent = ref(false)
 
 onMounted(() => {
-  if (!localStorage.getItem('cookie_consent')) {
-    showCookieConsent.value = true
-  }
+  setCookieConsentVisible(!localStorage.getItem('cookie_consent'))
 })
+
+onUnmounted(() => {
+  document.body.classList.remove('pv-cookie-visible')
+})
+
+function setCookieConsentVisible(visible: boolean): void {
+  showCookieConsent.value = visible
+  document.body.classList.toggle('pv-cookie-visible', visible)
+}
 
 function acceptCookies(): void {
   localStorage.setItem('cookie_consent', '1')
-  showCookieConsent.value = false
+  setCookieConsentVisible(false)
 }
 </script>
 

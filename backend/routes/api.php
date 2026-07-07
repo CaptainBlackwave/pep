@@ -119,8 +119,6 @@ Route::prefix('v1')->group(function () {
         Route::post('/user/blocked-users', [UserSettingsController::class, 'blockUser']);
         Route::delete('/user/blocked-users/{user}', [UserSettingsController::class, 'unblockUser']);
 
-        Route::post('/vendor-access/request', [\App\Core\Http\Controllers\VendorAccessRequestController::class, 'store']);
-
         Route::prefix('community')->group(function () {
             Route::get('/user-actions', [CommunityUserActionController::class, 'index']);
             Route::post('/user-actions/toggle', [CommunityUserActionController::class, 'toggle']);

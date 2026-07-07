@@ -216,6 +216,34 @@
           </div>
         </article>
 
+        <article class="pv-panel pv-home-links">
+          <header class="pv-panel-header">
+            <h2><PvIcon name="home" /> Explore</h2>
+          </header>
+          <div class="pv-home-link-grid">
+            <router-link to="/discussions" class="pv-home-link">
+              <span class="pv-icon-tile"><PvIcon name="discussions" /></span>
+              <span><strong>Discussions</strong><small>Open conversations</small></span>
+              <PvIcon name="chevron" />
+            </router-link>
+            <router-link to="/research-library" class="pv-home-link">
+              <span class="pv-icon-tile"><PvIcon name="library" /></span>
+              <span><strong>Research Library</strong><small>Articles and references</small></span>
+              <PvIcon name="chevron" />
+            </router-link>
+            <router-link to="/guides" class="pv-home-link">
+              <span class="pv-icon-tile"><PvIcon name="question" /></span>
+              <span><strong>Guides &amp; FAQ</strong><small>Safety-first reading</small></span>
+              <PvIcon name="chevron" />
+            </router-link>
+            <router-link :to="authStore.isAuthenticated ? '/members' : '/pricing'" class="pv-home-link">
+              <span class="pv-icon-tile"><PvIcon name="users" /></span>
+              <span><strong>{{ authStore.isAuthenticated ? 'Members' : 'Premium' }}</strong><small>{{ authStore.isAuthenticated ? 'Community directory' : 'Unlock protected areas' }}</small></span>
+              <PvIcon name="chevron" />
+            </router-link>
+          </div>
+        </article>
+
       </div>
 
       <aside class="pv-stack pv-right-rail">
@@ -297,7 +325,12 @@
         <article class="pv-panel">
           <p v-if="discussionStatusMessage" class="pv-alert pv-alert--compact">{{ discussionStatusMessage }}</p>
           <div class="pv-topic-list">
-            <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
+            <div v-if="discussionsLoaded && discussions.length === 0" class="pv-empty-inline">
+              <PvIcon name="message" />
+              <strong>No discussions found</strong>
+              <p>{{ activeCategory || discussionSearch ? 'Try clearing the current filters.' : 'Start the first discussion in this space.' }}</p>
+              <button v-if="activeCategory || discussionSearch" class="pv-small-button" type="button" @click="clearDiscussionFilters">Clear Filters</button>
+            </div>
             <div v-if="!discussionsLoaded" class="pv-skeleton-stack">
               <div v-for="i in 5" :key="i" class="pv-skeleton-card"><div class="pv-skeleton pv-skeleton--avatar"></div><div class="pv-skeleton-body"><div class="pv-skeleton pv-skeleton--line w-75"></div><div class="pv-skeleton pv-skeleton--line w-50"></div><div class="pv-skeleton pv-skeleton--line w-25"></div></div></div>
             </div>
@@ -488,7 +521,7 @@
 
       <p v-if="replyStatusMessage" class="pv-alert pv-alert--compact">{{ replyStatusMessage }}</p>
 
-      <form id="reply-composer" class="reply-composer" @submit.prevent="submitReply">
+      <form v-if="authStore.isAuthenticated" id="reply-composer" class="reply-composer" @submit.prevent="submitReply">
         <div class="reply-composer-head">
           <strong>Reply as {{ accountName() }}</strong>
           <small>{{ plainTextFromRichText(replyBody).length }}/8000</small>
@@ -507,6 +540,17 @@
           <button type="submit" class="pv-primary-button" :disabled="submittingReply"><PvIcon name="send" /> {{ submittingReply ? 'Posting...' : 'Post Reply' }}</button>
         </div>
       </form>
+      <article v-else id="reply-composer" class="pv-panel pv-reply-login">
+        <span class="pv-icon-tile"><PvIcon name="lock" /></span>
+        <div>
+          <h2>Sign in to reply</h2>
+          <p class="pv-muted">Join the discussion with your account, quote posts, and upload attachments.</p>
+        </div>
+        <div class="pv-reply-login-actions">
+          <router-link :to="{ path: '/login', query: { redirect: route.fullPath } }" class="pv-primary-button">Sign In</router-link>
+          <router-link :to="{ path: '/register', query: { redirect: route.fullPath } }" class="pv-small-button">Register</router-link>
+        </div>
+      </article>
     </div>
     <div v-else class="pv-empty-route">
       <h1>Discussion not found</h1>
@@ -517,7 +561,7 @@
   <section v-else-if="page === 'labResults'" class="pv-page">
     <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
       <div class="pv-upgrade-card">
-        <PvIcon name="flask" />
+        <span class="pv-upgrade-icon"><PvIcon name="flask" /></span>
         <h2>Premium Feature</h2>
         <p>Upgrade to Premium to access independent lab testing reports, COAs, purity analysis, and batch data.</p>
         <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
@@ -588,7 +632,15 @@
   </section>
 
   <section v-else-if="page === 'labReport'" class="pv-page">
-    <div v-if="detailLabResult" class="pv-content-grid">
+    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
+      <div class="pv-upgrade-card">
+        <span class="pv-upgrade-icon"><PvIcon name="flask" /></span>
+        <h2>Premium Feature</h2>
+        <p>Upgrade to Premium to access independent lab testing reports, COAs, purity analysis, and batch data.</p>
+        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+      </div>
+    </div>
+    <div v-else-if="detailLabResult" class="pv-content-grid">
       <main class="pv-stack">
         <nav class="pv-breadcrumbs">Lab Results <PvIcon name="chevron" /> {{ detailLabResult.name }} <PvIcon name="chevron" /> Report</nav>
         <header class="pv-page-header">
@@ -645,7 +697,7 @@
   <section v-else-if="page === 'vendorReviews'" class="pv-page">
     <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
       <div class="pv-upgrade-card">
-        <PvIcon name="shield" />
+        <span class="pv-upgrade-icon"><PvIcon name="shield" /></span>
         <h2>Premium Feature</h2>
         <p>Upgrade to Premium to read and write vendor reviews with ratings, photos, and detailed feedback.</p>
         <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
@@ -669,15 +721,15 @@
           <p v-if="vendorStatusMessage" class="pv-alert pv-alert--compact">{{ vendorStatusMessage }}</p>
           <p v-if="vendorsLoaded && vendors.length === 0" class="pv-muted">No vendors found.</p>
           <article v-for="vendor in vendors" :key="vendor.slug" class="vendor-card">
-            <router-link :to="vendor.href" class="vendor-arrow">›</router-link>
+            <router-link :to="vendor.href" class="vendor-arrow" :aria-label="`Open ${vendor.name}`"><PvIcon name="chevron" /></router-link>
             <div class="vendor-top">
               <span v-if="vendor.imageUrl" class="vendor-logo"><img :src="vendor.imageUrl" :alt="vendor.name"></span>
               <span v-else class="vendor-logo vendor-logo--letter">{{ vendor.logoText }}</span>
               <div class="vendor-info">
                 <h3>{{ vendor.name }}</h3>
-                <span class="trusted">✓ {{ vendor.status }}</span>
+                <span class="trusted"><PvIcon name="check" /> {{ vendor.status }}</span>
                 <span v-if="vendor.country" class="country-badge">{{ countryFlag(vendor.country) }} {{ vendor.country }}</span>
-                <p class="vendor-meta">☆ {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} · Member since {{ vendor.since }}</p>
+                <p class="vendor-meta"><PvIcon name="star" /> {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} <span>Member since {{ vendor.since || 'recently' }}</span></p>
               </div>
             </div>
             <div class="vendor-tags">
@@ -685,17 +737,17 @@
             </div>
             <div class="vendor-stats">
               <div>
-                <strong>★ {{ vendor.rating || '0.0' }} <small>/ 5</small></strong>
+                <strong><PvIcon name="star" /> {{ vendor.rating || '0.0' }} <small>/ 5</small></strong>
                 <span>Overall Rating</span>
               </div>
               <div>
-                <strong>🛒 {{ vendor.buyAgain || '0%' }}</strong>
+                <strong><PvIcon name="cart" /> {{ vendor.buyAgain || '0%' }}</strong>
                 <span>Would buy again</span>
               </div>
             </div>
             <div class="vendor-actions">
-              <router-link :to="vendor.href" class="secondary">☷ View Vendor</router-link>
-              <router-link :to="`${vendor.href}/review`" class="primary">✎ Write Review</router-link>
+              <router-link :to="vendor.href" class="secondary"><PvIcon name="eye" /> View Vendor</router-link>
+              <router-link :to="`${vendor.href}/review`" class="primary"><PvIcon name="edit" /> Write Review</router-link>
             </div>
           </article>
           <PaginationBlock :meta="vendorPagination" @page="setVendorPage" />
@@ -732,7 +784,19 @@
           </router-link>
         </header>
 
-        <article v-if="apiMyVendor" class="pv-panel pv-vendor-owner-card">
+        <article v-if="!authStore.isAuthenticated" class="pv-panel pv-vendor-access-card">
+          <span class="pv-icon-tile"><PvIcon name="lock" /></span>
+          <div>
+            <h2>Sign in for vendor access</h2>
+            <p class="pv-muted">Use an account to request vendor access, manage an approved profile, and maintain public product listings.</p>
+          </div>
+          <div class="pv-reply-login-actions">
+            <router-link :to="{ path: '/login', query: { redirect: route.fullPath } }" class="pv-primary-button">Sign In</router-link>
+            <router-link :to="{ path: '/register', query: { redirect: route.fullPath } }" class="pv-small-button">Register</router-link>
+          </div>
+        </article>
+
+        <article v-if="authStore.isAuthenticated && apiMyVendor" class="pv-panel pv-vendor-owner-card">
           <span class="pv-logo-card" :class="apiMyVendor.class"><img v-if="apiMyVendor.imageUrl" :src="apiMyVendor.imageUrl" :alt="apiMyVendor.name"><template v-else>{{ apiMyVendor.logoText }}</template></span>
           <span>
             <strong>{{ vendorPortalAccessApproved ? `You control ${apiMyVendor.name}` : `${apiMyVendor.name} is locked` }}</strong>
@@ -741,10 +805,10 @@
           <router-link v-if="apiMyVendor.publishStatus === 'published'" :to="apiMyVendor.href" class="pv-small-button">Open Profile</router-link>
         </article>
 
-        <p v-if="vendorPortalStatusMessage" class="pv-alert pv-alert--compact">{{ vendorPortalStatusMessage }}</p>
-        <p v-if="vendorPortalFormError" class="pv-alert pv-alert--compact">{{ vendorPortalFormError }}</p>
+        <p v-if="authStore.isAuthenticated && vendorPortalStatusMessage" class="pv-alert pv-alert--compact">{{ vendorPortalStatusMessage }}</p>
+        <p v-if="authStore.isAuthenticated && vendorPortalFormError" class="pv-alert pv-alert--compact">{{ vendorPortalFormError }}</p>
 
-        <form v-if="vendorPortalAccessApproved" class="pv-form-card pv-vendor-portal-form" @submit.prevent="saveVendorProfile">
+        <form v-if="authStore.isAuthenticated && vendorPortalAccessApproved" class="pv-form-card pv-vendor-portal-form" @submit.prevent="saveVendorProfile">
           <header class="pv-panel-header">
             <div>
               <h2>{{ apiMyVendor ? 'Edit Vendor Profile' : 'Set Up Vendor Profile' }}</h2>
@@ -825,7 +889,7 @@
           </footer>
         </form>
 
-        <article v-if="vendorPortalAccessApproved && apiMyVendor" class="pv-form-card pv-vendor-product-manager">
+        <article v-if="authStore.isAuthenticated && vendorPortalAccessApproved && apiMyVendor" class="pv-form-card pv-vendor-product-manager">
           <header class="pv-panel-header">
             <div>
               <h2>Product Catalog</h2>
@@ -965,7 +1029,7 @@
           </div>
         </article>
 
-        <article v-if="vendorPortalAccessApproved && apiMyVendor" class="pv-form-card pv-vendor-document-manager">
+        <article v-if="authStore.isAuthenticated && vendorPortalAccessApproved && apiMyVendor" class="pv-form-card pv-vendor-document-manager">
           <header class="pv-panel-header">
             <div>
               <h2>Documents</h2>
@@ -1031,7 +1095,7 @@
           </div>
         </article>
 
-         <article v-else-if="!vendorPortalAccessApproved" class="pv-panel">
+         <article v-else-if="authStore.isAuthenticated && !vendorPortalAccessApproved" class="pv-panel">
            <h2>Vendor Access Required</h2>
            <p class="pv-muted">Read the <router-link to="/discussions/vendor-application-process" class="pv-purple-link">Vendor Application Process</router-link> first, then follow the steps below.</p>
            <dl class="pv-data-list">
@@ -1063,8 +1127,8 @@
         <article class="pv-panel">
           <h2>Vendor Access</h2>
           <dl class="pv-data-list">
-            <div><dt>Status</dt><dd>{{ vendorPortalAccessApproved ? 'Approved' : 'Not approved' }}</dd></div>
-            <div><dt>Profile</dt><dd>{{ apiMyVendor ? apiMyVendor.publishStatus : 'Not created' }}</dd></div>
+            <div><dt>Status</dt><dd>{{ !authStore.isAuthenticated ? 'Sign in required' : vendorPortalAccessApproved ? 'Approved' : 'Not approved' }}</dd></div>
+            <div><dt>Profile</dt><dd>{{ !authStore.isAuthenticated ? 'Account required' : apiMyVendor ? apiMyVendor.publishStatus : 'Not created' }}</dd></div>
           </dl>
           <button v-if="authStore.user?.roles?.includes('admin') && !vendorPortalAccessApproved" class="pv-primary-button pv-full" style="margin-top:12px" @click="approveVendorAccess">Approve Vendor Access</button>
         </article>
@@ -1083,26 +1147,34 @@
   </section>
 
   <section v-else-if="page === 'vendorDetail' || page === 'reviewModal'" class="pv-page">
-    <div v-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
+    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
+      <div class="pv-upgrade-card">
+        <span class="pv-upgrade-icon"><PvIcon name="shield" /></span>
+        <h2>Premium Feature</h2>
+        <p>Upgrade to Premium to read and write vendor reviews with ratings, photos, and detailed feedback.</p>
+        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+      </div>
+    </div>
+    <div v-else-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
       <main class="pv-stack">
         <router-link to="/vendor-reviews" class="op-back">← Back to Vendors</router-link>
         <article class="vendor-card vendor-card--hero">
           <div v-if="detailVendor.imageUrl" class="vendor-hero-bg" :style="{ backgroundImage: `url(${detailVendor.imageUrl})` }"></div>
           <div class="vendor-top">
-            <span v-if="detailVendor.imageUrl" class="vendor-logo"><img :src="detailVendor.imageUrl" :alt="detailVendor.name"></span>
-            <span v-else class="vendor-logo vendor-logo--letter">{{ detailVendor.logoText }}</span>
-            <div class="vendor-info">
-              <h3>{{ detailVendor.name }}</h3>
-              <span class="trusted">✓ {{ detailVendor.status }}</span>
+              <span v-if="detailVendor.imageUrl" class="vendor-logo"><img :src="detailVendor.imageUrl" :alt="detailVendor.name"></span>
+              <span v-else class="vendor-logo vendor-logo--letter">{{ detailVendor.logoText }}</span>
+              <div class="vendor-info">
+                <h3>{{ detailVendor.name }}</h3>
+              <span class="trusted"><PvIcon name="check" /> {{ detailVendor.status }}</span>
               <span v-if="detailVendor.country" class="country-badge">{{ countryFlag(detailVendor.country) }} {{ detailVendor.country }}</span>
-              <p class="vendor-meta">☆ {{ detailVendor.rating }} / 5 · {{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }} · Member since {{ detailVendor.since }}</p>
+              <p class="vendor-meta"><PvIcon name="star" /> {{ detailVendor.rating }} / 5 <span>{{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }}</span><span>Member since {{ detailVendor.since || 'recently' }}</span></p>
               <div class="vendor-tags" style="margin-top:8px">
                 <span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span>
               </div>
             </div>
           </div>
           <div class="vendor-actions" style="margin-top:16px">
-            <router-link :to="`${detailVendor.href}/review`" class="primary">✎ Write Review</router-link>
+            <router-link :to="`${detailVendor.href}/review`" class="primary"><PvIcon name="edit" /> Write Review</router-link>
             <button v-if="hasVendorContact(detailVendor)" class="secondary" @click="showVendorContactSection">Contact</button>
             <router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="secondary">Manage</router-link>
             <a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="secondary">Website</a>
@@ -1299,7 +1371,7 @@
       <h1>Vendor not found</h1>
       <p>This vendor has not been published or does not exist.</p>
     </div>
-    <div v-if="page === 'reviewModal'" class="pv-modal-backdrop">
+    <div v-if="page === 'reviewModal' && !showUpgradePrompt" class="pv-modal-backdrop">
       <form v-if="detailVendor" class="pv-modal" @submit.prevent="submitVendorReview">
         <header class="pv-panel-header"><div><h2>Write a Review</h2><p class="pv-muted">Reviewing {{ detailVendor.name }}. Share your experience to help others in the community.</p></div><router-link :to="detailVendor.href" class="pv-icon-button pv-icon-button--static"><PvIcon name="close" /></router-link></header>
         <p v-if="vendorReviewFormError" class="pv-alert pv-alert--compact">{{ vendorReviewFormError }}</p>
@@ -1447,7 +1519,7 @@
    <section v-else-if="page === 'members'" class="pv-page">
     <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
       <div class="pv-upgrade-card">
-        <PvIcon name="users" />
+        <span class="pv-upgrade-icon"><PvIcon name="users" /></span>
         <h2>Premium Feature</h2>
         <p>Upgrade to Premium to browse detailed member profiles with activity history and reputation scores.</p>
         <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
@@ -1521,14 +1593,22 @@
   </section>
 
   <section v-else-if="page === 'memberDetail'" class="pv-page">
-    <MemberProfile v-if="detailMember" :profile="detailMember" />
+    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
+      <div class="pv-upgrade-card">
+        <span class="pv-upgrade-icon"><PvIcon name="users" /></span>
+        <h2>Premium Feature</h2>
+        <p>Upgrade to Premium to browse detailed member profiles with activity history and reputation scores.</p>
+        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+      </div>
+    </div>
+    <MemberProfile v-else-if="detailMember" :profile="detailMember" />
     <div v-else class="pv-empty-route"><h1>Member not found</h1><p>This member profile has not been published or does not exist.</p></div>
   </section>
 
   <section v-else-if="page === 'messages'" class="pv-page pv-messages-page">
     <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
       <div class="pv-upgrade-card">
-        <PvIcon name="message" />
+        <span class="pv-upgrade-icon"><PvIcon name="message" /></span>
         <h2>Premium Feature</h2>
         <p>Upgrade to Premium to send direct messages to other members for private discussions and collaboration.</p>
         <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
@@ -2911,7 +2991,7 @@ const discussionsLoaded = ref(false)
 const discussionPagination = ref<PaginationMeta | null>(null)
 const discussionPage = ref(1)
 const discussionSearch = ref('')
-const activeCategory = ref('rules')
+const activeCategory = ref('')
 const discussionStatusMessage = ref('')
 const showNewDiscussion = ref(false)
 const creatingDiscussion = ref(false)
@@ -3024,7 +3104,8 @@ const billingInterval = ref<'month' | 'year'>('year')
 const paymentStatusMessage = ref('')
 const subscribing = ref(false)
 
-const showUpgradePrompt = computed(() => authStore.isAuthenticated && membershipTier.value !== 'paid')
+const hasPremiumAccess = computed(() => authStore.isAuthenticated && membershipTier.value === 'paid')
+const showUpgradePrompt = computed(() => !hasPremiumAccess.value)
 
 interface MembershipPlan {
   id: number
@@ -4565,6 +4646,12 @@ function jumpToReplyComposer(): void {
 }
 
 function prepareReply(reply: UiReply | null, quote = false): void {
+  if (!authStore.isAuthenticated) {
+    replyStatusMessage.value = 'Sign in to reply to this discussion.'
+    jumpToReplyComposer()
+    return
+  }
+
   if (!reply) {
     const text = plainTextFromRichText(detailDiscussion.value?.body ?? '') || detailParagraphs.value.join('\n') || detailDiscussion.value?.title || ''
     replyBody.value = quote && text ? quoteHtml(text) : ''
@@ -5202,6 +5289,13 @@ function setDiscussionCategory(slug: string): void {
   void loadDiscussions()
 }
 
+function clearDiscussionFilters(): void {
+  discussionSearch.value = ''
+  activeCategory.value = ''
+  discussionPage.value = 1
+  void loadDiscussions()
+}
+
 function setDiscussionPage(pageNumber: number): void {
   discussionPage.value = pageNumber
   void loadDiscussions()
@@ -5760,6 +5854,7 @@ function productCatalogPriceLabel(product: VendorProduct): string {
 
 function mapVendor(item: ApiVendor): UiVendor {
   const products = (item.products ?? []).map(mapVendorProduct)
+  const topProducts = (item.top_products ?? []).map(mapVendorProduct)
 
   function mapVendorDocument(doc: ApiVendorDocument): VendorDocument {
     return {
@@ -5815,7 +5910,7 @@ function mapVendor(item: ApiVendor): UiVendor {
     avgResponseTime: item.avg_response_time ?? '',
     productCount: item.product_count ?? products.filter(product => product.status === 'published').length,
     products,
-    topProducts: (item.top_products ?? []).map(mapVendorProduct),
+    topProducts: topProducts.length > 0 ? topProducts : products.slice(0, 3),
     documents: (item.documents ?? []).map(mapVendorDocument),
     ratingDistribution: item.rating_distribution ?? [],
   }
@@ -6232,6 +6327,11 @@ async function saveVendorProfile(): Promise<void> {
 }
 
 async function requestVendorAccess(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    await router.push({ path: '/login', query: { redirect: route.fullPath } })
+    return
+  }
+
   vendorAccessRequested.value = true
   try {
     await api.post('/api/v1/vendor-access/request')
@@ -7729,6 +7829,21 @@ function contentThumbnailStyle(item: UiContentItem, fallbackIndex = 0) {
   return thumbnailStyle(item.imageIndex || fallbackIndex, item.imageUrl)
 }
 
+type TipTapToolbarAction = {
+  key: string
+  icon: string
+  title: string
+  active?: () => boolean | undefined
+  disabled?: () => boolean
+  run: () => void
+}
+
+type TipTapToolbarGroup = {
+  key: string
+  label: string
+  actions: TipTapToolbarAction[]
+}
+
 const TipTapComposer = defineComponent({
   props: {
     modelValue: { type: String, default: '' },
@@ -7884,19 +7999,45 @@ const TipTapComposer = defineComponent({
       activeEditor.chain().focus().insertContent(emoji).run()
     })
 
-    const actions = [
-      { key: 'bold', label: 'B', title: 'Bold', active: () => editor.value?.isActive('bold'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBold().run()) },
-      { key: 'italic', label: 'I', title: 'Italic', active: () => editor.value?.isActive('italic'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleItalic().run()) },
-      { key: 'heading', label: 'H', title: 'Heading', active: () => editor.value?.isActive('heading', { level: 2 }), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleHeading({ level: 2 }).run()) },
-      { key: 'quote', label: '""', title: 'Quote', active: () => editor.value?.isActive('blockquote'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBlockquote().run()) },
-      { key: 'bullet', label: 'List', title: 'Bullet list', active: () => editor.value?.isActive('bulletList'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBulletList().run()) },
-      { key: 'numbered', label: '1.', title: 'Numbered list', active: () => editor.value?.isActive('orderedList'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleOrderedList().run()) },
-      { key: 'code', label: '</>', title: 'Code block', active: () => editor.value?.isActive('codeBlock'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleCodeBlock().run()) },
-      { key: 'link', label: 'Link', title: 'Link', run: setLink },
-      { key: 'image', label: 'Image', title: 'Image', run: setImage },
-      { key: 'table', label: 'Table', title: 'Table', active: () => editor.value?.isActive('table'), run: () => withEditor(activeEditor => activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()) },
-      { key: 'emoji', label: 'Smile', title: 'Emoji', run: setEmoji },
-      { key: 'video', label: 'Video', title: 'YouTube embed', run: setVideo },
+    const actionGroups: TipTapToolbarGroup[] = [
+      {
+        key: 'format',
+        label: 'Formatting',
+        actions: [
+          { key: 'bold', icon: 'bold', title: 'Bold', active: () => editor.value?.isActive('bold'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBold().run()) },
+          { key: 'italic', icon: 'italic', title: 'Italic', active: () => editor.value?.isActive('italic'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleItalic().run()) },
+          { key: 'heading', icon: 'heading', title: 'Heading', active: () => editor.value?.isActive('heading', { level: 2 }), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleHeading({ level: 2 }).run()) },
+          { key: 'quote', icon: 'quote', title: 'Quote', active: () => editor.value?.isActive('blockquote'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBlockquote().run()) },
+        ],
+      },
+      {
+        key: 'structure',
+        label: 'Structure',
+        actions: [
+          { key: 'bullet', icon: 'list', title: 'Bullet list', active: () => editor.value?.isActive('bulletList'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleBulletList().run()) },
+          { key: 'numbered', icon: 'list-ordered', title: 'Numbered list', active: () => editor.value?.isActive('orderedList'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleOrderedList().run()) },
+          { key: 'code', icon: 'code', title: 'Code block', active: () => editor.value?.isActive('codeBlock'), run: () => withEditor(activeEditor => activeEditor.chain().focus().toggleCodeBlock().run()) },
+          { key: 'table', icon: 'table', title: 'Table', active: () => editor.value?.isActive('table'), run: () => withEditor(activeEditor => activeEditor.chain().focus().insertTable({ rows: 3, cols: 3, withHeaderRow: true }).run()) },
+        ],
+      },
+      {
+        key: 'insert',
+        label: 'Insert',
+        actions: [
+          { key: 'link', icon: 'link', title: 'Link', active: () => editor.value?.isActive('link'), run: setLink },
+          { key: 'image', icon: 'image', title: 'Image', run: setImage },
+          { key: 'emoji', icon: 'emoji', title: 'Emoji', run: setEmoji },
+          { key: 'video', icon: 'video', title: 'YouTube embed', run: setVideo },
+        ],
+      },
+      {
+        key: 'history',
+        label: 'History',
+        actions: [
+          { key: 'undo', icon: 'undo', title: 'Undo', disabled: () => !editor.value?.can().undo(), run: () => withEditor(activeEditor => activeEditor.chain().focus().undo().run()) },
+          { key: 'redo', icon: 'redo', title: 'Redo', disabled: () => !editor.value?.can().redo(), run: () => withEditor(activeEditor => activeEditor.chain().focus().redo().run()) },
+        ],
+      },
     ]
 
     return () => h('div', { class: ['pv-tiptap', props.compact ? 'pv-tiptap--compact' : ''] }, [
@@ -7919,36 +8060,28 @@ const TipTapComposer = defineComponent({
         })
         : h('div', { class: 'pv-tiptap-shell' }, [
           h('div', { class: 'pv-tiptap-toolbar', 'aria-label': 'Text formatting toolbar' }, [
-            ...actions.map(action => h('button', {
+            ...actionGroups.map(group => h('div', {
+              key: group.key,
+              class: 'pv-tiptap-group',
+              'aria-label': group.label,
+            }, group.actions.map(action => h('button', {
               key: action.key,
               type: 'button',
               title: action.title,
               'aria-label': action.title,
               class: { active: Boolean(action.active?.()) },
-              disabled: !editor.value,
+              disabled: !editor.value || Boolean(action.disabled?.()),
               onClick: action.run,
-            }, action.label)),
-            h('span', { class: 'pv-tiptap-spacer' }),
-            h('button', {
-              type: 'button',
-              title: 'Undo',
-              'aria-label': 'Undo',
-              disabled: !editor.value?.can().undo(),
-              onClick: () => withEditor(activeEditor => activeEditor.chain().focus().undo().run()),
-            }, 'Undo'),
-            h('button', {
-              type: 'button',
-              title: 'Redo',
-              'aria-label': 'Redo',
-              disabled: !editor.value?.can().redo(),
-              onClick: () => withEditor(activeEditor => activeEditor.chain().focus().redo().run()),
-            }, 'Redo'),
+            }, [
+              h(PvIcon, { name: action.icon }),
+              h('span', { class: 'pv-sr-only' }, action.title),
+            ])))),
           ]),
           h(EditorContent, { editor: editor.value, class: 'pv-tiptap-editor' }),
           h('input', { type: 'file', ref: 'tiptapFileInput', accept: 'image/*,video/*,application/pdf', style: 'display:none', onChange: tiptapFileChange }),
           h('div', { class: 'pv-tiptap-foot' }, [
-            h('span', 'Use formatting, drag images in, or paste links.'),
-            h('small', `${characterCount()} characters`),
+            h('span', preview.value ? 'Preview' : 'Write'),
+            h('small', `${characterCount()} / ${props.maxLength}`),
           ]),
         ]),
     ])

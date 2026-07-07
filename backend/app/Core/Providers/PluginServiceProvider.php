@@ -285,7 +285,7 @@ class PluginServiceProvider extends ServiceProvider
                 $this->plugins[$pluginName] = array_merge([
                     'id' => $pluginName,
                     'path' => $pluginDir,
-                    'namespace' => "App\\Plugins\\{$pluginName}",
+                    'namespace' => 'App\\Plugins\\' . Str::studly($pluginName),
                     'enabled' => true,
                 ], $pluginData ?? []);
             }
