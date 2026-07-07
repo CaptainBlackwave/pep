@@ -150,7 +150,7 @@ function resetCookieConsent(): void {
 }
 const navItems = computed(() => {
   const isAuth = authStore.isAuthenticated
-  const isFree = !isAuth || (authStore.user?.tier === 'free' && !membershipDisabled.value)
+  const isFree = !membershipDisabled.value && (!isAuth || authStore.user?.tier === 'free')
   const allItems = [
     { to: '/home', label: 'Home', icon: 'home', match: ['/home', '/dashboard'] },
     { to: '/discussions', label: 'Discussions', icon: 'discussions', match: ['/discussions'] },
