@@ -108,6 +108,7 @@
           <router-link to="/terms">Terms of Service</router-link>
           <router-link to="/privacy">Privacy Policy</router-link>
           <router-link to="/community-rules">Community Rules</router-link>
+          <a href="#" @click.prevent="resetCookieConsent" style="cursor:pointer">Cookie Settings</a>
         </div>
       </footer>
     </aside>
@@ -137,6 +138,11 @@ const notificationsStore = useNotificationsStore()
 const currentYear = new Date().getFullYear()
 const telegramUrl = ref('https://t.me/peptidevendors')
 const showUpgradePrompt = computed(() => authStore.isAuthenticated && authStore.user?.tier === 'free')
+
+function resetCookieConsent(): void {
+  localStorage.removeItem('cookie_consent')
+  window.location.reload()
+}
 const navItems = computed(() => {
   const isAuth = authStore.isAuthenticated
   const allItems = [
