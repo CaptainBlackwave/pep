@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Plugins\Vendors\Controllers;
+namespace App\Plugins\Vendors\Controllers\Admin;
 
 use App\Core\Models\AdminNotification;
 use App\Core\Models\VendorAccessRequest;
