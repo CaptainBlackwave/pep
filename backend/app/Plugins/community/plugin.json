@@ -1,0 +1,14 @@
+{
+  "name": "Community",
+  "slug": "community",
+  "version": "1.0.0",
+  "description": "Members directory, direct messaging, and community notifications.",
+  "author": "PepVGuides",
+  "routes": {
+    "api": true,
+    "admin": true
+  },
+  "require": {
+    "laravel": "^11.0"
+  }
+}

@@ -1,0 +1,14 @@
+{
+  "name": "Vendors",
+  "slug": "vendors",
+  "version": "1.0.0",
+  "description": "Vendor profiles, reviews, products, documents, and claims.",
+  "author": "PepVGuides",
+  "routes": {
+    "api": true,
+    "admin": true
+  },
+  "require": {
+    "laravel": "^11.0"
+  }
+}

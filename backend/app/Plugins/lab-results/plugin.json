@@ -1,0 +1,14 @@
+{
+  "name": "Lab Results",
+  "slug": "lab-results",
+  "version": "1.0.0",
+  "description": "Community lab results with compound analysis, batch tracking, and vendor reports.",
+  "author": "PepVGuides",
+  "routes": {
+    "api": true,
+    "admin": true
+  },
+  "require": {
+    "laravel": "^11.0"
+  }
+}

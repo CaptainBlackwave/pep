@@ -1,19 +1,10 @@
 <?php
 
 use App\Core\Http\Controllers\AuthController;
-use App\Core\Http\Controllers\CommunityAnnouncementController;
-use App\Core\Http\Controllers\CommunityContentController;
-use App\Core\Http\Controllers\CommunityDiscussionController;
-use App\Core\Http\Controllers\CommunityLabResultController;
-use App\Core\Http\Controllers\CommunityMemberController;
-use App\Core\Http\Controllers\CommunityMessageController;
-use App\Core\Http\Controllers\CommunityNotificationController;
 use App\Core\Http\Controllers\CommunityUserActionController;
-use App\Core\Http\Controllers\CommunityVendorController;
 use App\Core\Http\Controllers\EmojiController;
 use App\Core\Http\Controllers\PluginController;
 use App\Core\Http\Controllers\PushSubscriptionController;
-use App\Core\Http\Controllers\VendorAccessRequestController;
 use App\Core\Http\Controllers\UserSettingsController;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
@@ -90,32 +81,10 @@ Route::prefix('v1')->group(function () {
 
     // Public community routes (guests and members — tier gating is internal)
     Route::prefix('community')->group(function () {
-        Route::get('/discussion-categories', [CommunityDiscussionController::class, 'categories']);
-        Route::get('/discussions', [CommunityDiscussionController::class, 'index']);
-        Route::get('/discussions/{discussion}', [CommunityDiscussionController::class, 'show'])->middleware(\App\Core\Middleware\CheckDailyLimit::class);
-        Route::get('/announcements', [CommunityAnnouncementController::class, 'index']);
-        Route::get('/announcements/{announcement}', [CommunityAnnouncementController::class, 'show']);
-        Route::get('/research-library', [CommunityContentController::class, 'researchIndex']);
-        Route::get('/research-library/{content}', [CommunityContentController::class, 'researchShow']);
-        Route::get('/guides', [CommunityContentController::class, 'guideIndex']);
-        Route::get('/guides/{content}', [CommunityContentController::class, 'guideShow']);
-        Route::get('/faqs', [CommunityContentController::class, 'faqIndex']);
         Route::get('/search', [\App\Core\Http\Controllers\SearchController::class, 'search']);
-        Route::get('/lab-results', [CommunityLabResultController::class, 'index'])->middleware('tier:paid');
-        Route::get('/lab-results/{result}', [CommunityLabResultController::class, 'show'])->middleware('tier:paid');
-        Route::get('/vendors', [CommunityVendorController::class, 'index'])->middleware('tier:paid');
-        Route::get('/vendors/{vendor}', [CommunityVendorController::class, 'show'])->middleware('tier:paid');
     });
 
-    // Authenticated community content
-    Route::middleware('auth:sanctum')->prefix('community')->group(function () {
-        Route::get('/members', [CommunityMemberController::class, 'index'])->middleware('tier:paid');
-        Route::get('/members/{member}', [CommunityMemberController::class, 'show'])->middleware('tier:paid');
-        Route::get('/messages', [CommunityMessageController::class, 'index'])->middleware('tier:paid');
-        Route::get('/messages/{thread}', [CommunityMessageController::class, 'show'])->middleware('tier:paid');
-        Route::get('/notifications', [CommunityNotificationController::class, 'index']);
-        Route::get('/notifications/{notification}', [CommunityNotificationController::class, 'show']);
-    });
+    // Community routes are now provided by plugins
 
     // WebSocket routes (public - for guest tracking)
     Route::prefix('ws')->controller(\App\Core\Http\Controllers\WebSocketController::class)->withoutMiddleware('auth:sanctum')->group(function () {
@@ -153,48 +122,13 @@ Route::prefix('v1')->group(function () {
         Route::post('/user/blocked-users', [UserSettingsController::class, 'blockUser']);
         Route::delete('/user/blocked-users/{user}', [UserSettingsController::class, 'unblockUser']);
 
-        Route::post('/vendor-access/request', [VendorAccessRequestController::class, 'store']);
+        Route::post('/vendor-access/request', [\App\Core\Http\Controllers\VendorAccessRequestController::class, 'store']);
 
         Route::prefix('community')->group(function () {
             Route::get('/user-actions', [CommunityUserActionController::class, 'index']);
             Route::post('/user-actions/toggle', [CommunityUserActionController::class, 'toggle']);
-            Route::post('/discussions', [CommunityDiscussionController::class, 'store']);
-            Route::patch('/discussions/{discussion}', [CommunityDiscussionController::class, 'update']);
-            Route::delete('/discussions/{discussion}', [CommunityDiscussionController::class, 'destroy']);
-            Route::post('/discussions/{discussion}/replies', [CommunityDiscussionController::class, 'reply']);
             Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe']);
             Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe']);
-            Route::post('/discussions/{discussion}/vote', [CommunityDiscussionController::class, 'voteOnDiscussion']);
-            Route::post('/discussions/{discussion}/report', [CommunityDiscussionController::class, 'reportDiscussion']);
-            Route::post('/discussion-replies/{reply}/vote', [CommunityDiscussionController::class, 'voteOnReply']);
-            Route::post('/discussion-replies/{reply}/report', [CommunityDiscussionController::class, 'reportReply']);
-            Route::delete('/discussion-replies/{reply}', [CommunityDiscussionController::class, 'destroyReply']);
-
-            // Paid-only routes
-            Route::middleware('tier:paid')->group(function () {
-                Route::post('/lab-results', [CommunityLabResultController::class, 'store']);
-                Route::get('/vendor-profile', [CommunityVendorController::class, 'myVendorProfile']);
-                Route::post('/vendor-profile/image', [CommunityVendorController::class, 'uploadVendorImage']);
-                Route::post('/vendor-profile', [CommunityVendorController::class, 'storeVendorProfile']);
-                Route::patch('/vendor-profile', [CommunityVendorController::class, 'updateVendorProfile']);
-                Route::post('/vendor-profile/products', [CommunityVendorController::class, 'storeVendorProduct']);
-                Route::post('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
-                Route::patch('/vendor-profile/products/{product}', [CommunityVendorController::class, 'updateVendorProduct']);
-                Route::delete('/vendor-profile/products/{product}', [CommunityVendorController::class, 'destroyVendorProduct']);
-                Route::post('/vendor-profile/documents', [CommunityVendorController::class, 'storeVendorDocument']);
-                Route::delete('/vendor-profile/documents/{document}', [CommunityVendorController::class, 'destroyVendorDocument']);
-                Route::post('/vendors/{vendor}/claim', [CommunityVendorController::class, 'claimVendor']);
-                Route::post('/vendors/{vendor}/reviews', [CommunityVendorController::class, 'storeReview']);
-                Route::post('/vendor-reviews/{review}/helpful', [CommunityVendorController::class, 'markReviewHelpful']);
-                Route::post('/vendor-reviews/{review}/respond', [CommunityVendorController::class, 'respondToReview']);
-                Route::post('/messages', [CommunityMessageController::class, 'storeThread']);
-                Route::post('/messages/{thread}/messages', [CommunityMessageController::class, 'store']);
-            });
-
-            Route::post('/notifications/{notification}/read', [CommunityNotificationController::class, 'markAsRead']);
-            Route::post('/notifications/read-all', [CommunityNotificationController::class, 'markAllAsRead']);
-            Route::delete('/notifications/read/clear', [CommunityNotificationController::class, 'deleteRead']);
-            Route::delete('/notifications/{notification}', [CommunityNotificationController::class, 'delete']);
         });
 
         // Two-Factor Authentication (authenticated routes)
@@ -254,19 +188,7 @@ Route::prefix('v1')->group(function () {
                 Route::get('/themes', 'index')->defaults('type', 'theme');
             });
 
-            // User Management
-            Route::prefix('users')->controller(\App\Core\Http\Controllers\Admin\UserManagementController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::get('/statistics', 'statistics');
-                Route::post('/', 'store');
-                Route::get('/{user}', 'show');
-                Route::patch('/{user}', 'update');
-                Route::delete('/{user}', 'destroy');
-                Route::post('/{user}/ban', 'ban');
-                Route::post('/{user}/unban', 'unban');
-            Route::patch('/{user}/vendor-access', 'updateVendorAccess');
-            Route::post('/{user}/vendor-profile', 'grantVendorProfile');
-        });
+            // User Management — now provided by plugins
 
         // Data Deletion Requests
         Route::apiResource('data-deletion-requests', \App\Core\Http\Controllers\Admin\DataDeletionController::class)->only(['index', 'show', 'update']);
@@ -332,68 +254,10 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{discussion}', 'destroy');
             });
 
-            Route::apiResource('community/categories', \App\Core\Http\Controllers\Admin\CommunityCategoryAdminController::class)
-                ->parameters(['categories' => 'category']);
-
-            Route::prefix('community/lab-results')->controller(\App\Core\Http\Controllers\Admin\CommunityLabResultAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::patch('/{result}', 'update');
-                Route::delete('/{result}', 'destroy');
-            });
-
-            Route::prefix('community/vendor-reviews')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorReviewAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::patch('/{review}', 'update');
-                Route::delete('/{review}', 'destroy');
-            });
-
-            Route::prefix('community/vendors')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::post('/', 'store');
-                Route::patch('/{vendor}', 'update');
-                Route::delete('/{vendor}', 'destroy');
-            });
-
-            Route::prefix('community/vendor-products')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorProductAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::post('/', 'store');
-                Route::patch('/{product}', 'update');
-                Route::delete('/{product}', 'destroy');
-            });
-
-            Route::prefix('community/vendor-claims')->controller(\App\Core\Http\Controllers\Admin\CommunityVendorClaimAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::patch('/{claim}', 'update');
-            });
-
-            Route::prefix('community/announcements')->controller(\App\Core\Http\Controllers\Admin\CommunityAnnouncementAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::post('/', 'store');
-                Route::patch('/{announcement}', 'update');
-                Route::delete('/{announcement}', 'destroy');
-            });
-
-            Route::prefix('community/notifications')->controller(\App\Core\Http\Controllers\Admin\CommunityNotificationAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::post('/', 'store');
-                Route::patch('/{notification}', 'update');
-                Route::delete('/{notification}', 'destroy');
-            });
-
             Route::prefix('community/access-codes')->controller(\App\Core\Http\Controllers\Admin\CommunityAccessCodeAdminController::class)->group(function () {
                 Route::get('/', 'index');
                 Route::post('/', 'store');
                 Route::delete('/{accessCode}', 'destroy');
-            });
-
-            Route::get('/vendor-access/requests', [VendorAccessRequestController::class, 'index']);
-            Route::patch('/vendor-access/requests/{vendorAccessRequest}', [VendorAccessRequestController::class, 'update']);
-
-            Route::prefix('community/content')->controller(\App\Core\Http\Controllers\Admin\CommunityContentAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::post('/', 'store');
-                Route::patch('/{content}', 'update');
-                Route::delete('/{content}', 'destroy');
             });
 
             // Locations and Memberships are now provided by plugins

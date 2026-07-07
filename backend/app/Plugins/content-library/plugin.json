@@ -1,0 +1,14 @@
+{
+  "name": "Content Library",
+  "slug": "content-library",
+  "version": "1.0.0",
+  "description": "Research library, guides, and FAQ content management.",
+  "author": "PepVGuides",
+  "routes": {
+    "api": true,
+    "admin": true
+  },
+  "require": {
+    "laravel": "^11.0"
+  }
+}

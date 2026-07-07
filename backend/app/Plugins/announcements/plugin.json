@@ -1,0 +1,14 @@
+{
+  "name": "Announcements",
+  "slug": "announcements",
+  "version": "1.0.0",
+  "description": "Community announcements with categories, pinning, and scheduling.",
+  "author": "PepVGuides",
+  "routes": {
+    "api": true,
+    "admin": true
+  },
+  "require": {
+    "laravel": "^11.0"
+  }
+}
