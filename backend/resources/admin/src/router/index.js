@@ -149,6 +149,11 @@ const router = createRouter({
           component: () => import('../views/CommunityVendorClaimsView.vue')
         },
         {
+          path: '/data-deletion-requests',
+          name: 'data-deletion-requests',
+          component: () => import('../views/DataDeletionRequestsView.vue')
+        },
+        {
           path: '/community-announcements',
           name: 'community-announcements',
           component: () => import('../views/CommunityAnnouncementsView.vue')

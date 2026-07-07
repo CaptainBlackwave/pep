@@ -84,8 +84,8 @@ Route::prefix('v1')->group(function () {
             'email' => 'required|email|max:255',
             'reason' => 'nullable|string|max:2000',
         ]);
-        \Illuminate\Support\Facades\Log::info('Data deletion request', $validated);
-        return response()->json(['message' => 'Request received.']);
+        \App\Core\Models\DataDeletionRequest::create($validated);
+        return response()->json(['message' => 'Request received. We will process it within 30 days.']);
     });
 
     // Public community routes (guests and members)
@@ -260,11 +260,14 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{user}', 'destroy');
                 Route::post('/{user}/ban', 'ban');
                 Route::post('/{user}/unban', 'unban');
-                Route::patch('/{user}/vendor-access', 'updateVendorAccess');
-                Route::post('/{user}/vendor-profile', 'grantVendorProfile');
-            });
+            Route::patch('/{user}/vendor-access', 'updateVendorAccess');
+            Route::post('/{user}/vendor-profile', 'grantVendorProfile');
+        });
 
-            // Roles & Permissions
+        // Data Deletion Requests
+        Route::apiResource('data-deletion-requests', \App\Core\Http\Controllers\Admin\DataDeletionController::class)->only(['index', 'show', 'update']);
+
+        // Roles & Permissions
             Route::prefix('roles')->controller(\App\Core\Http\Controllers\Admin\RolePermissionController::class)->group(function () {
                 Route::get('/', 'indexRoles');
                 Route::post('/', 'storeRole');

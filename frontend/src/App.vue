@@ -2,7 +2,7 @@
   <RouterView />
   <div v-if="showCookieConsent" class="pv-cookie-banner">
     <div class="pv-cookie-banner-inner">
-      <p>This site uses essential cookies for authentication (Sanctum), security (XSRF), and session management. By continuing, you accept our <router-link to="/privacy">Privacy Policy</router-link>.</p>
+      <p>We use cookies to keep you logged in and make the site work. By continuing, you agree to our <router-link to="/privacy">Privacy Policy</router-link>.</p>
       <button class="pv-primary-button" @click="acceptCookies">Accept</button>
     </div>
   </div>

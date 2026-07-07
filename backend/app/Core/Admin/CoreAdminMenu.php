@@ -74,7 +74,8 @@ class CoreAdminMenu
                     [ 'route' => '/backups',        'label' => 'Backups',         'icon' => 'CircleStackIcon' ],
                     [ 'route' => '/webhooks',       'label' => 'Webhooks',        'icon' => 'ArrowTopRightOnSquareIcon' ],
                     [ 'route' => '/api-keys',       'label' => 'API Keys',        'icon' => 'KeyIcon' ],
-                    [ 'route' => '/notifications',  'label' => 'Notifications',   'icon' => 'BellIcon' ],
+                    [ 'route' => '/data-deletion-requests', 'label' => 'Data Deletion',  'icon' => 'TrashIcon' ],
+                    [ 'route' => '/notifications', 'label' => 'Notifications',   'icon' => 'BellIcon' ],
                     // Calendar and Tasks removed - no backend implementations
                     // See ADMIN_MENU_AUDIT.md for tracking
                 ],
