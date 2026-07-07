@@ -2069,6 +2069,49 @@ table {
   border: 2px solid #0b0f19;
 }
 
+.pv-skeleton-stack {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.pv-skeleton-card {
+  display: grid;
+  grid-template-columns: 90px 1fr;
+  gap: 12px;
+  padding: 10px 14px;
+  border-radius: 10px;
+  background: rgba(139, 92, 246, 0.05);
+  border: 1px solid rgba(139, 92, 246, 0.15);
+}
+.pv-skeleton-body {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding-top: 4px;
+}
+.pv-skeleton {
+  background: linear-gradient(90deg, rgba(139, 92, 246, 0.08) 25%, rgba(139, 92, 246, 0.15) 50%, rgba(139, 92, 246, 0.08) 75%);
+  background-size: 200% 100%;
+  animation: pv-skeleton-pulse 1.5s ease-in-out infinite;
+  border-radius: 6px;
+}
+.pv-skeleton--avatar {
+  width: 42px;
+  height: 42px;
+  border-radius: 50%;
+}
+.pv-skeleton--line {
+  height: 14px;
+}
+.w-75 { width: 75%; }
+.w-50 { width: 50%; }
+.w-25 { width: 25%; }
+
+@keyframes pv-skeleton-pulse {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
+
 .pv-cookie-banner {
   position: fixed;
   bottom: 0;

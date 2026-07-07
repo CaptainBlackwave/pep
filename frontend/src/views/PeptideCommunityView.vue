@@ -286,6 +286,9 @@
           <p v-if="discussionStatusMessage" class="pv-alert pv-alert--compact">{{ discussionStatusMessage }}</p>
           <div class="pv-topic-list">
             <p v-if="discussionsLoaded && discussions.length === 0" class="pv-muted">No discussions found.</p>
+            <div v-if="!discussionsLoaded" class="pv-skeleton-stack">
+              <div v-for="i in 5" :key="i" class="pv-skeleton-card"><div class="pv-skeleton pv-skeleton--avatar"></div><div class="pv-skeleton-body"><div class="pv-skeleton pv-skeleton--line w-75"></div><div class="pv-skeleton pv-skeleton--line w-50"></div><div class="pv-skeleton pv-skeleton--line w-25"></div></div></div>
+            </div>
             <article
               v-for="(topic, index) in discussions"
               :key="topic.title"
@@ -3751,6 +3754,11 @@ async function toggleUserSetting(key: BooleanUserSettingKey): Promise<void> {
   const next = { ...userSettings.value, [key]: !userSettings.value[key] }
   userSettings.value = next
   await saveUserSettings({ [key]: next[key] } as Partial<UserSettingsPayload>)
+  if (key === 'push_notifications' && next[key]) {
+    const { usePushNotifications } = await import('@/composables/usePushNotifications')
+    const { requestPermission } = usePushNotifications()
+    await requestPermission()
+  }
 }
 
 async function setUserSetting<K extends keyof UserSettingsPayload>(key: K, value: UserSettingsPayload[K]): Promise<void> {
