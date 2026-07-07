@@ -5,15 +5,11 @@ namespace App\Core\Http\Controllers\Admin;
 use App\Core\Http\Controllers\Controller;
 use App\Core\Http\Resources\CommunityVendorReviewResource;
 use App\Core\Models\CommunityVendorReview;
-use App\Core\Services\CommunityNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class CommunityVendorReviewAdminController extends Controller
 {
-    public function __construct(private CommunityNotificationService $notifications)
-    {
-    }
 
     public function index(Request $request)
     {
@@ -78,8 +74,6 @@ class CommunityVendorReviewAdminController extends Controller
             $this->refreshVendorSnapshot($reviewModel->vendor);
         }
 
-        $this->notifications->syncVendorReview($reviewModel);
-
         return new CommunityVendorReviewResource($reviewModel->load(['vendor', 'user']));
     }
 
@@ -92,8 +86,6 @@ class CommunityVendorReviewAdminController extends Controller
         if ($wasPublished && $reviewModel->vendor) {
             $this->refreshVendorSnapshot($reviewModel->vendor);
         }
-
-        $this->notifications->syncVendorReview($reviewModel);
 
         return response()->json([
             'success' => true,

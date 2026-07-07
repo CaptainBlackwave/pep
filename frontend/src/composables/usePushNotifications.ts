@@ -33,13 +33,27 @@ export function usePushNotifications() {
     }
   }
 
+  async function unsubscribe() {
+    try {
+      const registration = await navigator.serviceWorker.ready
+      const existing = await registration.pushManager.getSubscription()
+      if (existing) {
+        const endpoint = existing.endpoint
+        await existing.unsubscribe()
+        await api.post('/api/v1/community/push/unsubscribe', { endpoint }).catch(() => {})
+      }
+      pushGranted.value = false
+    } catch {
+      // push unsubscribe failed silently
+    }
+  }
+
   async function doSubscribe() {
     try {
       const registration = await navigator.serviceWorker.ready
       const existing = await registration.pushManager.getSubscription()
       if (existing) {
-        pushGranted.value = true
-        return
+        await existing.unsubscribe()
       }
 
       const { data } = await api.get<{ public_key: string }>('/api/v1/push/vapid-key')
@@ -56,12 +70,14 @@ export function usePushNotifications() {
         public_key: arrayBufferToBase64(subscription.getKey('p256dh')),
         auth_token: arrayBufferToBase64(subscription.getKey('auth')),
       })
+
+      pushGranted.value = true
     } catch {
       // push setup failed silently
     }
   }
 
-  return { pushSupported, pushGranted, init, requestPermission }
+  return { pushSupported, pushGranted, init, requestPermission, unsubscribe }
 }
 
 function urlBase64ToArrayBuffer(base64String: string): ArrayBuffer {

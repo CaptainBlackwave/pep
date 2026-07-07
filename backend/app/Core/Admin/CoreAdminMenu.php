@@ -51,7 +51,6 @@ class CoreAdminMenu
                     [ 'route' => '/community-categories', 'label' => 'Categories', 'icon' => 'TagIcon' ],
                     [ 'route' => '/community-lab-results', 'label' => 'Lab Results', 'icon' => 'BeakerIcon' ],
                     [ 'route' => '/community-announcements', 'label' => 'Announcements', 'icon' => 'MegaphoneIcon' ],
-                    [ 'route' => '/community-notifications', 'label' => 'Notifications', 'icon' => 'BellIcon' ],
                     [ 'route' => '/community-access-codes', 'label' => 'Access Codes', 'icon' => 'KeyIcon' ],
                     [ 'route' => '/community-content', 'label' => 'Content Library', 'icon' => 'DocumentTextIcon' ],
                     [ 'route' => '/vendor-access-requests', 'label' => 'Vendor Access Requests', 'icon' => 'IdentificationIcon' ],

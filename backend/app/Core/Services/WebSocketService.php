@@ -125,7 +125,7 @@ class WebSocketService
     public function setOnline(User $user): void
     {
         Cache::put("user_online:{$user->id}", true, now()->addMinutes(5));
-        $this->updateOnlineUsers();
+        $this->broadcastOnlineCounts();
     }
 
     /**
@@ -134,7 +134,7 @@ class WebSocketService
     public function setOffline(User $user): void
     {
         Cache::forget("user_online:{$user->id}");
-        $this->updateOnlineUsers();
+        $this->broadcastOnlineCounts();
     }
 
     /**
@@ -146,21 +146,45 @@ class WebSocketService
     }
 
     /**
-     * Get online users count
+     * Get online users count (members only)
      */
     public function getOnlineCount(): int
     {
-        return Cache::get('online_users_count', 0);
+        return $this->getOnlineCounts()['members'];
     }
 
     /**
-     * Update online users count
+     * Get both online members and guests count from DB
      */
-    protected function updateOnlineUsers(): void
+    public function getOnlineCounts(): array
     {
-        // This would typically be handled by Redis or presence channels
-        $count = Cache::get('online_users_count', 0);
-        $this->toAll('online_count', ['count' => $count]);
+        $members = User::where('last_active', '>=', now()->subMinutes(15))->count();
+        $guests = \App\Core\Models\GuestSession::where('last_active', '>=', now()->subMinutes(15))->count();
+        return ['members' => $members, 'guests' => $guests];
+    }
+
+    /**
+     * Get visits today count
+     */
+    public function getVisitsToday(): int
+    {
+        $membersToday = User::whereDate('last_active', today())->count();
+        $guestsToday = \App\Core\Models\GuestSession::whereDate('last_active', today())->count();
+        return $membersToday + $guestsToday;
+    }
+
+    /**
+     * Broadcast online counts via WebSocket
+     */
+    public function broadcastOnlineCounts(): void
+    {
+        $counts = $this->getOnlineCounts();
+        $this->toAll('online_count', [
+            'count' => $counts['members'],
+            'members' => $counts['members'],
+            'guests' => $counts['guests'],
+            'visits_today' => $this->getVisitsToday(),
+        ]);
     }
 
     /**

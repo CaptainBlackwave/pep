@@ -6,12 +6,17 @@ use App\Core\Http\Controllers\Controller;
 use App\Core\Http\Resources\CommunityVendorResource;
 use App\Core\Models\CommunityVendor;
 use App\Core\Models\User;
+use App\Core\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class CommunityVendorAdminController extends Controller
 {
+    public function __construct(
+        private PushNotificationService $push,
+    ) {
+    }
     public function index(Request $request)
     {
         $validated = $request->validate([
@@ -71,6 +76,15 @@ class CommunityVendorAdminController extends Controller
             'member_since' => $validated['member_since'] ?? now()->toDateString(),
             'last_active_at' => now(),
         ]);
+
+        if (($validated['status'] ?? 'published') === 'published') {
+            $this->push->notifyAllPremium(
+                'vendor_added',
+                "New vendor: {$vendor->name}",
+                "A new vendor has been added to the community.",
+                "/vendors/{$vendor->slug}",
+            );
+        }
 
         return (new CommunityVendorResource($vendor->load('owner')))
             ->response()

@@ -117,6 +117,12 @@ Route::prefix('v1')->group(function () {
         Route::get('/notifications/{notification}', [CommunityNotificationController::class, 'show']);
     });
 
+    // WebSocket routes (public - for guest tracking)
+    Route::prefix('ws')->controller(\App\Core\Http\Controllers\WebSocketController::class)->withoutMiddleware('auth:sanctum')->group(function () {
+        Route::get('/online-count', 'onlineCount');
+        Route::post('/heartbeat', 'heartbeat');
+    });
+
     // Protected authentication routes
     Route::middleware('auth:sanctum')->group(function () {
         Route::post('/upload/image', function (\Illuminate\Http\Request $request) {
@@ -208,12 +214,10 @@ Route::prefix('v1')->group(function () {
             Route::delete('/{provider}/unlink', 'unlink');
         });
 
-        // WebSocket Routes
+        // WebSocket Routes (authenticated)
         Route::prefix('ws')->controller(\App\Core\Http\Controllers\WebSocketController::class)->group(function () {
             Route::post('/auth', 'authorizeChannel');
             Route::post('/poll', 'poll');
-            Route::get('/online-count', 'onlineCount');
-            Route::post('/heartbeat', 'heartbeat');
             Route::get('/presence/{channel}', 'presenceMembers');
         });
 
@@ -367,13 +371,6 @@ Route::prefix('v1')->group(function () {
                 Route::post('/', 'store');
                 Route::patch('/{announcement}', 'update');
                 Route::delete('/{announcement}', 'destroy');
-            });
-
-            Route::prefix('community/notifications')->controller(\App\Core\Http\Controllers\Admin\CommunityNotificationAdminController::class)->group(function () {
-                Route::get('/', 'index');
-                Route::post('/', 'store');
-                Route::patch('/{notification}', 'update');
-                Route::delete('/{notification}', 'destroy');
             });
 
             Route::prefix('community/access-codes')->controller(\App\Core\Http\Controllers\Admin\CommunityAccessCodeAdminController::class)->group(function () {

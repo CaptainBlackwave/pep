@@ -2,12 +2,18 @@
 
 namespace App\Core\Http\Controllers;
 
+use App\Core\Models\AdminNotification;
 use App\Core\Models\VendorAccessRequest;
+use App\Core\Services\AdminNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Routing\Controller;
 
 class VendorAccessRequestController extends Controller
 {
+    public function __construct(
+        private AdminNotificationService $adminNotifications,
+    ) {
+    }
     public function store(Request $request)
     {
         $user = $request->user();
@@ -26,6 +32,16 @@ class VendorAccessRequestController extends Controller
             'user_id' => $user->id,
             'status' => 'pending',
         ]);
+
+        $this->adminNotifications->notifyAll(
+            AdminNotification::TYPE_TASK,
+            'Vendor Access Request',
+            "{$user->name} requested vendor access.",
+            ['user_id' => $user->id, 'request_id' => $vendorAccessRequest->id],
+            '🏪',
+            '/vendor-access-requests',
+            AdminNotification::PRIORITY_NORMAL
+        );
 
         return response()->json([
             'message' => 'Vendor access request submitted.',

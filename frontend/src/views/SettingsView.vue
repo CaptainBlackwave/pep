@@ -152,7 +152,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, watch, onMounted } from 'vue'
 import api from '@/services/api'
 import { useToast } from '@/composables/useToast'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
@@ -278,6 +278,17 @@ const toggle2FA = async () => {
   // TODO: Implement 2FA toggle flow
   toast.info('Two-factor authentication setup coming soon!')
 }
+
+watch(() => settings.value.push_notifications, async (val, old) => {
+  if (old === undefined) return
+  const { usePushNotifications } = await import('@/composables/usePushNotifications')
+  const { requestPermission, unsubscribe } = usePushNotifications()
+  if (val) {
+    await requestPermission()
+  } else {
+    await unsubscribe()
+  }
+})
 
 onMounted(() => {
   loadSettings()

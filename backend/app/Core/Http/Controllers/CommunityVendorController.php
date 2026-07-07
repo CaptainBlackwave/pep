@@ -12,7 +12,7 @@ use App\Core\Models\CommunityVendorDocument;
 use App\Core\Models\CommunityVendorProduct;
 use App\Core\Models\CommunityVendorReview;
 use App\Core\Models\User;
-use App\Core\Services\CommunityNotificationService;
+use App\Core\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Storage;
 use Illuminate\Support\Str;
@@ -20,8 +20,9 @@ use Illuminate\Validation\Rule;
 
 class CommunityVendorController extends Controller
 {
-    public function __construct(private CommunityNotificationService $notifications)
-    {
+    public function __construct(
+        private PushNotificationService $push,
+    ) {
     }
 
     public function index(Request $request)
@@ -163,6 +164,13 @@ class CommunityVendorController extends Controller
             'last_active_at' => now(),
             'profile_submitted_at' => now(),
         ]);
+
+        $this->push->notifyAllPremium(
+            'vendor_added',
+            "New vendor: {$vendor->name}",
+            "A new vendor has been added to the community.",
+            "/vendors/{$vendor->slug}",
+        );
 
         return (new CommunityVendorResource($vendor))
             ->response()
@@ -385,7 +393,13 @@ class CommunityVendorController extends Controller
         ]);
 
         $this->refreshVendorSnapshot($vendorModel);
-        $this->notifications->syncVendorReview($review);
+
+        $this->push->notifyAllPremium(
+            'vendor_review_added',
+            "New review for {$vendorModel->name}",
+            "{$request->user()->name} reviewed {$vendorModel->name}.",
+            "/vendors/{$vendorModel->slug}",
+        );
 
         return (new CommunityVendorReviewResource($review->load(['user', 'vendor'])))
             ->response()

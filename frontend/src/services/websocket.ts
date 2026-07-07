@@ -253,7 +253,7 @@ class WebSocketService {
     const protocol = url.startsWith('wss') ? 'wss' : 'ws'
     const baseUrl = url.replace(/^wss?:\/\//, '')
 
-    return `${protocol}://${baseUrl}/app/${key}?protocol=7&client=js&version=7.4.0&cluster=${cluster}`
+    return `${protocol}://${baseUrl}/ws/${key}?protocol=7&client=js&version=7.4.0&cluster=${cluster}`
   }
 
   /**

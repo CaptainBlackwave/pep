@@ -233,7 +233,7 @@
           </div>
         </article>
         <article class="pv-panel">
-          <header class="pv-panel-header"><h2><PvIcon name="users" /> Members Online</h2><span class="pv-count">{{ memberStats.online }}</span></header>
+          <header class="pv-panel-header"><h2><PvIcon name="users" /> Online Now</h2><span class="pv-count">{{ memberStats.online }}</span></header>
           <div class="pv-avatar-stack">
             <router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color">
               <img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name">
@@ -241,6 +241,7 @@
             </router-link>
             <span class="pv-more">+{{ Math.max(0, memberStats.online - onlineMembers.length) }}</span>
           </div>
+          <div v-if="memberStats.guests > 0" class="pv-panel-footer"><PvIcon name="eye" /> {{ memberStats.guests }} guest{{ memberStats.guests !== 1 ? 's' : '' }} browsing</div>
         </article>
         <article class="pv-panel">
           <header class="pv-panel-header">
@@ -1447,6 +1448,7 @@
         <div class="pv-metrics pv-metrics--member">
           <span><PvIcon name="users" /><strong>{{ memberStats.total }}</strong><small>Total Members</small></span>
           <span><PvIcon name="clock" /><strong>{{ memberStats.online }}</strong><small>Online Now</small></span>
+          <span v-if="memberStats.guests > 0"><PvIcon name="eye" /><strong>{{ memberStats.guests }}</strong><small>Guests</small></span>
           <span><PvIcon name="shield" /><strong>{{ apiMembers.filter(member => member.isModerator).length }}</strong><small>Moderators</small></span>
           <span><PvIcon name="star" /><strong>{{ topContributors.length }}</strong><small>Top Contributors</small></span>
         </div>
@@ -1500,7 +1502,7 @@
       </main>
       <aside class="pv-stack">
         <article class="pv-panel"><h2>Top Contributors</h2><div class="pv-mini-list"><router-link v-for="member in topContributors" :key="member.slug" :to="member.href" class="pv-mini-row"><span class="pv-avatar" :class="member.color">{{ member.initial }}</span><span><strong>{{ member.name }}</strong><small>{{ formatCount(memberEngagementScore(member)) }} contributions</small></span><PvIcon name="chevron" /></router-link></div></article>
-        <article class="pv-panel"><h2>Online Members</h2><div class="pv-avatar-stack"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color"><img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name"><span v-else>{{ member.initial }}</span></router-link><span v-if="onlineMembers.length === 0" class="pv-muted">Nobody online right now.</span></div></article>
+        <article class="pv-panel"><h2>Online Now</h2><div class="pv-avatar-stack"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color"><img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name"><span v-else>{{ member.initial }}</span></router-link><span v-if="onlineMembers.length === 0" class="pv-muted">Nobody online right now.</span></div><p v-if="memberStats.guests > 0" class="pv-muted pv-panel-footer"><PvIcon name="eye" /> {{ memberStats.guests }} guest{{ memberStats.guests !== 1 ? 's' : '' }} browsing</p></article>
         <article class="pv-panel"><h2>Member Tips</h2><ul class="pv-check-list"><li>Keep your profile bio current</li><li>Use reports for moderation issues</li><li>Message members from their profile</li><li>Reputation grows from useful posts</li></ul></article>
       </aside>
     </div>
@@ -1850,7 +1852,6 @@ import PvIcon from '@/components/peptide/PvIcon.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import GiphyPicker from '@/components/ui/GiphyPicker.vue'
 import api from '@/services/api'
-import { websocketService } from '@/services/websocket'
 import { useAuthStore } from '@/stores/auth'
 import heroImage from '@/assets/peptide/hero-vials.png'
 import researchImage from '@/assets/peptide/research-thumbnails.png'
@@ -3073,7 +3074,7 @@ const apiMembers = ref<UiMemberProfile[]>([])
 const apiTopContributorMembers = ref<UiMemberProfile[]>([])
 const apiOnlineMemberSummaries = ref<UiMemberProfile[]>([])
 const apiDetailMember = ref<UiMemberProfile | null>(null)
-const memberStats = ref({ total: 0, online: 0 })
+const memberStats = ref({ total: 0, online: 0, guests: 0, visits_today: 0 })
 const membersLoaded = ref(false)
 const memberPagination = ref<PaginationMeta | null>(null)
 const memberPage = ref(1)
@@ -3754,10 +3755,14 @@ async function toggleUserSetting(key: BooleanUserSettingKey): Promise<void> {
   const next = { ...userSettings.value, [key]: !userSettings.value[key] }
   userSettings.value = next
   await saveUserSettings({ [key]: next[key] } as Partial<UserSettingsPayload>)
-  if (key === 'push_notifications' && next[key]) {
+  if (key === 'push_notifications') {
     const { usePushNotifications } = await import('@/composables/usePushNotifications')
-    const { requestPermission } = usePushNotifications()
-    await requestPermission()
+    const { requestPermission, unsubscribe } = usePushNotifications()
+    if (next[key]) {
+      await requestPermission()
+    } else {
+      await unsubscribe()
+    }
   }
 }
 
@@ -5351,8 +5356,11 @@ function setupRealtime(): void {
     wsUnsubscribers.push(unsubCreated, unsubUpdated, unsubDeleted, unsubReplyCreated, unsubReplyDeleted)
 
     const unsubOnline = websocketService.on('online_count', (data: any) => {
-      if (typeof data?.count === 'number') {
-        memberStats.value = { ...memberStats.value, online: data.count }
+      memberStats.value = {
+        ...memberStats.value,
+        online: typeof data?.members === 'number' ? data.members : (typeof data?.count === 'number' ? data.count : memberStats.value.online),
+        guests: typeof data?.guests === 'number' ? data.guests : memberStats.value.guests,
+        visits_today: typeof data?.visits_today === 'number' ? data.visits_today : memberStats.value.visits_today,
       }
     })
     wsUnsubscribers.push(unsubOnline)
@@ -5361,10 +5369,28 @@ function setupRealtime(): void {
 
 let heartbeatInterval: ReturnType<typeof setInterval> | null = null
 
+function getGuestId(): string {
+  let id = localStorage.getItem('guest_id')
+  if (!id) {
+    id = crypto.randomUUID()
+    localStorage.setItem('guest_id', id)
+  }
+  return id
+}
+
 function startHeartbeat(): void {
   stopHeartbeat()
-  if (!authStore.isAuthenticated) return
-  const ping = () => api.post('/api/v1/ws/heartbeat').catch(() => {})
+  const ping = () => {
+    const payload: Record<string, unknown> = {}
+    if (!authStore.isAuthenticated) {
+      payload.guest_id = getGuestId()
+    }
+    api.post('/api/v1/ws/heartbeat', payload).then((res) => {
+      if (res.data?.members !== undefined) {
+        memberStats.value = { ...memberStats.value, online: res.data.members, guests: res.data.guests ?? 0, visits_today: res.data.visits_today ?? 0 }
+      }
+    }).catch(() => {})
+  }
   ping()
   heartbeatInterval = setInterval(ping, 120000)
 }
@@ -6831,7 +6857,7 @@ async function loadMembers(): Promise<void> {
     apiMembers.value = []
     apiTopContributorMembers.value = []
     apiOnlineMemberSummaries.value = []
-    memberStats.value = { total: 0, online: 0 }
+    memberStats.value = { total: 0, online: 0, guests: 0, visits_today: 0 }
     memberPagination.value = null
     membersLoaded.value = true
     return
@@ -6851,6 +6877,8 @@ async function loadMembers(): Promise<void> {
     memberStats.value = {
       total: response.data.meta?.stats?.total ?? 0,
       online: response.data.meta?.stats?.online ?? 0,
+      guests: memberStats.value.guests,
+      visits_today: memberStats.value.visits_today,
     }
     memberPagination.value = extractPagination(response.data.meta)
     membersLoaded.value = true

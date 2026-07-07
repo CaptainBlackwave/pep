@@ -159,11 +159,6 @@ const router = createRouter({
           component: () => import('../views/CommunityAnnouncementsView.vue')
         },
         {
-          path: '/community-notifications',
-          name: 'community-notifications',
-          component: () => import('../views/CommunityNotificationsView.vue')
-        },
-        {
           path: '/community-access-codes',
           name: 'community-access-codes',
           component: () => import('../views/CommunityAccessCodesView.vue')

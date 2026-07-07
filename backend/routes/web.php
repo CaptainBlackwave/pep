@@ -46,6 +46,7 @@ Route::prefix('admin')->group(function () {
 });
 
 // Community Frontend SPA — catch all non-API non-admin routes
+
 Route::get('/sitemap.xml', function () {
     $pages = [
         ['loc' => '/home', 'priority' => '1.0', 'changefreq' => 'daily'],

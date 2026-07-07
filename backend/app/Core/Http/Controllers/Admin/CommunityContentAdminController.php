@@ -5,16 +5,12 @@ namespace App\Core\Http\Controllers\Admin;
 use App\Core\Http\Controllers\Controller;
 use App\Core\Http\Resources\CommunityContentItemResource;
 use App\Core\Models\CommunityContentItem;
-use App\Core\Services\CommunityNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Support\Str;
 use Illuminate\Validation\Rule;
 
 class CommunityContentAdminController extends Controller
 {
-    public function __construct(private CommunityNotificationService $notifications)
-    {
-    }
 
     public function index(Request $request)
     {
@@ -77,8 +73,6 @@ class CommunityContentAdminController extends Controller
             'published_at' => $validated['published_at'] ?? ($status === 'published' ? now() : null),
         ]);
 
-        $this->notifications->syncContent($item);
-
         return (new CommunityContentItemResource($item->load('author')))
             ->response()
             ->setStatusCode(201);
@@ -107,8 +101,6 @@ class CommunityContentAdminController extends Controller
 
         $item->fill($validated)->save();
 
-        $this->notifications->syncContent($item);
-
         return new CommunityContentItemResource($item->load('author'));
     }
 
@@ -116,7 +108,6 @@ class CommunityContentAdminController extends Controller
     {
         $item = $this->findContent($content);
         $item->forceFill(['status' => 'hidden'])->save();
-        $this->notifications->syncContent($item);
 
         return response()->json([
             'success' => true,

@@ -3,6 +3,7 @@
 namespace App\Core\Http\Controllers;
 
 use App\Core\Events\WebSocketBroadcast;
+use App\Core\Http\Controllers\SseController;
 use App\Core\Http\Resources\CommunityDiscussionReplyResource;
 use App\Core\Http\Resources\CommunityDiscussionResource;
 use App\Core\Http\Resources\CommunityMemberResource;
@@ -174,7 +175,7 @@ class CommunityDiscussionController extends Controller
 
         $this->notifyMentionedUsers($body, $discussion, $user);
 
-        WebSocketBroadcast::dispatch('discussions', 'discussion.created', [
+        SseController::dispatch('discussions', 'discussion.created', [
             'discussion' => (new CommunityDiscussionResource($discussion))->resolve($request),
         ]);
 
@@ -208,7 +209,7 @@ class CommunityDiscussionController extends Controller
 
         $discussionModel->load(['category', 'user']);
 
-        WebSocketBroadcast::dispatch('discussions', 'discussion.updated', [
+        SseController::dispatch('discussions', 'discussion.updated', [
             'discussion' => (new CommunityDiscussionResource($discussionModel))->resolve($request),
         ]);
 
@@ -220,7 +221,7 @@ class CommunityDiscussionController extends Controller
         $discussionModel = $this->findOwnDiscussion($request, $discussion);
         $discussionModel->delete();
 
-        WebSocketBroadcast::dispatch('discussions', 'discussion.deleted', [
+        SseController::dispatch('discussions', 'discussion.deleted', [
             'id' => $discussionModel->id,
             'slug' => $discussionModel->slug,
         ]);
@@ -300,7 +301,7 @@ class CommunityDiscussionController extends Controller
 
         $reply->load('user.roles');
 
-        WebSocketBroadcast::dispatch('discussions', 'reply.created', [
+        SseController::dispatch('discussions', 'reply.created', [
             'reply' => (new CommunityDiscussionReplyResource($reply))->resolve($request),
             'discussion_slug' => $discussionModel->slug,
         ]);
@@ -400,7 +401,7 @@ class CommunityDiscussionController extends Controller
             'author_name' => null,
         ]);
 
-        WebSocketBroadcast::dispatch('discussions', 'reply.deleted', [
+        SseController::dispatch('discussions', 'reply.deleted', [
             'reply_id' => (int) $replyModel->id,
             'discussion_id' => $discussion->id,
             'discussion_slug' => $discussion->slug,

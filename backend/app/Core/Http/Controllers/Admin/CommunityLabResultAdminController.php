@@ -5,14 +5,15 @@ namespace App\Core\Http\Controllers\Admin;
 use App\Core\Http\Controllers\Controller;
 use App\Core\Http\Resources\CommunityLabResultResource;
 use App\Core\Models\CommunityLabResult;
-use App\Core\Services\CommunityNotificationService;
+use App\Core\Services\PushNotificationService;
 use Illuminate\Http\Request;
 use Illuminate\Validation\Rule;
 
 class CommunityLabResultAdminController extends Controller
 {
-    public function __construct(private CommunityNotificationService $notifications)
-    {
+    public function __construct(
+        private PushNotificationService $push,
+    ) {
     }
 
     public function index(Request $request)
@@ -77,9 +78,18 @@ class CommunityLabResultAdminController extends Controller
             $labResult->overall_result = 'Pass';
         }
 
+        $wasPublished = $labResult->getOriginal('status') === 'published';
         $labResult->save();
 
-        $this->notifications->syncLabResult($labResult);
+        if (!$wasPublished && $labResult->status === 'published') {
+            $compound = $labResult->compound_name;
+            $this->push->notifyAllPremium(
+                'lab_result_added',
+                "New lab result: {$compound}",
+                "A new lab result for {$compound} has been published.",
+                "/lab-results/{$labResult->slug}",
+            );
+        }
 
         return new CommunityLabResultResource($labResult->load('submittedBy'));
     }
@@ -91,7 +101,6 @@ class CommunityLabResultAdminController extends Controller
             'status' => 'hidden',
             'is_verified' => false,
         ])->save();
-        $this->notifications->syncLabResult($labResult);
 
         return response()->json([
             'success' => true,

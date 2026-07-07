@@ -88,12 +88,28 @@ class WebSocketController extends Controller
     public function heartbeat(Request $request): JsonResponse
     {
         $user = $request->user();
-        $this->wsService->setOnline($user);
-        $user->update(['last_active' => now()]);
+
+        if ($user) {
+            $this->wsService->setOnline($user);
+            $user->update(['last_active' => now()]);
+        }
+
+        $guestId = $request->input('guest_id');
+        if ($guestId) {
+            \App\Core\Models\GuestSession::updateOrCreate(
+                ['guest_id' => $guestId],
+                ['last_active' => now()]
+            );
+            $this->wsService->broadcastOnlineCounts();
+        }
+
+        $counts = $this->wsService->getOnlineCounts();
 
         return response()->json([
             'status' => 'ok',
-            'online_count' => $this->wsService->getOnlineCount(),
+            'members' => $counts['members'],
+            'guests' => $counts['guests'],
+            'visits_today' => $this->wsService->getVisitsToday(),
         ]);
     }
 
