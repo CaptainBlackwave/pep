@@ -4582,13 +4582,12 @@ async function toggleContentBookmark(slug: string): Promise<void> {
 }
 
 function savedProductLink(key: string): string {
-  const parts = key.split('-')
-  const id = parts.pop()
-  const vendorSlug = parts.join('-')
+  const [vendorSlug] = key.split(':')
   return `/vendor-reviews/${vendorSlug}`
 }
 function savedProductLabel(key: string): string {
-  return key.replace(/-/g, ' ')
+  const [, productRef] = key.split(':')
+  return (productRef || key).replace(/[-_]/g, ' ')
 }
 function savedContentLink(slug: string): string {
   if (slug.startsWith('guide-')) return `/guides/${slug.replace('guide-', '')}`
