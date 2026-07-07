@@ -1779,6 +1779,34 @@
     </div>
   </section>
 
+  <section v-else-if="page === 'saved'" class="pv-page">
+    <div class="pv-content-grid">
+      <main class="pv-stack">
+        <header class="pv-page-header"><div><h1>Saved</h1><p>Bookmarked products and content</p></div></header>
+
+        <article class="pv-panel">
+          <h2>Bookmarked Products</h2>
+          <div v-if="bookmarkedProductKeys.length === 0" class="pv-muted">No bookmarked products yet. Browse vendors and bookmark products to see them here.</div>
+          <router-link v-for="key in bookmarkedProductKeys" :key="key" :to="savedProductLink(key)" class="pv-mini-row">
+            <PvIcon name="bookmark" />
+            <span>{{ savedProductLabel(key) }}</span>
+            <PvIcon name="chevron" />
+          </router-link>
+        </article>
+
+        <article class="pv-panel">
+          <h2>Bookmarked Content</h2>
+          <div v-if="bookmarkedContentSlugs.length === 0" class="pv-muted">No bookmarked content yet. Browse research, guides, and FAQ to bookmark them.</div>
+          <router-link v-for="slug in bookmarkedContentSlugs" :key="slug" :to="savedContentLink(slug)" class="pv-mini-row">
+            <PvIcon name="bookmark" />
+            <span>{{ slug }}</span>
+            <PvIcon name="chevron" />
+          </router-link>
+        </article>
+      </main>
+    </div>
+  </section>
+
   <section v-else-if="page === 'search'" class="pv-page">
     <div class="pv-content-grid">
       <main class="pv-stack">
@@ -4553,6 +4581,21 @@ async function toggleContentBookmark(slug: string): Promise<void> {
   )
 }
 
+function savedProductLink(key: string): string {
+  const parts = key.split('-')
+  const id = parts.pop()
+  const vendorSlug = parts.join('-')
+  return `/vendor-reviews/${vendorSlug}`
+}
+function savedProductLabel(key: string): string {
+  return key.replace(/-/g, ' ')
+}
+function savedContentLink(slug: string): string {
+  if (slug.startsWith('guide-')) return `/guides/${slug.replace('guide-', '')}`
+  if (slug.startsWith('faq-')) return `/guides#faq-${slug.replace('faq-', '')}`
+  return `/research-library/${slug}`
+}
+
 function productBookmarkKey(product: VendorProduct): string {
   const vendor = detailVendor.value?.slug ?? String(product.vendorId ?? 'vendor')
   return `${vendor}:${product.slug || product.id || product.name}`
@@ -5073,6 +5116,8 @@ async function syncCommunityContent(): Promise<void> {
       return
     case 'notificationDetail':
       await Promise.all([loadNotificationDetail(), loadNotifications()])
+      return
+    case 'saved':
       return
     case 'search':
       await loadSearchResults()

@@ -233,6 +233,7 @@ const navItems = computed(() => {
     { to: '/guides', label: 'Guides & FAQ', icon: 'question', match: ['/guides'] },
     { to: '/members', label: 'Members', icon: 'users', match: ['/members'] },
     { to: '/announcements', label: 'Announcements', icon: 'megaphone', match: ['/announcements'] },
+    { to: '/saved', label: 'Saved', icon: 'bookmark', match: ['/saved'] },
     { to: '/notifications', label: 'Notifications', icon: 'bell', match: ['/notifications'] },
   ]
   return allItems.filter(item => {

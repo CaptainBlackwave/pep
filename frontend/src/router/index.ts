@@ -107,6 +107,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'settings/billing', name: 'settings-billing', component: peptidePage, meta: { title: 'Billing', page: 'settingsBilling' } satisfies RouteMeta },
       { path: 'settings/danger-zone', name: 'settings-danger-zone', component: peptidePage, meta: { title: 'Danger Zone', page: 'settingsDanger' } satisfies RouteMeta },
       { path: 'settings/:section', name: 'settings-placeholder', component: peptidePage, meta: { title: 'Account Settings', page: 'settingsProfile' } satisfies RouteMeta },
+      { path: 'saved', name: 'saved', component: peptidePage, meta: { title: 'Saved', page: 'saved' } satisfies RouteMeta },
       { path: 'search', name: 'search', component: peptidePage, meta: { title: 'Search', page: 'search' } satisfies RouteMeta },
       { path: 'telegram-updates', name: 'telegram-updates', component: peptidePage, meta: { title: 'Telegram Updates', page: 'telegramUpdates' } satisfies RouteMeta },
       { path: 'profile', redirect: '/settings' },
