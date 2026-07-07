@@ -1,9 +1,16 @@
 <template>
   <RouterView />
-  <div v-if="showCookieConsent" class="pv-cookie-banner">
+  <div v-if="showCookieConsent" class="pv-cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie notice">
     <div class="pv-cookie-banner-inner">
-      <p>We use cookies to keep you logged in and make the site work. By continuing, you agree to our <router-link to="/privacy">Privacy Policy</router-link>.</p>
-      <button class="pv-primary-button" @click="acceptCookies">Accept</button>
+      <span class="pv-cookie-icon"><PvIcon name="shield" /></span>
+      <div class="pv-cookie-copy">
+        <strong>Essential cookies</strong>
+        <p>We use cookies to keep you signed in, remember preferences, and protect the community.</p>
+      </div>
+      <div class="pv-cookie-actions">
+        <router-link to="/privacy" class="pv-small-button">Privacy</router-link>
+        <button class="pv-primary-button" @click="acceptCookies">Accept</button>
+      </div>
     </div>
   </div>
   <ToastContainer />
@@ -12,6 +19,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { RouterView } from 'vue-router'
+import PvIcon from '@/components/peptide/PvIcon.vue'
 import ToastContainer from './components/ToastContainer.vue'
 
 const showCookieConsent = ref(false)

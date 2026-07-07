@@ -303,7 +303,7 @@ class CommunityMemberController extends Controller
         $query = $this->memberQuery();
         $this->applyOnlineFilter($query, true);
 
-        return $query->orderByDesc('last_active')->limit(6)->get();
+        return $query->orderByDesc('last_active')->limit(80)->get();
     }
 
     private function activity(string $icon, string $tone, string $title, string $category, $occurredAt): array

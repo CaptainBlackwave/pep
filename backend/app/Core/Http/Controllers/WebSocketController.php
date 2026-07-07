@@ -2,9 +2,11 @@
 
 namespace App\Core\Http\Controllers;
 
+use App\Core\Models\GuestSession;
 use App\Core\Services\WebSocketService;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Str;
 
 class WebSocketController extends Controller
 {
@@ -77,8 +79,14 @@ class WebSocketController extends Controller
      */
     public function onlineCount(): JsonResponse
     {
+        $counts = $this->wsService->getOnlineCounts();
+
         return response()->json([
-            'count' => $this->wsService->getOnlineCount(),
+            'count' => $counts['members'],
+            'members' => $counts['members'],
+            'guests' => $counts['guests'],
+            'visits_today' => $this->wsService->getVisitsToday(),
+            'guest_activity' => $this->wsService->getGuestActivity(),
         ]);
     }
 
@@ -87,18 +95,32 @@ class WebSocketController extends Controller
      */
     public function heartbeat(Request $request): JsonResponse
     {
-        $user = $request->user();
+        $validated = $request->validate([
+            'guest_id' => ['nullable', 'string', 'max:80'],
+            'path' => ['nullable', 'string', 'max:255'],
+            'label' => ['nullable', 'string', 'max:120'],
+        ]);
+
+        $user = $request->user('sanctum');
+        $currentPath = $this->normaliseActivityPath($validated['path'] ?? '/');
+        $currentLabel = $this->normaliseActivityLabel($validated['label'] ?? 'Community');
 
         if ($user) {
             $this->wsService->setOnline($user);
             $user->update(['last_active' => now()]);
         }
 
-        $guestId = $request->input('guest_id');
+        $guestId = $validated['guest_id'] ?? null;
         if ($guestId) {
-            \App\Core\Models\GuestSession::updateOrCreate(
+            GuestSession::updateOrCreate(
                 ['guest_id' => $guestId],
-                ['last_active' => now()]
+                [
+                    'current_path' => $currentPath,
+                    'current_label' => $currentLabel,
+                    'ip_address' => $request->ip(),
+                    'user_agent' => Str::limit((string) $request->userAgent(), 255, ''),
+                    'last_active' => now(),
+                ]
             );
             $this->wsService->broadcastOnlineCounts();
         }
@@ -110,7 +132,29 @@ class WebSocketController extends Controller
             'members' => $counts['members'],
             'guests' => $counts['guests'],
             'visits_today' => $this->wsService->getVisitsToday(),
+            'guest_activity' => $this->wsService->getGuestActivity(),
         ]);
+    }
+
+    private function normaliseActivityPath(string $path): string
+    {
+        $path = Str::of($path)
+            ->before('?')
+            ->trim()
+            ->limit(255, '')
+            ->toString();
+
+        return $path !== '' && str_starts_with($path, '/') ? $path : '/';
+    }
+
+    private function normaliseActivityLabel(string $label): string
+    {
+        $label = Str::of($label)
+            ->squish()
+            ->limit(120, '')
+            ->toString();
+
+        return $label !== '' ? $label : 'Community';
     }
 
     /**

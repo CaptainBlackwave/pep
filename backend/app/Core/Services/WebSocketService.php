@@ -2,10 +2,11 @@
 
 namespace App\Core\Services;
 
+use App\Core\Models\GuestSession;
 use App\Core\Models\User;
+use Illuminate\Support\Carbon;
 use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\Log;
-use Illuminate\Support\Str;
 
 class WebSocketService
 {
@@ -169,7 +170,7 @@ class WebSocketService
     public function getOnlineCounts(): array
     {
         $members = User::where('last_active', '>=', now()->subMinutes(15))->count();
-        $guests = \App\Core\Models\GuestSession::where('last_active', '>=', now()->subMinutes(15))->count();
+        $guests = GuestSession::where('last_active', '>=', now()->subMinutes(15))->count();
         return ['members' => $members, 'guests' => $guests];
     }
 
@@ -179,8 +180,36 @@ class WebSocketService
     public function getVisitsToday(): int
     {
         $membersToday = User::whereDate('last_active', today())->count();
-        $guestsToday = \App\Core\Models\GuestSession::whereDate('last_active', today())->count();
+        $guestsToday = GuestSession::whereDate('last_active', today())->count();
         return $membersToday + $guestsToday;
+    }
+
+    /**
+     * Get grouped guest viewing activity for the community sidebar.
+     */
+    public function getGuestActivity(int $limit = 8): array
+    {
+        return GuestSession::query()
+            ->where('last_active', '>=', now()->subMinutes(15))
+            ->selectRaw('current_label, current_path, COUNT(*) as visitors, MAX(last_active) as last_seen_at')
+            ->groupBy('current_label', 'current_path')
+            ->orderByDesc('visitors')
+            ->orderByDesc('last_seen_at')
+            ->limit($limit)
+            ->get()
+            ->map(function ($row) {
+                $lastSeenAt = $row->last_seen_at ? Carbon::parse($row->last_seen_at) : null;
+
+                return [
+                    'label' => $row->current_label ?: 'Community',
+                    'path' => $row->current_path ?: '/',
+                    'visitors' => (int) $row->visitors,
+                    'last_seen_at' => $lastSeenAt?->toIso8601String(),
+                    'time_ago' => $lastSeenAt?->diffForHumans(),
+                ];
+            })
+            ->values()
+            ->all();
     }
 
     /**
@@ -194,6 +223,7 @@ class WebSocketService
             'members' => $counts['members'],
             'guests' => $counts['guests'],
             'visits_today' => $this->getVisitsToday(),
+            'guest_activity' => $this->getGuestActivity(),
         ]);
     }
 

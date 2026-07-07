@@ -232,16 +232,27 @@
             </router-link>
           </div>
         </article>
-        <article class="pv-panel">
-          <header class="pv-panel-header"><h2><PvIcon name="users" /> Online Now</h2><span class="pv-count">{{ memberStats.online }}</span></header>
-          <div class="pv-avatar-stack">
-            <router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color">
+        <article class="pv-panel pv-online-panel">
+          <header class="pv-panel-header"><h2><PvIcon name="users" /> Online Now</h2><span class="pv-count">{{ onlineActivityTotal }}</span></header>
+          <div class="pv-online-summary">
+            <span><PvIcon name="users" /><strong>{{ memberStats.online }}</strong><small>Members</small></span>
+            <span><PvIcon name="eye" /><strong>{{ memberStats.guests }}</strong><small>Guests</small></span>
+            <span><PvIcon name="clock" /><strong>{{ memberStats.visits_today }}</strong><small>Today</small></span>
+          </div>
+          <div class="pv-avatar-stack pv-avatar-stack--wrap" aria-label="Online members">
+            <router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar pv-avatar--online" :class="member.color" :title="member.name">
               <img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name">
               <span v-else>{{ member.initial }}</span>
             </router-link>
-            <span class="pv-more">+{{ Math.max(0, memberStats.online - onlineMembers.length) }}</span>
+            <span v-if="onlineMemberOverflow > 0" class="pv-more">+{{ onlineMemberOverflow }}</span>
+            <span v-if="memberStats.online === 0" class="pv-muted pv-online-empty">No members online.</span>
           </div>
-          <div v-if="memberStats.guests > 0" class="pv-panel-footer"><PvIcon name="eye" /> {{ memberStats.guests }} guest{{ memberStats.guests !== 1 ? 's' : '' }} browsing</div>
+          <div v-if="onlineGuestRows.length" class="pv-viewing-list">
+            <div v-for="activity in onlineGuestRows" :key="`${activity.path}-${activity.label}`" class="pv-viewing-row">
+              <PvIcon name="eye" />
+              <span><strong>{{ activity.label }}</strong><small>{{ guestVisitorLabel(activity.visitors) }}</small></span>
+            </div>
+          </div>
         </article>
         <article class="pv-panel">
           <header class="pv-panel-header">
@@ -311,8 +322,8 @@
                </div>
               <aside class="author-panel">
                 <router-link class="avatar-wrap pv-author-link" :to="memberHref(topic.authorUsername)" :aria-label="`View ${topic.author}'s profile`" @click.stop>
-                  <span v-if="topic.avatarUrl" class="avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
-                  <span v-else class="avatar" :class="topic.color">{{ topic.initial }}</span>
+                  <span v-if="topic.avatarUrl" class="avatar topic-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
+                  <span v-else class="avatar topic-avatar" :class="topic.color">{{ topic.initial }}</span>
                 </router-link>
                 <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>{{ topic.authorUsername }}</h4></router-link>
                 <div class="author-badge">{{ topic.authorBadge }}</div>
@@ -431,7 +442,7 @@
 
       <article v-for="(reply, index) in replies" :key="reply.id ?? `${reply.author}-${reply.time}`" class="post-card reply-post">
         <div class="post-left reply-left">
-          <router-link class="avatar letter-avatar pv-author-link" :to="memberHref(reply.authorUsername)" :aria-label="`View ${reply.author}'s profile`">
+          <router-link class="avatar letter-avatar reply-avatar pv-author-link" :to="memberHref(reply.authorUsername)" :aria-label="`View ${reply.author}'s profile`">
             <span v-if="reply.avatarUrl" class="img-wrap"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author"></span>
             <span v-else>{{ reply.initial }}</span>
             <span v-if="reply.authorOnline" class="online-indicator"></span>
@@ -1448,7 +1459,8 @@
         <div class="pv-metrics pv-metrics--member">
           <span><PvIcon name="users" /><strong>{{ memberStats.total }}</strong><small>Total Members</small></span>
           <span><PvIcon name="clock" /><strong>{{ memberStats.online }}</strong><small>Online Now</small></span>
-          <span v-if="memberStats.guests > 0"><PvIcon name="eye" /><strong>{{ memberStats.guests }}</strong><small>Guests</small></span>
+          <span><PvIcon name="eye" /><strong>{{ memberStats.guests }}</strong><small>Guests</small></span>
+          <span><PvIcon name="clock" /><strong>{{ memberStats.visits_today }}</strong><small>Visits Today</small></span>
           <span><PvIcon name="shield" /><strong>{{ apiMembers.filter(member => member.isModerator).length }}</strong><small>Moderators</small></span>
           <span><PvIcon name="star" /><strong>{{ topContributors.length }}</strong><small>Top Contributors</small></span>
         </div>
@@ -1502,7 +1514,7 @@
       </main>
       <aside class="pv-stack">
         <article class="pv-panel"><h2>Top Contributors</h2><div class="pv-mini-list"><router-link v-for="member in topContributors" :key="member.slug" :to="member.href" class="pv-mini-row"><span class="pv-avatar" :class="member.color">{{ member.initial }}</span><span><strong>{{ member.name }}</strong><small>{{ formatCount(memberEngagementScore(member)) }} contributions</small></span><PvIcon name="chevron" /></router-link></div></article>
-        <article class="pv-panel"><h2>Online Now</h2><div class="pv-avatar-stack"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar" :class="member.color"><img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name"><span v-else>{{ member.initial }}</span></router-link><span v-if="onlineMembers.length === 0" class="pv-muted">Nobody online right now.</span></div><p v-if="memberStats.guests > 0" class="pv-muted pv-panel-footer"><PvIcon name="eye" /> {{ memberStats.guests }} guest{{ memberStats.guests !== 1 ? 's' : '' }} browsing</p></article>
+        <article class="pv-panel pv-online-panel"><header class="pv-panel-header"><h2>Online Now</h2><span class="pv-count">{{ onlineActivityTotal }}</span></header><div class="pv-online-summary"><span><PvIcon name="users" /><strong>{{ memberStats.online }}</strong><small>Members</small></span><span><PvIcon name="eye" /><strong>{{ memberStats.guests }}</strong><small>Guests</small></span></div><div class="pv-avatar-stack pv-avatar-stack--wrap"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar pv-avatar--online" :class="member.color" :title="member.name"><img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name"><span v-else>{{ member.initial }}</span></router-link><span v-if="onlineMemberOverflow > 0" class="pv-more">+{{ onlineMemberOverflow }}</span><span v-if="memberStats.online === 0" class="pv-muted pv-online-empty">Nobody online right now.</span></div><div v-if="onlineGuestRows.length" class="pv-viewing-list"><div v-for="activity in onlineGuestRows" :key="`${activity.path}-${activity.label}`" class="pv-viewing-row"><PvIcon name="eye" /><span><strong>{{ activity.label }}</strong><small>{{ guestVisitorLabel(activity.visitors) }}</small></span></div></div></article>
         <article class="pv-panel"><h2>Member Tips</h2><ul class="pv-check-list"><li>Keep your profile bio current</li><li>Use reports for moderation issues</li><li>Message members from their profile</li><li>Reputation grows from useful posts</li></ul></article>
       </aside>
     </div>
@@ -2025,11 +2037,20 @@ interface ReplyRealtimePayload {
   discussion_slug?: string
 }
 
+interface OnlineGuestActivity {
+  label: string
+  path?: string | null
+  visitors: number
+  last_seen_at?: string | null
+  time_ago?: string | null
+}
+
 interface OnlineCountRealtimePayload {
   members?: number
   count?: number
   guests?: number
   visits_today?: number
+  guest_activity?: OnlineGuestActivity[]
 }
 
 interface DiscussionIndexResponse {
@@ -2648,7 +2669,7 @@ interface ApiMemberActivity {
 interface MemberIndexResponse {
   data: ApiMemberProfile[]
   meta?: PaginationMeta & {
-    stats?: { total?: number; online?: number }
+    stats?: { total?: number; online?: number; guests?: number; visits_today?: number }
     top_contributors?: ApiMemberProfile[]
     online_members?: ApiMemberProfile[]
   }
@@ -3130,6 +3151,7 @@ const apiTopContributorMembers = ref<UiMemberProfile[]>([])
 const apiOnlineMemberSummaries = ref<UiMemberProfile[]>([])
 const apiDetailMember = ref<UiMemberProfile | null>(null)
 const memberStats = ref({ total: 0, online: 0, guests: 0, visits_today: 0 })
+const onlineGuestActivity = ref<OnlineGuestActivity[]>([])
 const membersLoaded = ref(false)
 const memberPagination = ref<PaginationMeta | null>(null)
 const memberPage = ref(1)
@@ -3331,7 +3353,24 @@ const topContributors = computed(() => apiTopContributorMembers.value.length > 0
     .slice(0, 5))
 const onlineMembers = computed(() => apiOnlineMemberSummaries.value.length > 0
   ? apiOnlineMemberSummaries.value
-  : apiMembers.value.filter(member => member.isOnline).slice(0, 6))
+  : apiMembers.value.filter(member => member.isOnline).slice(0, 80))
+const onlineActivityTotal = computed(() => memberStats.value.online + memberStats.value.guests)
+const onlineMemberOverflow = computed(() => Math.max(0, memberStats.value.online - onlineMembers.value.length))
+const onlineGuestRows = computed<OnlineGuestActivity[]>(() => {
+  if (onlineGuestActivity.value.length > 0) {
+    return onlineGuestActivity.value
+  }
+
+  if (memberStats.value.guests > 0) {
+    return [{
+      label: 'Browsing the community',
+      path: '/',
+      visitors: memberStats.value.guests,
+    }]
+  }
+
+  return []
+})
 const chats = computed(() => {
   const search = messageSearch.value.trim().toLowerCase()
   if (!search) {
@@ -5310,12 +5349,7 @@ function setupRealtime(): void {
     wsUnsubscribers.push(unsubCreated, unsubUpdated, unsubDeleted, unsubReplyCreated, unsubReplyDeleted)
 
     const unsubOnline = websocketService.on<OnlineCountRealtimePayload>('online_count', data => {
-      memberStats.value = {
-        ...memberStats.value,
-        online: typeof data?.members === 'number' ? data.members : (typeof data?.count === 'number' ? data.count : memberStats.value.online),
-        guests: typeof data?.guests === 'number' ? data.guests : memberStats.value.guests,
-        visits_today: typeof data?.visits_today === 'number' ? data.visits_today : memberStats.value.visits_today,
-      }
+      syncOnlineActivity(data)
     })
     wsUnsubscribers.push(unsubOnline)
   }).catch(() => {})
@@ -5332,21 +5366,78 @@ function getGuestId(): string {
   return id
 }
 
+function currentActivityLabel(): string {
+  const activityLabels: Record<string, string> = {
+    home: 'Home',
+    pricing: 'Pricing',
+    discussions: 'Discussions',
+    discussionDetail: 'Discussion thread',
+    labResults: 'Lab results',
+    labReport: 'Lab result report',
+    vendorReviews: 'Vendor reviews',
+    vendorDetail: 'Vendor profile',
+    reviewModal: 'Writing a review',
+    vendorPortal: 'Vendor portal',
+    researchLibrary: 'Research library',
+    researchArticle: 'Research article',
+    guides: 'Guides',
+    guideDetail: 'Guide',
+    members: 'Members',
+    memberDetail: 'Member profile',
+    messages: 'Messages',
+    announcements: 'Announcements',
+    announcementNew: 'Creating announcement',
+    announcementDetail: 'Announcement',
+    notifications: 'Notifications',
+    notificationDetail: 'Notification',
+    search: 'Search',
+    telegramUpdates: 'Telegram updates',
+  }
+
+  if (page.value.startsWith('settings')) {
+    return 'Account settings'
+  }
+
+  return activityLabels[page.value] ?? String(route.meta.title ?? 'Community')
+}
+
+function syncOnlineActivity(data?: OnlineCountRealtimePayload): void {
+  if (!data) {
+    return
+  }
+
+  memberStats.value = {
+    ...memberStats.value,
+    online: typeof data.members === 'number' ? data.members : (typeof data.count === 'number' ? data.count : memberStats.value.online),
+    guests: typeof data.guests === 'number' ? data.guests : memberStats.value.guests,
+    visits_today: typeof data.visits_today === 'number' ? data.visits_today : memberStats.value.visits_today,
+  }
+
+  if (Array.isArray(data.guest_activity)) {
+    onlineGuestActivity.value = data.guest_activity
+  }
+}
+
+function guestVisitorLabel(count: number): string {
+  return `${count} guest${count === 1 ? '' : 's'} viewing`
+}
+
 function startHeartbeat(): void {
   stopHeartbeat()
   const ping = () => {
-    const payload: Record<string, unknown> = {}
+    const payload: Record<string, unknown> = {
+      path: route.path,
+      label: currentActivityLabel(),
+    }
     if (!authStore.isAuthenticated) {
       payload.guest_id = getGuestId()
     }
-    api.post<{ members?: number; guests?: number; visits_today?: number }>('/api/v1/ws/heartbeat', payload).then((res) => {
-      if (res.data?.members !== undefined) {
-        memberStats.value = { ...memberStats.value, online: res.data.members, guests: res.data.guests ?? 0, visits_today: res.data.visits_today ?? 0 }
-      }
+    api.post<OnlineCountRealtimePayload & { status?: string }>('/api/v1/ws/heartbeat', payload).then((res) => {
+      syncOnlineActivity(res.data)
     }).catch(() => {})
   }
   ping()
-  heartbeatInterval = setInterval(ping, 120000)
+  heartbeatInterval = setInterval(ping, 30000)
 }
 
 function stopHeartbeat(): void {
@@ -5358,12 +5449,14 @@ function stopHeartbeat(): void {
 
 watch(() => route.fullPath, () => {
   void syncCommunityContent()
+  startHeartbeat()
   if (page.value !== 'reviewModal') {
     clearVendorReviewPhotos()
   }
 })
 
 onUnmounted(() => {
+  stopHeartbeat()
   clearVendorReviewPhotos()
   if (vendorProductImagePreview.value && vendorProductImagePreview.value.startsWith('blob:')) {
     URL.revokeObjectURL(vendorProductImagePreview.value)
@@ -6799,7 +6892,6 @@ async function loadMembers(): Promise<void> {
     apiMembers.value = []
     apiTopContributorMembers.value = []
     apiOnlineMemberSummaries.value = []
-    memberStats.value = { total: 0, online: 0, guests: 0, visits_today: 0 }
     memberPagination.value = null
     membersLoaded.value = true
     return
@@ -6828,7 +6920,6 @@ async function loadMembers(): Promise<void> {
     apiMembers.value = []
     apiTopContributorMembers.value = []
     apiOnlineMemberSummaries.value = []
-    memberStats.value = { total: 0, online: 0, guests: 0, visits_today: 0 }
     memberPagination.value = null
     membersLoaded.value = true
   }
