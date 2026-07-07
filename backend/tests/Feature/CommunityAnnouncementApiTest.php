@@ -20,12 +20,13 @@ class CommunityAnnouncementApiTest extends TestCase
         Sanctum::actingAs(User::factory()->create());
     }
 
-    public function test_community_announcements_require_authentication(): void
+    public function test_community_announcements_are_public(): void
     {
         auth()->guard('sanctum')->forgetUser();
 
         $this->getJson('/api/v1/community/announcements')
-            ->assertUnauthorized();
+            ->assertOk()
+            ->assertJsonStructure(['data', 'meta']);
     }
 
     public function test_private_announcement_index_returns_published_announcements_and_stats(): void

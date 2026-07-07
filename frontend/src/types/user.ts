@@ -14,6 +14,7 @@ export interface User {
   profile_photo_path?: string
   profile_picture?: string
   is_approved_vendor?: boolean
+  tier?: 'free' | 'paid' | string
   roles?: string[]
   permissions?: string[]
 }

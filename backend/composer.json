@@ -6,10 +6,10 @@
     "keywords": ["laravel", "framework", "control-panel", "game-engine"],
     "license": "proprietary",
     "require": {
-        "php": "^8.2",
+        "php": "^8.4.1",
         "golonka/bbcodeparser": "^3.0",
         "joypixels/emoji-toolkit": "^10.0",
-        "laravel/framework": "^11.31",
+        "laravel/framework": "^12.61",
         "laravel/reverb": "^1.7",
         "laravel/sanctum": "^4.0",
         "laravel/socialite": "^5.24",

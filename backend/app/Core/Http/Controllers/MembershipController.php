@@ -186,9 +186,11 @@ class MembershipController extends Controller
         $price = (float) ($request->interval === 'year' ? $plan->price_yearly : $plan->price_monthly);
         $clientId = config('services.paypal.client_id');
         $secret = config('services.paypal.client_secret');
-        $base = config('services.paypal.mode') === 'live'
-            ? 'https://api-m.paypal.com'
-            : 'https://api-m.sandbox.paypal.com';
+        $base = $this->payPalBaseUrl();
+
+        if (!$clientId || !$secret) {
+            return response()->json(['error' => 'PayPal is not configured'], 503);
+        }
 
         $token = $this->payPalAuth($clientId, $secret, $base);
         if (!$token) return response()->json(['error' => 'PayPal auth failed'], 500);
@@ -207,16 +209,24 @@ class MembershipController extends Controller
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, "$base/v1/oauth2/token");
         curl_setopt($ch, CURLOPT_HEADER, false);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_USERPWD, "$clientId:$secret");
         curl_setopt($ch, CURLOPT_POSTFIELDS, 'grant_type=client_credentials');
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
         curl_close($ch);
-        if ($httpCode !== 200) return null;
-        return json_decode($result)->access_token;
+        if ($httpCode !== 200) {
+            Log::warning('PayPal auth failed', ['status' => $httpCode, 'error' => $error]);
+            return null;
+        }
+
+        return json_decode($result)->access_token ?? null;
     }
 
     private function payPalGetOrCreateProduct(string $token, string $base): ?string
@@ -226,7 +236,10 @@ class MembershipController extends Controller
         curl_setopt($ch, CURLOPT_URL, "$base/v1/catalogs/products");
         curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -247,7 +260,10 @@ class MembershipController extends Controller
             'type' => 'SERVICE',
         ]));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -283,7 +299,10 @@ class MembershipController extends Controller
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($planData));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         $result = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -316,7 +335,10 @@ class MembershipController extends Controller
         curl_setopt($ch, CURLOPT_POST, true);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($subscriptionData));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
-        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, false);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
         $response = curl_exec($ch);
         $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         curl_close($ch);
@@ -339,6 +361,10 @@ class MembershipController extends Controller
 
         if (!$event || !isset($event->event_type)) {
             return response()->json(['error' => 'Invalid payload'], 400);
+        }
+
+        if (!$this->verifyPayPalWebhook($request, $payload)) {
+            return response()->json(['error' => 'Invalid signature'], 400);
         }
 
         switch ($event->event_type) {
@@ -381,6 +407,72 @@ class MembershipController extends Controller
         }
 
         return response()->json(['received' => true]);
+    }
+
+    private function payPalBaseUrl(): string
+    {
+        return config('services.paypal.mode') === 'live'
+            ? 'https://api-m.paypal.com'
+            : 'https://api-m.sandbox.paypal.com';
+    }
+
+    private function verifyPayPalWebhook(Request $request, string $payload): bool
+    {
+        $clientId = config('services.paypal.client_id');
+        $secret = config('services.paypal.client_secret');
+        $webhookId = config('services.paypal.webhook_id');
+
+        if (!$clientId || !$secret || !$webhookId) {
+            Log::error('PayPal webhook verification is not configured.');
+            return false;
+        }
+
+        $headers = [
+            'auth_algo' => $request->header('PAYPAL-AUTH-ALGO'),
+            'cert_url' => $request->header('PAYPAL-CERT-URL'),
+            'transmission_id' => $request->header('PAYPAL-TRANSMISSION-ID'),
+            'transmission_sig' => $request->header('PAYPAL-TRANSMISSION-SIG'),
+            'transmission_time' => $request->header('PAYPAL-TRANSMISSION-TIME'),
+        ];
+
+        if (in_array(null, $headers, true) || in_array('', $headers, true)) {
+            return false;
+        }
+
+        $token = $this->payPalAuth($clientId, $secret, $this->payPalBaseUrl());
+        if (!$token) {
+            return false;
+        }
+
+        $body = json_encode([
+            ...$headers,
+            'webhook_id' => $webhookId,
+            'webhook_event' => json_decode($payload, true),
+        ]);
+
+        $ch = curl_init();
+        curl_setopt($ch, CURLOPT_URL, $this->payPalBaseUrl() . '/v1/notifications/verify-webhook-signature');
+        curl_setopt($ch, CURLOPT_HTTPHEADER, ["Content-Type: application/json", "Authorization: Bearer $token"]);
+        curl_setopt($ch, CURLOPT_POST, true);
+        curl_setopt($ch, CURLOPT_POSTFIELDS, $body);
+        curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYPEER, true);
+        curl_setopt($ch, CURLOPT_SSL_VERIFYHOST, 2);
+        curl_setopt($ch, CURLOPT_CONNECTTIMEOUT, 10);
+        curl_setopt($ch, CURLOPT_TIMEOUT, 30);
+        $response = curl_exec($ch);
+        $httpCode = curl_getinfo($ch, CURLINFO_HTTP_CODE);
+        $error = curl_error($ch);
+        curl_close($ch);
+
+        if ($httpCode !== 200) {
+            Log::warning('PayPal webhook verification failed', ['status' => $httpCode, 'error' => $error]);
+            return false;
+        }
+
+        $result = json_decode($response, true);
+
+        return ($result['verification_status'] ?? null) === 'SUCCESS';
     }
 
     public function cancel(Request $request)

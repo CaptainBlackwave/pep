@@ -89,7 +89,7 @@ test.describe('Welcome Banner', () => {
     await page.goto('/')
 
     // Admin link should not be visible
-    await expect(page.locator('.admin-link')).not.toBeVisible()
+    await expect(page.locator('.admin-link')).toBeHidden()
   })
 
   test('shows admin link for admin users', async ({ page }) => {
@@ -251,7 +251,7 @@ test.describe('Empty State (No Plugins)', () => {
     await page.goto('/')
 
     // Install link should not be visible for non-admins
-    await expect(page.locator('.install-link')).not.toBeVisible()
+    await expect(page.locator('.install-link')).toBeHidden()
   })
 })
 
@@ -305,7 +305,7 @@ test.describe('Plugin Feature Cards', () => {
     await page.goto('/')
 
     // Should not show features section
-    await expect(page.locator('.section-title').filter({ hasText: 'Features' })).not.toBeVisible()
+    await expect(page.locator('.section-title').filter({ hasText: 'Features' })).toBeHidden()
 
     // Should not show any feature cards
     await expect(page.locator('.feature-card')).toHaveCount(0)

@@ -373,6 +373,13 @@ Route::prefix('v1')->group(function () {
                 Route::delete('/{announcement}', 'destroy');
             });
 
+            Route::prefix('community/notifications')->controller(\App\Core\Http\Controllers\Admin\CommunityNotificationAdminController::class)->group(function () {
+                Route::get('/', 'index');
+                Route::post('/', 'store');
+                Route::patch('/{notification}', 'update');
+                Route::delete('/{notification}', 'destroy');
+            });
+
             Route::prefix('community/access-codes')->controller(\App\Core\Http\Controllers\Admin\CommunityAccessCodeAdminController::class)->group(function () {
                 Route::get('/', 'index');
                 Route::post('/', 'store');

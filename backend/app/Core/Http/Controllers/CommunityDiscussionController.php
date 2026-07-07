@@ -2,8 +2,6 @@
 
 namespace App\Core\Http\Controllers;
 
-use App\Core\Events\WebSocketBroadcast;
-use App\Core\Http\Controllers\SseController;
 use App\Core\Http\Resources\CommunityDiscussionReplyResource;
 use App\Core\Http\Resources\CommunityDiscussionResource;
 use App\Core\Http\Resources\CommunityMemberResource;
@@ -13,6 +11,7 @@ use App\Core\Models\CommunityDiscussionReport;
 use App\Core\Models\CommunityDiscussionReply;
 use App\Core\Models\CommunityDiscussionVote;
 use App\Core\Models\DiscussionSubscription;
+use App\Core\Models\User;
 use App\Core\Services\NotificationService;
 use App\Core\Services\PushNotificationService;
 use App\Core\Services\WebSocketService;
@@ -44,7 +43,7 @@ class CommunityDiscussionController extends Controller
 
         $user = $request->user();
         $query->whereHas('category', function ($q) use ($user) {
-            if (!$user || $user->tier !== 'paid') {
+            if (!$this->userHasPaidTier($user)) {
                 $q->where('premium_only', false);
             }
         });
@@ -93,14 +92,20 @@ class CommunityDiscussionController extends Controller
         ]);
     }
 
-    public function show(string $discussion)
+    public function show(Request $request, string $discussion)
     {
         $discussionModel = $this->findPublishedDiscussion($discussion)
             ->load(['category', 'user.roles', 'user.settings', 'replies.user.roles', 'replies.user.settings']);
 
+        abort_if(
+            $discussionModel->category?->premium_only && !$this->userHasPaidTier($request->user()),
+            403,
+            'This discussion is only available to premium members.'
+        );
+
         $discussionModel->increment('views_count');
         $discussionModel->refresh()->load(['category', 'user.roles', 'user.settings', 'replies.user.roles', 'replies.user.settings']);
-        $this->hydrateVoteAttributes(collect([$discussionModel]), 'discussion', request()->user()?->id);
+        $this->hydrateVoteAttributes(collect([$discussionModel]), 'discussion', $request->user()?->id);
         $this->hydrateVoteAttributes($discussionModel->replies, 'reply', request()->user()?->id);
 
         $participants = collect([$discussionModel->user])
@@ -175,7 +180,7 @@ class CommunityDiscussionController extends Controller
 
         $this->notifyMentionedUsers($body, $discussion, $user);
 
-        SseController::dispatch('discussions', 'discussion.created', [
+        $this->broadcastPublicDiscussionEvent($discussion, 'discussion.created', [
             'discussion' => (new CommunityDiscussionResource($discussion))->resolve($request),
         ]);
 
@@ -209,7 +214,7 @@ class CommunityDiscussionController extends Controller
 
         $discussionModel->load(['category', 'user']);
 
-        SseController::dispatch('discussions', 'discussion.updated', [
+        $this->broadcastPublicDiscussionEvent($discussionModel, 'discussion.updated', [
             'discussion' => (new CommunityDiscussionResource($discussionModel))->resolve($request),
         ]);
 
@@ -219,9 +224,10 @@ class CommunityDiscussionController extends Controller
     public function destroy(Request $request, string $discussion)
     {
         $discussionModel = $this->findOwnDiscussion($request, $discussion);
+        $discussionModel->loadMissing('category');
         $discussionModel->delete();
 
-        SseController::dispatch('discussions', 'discussion.deleted', [
+        $this->broadcastPublicDiscussionEvent($discussionModel, 'discussion.deleted', [
             'id' => $discussionModel->id,
             'slug' => $discussionModel->slug,
         ]);
@@ -301,7 +307,7 @@ class CommunityDiscussionController extends Controller
 
         $reply->load('user.roles');
 
-        SseController::dispatch('discussions', 'reply.created', [
+        $this->broadcastPublicDiscussionEvent($discussionModel, 'reply.created', [
             'reply' => (new CommunityDiscussionReplyResource($reply))->resolve($request),
             'discussion_slug' => $discussionModel->slug,
         ]);
@@ -401,13 +407,26 @@ class CommunityDiscussionController extends Controller
             'author_name' => null,
         ]);
 
-        SseController::dispatch('discussions', 'reply.deleted', [
-            'reply_id' => (int) $replyModel->id,
-            'discussion_id' => $discussion->id,
-            'discussion_slug' => $discussion->slug,
-        ]);
+        if ($discussion) {
+            $this->broadcastPublicDiscussionEvent($discussion, 'reply.deleted', [
+                'reply_id' => (int) $replyModel->id,
+                'discussion_id' => $discussion->id,
+                'discussion_slug' => $discussion->slug,
+            ]);
+        }
 
         return response()->json(['success' => true, 'message' => 'Reply deleted.']);
+    }
+
+    private function broadcastPublicDiscussionEvent(CommunityDiscussion $discussion, string $event, array $data): void
+    {
+        $discussion->loadMissing('category');
+
+        if ($discussion->category?->premium_only) {
+            return;
+        }
+
+        $this->websocket->broadcast('discussions', $event, $data);
     }
 
     private function findPublishedReply(string $value): CommunityDiscussionReply
@@ -601,7 +620,7 @@ class CommunityDiscussionController extends Controller
                 'discussions' => fn ($query) => $query->where('status', 'published'),
             ])
             ->when(
-                !$user || $user->tier !== 'paid',
+                !$this->userHasPaidTier($user),
                 fn ($query) => $query->where('premium_only', false)
             )
             ->orderBy('sort_order')
@@ -657,7 +676,7 @@ class CommunityDiscussionController extends Controller
             ->with(['category', 'user', 'lastReplyUser'])
             ->where('status', 'published')
             ->whereHas('category', function ($q) use ($user) {
-                if (!$user || $user->tier !== 'paid') {
+                if (!$this->userHasPaidTier($user)) {
                     $q->where('premium_only', false);
                 }
             })
@@ -668,5 +687,21 @@ class CommunityDiscussionController extends Controller
         $this->hydrateVoteAttributes($discussions, 'discussion', $userId);
 
         return $discussions;
+    }
+
+    private function userHasPaidTier(?User $user): bool
+    {
+        if (!$user) {
+            return false;
+        }
+
+        $attributes = $user->getAttributes();
+        $tier = $attributes['tier'] ?? $user->getRawOriginal('tier') ?? null;
+
+        if ($tier === null && $user->exists) {
+            $tier = User::query()->whereKey($user->getKey())->value('tier');
+        }
+
+        return $tier === 'paid';
     }
 }

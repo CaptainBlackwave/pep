@@ -149,6 +149,7 @@ describe('RegisterView', () => {
       const passwordInputs = wrapper.findAll('input[type="password"]')
       await passwordInputs[0].setValue(fields.password)
       await passwordInputs[1].setValue(fields.password_confirmation)
+      await wrapper.find('.pv-age-check input[type="checkbox"]').setValue(true)
       await wrapper.find('form').trigger('submit.prevent')
       await flushPromises()
     }

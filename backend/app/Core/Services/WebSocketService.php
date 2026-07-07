@@ -4,6 +4,7 @@ namespace App\Core\Services;
 
 use App\Core\Models\User;
 use Illuminate\Support\Facades\Cache;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Support\Str;
 
 class WebSocketService
@@ -43,8 +44,17 @@ class WebSocketService
         // Store in cache for polling fallback
         $this->storeMessage($channel, $payload);
 
-        // Broadcast via configured driver (Redis, Pusher, etc.)
-        broadcast(new \App\Core\Events\WebSocketBroadcast($channel, $event, $data));
+        // Broadcast via configured driver (Redis, Pusher, etc.). If realtime is
+        // unavailable, API writes should still succeed and polling can catch up.
+        try {
+            broadcast(new \App\Core\Events\WebSocketBroadcast($channel, $event, $data));
+        } catch (\Throwable $e) {
+            Log::warning('Realtime broadcast failed', [
+                'channel' => $channel,
+                'event' => $event,
+                'error' => $e->getMessage(),
+            ]);
+        }
     }
 
     /**

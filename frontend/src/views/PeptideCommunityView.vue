@@ -1490,9 +1490,9 @@
               </span>
               <p>{{ member.bio || 'No bio yet.' }}</p>
               <dl>
-                <span><dt>Posts</dt><dd>{{ formatCount(member.stats.posts) }}</dd></span>
-                <span><dt>Reviews</dt><dd>{{ formatCount(member.stats.reviews) }}</dd></span>
-                <span><dt>Labs</dt><dd>{{ formatCount(member.stats.lab_reports) }}</dd></span>
+                <div><dt>Posts</dt><dd>{{ formatCount(member.stats.posts) }}</dd></div>
+                <div><dt>Reviews</dt><dd>{{ formatCount(member.stats.reviews) }}</dd></div>
+                <div><dt>Labs</dt><dd>{{ formatCount(member.stats.lab_reports) }}</dd></div>
               </dl>
               <footer><small>{{ member.lastActive || 'No recent activity' }}</small><PvIcon name="chevron" /></footer>
             </router-link>
@@ -1852,7 +1852,9 @@ import PvIcon from '@/components/peptide/PvIcon.vue'
 import EmojiPicker from '@/components/ui/EmojiPicker.vue'
 import GiphyPicker from '@/components/ui/GiphyPicker.vue'
 import api from '@/services/api'
+import { websocketService } from '@/services/websocket'
 import { useAuthStore } from '@/stores/auth'
+import type { User } from '@/types/user'
 import heroImage from '@/assets/peptide/hero-vials.png'
 import researchImage from '@/assets/peptide/research-thumbnails.png'
 
@@ -1862,6 +1864,9 @@ const authStore = useAuthStore()
 const page = computed(() => String(route.meta.page ?? 'home'))
 const fallbackTitle = computed(() => String(route.meta.title ?? ''))
 
+type UnknownRecord = Record<string, unknown>
+type AuthUserRecord = User & UnknownRecord
+
 interface UiDiscussion {
   id?: number
   title: string
@@ -1869,6 +1874,7 @@ interface UiDiscussion {
   author: string
   authorUsername: string
   authorOnline: boolean
+  authorBadge?: string | null
   authorPostCount: number
   authorId?: number
   time: string
@@ -1941,7 +1947,8 @@ interface ApiDiscussion {
   is_pinned?: boolean
   is_locked?: boolean
   category?: { name?: string | null; slug?: string | null; color?: string | null } | null
-  author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; avatar?: string | null; is_online?: boolean; post_count?: number } | null
+  author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; avatar?: string | null; is_online?: boolean; badge?: string | null; post_count?: number } | null
+  premium_only?: boolean
   vote_score?: number
   viewer_vote?: number
   reply_items?: ApiReply[]
@@ -1971,11 +1978,32 @@ interface ApiReply {
   body?: string | null
   attachment_name?: string | null
   attachment_url?: string | null
-  attachment_meta?: Record<string, any> | null
+  attachment_meta?: UnknownRecord | null
   votes?: number
   viewer_vote?: number
   time_ago?: string | null
   author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; badge?: string | null; avatar?: string | null; is_online?: boolean } | null
+}
+
+interface DiscussionRealtimePayload {
+  discussion?: ApiDiscussion
+}
+
+interface DiscussionDeletedRealtimePayload {
+  slug?: string
+}
+
+interface ReplyRealtimePayload {
+  reply?: ApiReply
+  reply_id?: number
+  discussion_slug?: string
+}
+
+interface OnlineCountRealtimePayload {
+  members?: number
+  count?: number
+  guests?: number
+  visits_today?: number
 }
 
 interface DiscussionIndexResponse {
@@ -2426,7 +2454,7 @@ interface UiContentItem {
   author: string
   authorInitial: string
   authorBadge?: string | null
-  metadata: Record<string, any>
+  metadata: UnknownRecord
 }
 
 interface ApiContentItem {
@@ -2446,7 +2474,7 @@ interface ApiContentItem {
   views?: number
   downloads?: number
   comments?: number
-  metadata?: Record<string, any> | null
+  metadata?: UnknownRecord | null
   published_label?: string | null
   time_ago?: string | null
   href?: string
@@ -2512,7 +2540,7 @@ interface UiMemberProfile {
   joined: string
   lastActive: string
   interests: string[]
-  stats: Record<string, any>
+  stats: UnknownRecord
   badges: string[]
   href: string
   activities: UiMemberActivity[]
@@ -2619,7 +2647,7 @@ interface UiMessage {
   text: string
   time: string
   attachmentName?: string | null
-  attachmentMeta?: Record<string, any>
+  attachmentMeta?: UnknownRecord
   attachmentLabel: string
   avatarInitial: string
   avatarColor: string
@@ -2696,6 +2724,7 @@ interface ApiNotification {
 interface NotificationStats {
   total: number
   unread: number
+  read?: number
   announcements: number
   lab_results: number
   discussions: number
@@ -3181,6 +3210,8 @@ const newVendorReview = ref({
   rating: 0,
   title: '',
   body: '',
+  product_name: '',
+  tags: '',
   would_buy_again: true,
 })
 
@@ -3305,13 +3336,6 @@ const messageRecipientOptions = computed(() => {
 })
 const currentThread = computed(() => apiCurrentMessageThread.value)
 const categoryFilters = computed<ApiCategory[]>(() => discussionCategories.value)
-const discussionSortLabel = computed(() => {
-  if (discussionSort.value === 'replies') return 'Most Replies'
-  if (discussionSort.value === 'views') return 'Most Viewed'
-  return 'Latest Activity'
-})
-const isFollowingDiscussion = computed(() => Boolean(detailDiscussion.value?.slug && followedDiscussionSlugs.value.includes(detailDiscussion.value.slug)))
-const isSavedDiscussion = computed(() => Boolean(detailDiscussion.value?.slug && savedDiscussionSlugs.value.includes(detailDiscussion.value.slug)))
 const currentDiscussionSlug = computed(() => {
   const parts = route.path.split('/').filter(Boolean)
   return String(route.params.slug ?? parts[parts.length - 1] ?? '')
@@ -3325,60 +3349,6 @@ const detailParagraphs = computed(() => {
   const body = detailDiscussion.value?.body ?? detailDiscussion.value?.excerpt ?? ''
   return body.split(/\n+/).map(paragraph => paragraph.trim()).filter(Boolean)
 })
-const detailCategoryLabel = computed(() => detailDiscussion.value?.category || detailDiscussion.value?.tag || 'Discussion')
-const replyAttachmentCount = computed(() => replies.value.filter(reply => Boolean(reply.file || reply.attachmentUrl)).length)
-const discussionParticipants = computed<UiMemberProfile[]>(() => {
-  if (apiDiscussionParticipants.value.length > 0) {
-    return apiDiscussionParticipants.value
-  }
-
-  const participants = new Map<string, { name: string; initial: string; color: string }>()
-  if (detailDiscussion.value) {
-    participants.set(detailDiscussion.value.author, {
-      name: detailDiscussion.value.author,
-      initial: detailDiscussion.value.initial,
-      color: detailDiscussion.value.color,
-    })
-  }
-  replies.value.forEach((reply) => {
-    participants.set(reply.author, {
-      name: reply.author,
-      initial: reply.initial,
-      color: reply.color,
-    })
-  })
-
-  return Array.from(participants.values()).map(member => ({
-    id: undefined,
-    name: member.name,
-    username: member.name,
-    slug: member.name,
-    initial: member.initial,
-    color: member.color,
-    role: '',
-    group: '',
-    badge: null,
-    bio: '',
-    location: '',
-    websiteUrl: null,
-    isOnline: false,
-    isVerified: false,
-    isModerator: false,
-    joined: '',
-    lastActive: '',
-    interests: [],
-    stats: {},
-    badges: [],
-    href: '/members',
-    activities: [],
-    tabData: {},
-  }))
-})
-const similarDiscussionTopics = computed(() => apiSimilarDiscussions.value.length > 0
-  ? apiSimilarDiscussions.value
-  : discussions.value
-    .filter(topic => topic.slug !== currentDiscussionSlug.value && topic.href !== detailDiscussion.value?.href)
-    .slice(0, 3))
 const currentAnnouncementSlug = computed(() => {
   const parts = route.path.split('/').filter(Boolean)
   return String(route.params.slug ?? parts[parts.length - 1] ?? '')
@@ -3470,8 +3440,8 @@ function defaultUserSettings(): UserSettingsPayload {
   }
 }
 
-function userRecord(): Record<string, any> {
-  return (authStore.user as Record<string, any> | null) ?? {}
+function userRecord(): Partial<AuthUserRecord> {
+  return (authStore.user as AuthUserRecord | null) ?? {}
 }
 
 function backendAssetOrigin(): string {
@@ -3561,12 +3531,12 @@ async function loadPublicCommunitySettings(force = false): Promise<void> {
   }
 }
 
-function setAuthUser(user: Record<string, any>): void {
-  authStore.user = user as any
+function setAuthUser(user: AuthUserRecord): void {
+  authStore.user = user
   localStorage.setItem('user', JSON.stringify(user))
 }
 
-function hydrateSettingsFromUser(user: Record<string, any>): void {
+function hydrateSettingsFromUser(user: UnknownRecord): void {
   accountForm.value = {
     username: String(user.username ?? ''),
     name: String(user.name ?? user.username ?? ''),
@@ -3614,7 +3584,7 @@ async function loadUserSettings(): Promise<void> {
   }
 
   try {
-    const response = await api.get<Record<string, any>>('/api/v1/user', {
+    const response = await api.get<AuthUserRecord>('/api/v1/user', {
       cacheTTL: 0,
       skipDeduplication: true,
     })
@@ -3678,7 +3648,7 @@ async function saveUserSettings(payload: Partial<UserSettingsPayload> = userSett
   settingsStatusMessage.value = ''
 
   try {
-    const response = await api.patch<{ user?: Record<string, any> }>('/api/v1/user', payload)
+    const response = await api.patch<{ user?: AuthUserRecord }>('/api/v1/user', payload)
     if (response.data.user) {
       setAuthUser(response.data.user)
       hydrateSettingsFromUser(response.data.user)
@@ -3701,7 +3671,7 @@ async function saveAccountProfile(): Promise<void> {
   settingsStatusMessage.value = ''
 
   try {
-    const response = await api.patch<{ user?: Record<string, any> }>('/api/v1/user/profile', {
+    const response = await api.patch<{ user?: AuthUserRecord }>('/api/v1/user/profile', {
       username: accountForm.value.username,
       name: accountForm.value.name,
       email: accountForm.value.email,
@@ -3811,7 +3781,7 @@ async function deleteApiToken(tokenId: number): Promise<void> {
     await api.delete(`/api/v1/user/api-tokens/${tokenId}`)
 
     if (isCurrentToken) {
-      authStore.user = null as any
+      authStore.user = null
       localStorage.removeItem('user')
       localStorage.removeItem('auth_token')
       await router.push('/login')
@@ -3840,7 +3810,7 @@ async function revokeUserSession(session: UserSessionSummary): Promise<void> {
     })
 
     if (session.isCurrent) {
-      authStore.user = null as any
+      authStore.user = null
       localStorage.removeItem('user')
       localStorage.removeItem('auth_token')
       await router.push('/login')
@@ -3889,7 +3859,7 @@ async function uploadProfileAvatar(event: Event): Promise<void> {
   try {
     const formData = new FormData()
     formData.append('avatar', file)
-    const response = await api.post<{ user?: Record<string, any> }>('/api/v1/user/avatar', formData, {
+    const response = await api.post<{ user?: AuthUserRecord }>('/api/v1/user/avatar', formData, {
       headers: { 'Content-Type': 'multipart/form-data' },
       skipDeduplication: true,
     })
@@ -4073,7 +4043,7 @@ async function signOutEverywhere(): Promise<void> {
   } catch {
     // Local logout still protects the browser even if the server call fails.
   } finally {
-    authStore.user = null as any
+    authStore.user = null
     localStorage.removeItem('user')
     localStorage.removeItem('auth_token')
     signingOutEverywhere.value = false
@@ -4118,7 +4088,7 @@ function parseContentBlocks(body: string): Array<{ kind: 'heading' | 'paragraph'
   return blocks
 }
 
-function formatCount(value: number | undefined): string {
+function formatCount(value: unknown): string {
   const count = Number(value ?? 0)
 
   if (count >= 1000) {
@@ -4273,10 +4243,6 @@ function syncFiltersFromRouteQuery(): void {
   if (page.value === 'messages') messageSearch.value = query
 }
 
-function cycleDiscussionSort(): void {
-  discussionSort.value = discussionSort.value === 'latest' ? 'replies' : discussionSort.value === 'replies' ? 'views' : 'latest'
-}
-
 function cycleLabSort(): void {
   labSort.value = labSort.value === 'latest' ? 'purity' : labSort.value === 'purity' ? 'compound' : 'latest'
 }
@@ -4345,22 +4311,12 @@ async function saveEditDiscussion(): Promise<void> {
     })
     await loadDiscussionDetail()
     isEditingDiscussion.value = false
-  } catch (err: any) {
-    discussionEditError.value = err?.response?.data?.message ?? 'Failed to update discussion.'
+  } catch (error) {
+    const apiError = error as { response?: { data?: { message?: string } } }
+    discussionEditError.value = apiError.response?.data?.message ?? 'Failed to update discussion.'
   } finally {
     discussionEditSaving.value = false
   }
-}
-
-async function toggleDiscussionFollow(): Promise<void> {
-  if (!detailDiscussion.value?.slug) return
-  await toggleCommunityAction(
-    'follow',
-    'discussion',
-    detailDiscussion.value.slug,
-    'You are following this discussion.',
-    'You are no longer following this discussion.',
-  )
 }
 
 const showPostMenu = ref(false)
@@ -4421,17 +4377,6 @@ function startEditDiscussionFromList(topic: UiDiscussion): void {
   if (topic.href) {
     void router.push(topic.href + '?edit=1')
   }
-}
-
-async function toggleDiscussionSave(): Promise<void> {
-  if (!detailDiscussion.value?.slug) return
-  await toggleCommunityAction(
-    'save',
-    'discussion',
-    detailDiscussion.value.slug,
-    'Discussion saved.',
-    'Discussion removed from saved items.',
-  )
 }
 
 function isFollowingMember(member: UiMemberProfile): boolean {
@@ -4642,7 +4587,7 @@ async function submitReport(): Promise<void> {
       await api.post(`/api/v1/community/discussions/${currentDiscussionSlug.value}/report`, payload)
     } else if (reportTarget.value.type === 'discussion-list' && reportTarget.value.slug) {
       await api.post(`/api/v1/community/discussions/${reportTarget.value.slug}/report`, payload)
-    } else if (reportTarget.value.reply.id) {
+    } else if (reportTarget.value.type === 'reply' && reportTarget.value.reply.id) {
       await api.post(`/api/v1/community/discussion-replies/${reportTarget.value.reply.id}/report`, payload)
     }
 
@@ -4751,10 +4696,6 @@ function attachmentLabel(reply: UiReply): string {
   const type = String(reply.attachmentMeta?.type ?? 'file').toUpperCase()
   const size = Number(reply.attachmentMeta?.size ?? 0)
   return [type, size > 0 ? `${Math.round(size / 1024)} KB` : ''].filter(Boolean).join(' · ')
-}
-
-function jumpToVendorReviews(): void {
-  document.querySelector('.pv-review-summary')?.scrollIntoView({ behavior: 'smooth', block: 'start' })
 }
 
 function formatMetadataKey(key: string): string {
@@ -5193,18 +5134,6 @@ function setDiscussionCategory(slug: string): void {
   void loadDiscussions()
 }
 
-function applyDiscussionFilters(): void {
-  discussionPage.value = 1
-  void loadDiscussions()
-}
-
-function clearDiscussionFilters(): void {
-  discussionSearch.value = ''
-  activeCategory.value = ''
-  discussionPage.value = 1
-  void loadDiscussions()
-}
-
 function setDiscussionPage(pageNumber: number): void {
   discussionPage.value = pageNumber
   void loadDiscussions()
@@ -5232,10 +5161,6 @@ async function loadMembershipStatus(): Promise<void> {
   } catch {
     // silent
   }
-}
-
-function toggleBillingInterval(): void {
-  billingInterval.value = billingInterval.value === 'month' ? 'year' : 'month'
 }
 
 async function subscribeWith(provider: 'stripe' | 'paypal'): Promise<void> {
@@ -5315,13 +5240,13 @@ function setupRealtime(): void {
     websocketService.subscribe('announcements')
     websocketService.subscribe('global')
 
-    const unsubCreated = websocketService.on('discussion.created', (data: any) => {
+    const unsubCreated = websocketService.on<DiscussionRealtimePayload>('discussion.created', data => {
       if (data?.discussion && page.value === 'discussions') {
         apiDiscussions.value = [mapDiscussion(data.discussion), ...apiDiscussions.value]
       }
     })
 
-    const unsubUpdated = websocketService.on('discussion.updated', (data: any) => {
+    const unsubUpdated = websocketService.on<DiscussionRealtimePayload>('discussion.updated', data => {
       if (data?.discussion) {
         const updated = mapDiscussion(data.discussion)
         const idx = apiDiscussions.value.findIndex(d => d.id === updated.id || d.slug === updated.slug)
@@ -5329,13 +5254,13 @@ function setupRealtime(): void {
       }
     })
 
-    const unsubDeleted = websocketService.on('discussion.deleted', (data: any) => {
+    const unsubDeleted = websocketService.on<DiscussionDeletedRealtimePayload>('discussion.deleted', data => {
       if (data?.slug) {
         apiDiscussions.value = apiDiscussions.value.filter(d => d.slug !== data.slug)
       }
     })
 
-    const unsubReplyCreated = websocketService.on('reply.created', (data: any) => {
+    const unsubReplyCreated = websocketService.on<ReplyRealtimePayload>('reply.created', data => {
       if (data?.reply && data.discussion_slug === currentDiscussionSlug.value) {
         apiReplies.value = [...apiReplies.value, mapReply(data.reply)]
         if (apiDetailDiscussion.value) {
@@ -5344,7 +5269,7 @@ function setupRealtime(): void {
       }
     })
 
-    const unsubReplyDeleted = websocketService.on('reply.deleted', (data: any) => {
+    const unsubReplyDeleted = websocketService.on<ReplyRealtimePayload>('reply.deleted', data => {
       if (data?.reply_id && data.discussion_slug === currentDiscussionSlug.value) {
         apiReplies.value = apiReplies.value.filter(r => r.id !== data.reply_id)
         if (apiDetailDiscussion.value) {
@@ -5355,7 +5280,7 @@ function setupRealtime(): void {
 
     wsUnsubscribers.push(unsubCreated, unsubUpdated, unsubDeleted, unsubReplyCreated, unsubReplyDeleted)
 
-    const unsubOnline = websocketService.on('online_count', (data: any) => {
+    const unsubOnline = websocketService.on<OnlineCountRealtimePayload>('online_count', data => {
       memberStats.value = {
         ...memberStats.value,
         online: typeof data?.members === 'number' ? data.members : (typeof data?.count === 'number' ? data.count : memberStats.value.online),
@@ -5385,7 +5310,7 @@ function startHeartbeat(): void {
     if (!authStore.isAuthenticated) {
       payload.guest_id = getGuestId()
     }
-    api.post('/api/v1/ws/heartbeat', payload).then((res) => {
+    api.post<{ members?: number; guests?: number; visits_today?: number }>('/api/v1/ws/heartbeat', payload).then((res) => {
       if (res.data?.members !== undefined) {
         memberStats.value = { ...memberStats.value, online: res.data.members, guests: res.data.guests ?? 0, visits_today: res.data.visits_today ?? 0 }
       }
@@ -5711,12 +5636,6 @@ function productCatalogPriceLabel(product: VendorProduct): string {
   return product.priceLabel || 'Contact'
 }
 
-function variantAvailability(variant: ProductVariant): string {
-  if (variant.availability === 'out_of_stock') return 'Out of stock'
-  if (variant.availability === 'limited') return 'Limited'
-  return 'In stock'
-}
-
 function mapVendor(item: ApiVendor): UiVendor {
   const products = (item.products ?? []).map(mapVendorProduct)
 
@@ -5778,17 +5697,6 @@ function mapVendor(item: ApiVendor): UiVendor {
     documents: (item.documents ?? []).map(mapVendorDocument),
     ratingDistribution: item.rating_distribution ?? [],
   }
-}
-
-function vendorChipIcon(chip: string): string {
-  const value = chip.toLowerCase()
-
-  if (value.includes('pep') || value.includes('lab') || value.includes('research')) return 'flask'
-  if (value.includes('sale') || value.includes('deal')) return 'tag'
-  if (value.includes('support') || value.includes('contact')) return 'message'
-  if (value.includes('vendor') || value.includes('member') || value.includes('nick')) return 'user'
-
-  return 'tag'
 }
 
 function normalizeHandle(value?: string | null): string {
@@ -6304,6 +6212,11 @@ async function saveVendorDocument(): Promise<void> {
     vendorDocumentFormError.value = 'Please select a file to upload.'
     return
   }
+  const file = fileInput.files.item(0)
+  if (!file) {
+    vendorDocumentFormError.value = 'Please select a file to upload.'
+    return
+  }
   savingVendorDocument.value = true
   vendorDocumentFormError.value = ''
   vendorDocumentStatusMessage.value = ''
@@ -6312,7 +6225,7 @@ async function saveVendorDocument(): Promise<void> {
     form.append('title', vendorDocumentForm.value.title)
     form.append('category', vendorDocumentForm.value.category)
     form.append('description', vendorDocumentForm.value.description)
-    form.append('file', fileInput.files[0])
+    form.append('file', file)
     const response = await api.post<{ data: ApiVendorDocument }>('/api/v1/community/vendor-profile/documents', form, {
       headers: { 'Content-Type': 'multipart/form-data' },
       skipDeduplication: true,
@@ -6886,7 +6799,7 @@ async function loadMembers(): Promise<void> {
     apiMembers.value = []
     apiTopContributorMembers.value = []
     apiOnlineMemberSummaries.value = []
-    memberStats.value = { total: 0, online: 0 }
+    memberStats.value = { total: 0, online: 0, guests: 0, visits_today: 0 }
     memberPagination.value = null
     membersLoaded.value = true
   }
@@ -7148,8 +7061,16 @@ function mapNotification(item: ApiNotification): UiNotification {
 async function loadNotifications(): Promise<void> {
   if (!authStore.isAuthenticated) {
     apiNotifications.value = []
-    notificationStats.value = { total: 0, unread: 0, read: 0 }
-    notificationCategories.value = ['all']
+    notificationStats.value = {
+      total: 0,
+      unread: 0,
+      read: 0,
+      announcements: 0,
+      lab_results: 0,
+      discussions: 0,
+      vendors: 0,
+    }
+    notificationCategories.value = []
     notificationPagination.value = null
     notificationsLoaded.value = true
     notificationStatusMessage.value = ''
@@ -7699,8 +7620,11 @@ const TipTapComposer = defineComponent({
         },
         handleDrop: (view, event, slice, moved) => {
           if (!moved && event.dataTransfer?.files?.length) {
-            uploadToEditor(event.dataTransfer.files[0], editor.value)
-            return true
+            const file = event.dataTransfer.files.item(0)
+            if (file) {
+              uploadToEditor(file, editor.value)
+              return true
+            }
           }
           return false
         },
@@ -7788,7 +7712,7 @@ const TipTapComposer = defineComponent({
       input.value = ''
     }
 
-    const setImage = () => withEditor(activeEditor => {
+    const setImage = () => withEditor(() => {
       tiptapFileInput.value?.click()
     })
 
@@ -8281,11 +8205,22 @@ function settingsMain(pageName: string) {
     ])
   }
   if (pageName === 'settingsSessions') {
-    return h('article', { class: 'pv-panel' }, [h('h2', 'Sessions'), status, sessionList(20, true)])
+    return h('div', { class: 'pv-stack' }, [
+      h('article', { class: 'pv-panel' }, [h('h2', 'Sessions'), status, sessionList(20, true)]),
+      apiTokensPanel(),
+    ])
   }
    if (pageName === 'settingsDanger') {
      return h('div', { class: 'pv-stack' }, [
        status,
+       h('article', { class: 'pv-panel pv-settings-card' }, [
+        h('span', { class: 'pv-icon-tile' }, [h(PvIcon, { name: 'document' })]),
+        h('div', [
+          h('h2', 'Export Account Data'),
+          h('p', 'Download a JSON copy of your profile, settings, sessions, and API token metadata.'),
+          h('button', { class: 'pv-small-button', disabled: exportingAccountData.value, onClick: exportAccountData }, exportingAccountData.value ? 'Exporting...' : 'Export Data'),
+        ]),
+      ]),
        h('article', { class: 'pv-alert pv-alert--danger' }, [
         h(PvIcon, { name: 'shield' }),
         h('div', [
@@ -8419,6 +8354,43 @@ function sessionList(limit = 6, allowRevoke = false) {
   }))
 }
 
+function apiTokensPanel() {
+  return h('article', { class: 'pv-panel' }, [
+    h('header', { class: 'pv-panel-header' }, [
+      h('div', [
+        h('h2', 'API Tokens'),
+        h('p', { class: 'pv-muted' }, 'Create and revoke personal API tokens for integrations.'),
+      ]),
+      h('span', { class: 'pv-tag' }, `${userApiTokens.value.length} active`),
+    ]),
+    newPlainApiToken.value
+      ? h('div', { class: 'pv-alert pv-alert--compact' }, [
+        h('span', 'Copy this token now. It will not be shown again.'),
+        h('code', newPlainApiToken.value),
+        h('button', { class: 'pv-small-button', onClick: copyPlainApiToken }, 'Copy'),
+      ])
+      : null,
+    h('div', { class: 'pv-two-col pv-settings-inline-actions' }, [
+      settingsInput('Token Name', apiTokenForm.value.name, value => { apiTokenForm.value.name = value }),
+      h('button', { class: 'pv-primary-button', disabled: !apiTokenForm.value.name.trim(), onClick: createApiToken }, 'Create Token'),
+    ]),
+    h('div', { class: 'pv-mini-list' }, userApiTokens.value.length > 0
+      ? userApiTokens.value.map(token => h('span', { class: 'pv-mini-row' }, [
+        h(PvIcon, { name: 'document' }),
+        h('span', [
+          h('strong', token.name),
+          h('small', [
+            token.abilities?.length ? token.abilities.join(', ') : 'Default access',
+            token.last_used_at ? `Last used ${formatDate(token.last_used_at)}` : 'Never used',
+            token.created_at ? `Created ${formatDate(token.created_at)}` : '',
+          ].filter(Boolean).join(' · ')),
+        ]),
+        h('button', { class: 'pv-small-button', onClick: () => void deleteApiToken(token.id) }, 'Revoke'),
+      ]))
+      : [h('p', { class: 'pv-muted' }, 'No personal API tokens yet.')]),
+  ])
+}
+
 function settingsSummary() {
   return h('article', { class: 'pv-panel' }, [h('h2', 'Account Summary'), h('div', { class: 'pv-summary-user' }, [accountAvatarNode('pv-avatar--xl'), h('div', [h('strong', accountName()), h('span', { class: 'pv-tag' }, accountRole())])]), h('dl', { class: 'pv-data-list' }, [['Joined', authUserDate('created_at') || 'Not signed in'], ['Last Active', authUserDate('last_active') || ''], ['Email', accountEmail()], ['Two-Factor Authentication', authUserValue('two_factor_enabled') ? 'Enabled' : 'Disabled']].map(row => h('div', [h('dt', row[0]), h('dd', row[1])])))])
 }
@@ -8460,8 +8432,8 @@ function tipsPanel(title: string, tips: string[]) {
   ])
 }
 
-function authUserValue(key: string): any {
-  const user = authStore.user as Record<string, any> | null
+function authUserValue(key: string): unknown {
+  const user = authStore.user as AuthUserRecord | null
   return user?.[key] ?? null
 }
 
@@ -8500,6 +8472,6 @@ function authUserDate(key: string): string {
     return ''
   }
 
-  return new Date(value).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
+  return new Date(String(value)).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
 </script>

@@ -1,12 +1,12 @@
 /**
- * OpenPBBG Service Worker
- * Handles caching for static assets and API responses
+ * Peptide Vendors service worker.
+ * Handles caching for static assets and selected public API responses.
  */
 
 const CACHE_VERSION = 'v1'
-const STATIC_CACHE = `openpbbg-static-${CACHE_VERSION}`
-const API_CACHE = `openpbbg-api-${CACHE_VERSION}`
-const IMAGE_CACHE = `openpbbg-images-${CACHE_VERSION}`
+const STATIC_CACHE = `peptide-vendors-static-${CACHE_VERSION}`
+const API_CACHE = `peptide-vendors-api-${CACHE_VERSION}`
+const IMAGE_CACHE = `peptide-vendors-images-${CACHE_VERSION}`
 
 // Static assets to cache on install
 const STATIC_ASSETS = [
@@ -21,10 +21,14 @@ const IMAGE_CACHE_DURATION = 24 * 60 * 60 * 1000 // 24 hours
 
 // API routes to cache
 const CACHEABLE_API_ROUTES = [
-  '/api/user',
-  '/api/player',
-  '/api/settings',
-  '/api/game-data',
+  '/api/v1/settings/public',
+  '/api/v1/membership/plans',
+  '/api/v1/community/discussions',
+  '/api/v1/community/discussion-categories',
+  '/api/v1/community/announcements',
+  '/api/v1/community/research-library',
+  '/api/v1/community/guides',
+  '/api/v1/community/faqs',
 ]
 
 /**
@@ -51,7 +55,7 @@ self.addEventListener('activate', (event) => {
         cacheNames
           .filter((name) => {
             return (
-              name.startsWith('openpbbg-') &&
+              (name.startsWith('openpbbg-') || name.startsWith('peptide-vendors-')) &&
               name !== STATIC_CACHE &&
               name !== API_CACHE &&
               name !== IMAGE_CACHE

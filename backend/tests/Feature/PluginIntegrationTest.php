@@ -209,6 +209,8 @@ class PluginIntegrationTest extends TestCase
         $discoveredPlugins = $this->pluginManager->getAllPlugins();
         $discoveredSlugs = array_column($discoveredPlugins, 'slug');
 
+        $this->assertIsArray($discoveredSlugs);
+
         foreach ($directories as $dir) {
             $slug = strtolower(basename($dir));
 

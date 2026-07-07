@@ -65,8 +65,6 @@ test.describe('Core Web APP OS - Basic Tests', () => {
       errors.push(error.message)
     })
 
-    await page.waitForTimeout(1000)
-
     // Filter out non-critical errors
     const criticalErrors = errors.filter((e) =>
       !e.includes('WebSocket') && !e.includes('NetworkError')
@@ -125,8 +123,6 @@ test.describe('Login Page', () => {
     await page.fill('#password', 'password123')
     await page.click('button[type="submit"]')
 
-    // Form should be submitted (no errors)
-    await page.waitForTimeout(1000)
     await expect(page.locator('body')).toBeVisible()
   })
 })
@@ -167,8 +163,6 @@ test.describe('Register Page', () => {
     })
     await page.click('button[type="submit"]')
 
-    // Form should be submitted (no errors)
-    await page.waitForTimeout(1000)
     await expect(page.locator('body')).toBeVisible()
   })
 })

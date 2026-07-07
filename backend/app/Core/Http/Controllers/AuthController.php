@@ -53,7 +53,9 @@ class AuthController extends Controller
 
         // Wrap user creation, profile seeding, and role assignment in a transaction.
         // A partial failure (e.g. role table missing) must not leave a user without a profile.
-        $user = DB::transaction(function () use ($validated, $firstRank, $firstLocation) {
+        $ipAddress = $request->ip();
+
+        $user = DB::transaction(function () use ($validated, $firstRank, $firstLocation, $ipAddress) {
             if (!empty($validated['access_code'])) {
                 $accessCode = CommunityAccessCode::query()
                     ->available()
@@ -74,8 +76,8 @@ class AuthController extends Controller
                 'username'    => $validated['username'],
                 'email'       => $validated['email'],
                 'password'    => $validated['password'],
-                'register_ip' => $request->ip(),
-                'last_ip'     => $request->ip(),
+                'register_ip' => $ipAddress,
+                'last_ip'     => $ipAddress,
             ]);
 
             // User::booted() auto-creates a profile with column defaults.

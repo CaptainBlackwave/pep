@@ -19,7 +19,7 @@
         <kbd>/</kbd>
       </form>
 
-      <div class="pv-account">
+      <div v-if="authStore.isAuthenticated" class="pv-account">
         <router-link to="/notifications" class="pv-icon-button" aria-label="Notifications">
           <PvIcon name="bell" />
           <span v-if="notificationCount > 0" class="pv-badge">{{ notificationCount }}</span>
@@ -68,6 +68,10 @@
           </div>
         </div>
       </div>
+      <div v-else class="pv-account pv-account--guest">
+        <router-link to="/login" class="pv-small-button">Sign In</router-link>
+        <router-link to="/register" class="pv-primary-button">Register</router-link>
+      </div>
     </header>
 
     <aside class="pv-sidebar">
@@ -85,7 +89,7 @@
         </router-link>
       </nav>
 
-      <button type="button" class="pv-nav-item pv-logout-mobile" @click="handleLogout">
+      <button v-if="authStore.isAuthenticated" type="button" class="pv-nav-item pv-logout-mobile" @click="handleLogout">
         <PvIcon name="close" />
         <span>Logout</span>
       </button>
@@ -185,7 +189,11 @@ const searchPlaceholder = computed(() => {
 const accountLabel = computed(() => authStore.user?.username || authStore.user?.name || 'Account')
 const accountInitial = computed(() => accountLabel.value.charAt(0).toUpperCase())
 const accountAvatar = computed(() => {
-  const user = authStore.user as Record<string, any> | null
+  const user = authStore.user as {
+    avatar?: string | null
+    profile_photo_path?: string | null
+    profile_picture?: string | null
+  } | null
 
   return assetUrl(String(user?.avatar || user?.profile_photo_path || user?.profile_picture || ''))
 })

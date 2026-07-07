@@ -40,6 +40,7 @@ return Application::configure(basePath: dirname(__DIR__))
             'force.password.change' => \App\Core\Middleware\ForcePasswordChange::class,
             'verify.license' => \App\Core\Middleware\VerifyLicense::class,
             'tier' => \App\Core\Middleware\CheckTier::class,
+            'installer' => \App\Core\Http\Middleware\InstallerLocked::class,
         ]);
     })
     ->withExceptions(function (Exceptions $exceptions) {

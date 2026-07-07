@@ -249,7 +249,11 @@ test.describe('Plugin Integration Tests', () => {
         })
       })
 
+      const pluginsResponsePromise = page.waitForResponse('**/api/v1/plugins/enabled')
       await page.goto('/dashboard')
+      const pluginsResponse = await pluginsResponsePromise
+
+      expect(pluginsResponse.ok()).toBe(true)
 
       // Check if navigation shows plugin item
       // Note: This depends on the actual navigation component implementation
@@ -274,7 +278,11 @@ test.describe('Plugin Integration Tests', () => {
         })
       })
 
+      const pluginsResponsePromise = page.waitForResponse('**/api/v1/plugins/enabled')
       await page.goto('/dashboard')
+      const pluginsResponse = await pluginsResponsePromise
+
+      expect(pluginsResponse.ok()).toBe(true)
 
       // Check that plugin-specific navigation items are not visible
     })
@@ -342,8 +350,11 @@ test.describe('Plugin Integration Tests', () => {
         })
       })
 
+      const pluginsResponsePromise = page.waitForResponse('**/api/v1/plugins/enabled')
       await page.goto('/dashboard')
-      await page.waitForResponse('**/api/v1/plugins/enabled')
+      const pluginsResponse = await pluginsResponsePromise
+
+      expect(pluginsResponse.ok()).toBe(true)
 
       // Try to navigate to a plugin route
       // The route should be accessible
@@ -453,8 +464,11 @@ test.describe('Hardcoded Fragment Detection', () => {
       })
     })
 
+    const pluginsResponsePromise = page.waitForResponse('**/api/v1/plugins/enabled')
     await page.goto('/dashboard')
-    await page.waitForResponse('**/api/v1/plugins/enabled')
+    const pluginsResponse = await pluginsResponsePromise
+
+    expect(pluginsResponse.ok()).toBe(true)
 
     // With no plugins enabled, feature sections should show limited content
     // This tests that the frontend uses isPluginEnabled checks

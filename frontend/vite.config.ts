@@ -7,6 +7,10 @@ import compression from 'vite-plugin-compression'
 import { visualizer } from 'rollup-plugin-visualizer'
 import { VitePWA } from 'vite-plugin-pwa'
 
+const devPort = Number(process.env.VITE_DEV_PORT || 5175)
+const hmrClientPort = Number(process.env.VITE_HMR_CLIENT_PORT || devPort)
+const proxyTarget = process.env.VITE_PROXY_TARGET || process.env.VITE_API_URL || 'http://127.0.0.1:8001'
+
 // https://vite.dev/config/
 export default defineConfig({
   base: '/',
@@ -91,6 +95,16 @@ export default defineConfig({
           if (id.includes('node_modules/@vueuse/')) {
             return 'vueuse-vendor'
           }
+          // Rich editor and media pickers are sizeable but cache well independently.
+          if (id.includes('node_modules/@tiptap/') ||
+              id.includes('node_modules/prosemirror-')) {
+            return 'editor-vendor'
+          }
+          if (id.includes('node_modules/emoji-mart/') ||
+              id.includes('node_modules/@emoji-mart/') ||
+              id.includes('node_modules/@giphy/')) {
+            return 'media-vendor'
+          }
           // Route-based chunks for views
           if (id.includes('/src/views/')) {
             // Extract the view category (admin, modules, plugins)
@@ -148,17 +162,17 @@ export default defineConfig({
     assetsDir: 'assets',
   },
   server: {
-    port: 5175,
+    port: devPort,
     host: true,
-    strictPort: true,
+    strictPort: false,
     allowedHosts: ['frontend.openpbbg.orb.local', 'frontend.orb.local', 'localhost', '.orb.local'],
     hmr: {
-      clientPort: 5175,
+      clientPort: hmrClientPort,
       protocol: 'ws',
     },
     proxy: {
       '/api': {
-        target: 'http://host.docker.internal:8001',
+        target: proxyTarget,
         changeOrigin: true,
         secure: false,
         configure: (proxy) => {

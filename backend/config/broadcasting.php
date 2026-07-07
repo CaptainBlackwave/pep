@@ -1,7 +1,7 @@
 <?php
 
 return [
-    'default' => env('BROADCAST_CONNECTION', 'reverb'),
+    'default' => env('BROADCAST_CONNECTION', 'log'),
 
     'connections' => [
         'reverb' => [
@@ -31,6 +31,14 @@ return [
                 'encrypted' => true,
                 'useTLS' => env('PUSHER_SCHEME', 'https') === 'https',
             ],
+        ],
+
+        'log' => [
+            'driver' => 'log',
+        ],
+
+        'null' => [
+            'driver' => 'null',
         ],
     ],
 ];

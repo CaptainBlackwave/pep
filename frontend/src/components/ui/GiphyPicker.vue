@@ -34,49 +34,70 @@
 
 <script setup lang="ts">
 import { ref, nextTick, onBeforeUnmount } from 'vue'
-import { GiphyFetch } from '@giphy/js-fetch-api'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 
 const emit = defineEmits<{
   select: [url: string]
 }>()
 
+interface GiphyImage {
+  url: string
+  webp?: string
+}
+
+interface GiphyItem {
+  id: string
+  title: string
+  images: {
+    fixed_width: GiphyImage
+    original: GiphyImage
+  }
+}
+
+interface GiphyResponse {
+  data?: GiphyItem[]
+}
+
 const apiKey = import.meta.env.VITE_GIPHY_API_KEY as string ?? ''
 
 const isOpen = ref(false)
 const query = ref('')
-const gifs = ref<any[]>([])
+const gifs = ref<GiphyItem[]>([])
 const loading = ref(false)
 const pickerRef = ref<HTMLDivElement>()
 const gridRef = ref<HTMLDivElement>()
 
-let gf: GiphyFetch | null = null
 let searchTimer: ReturnType<typeof setTimeout> | null = null
 
-if (apiKey) {
-  gf = new GiphyFetch(apiKey)
+async function fetchGifs(path: 'trending' | 'search', params: Record<string, string | number> = {}) {
+  if (!apiKey) return
+  loading.value = true
+  try {
+    const url = new URL(`https://api.giphy.com/v1/gifs/${path}`)
+    url.searchParams.set('api_key', apiKey)
+    url.searchParams.set('limit', '30')
+    Object.entries(params).forEach(([key, value]) => {
+      url.searchParams.set(key, String(value))
+    })
+
+    const response = await fetch(url)
+    if (!response.ok) {
+      throw new Error('Unable to load GIFs')
+    }
+
+    const payload = await response.json() as GiphyResponse
+    gifs.value = payload.data ?? []
+  } finally {
+    loading.value = false
+  }
 }
 
 async function loadTrending() {
-  if (!gf) return
-  loading.value = true
-  try {
-    const result = await gf.trending({ limit: 30 })
-    gifs.value = result.data
-  } finally {
-    loading.value = false
-  }
+  await fetchGifs('trending')
 }
 
 async function loadSearch(q: string) {
-  if (!gf) return
-  loading.value = true
-  try {
-    const result = await gf.search(q, { limit: 30 })
-    gifs.value = result.data
-  } finally {
-    loading.value = false
-  }
+  await fetchGifs('search', { q })
 }
 
 function onSearch() {
@@ -90,7 +111,7 @@ function onSearch() {
   }, 400)
 }
 
-function select(gif: any) {
+function select(gif: GiphyItem) {
   emit('select', gif.images.original.url)
   close()
 }

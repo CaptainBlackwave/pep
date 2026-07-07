@@ -1,6 +1,7 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest'
 import { setActivePinia, createPinia } from 'pinia'
 import { useNotificationsStore } from '@/stores/notifications'
+import { useAuthStore } from '@/stores/auth'
 import type { Notification, NotificationType } from '@/types/notification'
 
 // Use vi.hoisted to define mocks before vi.mock is hoisted
@@ -43,6 +44,7 @@ const makeNotification = (overrides: Partial<Notification> = {}): Notification =
 describe('Notifications Store', () => {
   beforeEach(() => {
     setActivePinia(createPinia())
+    useAuthStore().user = { id: 1, username: 'tester', email: 'tester@example.com' }
     vi.clearAllMocks()
   })
 

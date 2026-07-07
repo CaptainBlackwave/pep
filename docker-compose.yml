@@ -11,6 +11,10 @@ services:
       - /app/node_modules
     environment:
       - NODE_ENV=development
+      - NODE_OPTIONS=--max-old-space-size=4096
+      - VITE_PROXY_TARGET=http://backend
+      - VITE_DEV_PORT=5175
+      - VITE_HMR_CLIENT_PORT=5175
     command: npm run dev -- --host 0.0.0.0
     networks:
       - laravelcp_net

@@ -17,15 +17,25 @@ import { ref, nextTick, onBeforeUnmount } from 'vue'
 import { Picker } from 'emoji-mart'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 
-let dataCache: any = null
+type EmojiMartData = Record<string, unknown>
+type EmojiSelection = {
+  native?: string
+}
 
-async function loadData() {
+let dataCache: EmojiMartData | null = null
+
+async function loadData(): Promise<EmojiMartData> {
   if (!dataCache) {
     const response = await fetch(
       'https://cdn.jsdelivr.net/npm/@emoji-mart/data'
     )
     dataCache = await response.json()
   }
+
+  if (!dataCache) {
+    throw new Error('Emoji data failed to load')
+  }
+
   return dataCache
 }
 
@@ -48,7 +58,7 @@ async function open() {
   if (!pickerContainer.value) return
   picker = new Picker({
     data: loadData,
-    onEmojiSelect: (emoji: any) => {
+    onEmojiSelect: (emoji: EmojiSelection) => {
       emit('update:modelValue', props.modelValue + (emoji.native ?? ''))
       isOpen.value = false
       picker = null

@@ -1,6 +1,6 @@
 <?php
 
-namespace App\Plugins\TestPlugin;
+namespace App\Plugins\testplugin;
 
 use App\Plugins\Plugin;
 use App\Core\Contracts\PluginInterface;
