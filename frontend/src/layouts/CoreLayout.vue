@@ -230,6 +230,7 @@ const navItems = computed(() => {
     { to: '/guides', label: 'Guides & FAQ', icon: 'question', match: ['/guides'] },
     { to: '/members', label: 'Members', icon: 'users', match: ['/members'] },
     { to: '/announcements', label: 'Announcements', icon: 'megaphone', match: ['/announcements'] },
+    { to: '/content-studio', label: 'Content Studio', icon: 'library', match: ['/content-studio'] },
     { to: '/saved', label: 'Saved', icon: 'bookmark', match: ['/saved'] },
     { to: '/notifications', label: 'Notifications', icon: 'bell', match: ['/notifications'] },
   ]

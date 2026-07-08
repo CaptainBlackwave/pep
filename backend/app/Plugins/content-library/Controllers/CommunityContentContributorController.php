@@ -16,7 +16,7 @@ use Illuminate\Validation\Rule;
 class CommunityContentContributorController extends Controller
 {
     /** @var array<int, string> */
-    private array $contributorRoles = ['admin', 'moderator', 'staff', 'editor', 'content-editor', 'researcher'];
+    private array $contributorRoles = ['admin', 'moderator', 'staff', 'editor', 'content-editor', 'researcher', 'user'];
 
     /** @var array<int, string> */
     private array $publisherRoles = ['admin', 'moderator', 'editor', 'content-editor'];
