@@ -764,7 +764,7 @@
             <button v-if="vendorHasActiveFilters" class="pv-small-button" type="button" @click="clearVendorFilters">Clear</button>
           </form>
           <p v-if="vendorStatusMessage" class="pv-alert pv-alert--compact">{{ vendorStatusMessage }}</p>
-          <p v-if="vendorsLoaded && vendors.length === 0" class="pv-muted">No vendors found.</p>
+          <div v-if="vendorsLoaded && vendors.length === 0" class="pv-empty-inline"><PvIcon name="star" /><strong>{{ authStore.isAuthenticated ? 'No vendors found' : 'Sign in to browse vendors' }}</strong><p>{{ authStore.isAuthenticated ? 'Check back later for new vendors.' : 'Create an account or sign in to browse community-reviewed vendors, compare ratings, and read reviews.' }}</p><router-link v-if="!authStore.isAuthenticated" to="/register" class="pv-primary-button">Create Account</router-link></div>
           <article v-for="vendor in vendors" :key="vendor.slug" class="vendor-card">
             <router-link :to="vendor.href" class="vendor-arrow" :aria-label="`Open ${vendor.name}`"><PvIcon name="chevron" /></router-link>
             <div class="vendor-top">
