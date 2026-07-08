@@ -478,6 +478,7 @@
                   <button @click="moderateDiscussion(detailDiscussion, 'pin'); showPostMenu = false">{{ detailDiscussion.isPinned ? 'Unpin' : 'Pin' }}</button>
                   <button @click="moderateDiscussion(detailDiscussion, 'lock'); showPostMenu = false">{{ detailDiscussion.isLocked ? 'Unlock' : 'Lock' }}</button>
                   <button @click="moderateBanAuthor(detailDiscussion); showPostMenu = false">Ban Author</button>
+                  <button @click="moderateWarnAuthor(detailDiscussion); showPostMenu = false">Warn Author</button>
                 </template>
               </div>
             </div>
@@ -566,6 +567,8 @@
                 <button @click="openReplyReport(reply)">Report</button>
                 <button v-if="authStore.user?.id === reply.authorId" @click="deleteReply(reply)">Delete</button>
                 <button v-if="hasAnyRole(['admin', 'moderator'])" @click="moderateHideReply(reply)">Hide</button>
+                <button v-if="hasAnyRole(['admin', 'moderator'])" @click="moderateBanAuthor(reply)">Ban Author</button>
+                <button v-if="hasAnyRole(['admin', 'moderator'])" @click="moderateWarnAuthor(reply)">Warn Author</button>
               </div>
             </div>
           </div>
@@ -4743,14 +4746,25 @@ async function moderateHideReply(reply: UiReply): Promise<void> {
   }
 }
 
-async function moderateBanAuthor(topic: UiDiscussion): Promise<void> {
+async function moderateBanAuthor(topicOrReply: UiDiscussion | UiReply): Promise<void> {
   const reason = prompt('Ban reason:')
-  if (!reason || !topic.authorId) return
+  if (!reason || !topicOrReply.authorId) return
   try {
-    await api.post(`/api/v1/community/moderate/users/${topic.authorId}/ban`, { reason })
+    await api.post(`/api/v1/community/moderate/users/${topicOrReply.authorId}/ban`, { reason })
     alert('User banned.')
   } catch {
     alert('Failed to ban user.')
+  }
+}
+
+async function moderateWarnAuthor(topicOrReply: UiDiscussion | UiReply): Promise<void> {
+  const reason = prompt('Warn reason:')
+  if (!reason || !topicOrReply.authorId) return
+  try {
+    await api.post(`/api/v1/community/moderate/users/${topicOrReply.authorId}/warn`, { reason })
+    alert('User warned.')
+  } catch {
+    alert('Failed to warn user.')
   }
 }
 

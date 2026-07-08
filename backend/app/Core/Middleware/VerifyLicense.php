@@ -14,16 +14,16 @@ class VerifyLicense
      */
     protected array $except = [
         'install/*',
-        'api/login',
-        'api/register',
-        'api/forgot-password',
-        'api/validate-reset-token',
-        'api/reset-password',
-        'api/2fa/verify',
-        'api/oauth/*/callback',
-        'api/license/callback',
-        'api/admin/license/status',
-        'api/admin/license/activate',
+        'api/*/login',
+        'api/*/register',
+        'api/*/forgot-password',
+        'api/*/validate-reset-token',
+        'api/*/reset-password',
+        'api/*/2fa/verify',
+        'api/*/oauth/*/callback',
+        'api/*/license/callback',
+        'api/*/admin/license/status',
+        'api/*/admin/license/activate',
     ];
 
     /**

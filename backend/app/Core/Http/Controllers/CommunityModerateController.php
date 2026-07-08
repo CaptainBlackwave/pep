@@ -15,6 +15,42 @@ class CommunityModerateController extends Controller
         $this->middleware('role:admin|moderator');
     }
 
+    public function updateDiscussion(Request $request, string $discussion)
+    {
+        $validated = $request->validate([
+            'status' => 'sometimes|in:published,hidden,locked,archived',
+            'is_pinned' => 'sometimes|boolean',
+            'is_locked' => 'sometimes|boolean',
+        ]);
+
+        $model = \App\Core\Models\CommunityDiscussion::findOrFail($discussion);
+        $model->update($validated);
+
+        if (class_exists(\App\Core\Services\WebSocketService::class) && app()->bound(\App\Core\Services\WebSocketService::class)) {
+            app(\App\Core\Services\WebSocketService::class)->broadcast('discussions', 'discussion.updated', [
+                'discussion_id' => $model->id,
+                'slug' => $model->slug,
+            ]);
+        }
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Discussion updated.',
+            'discussion' => $model
+        ]);
+    }
+
+    public function deleteDiscussion(Request $request, string $discussion)
+    {
+        $model = \App\Core\Models\CommunityDiscussion::findOrFail($discussion);
+        $model->delete();
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Discussion deleted.',
+        ]);
+    }
+
     public function deleteReply(Request $request, string $reply)
     {
         $replyModel = CommunityDiscussionReply::query()->with('discussion')->findOrFail($reply);
