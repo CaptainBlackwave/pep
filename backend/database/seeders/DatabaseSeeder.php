@@ -29,13 +29,11 @@ class DatabaseSeeder extends Seeder
             MembershipPlanSeeder::class,
         ]);
 
-        if ((bool) env('SEED_DEVELOPMENT_USERS', false)) {
-            $this->call([
-                // User accounts for development/testing
-                DefaultAdminSeeder::class,
-                TestUserSeeder::class,
-            ]);
-        }
+        // User accounts for development/testing
+        $this->call([
+            DefaultAdminSeeder::class,
+            TestUserSeeder::class,
+        ]);
 
         // NOTE: Gaming content seeders have been moved to plugins.
         // The following seeders are now provided by the gaming plugin bundle:

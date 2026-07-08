@@ -17,14 +17,15 @@ class LicenseService
      * and is used by the license:generate command to sign keys.
      */
     private const PUBLIC_KEY = '-----BEGIN PUBLIC KEY-----
-MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAuer9TfhLbECUOiGElhjn
-H4yr8DN/c/d7TFG94MMxGfjcGoV3jn/dNQo4MQpgO0qzNcuuEX9ZNcl4BulZk+md
-TZsIhSxELPXkilJyyHna+70azUety/hXEKe8EvlSEWCa+ie1Vw0A/Amkvw0ZX2dB
-b9ScQoWD8ZMPQ2mEOYfx1QMijHvWLQWF4S3kQjmSomwnMuRsI1WVLsQF0h+eUqUD
-O5M3Cgfei1msYFXqCu1pYHqxShq9qGsCjlMnr9ONRUZw2mod2TB0IiBO7ZR/AkJx
-XjY53zipqQY8HpE+XofF4oaMhEtBeaIBaStbR+C2XZ8RSGbW2p3ZEDnV1Yu9L4CI
-VQIDAQAB
+MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEA28YMV8A+5tULcwx577A1
+Va74ZkcCUBYqMGDU3YAL3SrFonMQOuiHy46voHf7UNT5xoC4FR/ENUzCOd82URrQ
+HjD6chQ+UoscaYFrN/gwEDAVnfo38JfVaao1YTDBtvug4/otm0n4mprgVkiEigh6
+noAqZEt8mQAY/HeaQiAof9rKJ4+5VfH4QqWR5BfjHex6D5qANSJRdjOZ64fTAvw0
+FOifNzD1L2IjCOleMS7m1xF8mzEzGwYciL40gsSkeZQHEONgBh6jBPI6D+I/jo6x
+iKU+1h+3i+usAlymIaBBhGfP4dwapcJoH3Rg50BpN5Yv8IDqQkIKLwJHyq5SDrED
+ZwIDAQAB
 -----END PUBLIC KEY-----';
+
 
     /**
      * Get the public key for verification.

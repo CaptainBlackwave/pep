@@ -57,7 +57,7 @@ class TestUserSeeder extends Seeder
             'name'                  => 'Test User',
             'username'              => 'testuser',
             'email'                 => 'testuser@example.com',
-            'password'              => Hash::make('testpass123'),
+            'password'              => 'testpass123',
             'email_verified_at'     => now(),
             'force_password_change' => false,
         ]);

@@ -57,7 +57,7 @@ class DefaultAdminSeeder extends Seeder
             'name'                  => 'Administrator',
             'username'              => 'admin',
             'email'                 => 'admin@example.com',
-            'password'              => Hash::make('admin123'),
+            'password'              => 'admin123',
             'email_verified_at'     => now(),
             'force_password_change' => true,
         ]);

@@ -87,6 +87,7 @@ class User extends Authenticatable
         'last_login_ip',
         'register_ip',
         'last_ip',
+        'is_banned',
 
         // Membership tier
         'tier',

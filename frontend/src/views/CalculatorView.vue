@@ -11,27 +11,47 @@
       <div class="pv-calculator-card">
         <form @submit.prevent class="pv-form">
           <div class="pv-form-group">
+            <label>Syringe Type</label>
+            <div class="pv-syringe-options" style="grid-template-columns: repeat(2, 1fr);">
+              <label class="pv-radio-card" :class="{ active: syringeType === 100 }">
+                <input type="radio" v-model="syringeType" :value="100" name="syringeType" />
+                <span class="pv-radio-content">
+                  <strong>U-100</strong>
+                  <small>Standard</small>
+                </span>
+              </label>
+              <label class="pv-radio-card" :class="{ active: syringeType === 40 }">
+                <input type="radio" v-model="syringeType" :value="40" name="syringeType" />
+                <span class="pv-radio-content">
+                  <strong>U-40</strong>
+                  <small>Veterinary</small>
+                </span>
+              </label>
+            </div>
+          </div>
+
+          <div class="pv-form-group">
             <label>Syringe Size</label>
             <div class="pv-syringe-options">
               <label class="pv-radio-card" :class="{ active: syringePreset === 1 }">
                 <input type="radio" v-model="syringePreset" :value="1" name="syringeSize" />
                 <span class="pv-radio-content">
                   <strong>1 mL</strong>
-                  <small>100 Units</small>
+                  <small>{{ syringeType }} Units</small>
                 </span>
               </label>
               <label class="pv-radio-card" :class="{ active: syringePreset === 0.5 }">
                 <input type="radio" v-model="syringePreset" :value="0.5" name="syringeSize" />
                 <span class="pv-radio-content">
                   <strong>0.5 mL</strong>
-                  <small>50 Units</small>
+                  <small>{{ Math.round(syringeType * 0.5) }} Units</small>
                 </span>
               </label>
               <label class="pv-radio-card" :class="{ active: syringePreset === 0.3 }">
                 <input type="radio" v-model="syringePreset" :value="0.3" name="syringeSize" />
                 <span class="pv-radio-content">
                   <strong>0.3 mL</strong>
-                  <small>30 Units</small>
+                  <small>{{ Math.round(syringeType * 0.3) }} Units</small>
                 </span>
               </label>
               <label class="pv-radio-card" :class="{ active: syringePreset === 0 }">
@@ -85,27 +105,36 @@
         <h2>Calculated Results</h2>
         
         <div class="pv-results-content" v-if="isValidInput">
-          <div class="pv-result-box primary-result">
-            <span class="pv-result-label">Draw Volume (Units)</span>
-            <span class="pv-result-value">{{ drawVolumeUnits.toFixed(1) }} <small>U</small></span>
-          </div>
-
-          <div class="pv-result-row">
-            <div class="pv-result-box">
-              <span class="pv-result-label">Volume (mL)</span>
-              <span class="pv-result-value">{{ drawVolumeMl.toFixed(3) }} <small>mL</small></span>
-            </div>
-            
-            <div class="pv-result-box">
-              <span class="pv-result-label">Concentration</span>
-              <span class="pv-result-value">{{ concentrationMgPerMl.toFixed(2) }} <small>mg/mL</small></span>
-            </div>
-          </div>
-
-          <div v-if="exceedsSyringeCapacity" class="pv-alert pv-alert-warning">
+          
+          <div v-if="exceedsVialCapacity" class="pv-alert pv-alert-error">
             <PvIcon name="alert-triangle" />
-            <span>Warning: The required draw volume ({{ drawVolumeMl.toFixed(2) }} mL) exceeds your selected syringe capacity ({{ activeSyringeSize }} mL).</span>
+            <span><strong>Critical Error:</strong> The desired dose ({{ desiredDose }}{{ doseUnit }}) is larger than the total amount of peptide in the vial ({{ peptideAmount }}mg). Please double-check your mg vs mcg selection.</span>
           </div>
+
+          <div v-else-if="exceedsSyringeCapacity" class="pv-alert pv-alert-error">
+            <PvIcon name="alert-triangle" />
+            <span><strong>Critical Error:</strong> The required draw volume ({{ drawVolumeMl.toFixed(2) }} mL) exceeds your selected syringe capacity ({{ activeSyringeSize }} mL). Please increase your syringe size or concentration.</span>
+          </div>
+
+          <template v-else>
+            <div class="pv-result-box primary-result">
+              <span class="pv-result-label">Draw Volume (Units)</span>
+              <span class="pv-result-value">{{ drawVolumeUnits.toFixed(1) }} <small>U</small></span>
+            </div>
+
+            <div class="pv-result-row">
+              <div class="pv-result-box">
+                <span class="pv-result-label">Volume (mL)</span>
+                <span class="pv-result-value">{{ drawVolumeMl.toFixed(3) }} <small>mL</small></span>
+              </div>
+              
+              <div class="pv-result-box">
+                <span class="pv-result-label">Concentration</span>
+                <span class="pv-result-value">{{ concentrationMgPerMl.toFixed(2) }} <small>mg/mL</small></span>
+              </div>
+            </div>
+          </template>
+
         </div>
         <div class="pv-results-empty" v-else>
           <PvIcon name="calculator" class="pv-empty-icon" />
@@ -120,6 +149,7 @@
 import { ref, computed } from 'vue'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 
+const syringeType = ref(100) // 100 for U-100, 40 for U-40
 const syringePreset = ref(1) // 1, 0.5, 0.3, or 0 (custom)
 const customSyringeSize = ref(2)
 const peptideAmount = ref<number | null>(10)
@@ -149,6 +179,10 @@ const totalPeptideMcg = computed(() => {
   return (peptideAmount.value || 0) * 1000
 })
 
+const exceedsVialCapacity = computed(() => {
+  return desiredDoseMcg.value > totalPeptideMcg.value
+})
+
 const concentrationMcgPerMl = computed(() => {
   if (!waterAmount.value) return 0
   return totalPeptideMcg.value / waterAmount.value
@@ -163,9 +197,9 @@ const drawVolumeMl = computed(() => {
   return desiredDoseMcg.value / concentrationMcgPerMl.value
 })
 
-// Standard U-100 insulin syringes have 100 units per 1 mL
+// Calculate units based on the selected syringe type (U-100 or U-40)
 const drawVolumeUnits = computed(() => {
-  return drawVolumeMl.value * 100
+  return drawVolumeMl.value * syringeType.value
 })
 
 const exceedsSyringeCapacity = computed(() => {
@@ -426,9 +460,18 @@ const exceedsSyringeCapacity = computed(() => {
   gap: 0.75rem;
   padding: 1rem;
   border-radius: 8px;
+}
+
+.pv-alert-warning {
   background: rgba(245, 184, 46, 0.1);
   border: 1px solid rgba(245, 184, 46, 0.3);
   color: var(--pv-amber);
+}
+
+.pv-alert-error {
+  background: rgba(239, 68, 68, 0.1);
+  border: 1px solid rgba(239, 68, 68, 0.3);
+  color: #ef4444;
 }
 
 .pv-alert :deep(svg) {

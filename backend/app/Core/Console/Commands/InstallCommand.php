@@ -171,22 +171,8 @@ class InstallCommand extends Command
             return false;
         }
 
-        // Look up first rank and location dynamically (never hardcode IDs)
-        $firstRank    = DB::table('ranks')->orderBy('required_exp', 'asc')->first();
-        $firstLocation = DB::table('locations')->orderBy('id', 'asc')->first();
-
-        if (! $firstRank) {
-            $this->error('   ✗ No ranks found in database. Seeding may have failed.');
-            return false;
-        }
-
-        if (! $firstLocation) {
-            $this->error('   ✗ No locations found in database. Seeding may have failed.');
-            return false;
-        }
-
         try {
-            $user = DB::transaction(function () use ($username, $email, $password, $firstRank, $firstLocation) {
+            $user = DB::transaction(function () use ($username, $email, $password) {
                 // Identity-only — game stats live on the profile
                 $user = User::create([
                     'name'                  => $username,
@@ -199,16 +185,12 @@ class InstallCommand extends Command
 
                 // User::booted() auto-creates the profile; seed starting game values
                 $user->profile()->update([
-                    'rank_id'     => $firstRank->id,
-                    'rank'        => $firstRank->name,
-                    'location_id' => $firstLocation->id,
-                    'location'    => $firstLocation->name,
                     'level'       => 1,
                     'experience'  => 0,
                     'energy'      => 100,
                     'max_energy'  => 100,
-                    'health'      => $firstRank->max_health ?? 100,
-                    'max_health'  => $firstRank->max_health ?? 100,
+                    'health'      => 100,
+                    'max_health'  => 100,
                     'cash'        => 1000,
                     'bank'        => 0,
                     'bullets'     => 50,
