@@ -1454,7 +1454,10 @@
   <section v-else-if="page === 'researchLibrary'" class="pv-page">
     <div class="pv-content-grid">
       <main class="pv-stack">
-        <header class="pv-page-header"><div><h1>Research Library</h1><p>Explore research, studies, and educational resources on peptides and performance compounds.</p></div></header>
+        <header class="pv-page-header">
+          <div><h1>Research Library</h1><p>Explore research, studies, and educational resources on peptides and performance compounds.</p></div>
+          <router-link v-if="canUseContentStudio" :to="{ path: '/content-studio', query: { type: 'research' } }" class="pv-small-button"><PvIcon name="plus" /> Add Research</router-link>
+        </header>
         <div class="pv-tabs"><button :class="{ active: activeResearchCategory === '' }" @click="activeResearchCategory = ''; loadResearchContent()">All</button><button v-for="category in contentCategories.research" :key="category.slug" :class="{ active: activeResearchCategory === category.slug }" @click="activeResearchCategory = category.slug; loadResearchContent()">{{ category.name }}</button></div>
         <div class="pv-toolbar"><label class="pv-input-search"><input v-model="researchSearch" placeholder="Search articles, compounds, topics..." @input="loadResearchContent"><PvIcon name="search" /></label><button class="pv-small-button" @click="cycleResearchSort">{{ researchSortLabel }} <PvIcon name="chevron" /></button><span class="pv-icon-button active pv-mode-indicator" aria-label="Library view"><PvIcon name="library" /></span><button class="pv-icon-button pv-icon-button--static" @click="loadResearchContent"><PvIcon name="filter" /></button></div>
         <p v-if="contentStatusMessage" class="pv-form-error">{{ contentStatusMessage }}</p>
@@ -1525,7 +1528,10 @@
   <section v-else-if="page === 'guides'" class="pv-page">
     <div class="pv-content-grid">
       <main class="pv-stack">
-        <header class="pv-page-header"><div><h1>Guides & FAQ</h1><p>Helpful guides, tutorials and answers to common questions from the community.</p></div></header>
+        <header class="pv-page-header">
+          <div><h1>Guides & FAQ</h1><p>Helpful guides, tutorials and answers to common questions from the community.</p></div>
+          <router-link v-if="canUseContentStudio" :to="{ path: '/content-studio', query: { type: 'guide' } }" class="pv-small-button"><PvIcon name="plus" /> Add Content</router-link>
+        </header>
         <label class="pv-input-search pv-input-search--wide"><input v-model="guideSearch" placeholder="Search guides & FAQ..." @keydown.enter="loadGuidesContent"><PvIcon name="search" /></label>
         <div class="pv-guide-cats"><button :class="{ active: activeGuideCategory === '' }" @click="activeGuideCategory = ''; loadGuidesContent()"><PvIcon name="library" /><strong>All Topics</strong><small>View all</small></button><button v-for="category in contentCategories.guide" :key="category.slug" :class="{ active: activeGuideCategory === category.slug }" @click="activeGuideCategory = category.slug; loadGuidesContent()"><PvIcon name="document" /><strong>{{ category.name }}</strong><small>{{ category.count }} guides</small></button></div>
         <article class="pv-panel">
@@ -1536,7 +1542,7 @@
         </article>
         <article id="faq-list" class="pv-panel"><header class="pv-panel-header"><h2>Frequently Asked Questions</h2><a class="pv-purple-link" href="#faq-list">View all FAQ →</a></header><details v-for="faq in faqs" :key="faq.slug"><summary><PvIcon name="question" /> {{ faq.title }}</summary><p class="pv-muted">{{ faq.body || faq.excerpt }}</p></details></article>
       </main>
-      <aside class="pv-stack"><article class="pv-panel pv-help-card"><PvIcon name="question" /><h2>Need Help?</h2><p>Can&apos;t find what you&apos;re looking for?</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article><article class="pv-panel"><h2>Top FAQ Topics</h2><dl class="pv-data-list"><div v-for="category in contentCategories.faq" :key="category.slug"><dt>{{ category.name }}</dt><dd>{{ category.count }}</dd></div></dl></article><article class="pv-panel"><h2>Community Help</h2><div class="pv-mini-list"><router-link to="/discussions" class="pv-mini-row"><PvIcon name="question" /><span><strong>Ask the Community</strong><small>Get answers from experienced members</small></span><PvIcon name="chevron" /></router-link><a href="/admin/community-content" class="pv-mini-row"><PvIcon name="document" /><span><strong>Submit a Guide</strong><small>Share your knowledge with others</small></span><PvIcon name="chevron" /></a><router-link :to="{ path: '/discussions', query: { q: 'issue' } }" class="pv-mini-row"><PvIcon name="bell" /><span><strong>Report an Issue</strong><small>Report outdated or incorrect info</small></span><PvIcon name="chevron" /></router-link></div></article><article class="pv-panel"><h2>Popular Tags</h2><span class="pv-chip-row"><span v-for="topic in contentTopics.guide" :key="topic.name">{{ topic.name }}</span></span></article></aside>
+      <aside class="pv-stack"><article class="pv-panel pv-help-card"><PvIcon name="question" /><h2>Need Help?</h2><p>Can&apos;t find what you&apos;re looking for?</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article><article class="pv-panel"><h2>Top FAQ Topics</h2><dl class="pv-data-list"><div v-for="category in contentCategories.faq" :key="category.slug"><dt>{{ category.name }}</dt><dd>{{ category.count }}</dd></div></dl></article><article class="pv-panel"><h2>Community Help</h2><div class="pv-mini-list"><router-link to="/discussions" class="pv-mini-row"><PvIcon name="question" /><span><strong>Ask the Community</strong><small>Get answers from experienced members</small></span><PvIcon name="chevron" /></router-link><router-link v-if="canUseContentStudio" :to="{ path: '/content-studio', query: { type: 'guide' } }" class="pv-mini-row"><PvIcon name="document" /><span><strong>Submit a Guide</strong><small>Share your knowledge with others</small></span><PvIcon name="chevron" /></router-link><router-link :to="{ path: '/discussions', query: { q: 'issue' } }" class="pv-mini-row"><PvIcon name="bell" /><span><strong>Report an Issue</strong><small>Report outdated or incorrect info</small></span><PvIcon name="chevron" /></router-link></div></article><article class="pv-panel"><h2>Popular Tags</h2><span class="pv-chip-row"><span v-for="topic in contentTopics.guide" :key="topic.name">{{ topic.name }}</span></span></article></aside>
     </div>
   </section>
 
@@ -1561,6 +1567,101 @@
       <aside class="pv-stack"><article class="pv-panel"><h2>On This Page</h2><ol class="pv-toc"><li v-for="heading in guideHeadings" :key="heading" :class="{ active: heading === guideHeadings[0] }">{{ heading }}</li></ol></article><article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Difficulty</dt><dd><span class="pv-green-dot"></span> {{ detailGuide.metadata.difficulty ?? 'Beginner' }}</dd></div><div><dt>Time to Complete</dt><dd>{{ detailGuide.timeLabel }}</dd></div><div><dt>Category</dt><dd>{{ detailGuide.category }}</dd></div><div><dt>Last Updated</dt><dd>{{ detailGuide.date }}</dd></div></dl></article><article class="pv-panel"><h2>Related Guides</h2><div class="pv-mini-list"><router-link v-for="(guide, index) in relatedGuides" :key="guide.title" :to="guide.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(guide, index + 1)"></span><span><strong>{{ guide.title }}</strong><small>{{ guide.timeLabel }} read</small></span></router-link></div></article><article class="pv-panel pv-help-card"><h2>Still Need Help?</h2><p>Ask the community or submit a question.</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article></aside>
     </div>
     <div v-else class="pv-empty-route"><h1>Guide not found</h1><p>This guide has not been published or does not exist.</p></div>
+  </section>
+
+  <section v-else-if="page === 'contentStudio'" class="pv-page pv-content-studio-page">
+    <div class="pv-content-grid">
+      <main class="pv-stack">
+        <header class="pv-page-header">
+          <div><h1>Content Studio</h1><p>Create research posts, guides, and FAQ entries from the frontend.</p></div>
+          <router-link to="/guides" class="pv-small-button"><PvIcon name="arrow-left" /> Guides</router-link>
+        </header>
+
+        <article v-if="!authStore.isAuthenticated" class="pv-panel pv-empty-inline">
+          <PvIcon name="lock" />
+          <strong>Sign in required</strong>
+          <p>Staff and content editors can submit content after signing in.</p>
+          <router-link to="/login" class="pv-primary-button">Sign in</router-link>
+        </article>
+
+        <article v-else-if="!contentStudioLoaded" class="pv-panel pv-empty-inline">
+          <PvIcon name="clock" />
+          <strong>Loading content access</strong>
+          <p>Checking your frontend publishing permissions.</p>
+        </article>
+
+        <article v-else-if="contentStudioLoaded && !canUseContentStudio" class="pv-panel pv-empty-inline">
+          <PvIcon name="shield" />
+          <strong>No content permissions</strong>
+          <p>Your account needs the staff or content-editor role, or the community content permissions, before you can submit content.</p>
+        </article>
+
+        <form v-else class="pv-form-card pv-content-studio-form" @submit.prevent="saveContentStudioItem">
+          <p v-if="contentStudioStatusMessage" class="pv-alert pv-alert--compact">{{ contentStudioStatusMessage }}</p>
+          <div class="pv-content-type-picker" role="group" aria-label="Content type">
+            <button type="button" :class="{ active: contentStudioForm.type === 'research' }" @click="setContentStudioType('research')"><PvIcon name="library" /><span><strong>Research</strong><small>Library article</small></span></button>
+            <button type="button" :class="{ active: contentStudioForm.type === 'guide' }" @click="setContentStudioType('guide')"><PvIcon name="document" /><span><strong>Guide</strong><small>Step-by-step</small></span></button>
+            <button type="button" :class="{ active: contentStudioForm.type === 'faq' }" @click="setContentStudioType('faq')"><PvIcon name="question" /><span><strong>FAQ</strong><small>Quick answer</small></span></button>
+          </div>
+
+          <div class="pv-form-row">
+            <label>Title<input v-model="contentStudioForm.title" required maxlength="220" placeholder="Example: Safe peptide storage basics"></label>
+            <label>Category<input v-model="contentStudioForm.category" maxlength="100" placeholder="Storage, Research, Safety..."></label>
+          </div>
+          <div class="pv-form-row">
+            <label>Tag<input v-model="contentStudioForm.tag" maxlength="80" placeholder="Peptides, FAQ, Beginner..."></label>
+            <label>Read Time<input v-model.number="contentStudioForm.read_minutes" min="1" max="240" type="number"></label>
+          </div>
+          <label>Excerpt<textarea v-model="contentStudioForm.excerpt" maxlength="500" rows="3" placeholder="Short summary shown on cards and search results."></textarea><small>{{ contentStudioForm.excerpt.length }}/500</small></label>
+          <div v-if="contentStudioForm.type === 'research'" class="pv-form-row">
+            <label>Compound<input v-model="contentStudioForm.metadata_compound" maxlength="160" placeholder="Retatrutide, BPC-157..."></label>
+            <label>References<input v-model="contentStudioForm.metadata_references" maxlength="240" placeholder="Optional source or citation note"></label>
+          </div>
+          <div v-else-if="contentStudioForm.type === 'guide'" class="pv-form-row">
+            <label>Difficulty<select v-model="contentStudioForm.metadata_difficulty"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></label>
+            <label>Guide Type<input v-model="contentStudioForm.metadata_guide_type" maxlength="80" placeholder="Tutorial, Checklist, Reference..."></label>
+          </div>
+          <label>Body<TipTapComposer :key="'content-studio-' + contentStudioEditorKey" v-model="contentStudioForm.body" placeholder="Write the full content..." :max-length="50000" /></label>
+          <div class="pv-form-row">
+            <label>Image URL<input v-model="contentStudioForm.image_url" type="url" placeholder="https://example.com/image.jpg"></label>
+            <label v-if="canPublishContent">Status<select v-model="contentStudioForm.status"><option value="draft">Draft</option><option value="published">Published</option><option value="hidden">Hidden</option></select></label>
+            <label v-else>Status<input value="Draft for review" readonly></label>
+          </div>
+          <footer class="pv-content-studio-actions">
+            <button type="button" class="pv-small-button" @click="resetContentStudioForm">Clear</button>
+            <button class="pv-primary-button" :disabled="contentStudioSaving"><PvIcon name="send" /> {{ contentStudioSaving ? 'Saving...' : contentStudioEditingId ? 'Save Changes' : 'Submit Content' }}</button>
+          </footer>
+        </form>
+      </main>
+
+      <aside class="pv-stack">
+        <article class="pv-panel">
+          <h2>Frontend Access</h2>
+          <dl class="pv-data-list">
+            <div><dt>Create</dt><dd>{{ contentStudioPermissions.can_create ? 'Allowed' : 'No' }}</dd></div>
+            <div><dt>Publish</dt><dd>{{ contentStudioPermissions.can_publish ? 'Allowed' : 'Draft only' }}</dd></div>
+            <div><dt>Scope</dt><dd>{{ contentStudioPermissions.can_manage ? 'All content' : 'Own submissions' }}</dd></div>
+          </dl>
+        </article>
+        <article v-if="canUseContentStudio" class="pv-panel">
+          <header class="pv-panel-header">
+            <h2>{{ contentStudioPermissions.can_manage ? 'Content Queue' : 'My Submissions' }}</h2>
+            <button class="pv-small-button" type="button" @click="loadContentStudioItems">Refresh</button>
+          </header>
+          <div class="pv-content-studio-list">
+            <button v-for="item in contentStudioItems" :key="item.slug" type="button" @click="editContentStudioItem(item)">
+              <span><strong>{{ item.title }}</strong><small>{{ item.type }} · {{ item.category || 'General' }}</small></span>
+              <em :class="`status-${item.status}`">{{ item.status }}</em>
+            </button>
+            <p v-if="contentStudioLoaded && contentStudioItems.length === 0" class="pv-muted">No submissions yet.</p>
+          </div>
+        </article>
+        <article class="pv-panel">
+          <h2>How It Works</h2>
+          <p class="pv-muted">Staff can save drafts from here. Content editors can review and publish without using the admin panel.</p>
+        </article>
+      </aside>
+    </div>
   </section>
 
    <section v-else-if="page === 'members'" class="pv-page">
@@ -1689,10 +1790,23 @@
         </form>
         <p v-if="messagesStatusMessage" class="pv-muted">{{ messagesStatusMessage }}</p>
         <p v-if="messagesLoaded && chats.length === 0" class="pv-muted">No message threads yet.</p>
-        <button v-for="chat in chats" :key="chat.id" class="pv-chat-row" :class="{ active: currentThread?.id === chat.id }" @click="openMessageThread(chat.id)"><span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span><span><strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag">{{ chat.participant.role }}</em></strong><small>{{ chat.preview }}</small></span><span class="pv-chat-row-end"><time>{{ chat.time }}</time><span v-if="chat.unread > 0" class="pv-unread-badge">{{ chat.unread }}</span></span></button>
+        <button
+          v-for="chat in chats"
+          :key="chat.id"
+          class="pv-chat-row"
+          :class="{ active: currentThread?.id === chat.id }"
+          @click="openMessageThread(chat.id)"
+        >
+          <span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span>
+          <span class="pv-chat-row-main">
+            <strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag pv-chat-role">{{ chat.participant.role }}</em></strong>
+            <small>{{ chat.preview }}</small>
+          </span>
+          <span class="pv-chat-row-end"><time>{{ chat.time }}</time><span v-if="chat.unread > 0" class="pv-unread-badge">{{ chat.unread }}</span></span>
+        </button>
       </aside>
       <main v-if="currentThread" class="pv-chat-panel">
-        <header><button class="pv-icon-button pv-icon-button--static pv-mobile-back" @click="openMessagesInbox" aria-label="Back to threads"><PvIcon name="chevron" /></button><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div><h2>{{ currentThread.participant.name }} <span class="pv-tag">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><button class="pv-icon-button pv-icon-button--static" title="Delete conversation" @click="deleteCurrentThread"><PvIcon name="trash" /></button><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static" aria-label="View member profile"><PvIcon name="user" /></router-link></header>
+        <header class="pv-chat-header"><button class="pv-icon-button pv-icon-button--static pv-mobile-back" @click="openMessagesInbox" aria-label="Back to threads"><PvIcon name="arrow-left" /></button><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div class="pv-chat-header-copy"><h2>{{ currentThread.participant.name }} <span class="pv-tag pv-chat-role">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><button class="pv-icon-button pv-icon-button--static pv-chat-delete" title="Delete conversation" @click="deleteCurrentThread"><PvIcon name="trash" /></button><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static pv-chat-profile" aria-label="View member profile"><PvIcon name="user" /></router-link></header>
         <div v-if="showMessageSafetyNotice" class="pv-alert"><PvIcon name="shield" /><span>Messages are visible only to you and the recipient. Do not share personal info or make any transactions.</span><button type="button" class="pv-icon-button" aria-label="Dismiss notice" @click="showMessageSafetyNotice = false"><PvIcon name="close" /></button></div>
         <div ref="messageStreamRef" class="pv-chat-stream">
           <template v-for="(message, msgIdx) in currentThread.messages" :key="message.id ?? message.time">
@@ -1701,7 +1815,7 @@
           </template>
         </div>
         <div v-if="messageAttachmentFile" class="pv-attachment-preview"><img v-if="messageAttachmentPreviewUrl" :src="messageAttachmentPreviewUrl" alt="Attachment preview"><span><strong>{{ messageAttachmentFile.name }}</strong><small>{{ formatFileSize(messageAttachmentFile.size) }}</small></span><button type="button" class="pv-icon-button" aria-label="Remove" @click="clearMessageAttachment"><PvIcon name="close" /></button></div>
-        <form class="pv-chat-input" @submit.prevent="sendMessage"><button type="button" class="pv-icon-button pv-icon-button--static" title="Attach file" @click="messageFileInput?.click()"><PvIcon name="image" /></button><input ref="messageFileInput" type="file" accept="image/*,application/pdf" class="pv-sr-only" @change="handleMessageAttachment"><input v-model="messageBody" placeholder="Type a message..."><EmojiPicker v-model="messageBody" /><button class="pv-primary-button" :disabled="sendingMessage || (!messageBody.trim() && !messageAttachmentFile)"><PvIcon name="send" /></button></form>
+        <form class="pv-chat-input" @submit.prevent="sendMessage"><button type="button" class="pv-icon-button pv-icon-button--static pv-chat-attach" title="Attach file" @click="messageFileInput?.click()"><PvIcon name="image" /></button><input ref="messageFileInput" type="file" accept="image/*,application/pdf" class="pv-sr-only" @change="handleMessageAttachment"><input v-model="messageBody" class="pv-chat-text" placeholder="Type a message..."><EmojiPicker v-model="messageBody" /><button class="pv-primary-button pv-chat-send" :disabled="sendingMessage || (!messageBody.trim() && !messageAttachmentFile)" aria-label="Send message"><PvIcon name="send" /></button></form>
       </main>
       <main v-else class="pv-chat-panel"><article class="pv-panel"><h2>No thread selected</h2><p class="pv-muted">Choose a thread to read messages.</p></article></main>
     </div>
@@ -1784,25 +1898,22 @@
     </div>
   </section>
 
-  <section v-else-if="page === 'notifications'" class="pv-page">
+  <section v-else-if="page === 'notifications'" class="pv-page pv-notifications-page">
     <div class="pv-content-grid">
       <main class="pv-stack">
-        <header class="pv-page-header">
+        <header class="pv-page-header pv-notifications-header">
           <div><h1>Notifications</h1><p>Review replies, mentions, messages, vendor updates, and system notices.</p></div>
-          <div class="pv-action-row">
-            <button v-if="authStore.isAuthenticated" class="pv-small-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead"><PvIcon name="check" /> Mark all read</button>
-            <router-link to="/settings/notifications" class="pv-icon-button" aria-label="Notification settings"><PvIcon name="settings" /></router-link>
+          <div class="pv-action-row pv-notifications-actions">
+            <button v-if="authStore.isAuthenticated" class="pv-small-button pv-notification-read-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead"><PvIcon name="check" /> Mark all read</button>
+            <router-link to="/settings/notifications" class="pv-small-button pv-notification-settings-button" aria-label="Notification settings"><PvIcon name="settings" /> Settings</router-link>
           </div>
         </header>
-        <div class="pv-notification-summary-grid">
-          <span><PvIcon name="bell" /><strong>{{ notificationCounts.unread }}</strong><small>Unread</small></span>
-          <span><PvIcon name="message" /><strong>{{ notificationCounts.messagesUnread }}</strong><small>Messages</small></span>
-          <span><PvIcon name="discussions" /><strong>{{ notificationCounts.discussions }}</strong><small>Discussions</small></span>
-          <span><PvIcon name="megaphone" /><strong>{{ notificationCounts.announcements }}</strong><small>Announcements</small></span>
-        </div>
-        <div class="pv-tabs pv-tabs--line">
-          <button v-for="filter in notificationFilterTabs" :key="filter.slug" :class="{ active: activeNotificationFilter === filter.slug }" @click="setNotificationFilter(filter.slug)">
-            {{ filter.label }} <span v-if="filter.count !== undefined">{{ filter.count }}</span>
+        <div class="pv-notification-quick-filter" role="group" aria-label="Notification filter">
+          <button type="button" :class="{ active: activeNotificationFilter === 'all' }" @click="setNotificationFilter('all')">
+            <PvIcon name="bell" /> All
+          </button>
+          <button type="button" :class="{ active: activeNotificationFilter === 'unread' }" @click="setNotificationFilter('unread')">
+            <PvIcon name="clock" /> Unread <span v-if="notificationCounts.unread">{{ notificationCounts.unread }}</span>
           </button>
         </div>
         <article class="pv-panel pv-notification-list">
@@ -1810,9 +1921,16 @@
           <div v-if="notificationsLoaded && notifications.length === 0" class="pv-empty-inline"><PvIcon name="bell" /><strong>No notifications yet</strong><p>Replies, mentions, messages, and important account updates will appear here.</p></div>
           <router-link v-for="item in notifications" :key="item.slug" :to="item.detailHref" class="pv-notification-row" :class="{ unread: item.unread }" @click="markNotificationRead(item.slug)">
             <span class="pv-large-icon" :class="item.tone"><PvIcon :name="item.icon" /></span>
-            <span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em class="pv-tag" :class="item.tone">{{ item.category }}</em></span>
-            <time>{{ item.time }}</time>
-            <b v-if="item.unread"></b>
+            <span class="pv-notification-copy">
+              <span class="pv-notification-meta">
+                <em class="pv-tag" :class="item.tone">{{ item.category }}</em>
+                <time class="pv-notification-time pv-notification-time--inline">{{ item.time }}</time>
+              </span>
+              <strong class="pv-notification-title">{{ item.title }}</strong>
+              <small class="pv-notification-text">{{ item.text }}</small>
+            </span>
+            <time class="pv-notification-time pv-notification-time--rail">{{ item.time }}</time>
+            <b v-if="item.unread" class="pv-notification-unread-dot"></b>
           </router-link>
         </article>
         <PaginationBlock :meta="notificationPagination" :label="notificationPaginationLabel" @page="setNotificationPage" />
@@ -1832,9 +1950,45 @@
     </div>
   </section>
 
-  <section v-else-if="page === 'notificationDetail'" class="pv-page">
+  <section v-else-if="page === 'notificationDetail'" class="pv-page pv-notification-detail-page">
     <div class="pv-content-grid">
-      <main v-if="primaryNotification" class="pv-stack"><router-link to="/notifications" class="pv-purple-link">Back</router-link><header class="pv-page-header"><div><h1>Notification</h1><router-link to="/notifications" class="pv-purple-link">Back to all notifications</router-link></div><button v-if="authStore.isAuthenticated && primaryNotification.unread" class="pv-small-button" :disabled="markingNotificationsRead" @click="markNotificationRead(primaryNotification.slug)"><PvIcon name="mail" /> Mark as read</button><router-link v-if="previousNotification" class="pv-icon-button pv-icon-button--static" :to="previousNotification.detailHref" aria-label="Previous notification"><PvIcon name="chevron" /></router-link><router-link v-if="nextNotification" class="pv-icon-button pv-icon-button--static" :to="nextNotification.detailHref" aria-label="Next notification"><PvIcon name="chevron" /></router-link></header><article class="pv-notification-hero"><span class="pv-large-icon" :class="primaryNotification.tone"><PvIcon :name="primaryNotification.icon" /></span><div><div class="pv-author-line"><span class="pv-tag">{{ primaryNotification.category }}</span><strong>{{ primaryNotification.author }}</strong><span>{{ primaryNotification.time }}</span></div><h2>{{ primaryNotification.title }}</h2><p>{{ primaryNotification.text }}</p><router-link :to="primaryNotification.href" class="pv-primary-button">Open {{ primaryNotification.category }} <PvIcon name="share" /></router-link></div></article><article class="pv-panel pv-prose"><h2>Full Message</h2><p v-for="paragraph in primaryNotification.bodyParagraphs" :key="paragraph">{{ paragraph }}</p><hr><h2>What you can do</h2><router-link :to="primaryNotification.href" class="pv-action-card"><PvIcon :name="primaryNotification.icon" /><span><strong>Open related content</strong><small>View the full source item for this notification.</small></span><PvIcon name="chevron" /></router-link><router-link to="/discussions" class="pv-action-card"><PvIcon name="message" /><span><strong>Join the discussion</strong><small>Discuss updates with the community.</small></span><PvIcon name="chevron" /></router-link></article></main>
+      <main v-if="primaryNotification" class="pv-stack pv-notification-detail-main">
+        <router-link to="/notifications" class="pv-purple-link">Back to notifications</router-link>
+        <header class="pv-page-header pv-notification-detail-header">
+          <div>
+            <h1>Notification</h1>
+            <p>Read the update and open the related content when needed.</p>
+          </div>
+          <div class="pv-action-row pv-notification-detail-actions">
+            <button v-if="authStore.isAuthenticated && primaryNotification.unread" class="pv-small-button" :disabled="markingNotificationsRead" @click="markNotificationRead(primaryNotification.slug)"><PvIcon name="mail" /> Mark as read</button>
+            <router-link v-if="previousNotification" class="pv-icon-button pv-icon-button--static" :to="previousNotification.detailHref" aria-label="Previous notification"><PvIcon name="chevron" /></router-link>
+            <router-link v-if="nextNotification" class="pv-icon-button pv-icon-button--static" :to="nextNotification.detailHref" aria-label="Next notification"><PvIcon name="chevron" /></router-link>
+          </div>
+        </header>
+        <article class="pv-notification-hero pv-notification-detail-hero">
+          <span class="pv-large-icon" :class="primaryNotification.tone"><PvIcon :name="primaryNotification.icon" /></span>
+          <div class="pv-notification-hero-copy">
+            <div class="pv-notification-meta">
+              <span class="pv-tag" :class="primaryNotification.tone">{{ primaryNotification.category }}</span>
+              <strong>{{ primaryNotification.author }}</strong>
+              <time>{{ primaryNotification.time }}</time>
+            </div>
+            <h2 class="pv-notification-title">{{ primaryNotification.title }}</h2>
+            <p class="pv-notification-text">{{ primaryNotification.text }}</p>
+            <router-link :to="primaryNotification.href" class="pv-primary-button">Open {{ primaryNotification.category }} <PvIcon name="share" /></router-link>
+          </div>
+        </article>
+        <article class="pv-panel pv-prose pv-notification-body-card">
+          <h2>Full Message</h2>
+          <div class="pv-notification-body-copy">
+            <p v-for="paragraph in primaryNotification.bodyParagraphs" :key="paragraph">{{ paragraph }}</p>
+          </div>
+          <hr>
+          <h2>What you can do</h2>
+          <router-link :to="primaryNotification.href" class="pv-action-card pv-notification-action-card"><PvIcon :name="primaryNotification.icon" /><span><strong>Open related content</strong><small>View the full source item for this notification.</small></span><PvIcon name="chevron" /></router-link>
+          <router-link to="/discussions" class="pv-action-card pv-notification-action-card"><PvIcon name="message" /><span><strong>Join the discussion</strong><small>Discuss updates with the community.</small></span><PvIcon name="chevron" /></router-link>
+        </article>
+      </main>
       <main v-else class="pv-stack"><router-link to="/notifications" class="pv-purple-link">Back</router-link><article class="pv-panel"><h1>Notification not found</h1><p class="pv-muted">There are no live notifications to show yet.</p></article></main>
       <aside class="pv-stack"><article class="pv-panel"><h2>Notification Details</h2><dl class="pv-data-list"><div><dt>Type</dt><dd>{{ primaryNotification?.category ?? '' }}</dd></div><div><dt>From</dt><dd>{{ primaryNotification?.author ?? '' }}</dd></div><div><dt>Received</dt><dd>{{ primaryNotification?.time ?? '' }}</dd></div><div><dt>Status</dt><dd><span class="pv-dot purple"></span> {{ primaryNotification?.unread ? 'Unread' : 'Read' }}</dd></div></dl><hr><h2>Related Links</h2><div class="pv-filter-list"><router-link to="/lab-results"><PvIcon name="flask" /> Lab Results <PvIcon name="chevron" /></router-link><router-link to="/announcements"><PvIcon name="megaphone" /> Announcements <PvIcon name="chevron" /></router-link><router-link to="/discussions"><PvIcon name="message" /> Community Discussions <PvIcon name="chevron" /></router-link></div></article></aside>
     </div>
@@ -2683,11 +2837,15 @@ interface AnnouncementDetailResponse {
   data: ApiAnnouncement
 }
 
+type ContentKind = 'research' | 'guide' | 'faq'
+type ContentStatus = 'draft' | 'published' | 'hidden'
+
 interface UiContentItem {
   id?: number
-  type: 'research' | 'guide' | 'faq'
+  type: ContentKind
   title: string
   slug: string
+  status: ContentStatus
   tag: string
   category: string
   excerpt: string
@@ -2710,9 +2868,10 @@ interface UiContentItem {
 
 interface ApiContentItem {
   id?: number
-  type: 'research' | 'guide' | 'faq'
+  type: ContentKind
   title: string
   slug: string
+  status?: ContentStatus
   category: string
   category_slug: string
   tag?: string | null
@@ -2765,11 +2924,25 @@ interface ContentIndexResponse {
     categories?: ContentCategory[]
     topics?: ContentTopic[]
     filters?: Partial<ContentFilterOptions>
+    permissions?: Partial<ContentStudioPermissions>
   }
 }
 
 interface ContentDetailResponse {
   data: ApiContentItem
+}
+
+interface ContentStudioPermissions {
+  can_create: boolean
+  can_update: boolean
+  can_publish: boolean
+  can_manage: boolean
+  default_status: ContentStatus
+  allowed_statuses: ContentStatus[]
+}
+
+interface ContentStudioPermissionsResponse {
+  data: ContentStudioPermissions
 }
 
 interface UiMemberProfile {
@@ -3314,7 +3487,6 @@ const apiDetailGuide = ref<UiContentItem | null>(null)
 const apiFaqs = ref<UiContentItem[]>([])
 const researchPagination = ref<PaginationMeta | null>(null)
 const guidePagination = ref<PaginationMeta | null>(null)
-type ContentKind = 'research' | 'guide' | 'faq'
 
 const contentCategories = ref<Record<ContentKind, ContentCategory[]>>({
   research: [],
@@ -3338,6 +3510,37 @@ const contentFilterOptions = ref<Record<ContentKind, ContentFilterOptions>>({
   guide: emptyContentFilterOptions(),
   faq: emptyContentFilterOptions(),
 })
+const defaultContentStudioPermissions = (): ContentStudioPermissions => ({
+  can_create: false,
+  can_update: false,
+  can_publish: false,
+  can_manage: false,
+  default_status: 'draft',
+  allowed_statuses: ['draft'],
+})
+const defaultContentStudioForm = () => ({
+  type: 'guide' as ContentKind,
+  title: '',
+  category: '',
+  tag: '',
+  excerpt: '',
+  body: '',
+  image_url: '',
+  read_minutes: 5,
+  metadata_compound: '',
+  metadata_references: '',
+  metadata_difficulty: 'Beginner',
+  metadata_guide_type: '',
+  status: 'draft' as ContentStatus,
+})
+const contentStudioPermissions = ref<ContentStudioPermissions>(defaultContentStudioPermissions())
+const contentStudioItems = ref<UiContentItem[]>([])
+const contentStudioForm = ref(defaultContentStudioForm())
+const contentStudioLoaded = ref(false)
+const contentStudioSaving = ref(false)
+const contentStudioStatusMessage = ref('')
+const contentStudioEditingId = ref<number | null>(null)
+const contentStudioEditorKey = ref(0)
 const contentLoaded = ref(false)
 const contentStatusMessage = ref('')
 const activeResearchCategory = ref('')
@@ -3544,6 +3747,18 @@ const announcementPreview = computed(() => announcements.value.slice(0, 3))
 const articles = computed(() => apiResearchArticles.value)
 const guides = computed(() => apiGuides.value)
 const faqs = computed(() => apiFaqs.value)
+const hasFrontendContentRole = computed(() => hasAnyRole(['admin', 'moderator', 'staff', 'editor', 'content-editor', 'researcher']))
+const hasFrontendContentPermission = computed(() => {
+  const permissions = authStore.user?.permissions ?? []
+  return permissions.some(permission => [
+    'community-content.create',
+    'community-content.update',
+    'community-content.publish',
+    'community-content.manage',
+  ].includes(permission))
+})
+const canUseContentStudio = computed(() => contentStudioPermissions.value.can_create || contentStudioPermissions.value.can_update || contentStudioPermissions.value.can_manage || hasFrontendContentRole.value || hasFrontendContentPermission.value)
+const canPublishContent = computed(() => contentStudioPermissions.value.can_publish || hasAnyRole(['admin', 'moderator', 'editor', 'content-editor']) || (authStore.user?.permissions ?? []).some(permission => ['community-content.publish', 'community-content.manage'].includes(permission)))
 const popularTopics = computed(() => contentTopics.value.research.length > 0 ? contentTopics.value.research : contentTopics.value.guide)
 const researchSortLabel = computed(() => contentFilterOptions.value.research.sorts.find(sort => sort.value === researchSort.value)?.label ?? 'Latest Added')
 const memberEngagementScore = (member: UiMemberProfile) => Number(member.stats.posts ?? 0) + Number(member.stats.reviews ?? 0) + Number(member.stats.lab_reports ?? 0) + Number(member.stats.solutions ?? 0)
@@ -5357,6 +5572,9 @@ async function syncCommunityContent(): Promise<void> {
     case 'guideDetail':
       await Promise.all([loadContentDetails(), loadGuidesContent()])
       return
+    case 'contentStudio':
+      await loadContentStudio()
+      return
     case 'members':
       await loadMembers()
       return
@@ -7079,6 +7297,7 @@ function mapContent(item: ApiContentItem): UiContentItem {
     type: item.type,
     title: item.title,
     slug: item.slug,
+    status: item.status ?? 'published',
     tag: item.tag ?? item.category,
     category: item.category,
     excerpt: item.excerpt ?? '',
@@ -7331,6 +7550,183 @@ async function loadContentDetails(): Promise<void> {
       apiDetailGuide.value = null
     }
   }
+}
+
+function contentTypeFromRoute(): ContentKind {
+  const value = String(route.query.type ?? '')
+  return value === 'research' || value === 'faq' ? value : 'guide'
+}
+
+function setContentStudioType(type: ContentKind): void {
+  contentStudioForm.value.type = type
+  if (type === 'faq' && contentStudioForm.value.read_minutes > 5) {
+    contentStudioForm.value.read_minutes = 3
+  }
+}
+
+async function loadContentStudio(): Promise<void> {
+  if (!authStore.isAuthenticated) {
+    contentStudioPermissions.value = defaultContentStudioPermissions()
+    contentStudioItems.value = []
+    contentStudioLoaded.value = true
+    return
+  }
+
+  if (!contentStudioEditingId.value) {
+    contentStudioForm.value.type = contentTypeFromRoute()
+  }
+
+  contentStudioLoaded.value = false
+  await loadContentStudioPermissions()
+
+  if (canUseContentStudio.value) {
+    await loadContentStudioItems()
+  } else {
+    contentStudioItems.value = []
+  }
+
+  contentStudioLoaded.value = true
+}
+
+async function loadContentStudioPermissions(): Promise<void> {
+  try {
+    const response = await api.get<ContentStudioPermissionsResponse>('/api/v1/community/content/permissions', {
+      cacheTTL: 0,
+      skipDeduplication: true,
+    })
+    contentStudioPermissions.value = response.data.data
+    if (!canPublishContent.value) {
+      contentStudioForm.value.status = 'draft'
+    }
+  } catch {
+    contentStudioPermissions.value = defaultContentStudioPermissions()
+  }
+}
+
+async function loadContentStudioItems(): Promise<void> {
+  try {
+    const response = await api.get<ContentIndexResponse>('/api/v1/community/content', {
+      cacheTTL: 0,
+      skipDeduplication: true,
+      params: {
+        limit: 40,
+      },
+    })
+    contentStudioItems.value = response.data.data.map(mapContent)
+    const permissions = response.data.meta?.permissions as Partial<ContentStudioPermissions> | undefined
+    if (permissions) {
+      contentStudioPermissions.value = {
+        ...contentStudioPermissions.value,
+        ...permissions,
+        default_status: permissions.default_status ?? contentStudioPermissions.value.default_status,
+        allowed_statuses: permissions.allowed_statuses ?? contentStudioPermissions.value.allowed_statuses,
+      }
+    }
+  } catch (error) {
+    const apiError = error as { response?: { data?: { message?: string } } }
+    contentStudioItems.value = []
+    contentStudioStatusMessage.value = apiError.response?.data?.message ?? 'Unable to load content submissions.'
+  }
+}
+
+function contentStudioMetadata(): UnknownRecord {
+  if (contentStudioForm.value.type === 'research') {
+    return {
+      compound: contentStudioForm.value.metadata_compound || undefined,
+      references: contentStudioForm.value.metadata_references || undefined,
+    }
+  }
+
+  if (contentStudioForm.value.type === 'guide') {
+    return {
+      difficulty: contentStudioForm.value.metadata_difficulty || 'Beginner',
+      guide_type: contentStudioForm.value.metadata_guide_type || undefined,
+    }
+  }
+
+  return {}
+}
+
+function contentStudioPayload(): UnknownRecord {
+  return {
+    type: contentStudioForm.value.type,
+    title: contentStudioForm.value.title.trim(),
+    category: contentStudioForm.value.category.trim() || 'General',
+    tag: contentStudioForm.value.tag.trim() || undefined,
+    excerpt: contentStudioForm.value.excerpt.trim() || undefined,
+    body: contentStudioForm.value.body,
+    image_url: contentStudioForm.value.image_url.trim() || undefined,
+    read_minutes: Number(contentStudioForm.value.read_minutes || 5),
+    metadata: contentStudioMetadata(),
+    status: canPublishContent.value ? contentStudioForm.value.status : 'draft',
+  }
+}
+
+async function saveContentStudioItem(): Promise<void> {
+  if (!contentStudioForm.value.title.trim() || !plainTextFromRichText(contentStudioForm.value.body).trim()) {
+    contentStudioStatusMessage.value = 'Title and body are required.'
+    return
+  }
+
+  contentStudioSaving.value = true
+  contentStudioStatusMessage.value = ''
+
+  try {
+    const payload = contentStudioPayload()
+    const response = contentStudioEditingId.value
+      ? await api.patch<ContentDetailResponse>(`/api/v1/community/content/${contentStudioEditingId.value}`, payload)
+      : await api.post<ContentDetailResponse>('/api/v1/community/content', payload)
+    const saved = mapContent(response.data.data)
+    const index = contentStudioItems.value.findIndex(item => item.id === saved.id)
+    if (index >= 0) {
+      contentStudioItems.value.splice(index, 1, saved)
+    } else {
+      contentStudioItems.value = [saved, ...contentStudioItems.value]
+    }
+    contentStudioEditingId.value = saved.id ?? null
+    contentStudioStatusMessage.value = saved.status === 'published' ? 'Content published.' : 'Content saved as draft for review.'
+  } catch (error) {
+    const apiError = error as { response?: { data?: { message?: string; errors?: Record<string, string[]> } } }
+    const errors = apiError.response?.data?.errors
+    const firstError = errors ? Object.values(errors)[0]?.[0] : ''
+    contentStudioStatusMessage.value = firstError || apiError.response?.data?.message || 'Unable to save content.'
+  } finally {
+    contentStudioSaving.value = false
+  }
+}
+
+function editContentStudioItem(item: UiContentItem): void {
+  contentStudioEditingId.value = item.id ?? null
+  contentStudioForm.value = {
+    ...defaultContentStudioForm(),
+    type: item.type,
+    title: item.title,
+    category: item.category,
+    tag: item.tag,
+    excerpt: item.excerpt,
+    body: item.body,
+    image_url: item.imageUrl ?? '',
+    read_minutes: item.readMinutes,
+    metadata_compound: String(item.metadata.compound ?? ''),
+    metadata_references: String(item.metadata.references ?? ''),
+    metadata_difficulty: String(item.metadata.difficulty ?? 'Beginner'),
+    metadata_guide_type: String(item.metadata.guide_type ?? ''),
+    status: canPublishContent.value ? item.status : 'draft',
+  }
+  contentStudioEditorKey.value += 1
+  contentStudioStatusMessage.value = `Editing "${item.title}".`
+  window.scrollTo({ top: 0, behavior: 'smooth' })
+}
+
+function resetContentStudioForm(): void {
+  contentStudioEditingId.value = null
+  contentStudioForm.value = {
+    ...defaultContentStudioForm(),
+    type: contentTypeFromRoute(),
+    status: 'draft',
+  }
+  contentStudioEditorKey.value += 1
+  contentStudioStatusMessage.value = ''
 }
 
 async function loadMembers(): Promise<void> {
@@ -7827,16 +8223,6 @@ const notificationCounts = computed(() => ({
   messagesUnread: notificationStats.value.messages_unread ?? notificationStats.value.message_unread ?? 0,
   systemUnread: notificationStats.value.system_unread ?? 0,
 }))
-const notificationFilterTabs = computed(() => [
-  { slug: 'all', label: 'All' },
-  { slug: 'unread', label: 'Unread', count: notificationCounts.value.unread },
-  { slug: 'replies', label: 'Replies', count: notificationCounts.value.repliesUnread },
-  { slug: 'mentions', label: 'Mentions', count: notificationCounts.value.mentionsUnread },
-  { slug: 'messages', label: 'Messages', count: notificationCounts.value.messagesUnread },
-  { slug: 'announcements', label: 'Announcements', count: notificationCounts.value.announcements },
-  { slug: 'lab-results', label: 'Lab Results', count: notificationCounts.value.labResults },
-  { slug: 'vendor-reviews', label: 'Vendors', count: notificationCounts.value.vendors },
-])
 const notificationFilterItems = computed(() => [
   { slug: 'all', label: 'All Notifications', icon: 'bell', count: notificationCounts.value.total },
   { slug: 'unread', label: 'Unread', icon: 'clock', count: notificationCounts.value.unread },

@@ -6,7 +6,10 @@ use App\Core\Middleware\VerifyLicense;
 use App\Core\Models\CommunityContentItem;
 use App\Core\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Facades\Route;
 use Laravel\Sanctum\Sanctum;
+use Spatie\Permission\Models\Permission;
+use Spatie\Permission\Models\Role;
 use Tests\TestCase;
 
 class CommunityContentApiTest extends TestCase
@@ -17,6 +20,7 @@ class CommunityContentApiTest extends TestCase
     {
         parent::setUp();
 
+        $this->loadContentLibraryRoutesForTests();
         Sanctum::actingAs(User::factory()->create());
     }
 
@@ -151,5 +155,130 @@ class CommunityContentApiTest extends TestCase
             'slug' => 'how-should-i-store-peptides',
             'status' => 'published',
         ]);
+    }
+
+    public function test_staff_can_create_frontend_content_draft_without_admin_access(): void
+    {
+        $this->seedContentContributorPermissions();
+
+        $staff = User::factory()->create(['username' => 'StaffUser']);
+        $staff->assignRole('staff');
+
+        Sanctum::actingAs($staff);
+
+        $response = $this->postJson('/api/v1/community/content', [
+            'type' => 'guide',
+            'title' => 'Frontend Storage Guide',
+            'category' => 'Storage',
+            'excerpt' => 'A staff-created draft.',
+            'body' => 'Draft body.',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.type', 'guide')
+            ->assertJsonPath('data.slug', 'frontend-storage-guide')
+            ->assertJsonPath('data.status', 'draft');
+
+        $this->assertDatabaseHas('community_content_items', [
+            'slug' => 'frontend-storage-guide',
+            'user_id' => $staff->id,
+            'status' => 'draft',
+        ]);
+    }
+
+    public function test_staff_cannot_publish_frontend_content(): void
+    {
+        $this->seedContentContributorPermissions();
+
+        $staff = User::factory()->create();
+        $staff->assignRole('staff');
+
+        Sanctum::actingAs($staff);
+
+        $response = $this->postJson('/api/v1/community/content', [
+            'type' => 'research',
+            'title' => 'Pending Research',
+            'category' => 'Research',
+            'status' => 'published',
+        ]);
+
+        $response->assertForbidden();
+
+        $this->assertDatabaseMissing('community_content_items', [
+            'slug' => 'pending-research',
+            'status' => 'published',
+        ]);
+    }
+
+    public function test_content_editor_can_publish_from_frontend_without_admin_panel_permission(): void
+    {
+        $this->seedContentContributorPermissions();
+
+        $editor = User::factory()->create(['username' => 'ContentEditor']);
+        $editor->assignRole('content-editor');
+
+        Sanctum::actingAs($editor);
+
+        $response = $this->postJson('/api/v1/community/content', [
+            'type' => 'faq',
+            'title' => 'Can staff publish FAQs?',
+            'category' => 'Workflow',
+            'body' => 'Only content editors can publish directly.',
+            'status' => 'published',
+        ]);
+
+        $response->assertCreated()
+            ->assertJsonPath('data.type', 'faq')
+            ->assertJsonPath('data.status', 'published');
+
+        $this->assertDatabaseHas('community_content_items', [
+            'slug' => 'can-staff-publish-faqs',
+            'status' => 'published',
+            'user_id' => $editor->id,
+        ]);
+
+        $this->assertFalse($editor->fresh()->can('view admin panel'));
+    }
+
+    private function seedContentContributorPermissions(): void
+    {
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+
+        foreach ([
+            'community-content.create',
+            'community-content.update',
+            'community-content.publish',
+            'community-content.manage',
+            'view admin panel',
+        ] as $permission) {
+            Permission::firstOrCreate(['name' => $permission, 'guard_name' => 'sanctum']);
+        }
+
+        Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'sanctum'])
+            ->syncPermissions(['community-content.create', 'community-content.update']);
+
+        Role::firstOrCreate(['name' => 'content-editor', 'guard_name' => 'sanctum'])
+            ->syncPermissions([
+                'community-content.create',
+                'community-content.update',
+                'community-content.publish',
+                'community-content.manage',
+            ]);
+
+        app()[\Spatie\Permission\PermissionRegistrar::class]->forgetCachedPermissions();
+    }
+
+    private function loadContentLibraryRoutesForTests(): void
+    {
+        Route::prefix('api')
+            ->middleware('api')
+            ->namespace('App\\Plugins\\ContentLibrary\\Controllers')
+            ->group(base_path('app/Plugins/content-library/routes/api.php'));
+
+        Route::prefix('api/v1/admin')
+            ->middleware(['api', 'auth:sanctum', 'role:admin|moderator', 'verify.license'])
+            ->namespace('App\\Plugins\\ContentLibrary\\Controllers\\Admin')
+            ->name('admin.')
+            ->group(base_path('app/Plugins/content-library/routes/admin.php'));
     }
 }

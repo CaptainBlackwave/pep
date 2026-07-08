@@ -93,6 +93,7 @@ const routes: RouteRecordRaw[] = [
       { path: 'research-library/:slug', name: 'research-article', component: peptidePage, meta: { title: 'Research Article', page: 'researchArticle' } satisfies RouteMeta },
       { path: 'guides', name: 'guides', component: peptidePage, meta: { title: 'Guides & FAQ', page: 'guides' } satisfies RouteMeta },
       { path: 'guides/:slug', name: 'guide-detail', component: peptidePage, meta: { title: 'Guide', page: 'guideDetail' } satisfies RouteMeta },
+      { path: 'content-studio', name: 'content-studio', component: peptidePage, meta: { title: 'Content Studio', page: 'contentStudio' } satisfies RouteMeta },
       { path: 'members', name: 'members', component: peptidePage, meta: { title: 'Members', page: 'members' } satisfies RouteMeta },
       { path: 'members/:slug', name: 'member-detail', component: peptidePage, meta: { title: 'Member Profile', page: 'memberDetail' } satisfies RouteMeta },
       { path: 'messages', name: 'messages', component: peptidePage, meta: { title: 'Messages', page: 'messages' } satisfies RouteMeta },

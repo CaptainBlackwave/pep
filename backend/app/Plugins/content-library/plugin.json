@@ -4,6 +4,12 @@
   "version": "1.0.0",
   "description": "Research library, guides, and FAQ content management.",
   "author": "PepVGuides",
+  "permissions": {
+    "community-content.create": "Create community content drafts",
+    "community-content.update": "Update own community content",
+    "community-content.publish": "Publish community content",
+    "community-content.manage": "Manage all community content"
+  },
   "routes": {
     "api": true,
     "admin": true
