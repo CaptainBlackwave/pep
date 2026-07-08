@@ -230,11 +230,18 @@ const navItems = computed(() => {
     { to: '/guides', label: 'Guides & FAQ', icon: 'question', match: ['/guides'] },
     { to: '/members', label: 'Members', icon: 'users', match: ['/members'] },
     { to: '/announcements', label: 'Announcements', icon: 'megaphone', match: ['/announcements'] },
+    { to: '/content-studio', label: 'Content Studio', icon: 'library', match: ['/content-studio'] },
     { to: '/saved', label: 'Saved', icon: 'bookmark', match: ['/saved'] },
     { to: '/notifications', label: 'Notifications', icon: 'bell', match: ['/notifications'] },
     { to: '/calculator', label: 'Calculator', icon: 'calculator', match: ['/calculator'] },
   ]
+
+  const contentRoles = ['admin', 'moderator', 'staff', 'editor', 'content-editor', 'researcher']
+
   return allItems.filter(item => {
+    if (item.to === '/content-studio' && !hasAnyRole(contentRoles)) {
+      return false
+    }
     if (isFree && ['/lab-results', '/members', '/notifications'].includes(item.to)) {
       return false
     }

@@ -55,6 +55,12 @@ class RolePermissionSeeder extends Seeder
             'manage tickets',
             'view reports',
 
+            // Community Content
+            'community-content.create',
+            'community-content.update',
+            'community-content.publish',
+            'community-content.manage',
+
             // Email Management
             'manage email settings',
             'manage email templates',
@@ -78,6 +84,8 @@ class RolePermissionSeeder extends Seeder
         // Create roles with sanctum guard
         $admin = Role::firstOrCreate(['name' => 'admin', 'guard_name' => 'sanctum']);
         $moderator = Role::firstOrCreate(['name' => 'moderator', 'guard_name' => 'sanctum']);
+        $staff = Role::firstOrCreate(['name' => 'staff', 'guard_name' => 'sanctum']);
+        $contentEditor = Role::firstOrCreate(['name' => 'content-editor', 'guard_name' => 'sanctum']);
         $user = Role::firstOrCreate(['name' => 'user', 'guard_name' => 'sanctum']);
 
         // Admin gets ALL permissions
@@ -94,6 +102,23 @@ class RolePermissionSeeder extends Seeder
             'moderate chat',
             'manage tickets',
             'view reports',
+            'community-content.create',
+            'community-content.update',
+            'community-content.publish',
+        ]);
+
+        // Staff can write frontend community content drafts without admin panel access.
+        $staff->syncPermissions([
+            'community-content.create',
+            'community-content.update',
+        ]);
+
+        // Content editors can review and publish community content without full admin access.
+        $contentEditor->syncPermissions([
+            'community-content.create',
+            'community-content.update',
+            'community-content.publish',
+            'community-content.manage',
         ]);
 
         // User role gets no admin permissions (they just play the game)
@@ -102,6 +127,8 @@ class RolePermissionSeeder extends Seeder
         $this->command->info('Roles and permissions created successfully (sanctum guard)!');
         $this->command->info('- admin: Full access');
         $this->command->info('- moderator: Forum/chat moderation, user bans, tickets');
+        $this->command->info('- staff: Frontend content draft access');
+        $this->command->info('- content-editor: Frontend content publishing access');
         $this->command->info('- user: Regular player (no admin access)');
     }
 }

@@ -18,6 +18,7 @@ export interface RouteMeta {
   keepAlive?: boolean
   plugin?: string
   page?: string
+  contentType?: 'research' | 'guide' | 'faq'
 }
 
 /**
@@ -35,6 +36,7 @@ declare module 'vue-router' {
     keepAlive?: boolean
     plugin?: string
     page?: string
+    contentType?: 'research' | 'guide' | 'faq'
   }
 }
 
