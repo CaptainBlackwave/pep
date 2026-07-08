@@ -82,6 +82,8 @@ const icons: Record<string, string[]> = {
   reply: ['M9 17 4 12l5-5', 'M20 18v-2a4 4 0 0 0-4-4H4'],
   quote: ['M7 7h5v5c0 4-2 6-6 7', 'M17 7h4v5c0 4-2 6-6 7'],
   'credit-card': ['M2 8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V8Z', 'M2 11h20', 'M6 15h2', 'M10 15h1'],
+  calculator: ['M4 3h16a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2z', 'M8 8h8', 'M8 13h.01', 'M12 13h.01', 'M16 13h.01', 'M8 17h.01', 'M12 17h.01', 'M16 17h.01'],
+  'alert-triangle': ['m12 3-9 16h18L12 3Z', 'M12 9v4', 'M12 16h.01'],
 }
 
 const iconPaths = computed(() => icons[props.name] ?? icons.question)

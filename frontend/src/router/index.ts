@@ -6,6 +6,7 @@ import '@/types/router'
 export type { RouteMeta } from '@/types/router'
 
 const peptidePage = () => import('@/views/PeptideCommunityView.vue')
+const calculatorPage = () => import('@/views/CalculatorView.vue')
 
 const routes: RouteRecordRaw[] = [
   {
@@ -78,6 +79,7 @@ const routes: RouteRecordRaw[] = [
     meta: {} satisfies RouteMeta,
     children: [
       { path: 'dashboard', name: 'dashboard', component: peptidePage, meta: { title: 'Home', page: 'home' } satisfies RouteMeta },
+      { path: 'calculator', name: 'calculator', component: calculatorPage, meta: { title: 'Peptide Calculator', page: 'calculator', description: 'Calculate peptide dosages, reconstitution volumes and injection amounts.' } satisfies RouteMeta },
       { path: 'home', name: 'home', component: peptidePage, meta: { title: 'Home', page: 'home', description: 'Peptide research community with independent vendor reviews, lab results, and educational discussions.' } satisfies RouteMeta },
       { path: 'pricing', name: 'pricing', component: peptidePage, meta: { title: 'Pricing', page: 'pricing' } satisfies RouteMeta },
       { path: 'discussions', name: 'discussions', component: peptidePage, meta: { title: 'Discussions', page: 'discussions', description: 'Community discussions about peptide research, harm reduction, and educational topics.' } satisfies RouteMeta },
