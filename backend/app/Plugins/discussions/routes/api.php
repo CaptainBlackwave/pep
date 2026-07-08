@@ -21,5 +21,7 @@ Route::prefix('v1')->group(function () {
         Route::post('/discussion-replies/{reply}/vote', 'CommunityDiscussionController@voteOnReply');
         Route::post('/discussion-replies/{reply}/report', 'CommunityDiscussionController@reportReply');
         Route::delete('/discussion-replies/{reply}', 'CommunityDiscussionController@destroyReply');
+        
+        Route::patch('/discussions/{discussion}/moderate', 'CommunityDiscussionController@moderate');
     });
 });
