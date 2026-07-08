@@ -1,130 +1,132 @@
 <template>
-  <div class="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 p-4">
-    <!-- Background Effects -->
-    <div class="absolute inset-0 overflow-hidden">
-      <div class="absolute -top-40 -right-40 w-80 h-80 bg-amber-500/20 rounded-full blur-3xl" />
-      <div class="absolute -bottom-40 -left-40 w-80 h-80 bg-orange-500/20 rounded-full blur-3xl" />
-    </div>
-
-    <div class="relative w-full max-w-md">
-      <!-- Logo Card -->
-      <div class="text-center mb-8">
-        <div class="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-gradient-to-br from-amber-500 to-orange-600 shadow-lg shadow-amber-500/30 mb-4">
+  <div class="admin-auth">
+    <div class="admin-auth-shell">
+      <section class="admin-auth-copy">
+        <div class="admin-auth-logo">
           <BoltIcon class="w-8 h-8 text-white" />
         </div>
-        <h1 class="text-3xl font-bold text-white">LaravelCP</h1>
-        <p class="text-slate-400 mt-1">Admin Control Panel</p>
-      </div>
+        <p class="admin-auth-kicker">Admin Control Panel</p>
+        <h1>LaravelCP</h1>
+        <p>Manage users, community content, vendors, security, system health, and operational settings from one focused workspace.</p>
+        <div class="admin-auth-proof">
+          <span><ShieldCheckIcon class="w-5 h-5" /> Role protected</span>
+          <span><LockClosedIcon class="w-5 h-5" /> 2FA ready</span>
+          <span><BoltIcon class="w-5 h-5" /> Realtime operations</span>
+        </div>
+      </section>
 
-      <!-- Login Card -->
-      <div class="bg-slate-800/50 backdrop-blur-xl border border-slate-700/50 rounded-2xl p-8 shadow-2xl">
-        <form @submit.prevent="twoFactorRequired ? handle2faVerify() : handleLogin()" class="space-y-6">
-                    <!-- 2FA Code Input -->
-                    <div v-if="twoFactorRequired" class="space-y-2">
-                      <label class="block text-sm font-medium text-slate-300">Two-Factor Code</label>
-                      <div class="relative">
-                        <input
-                          v-model="twoFactorCode"
-                          type="text"
-                          maxlength="6"
-                          placeholder="Enter your 2FA code"
-                          required
-                          class="w-full pl-4 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
-                        />
-                      </div>
-                    </div>
-          <!-- Error Message -->
-          <div v-if="error"
-            class="flex items-center gap-3 p-4 rounded-xl bg-red-500/10 border border-red-500/30"
-          >
+      <section class="admin-auth-card">
+        <header>
+          <span class="admin-auth-kicker">Secure sign in</span>
+          <h2>{{ twoFactorRequired ? 'Two-Factor Verification' : 'Welcome Back' }}</h2>
+          <p>{{ twoFactorRequired ? 'Enter the 6-digit code from your authenticator app.' : 'Use your administrator credentials to continue.' }}</p>
+        </header>
+
+        <form @submit.prevent="twoFactorRequired ? handle2faVerify() : handleLogin()" class="admin-auth-form">
+          <div v-if="error" class="admin-auth-error">
             <ExclamationCircleIcon class="w-5 h-5 text-red-400 flex-shrink-0" />
-            <p class="text-sm text-red-400">{{ error }}</p>
+            <p>{{ error }}</p>
           </div>
 
-          <!-- Email/Username -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Email or Username</label>
-            <div class="relative">
-              <UserIcon class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                v-model="credentials.login"
-                type="text"
-                placeholder="Enter your credentials"
-                required
-                class="w-full pl-12 pr-4 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
-              />
-            </div>
-          </div>
+          <template v-if="twoFactorRequired">
+            <label class="admin-auth-field">
+              <span>Two-Factor Code</span>
+              <span class="admin-auth-input">
+                <LockClosedIcon class="w-5 h-5" />
+                <input
+                  v-model="twoFactorCode"
+                  type="text"
+                  inputmode="numeric"
+                  maxlength="6"
+                  placeholder="000000"
+                  autocomplete="one-time-code"
+                  required
+                />
+              </span>
+            </label>
+          </template>
 
-          <!-- Password -->
-          <div class="space-y-2">
-            <label class="block text-sm font-medium text-slate-300">Password</label>
-            <div class="relative">
-              <LockClosedIcon class="absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-              <input
-                v-model="credentials.password"
-                :type="showPassword ? 'text' : 'password'"
-                placeholder="Enter your password"
-                required
-                class="w-full pl-12 pr-12 py-3 rounded-xl bg-slate-900/50 border border-slate-600/50 text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-amber-500/50 focus:border-amber-500/50 transition-all"
-              />
-              <button
-                type="button"
-                @click="showPassword = !showPassword"
-                class="absolute right-4 top-1/2 -translate-y-1/2 text-slate-400 hover:text-white transition-colors"
-              >
-                <EyeIcon v-if="!showPassword" class="w-5 h-5" />
-                <EyeSlashIcon v-else class="w-5 h-5" />
-              </button>
-            </div>
-          </div>
+          <template v-else>
+            <label class="admin-auth-field">
+              <span>Email or Username</span>
+              <span class="admin-auth-input">
+                <UserIcon class="w-5 h-5" />
+                <input
+                  v-model="credentials.login"
+                  type="text"
+                  placeholder="Enter your credentials"
+                  autocomplete="username"
+                  required
+                />
+              </span>
+            </label>
 
-          <!-- Submit Button -->
-          <button
-            type="submit"
-            :disabled="loading"
-            class="w-full py-3.5 rounded-xl bg-gradient-to-r from-amber-500 to-orange-600 text-white font-semibold shadow-lg shadow-amber-500/30 hover:shadow-amber-500/50 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed disabled:hover:scale-100 transition-all"
-          >
-            <span v-if="loading" class="flex items-center justify-center gap-2">
+            <label class="admin-auth-field">
+              <span>Password</span>
+              <span class="admin-auth-input">
+                <LockClosedIcon class="w-5 h-5" />
+                <input
+                  v-model="credentials.password"
+                  :type="showPassword ? 'text' : 'password'"
+                  placeholder="Enter your password"
+                  autocomplete="current-password"
+                  required
+                />
+                <button
+                  type="button"
+                  class="admin-auth-icon-button"
+                  :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                  @click="showPassword = !showPassword"
+                >
+                  <EyeIcon v-if="!showPassword" class="w-5 h-5" />
+                  <EyeSlashIcon v-else class="w-5 h-5" />
+                </button>
+              </span>
+            </label>
+          </template>
+
+          <button type="submit" :disabled="loading" class="admin-auth-submit">
+            <span v-if="loading" class="admin-auth-loading">
               <svg class="animate-spin w-5 h-5" fill="none" viewBox="0 0 24 24">
                 <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4" />
                 <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z" />
               </svg>
-              Signing in...
+              {{ twoFactorRequired ? 'Verifying...' : 'Signing in...' }}
             </span>
-            <span v-else class="flex items-center justify-center gap-2">
+            <span v-else class="admin-auth-loading">
               <ArrowRightOnRectangleIcon class="w-5 h-5" />
-              Sign In
+              {{ twoFactorRequired ? 'Verify Code' : 'Sign In' }}
             </span>
+          </button>
+
+          <button
+            v-if="twoFactorRequired"
+            type="button"
+            class="admin-auth-secondary"
+            @click="twoFactorRequired = false"
+          >
+            Use different credentials
           </button>
         </form>
 
-        <!-- OAuth Providers -->
-        <div v-if="oauthProviders.length > 0" class="mt-6">
-          <div class="flex items-center gap-3 mb-4">
-            <div class="flex-1 h-px bg-slate-600/50" />
-            <span class="text-xs text-slate-500 uppercase tracking-wider">or continue with</span>
-            <div class="flex-1 h-px bg-slate-600/50" />
+        <div v-if="!twoFactorRequired && oauthProviders.length > 0" class="admin-auth-oauth">
+          <div class="admin-auth-divider">
+            <span>or continue with</span>
           </div>
-          <div class="grid gap-2" :class="oauthProviders.length === 1 ? 'grid-cols-1' : 'grid-cols-2'">
+          <div class="admin-auth-oauth-grid" :class="{ 'admin-auth-oauth-grid--single': oauthProviders.length === 1 }">
             <button
               v-for="provider in oauthProviders"
               :key="provider.name"
               @click="loginWithOAuth(provider.name)"
               :disabled="oauthLoading === provider.name"
-              class="flex items-center justify-center gap-2 py-2.5 px-4 rounded-xl border border-slate-600/50 bg-slate-900/50 text-slate-300 hover:text-white hover:bg-slate-700/50 hover:border-slate-500/50 transition-all disabled:opacity-50"
+              class="admin-auth-oauth-button"
             >
               <component :is="oauthIcons[provider.name]" class="w-5 h-5" />
-              <span class="text-sm font-medium capitalize">{{ provider.name }}</span>
+              <span>{{ provider.name }}</span>
             </button>
           </div>
         </div>
-      </div>
-
-      <!-- Footer -->
-      <p class="text-center text-slate-500 text-sm mt-6">
-        LaravelCP Admin Panel &copy; {{ new Date().getFullYear() }}
-      </p>
+      </section>
     </div>
   </div>
 </template>
@@ -140,7 +142,8 @@ import {
   EyeIcon,
   EyeSlashIcon,
   ArrowRightOnRectangleIcon,
-  ExclamationCircleIcon
+  ExclamationCircleIcon,
+  ShieldCheckIcon
 } from '@heroicons/vue/24/outline'
 
 // Inline SVG icon components for OAuth providers

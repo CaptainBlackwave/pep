@@ -1,7 +1,7 @@
 <template>
-  <div class="p-6 space-y-6">
+  <div class="p-6 space-y-6 admin-plugins-page">
     <!-- Actions -->
-    <div class="flex items-center justify-end gap-3">
+    <div class="flex items-center justify-end gap-3 admin-plugin-actions">
       <button @click="showUploadModal = true" class="flex items-center gap-2 px-4 py-2.5 bg-slate-800/50 hover:bg-slate-700/50 text-slate-300 hover:text-white rounded-xl border border-slate-700/50 font-medium transition-all">
         <ArrowUpTrayIcon class="w-5 h-5" />
         Upload Plugin
@@ -13,7 +13,7 @@
     </div>
 
     <!-- Tabs -->
-    <div class="flex gap-2 border-b border-slate-700/50">
+    <div class="flex gap-2 border-b border-slate-700/50 admin-plugin-tabs">
       <button
         :class="[
           'px-5 py-3 text-sm font-medium transition-all border-b-2 -mb-px',

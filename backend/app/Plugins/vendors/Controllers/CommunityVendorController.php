@@ -37,6 +37,14 @@ class CommunityVendorController extends Controller
 
         $query = CommunityVendor::query()->where('status', 'published');
 
+        // Tier access control
+        $user = $request->user();
+        if (!$user) {
+            $query->whereRaw('1 = 0');
+        } elseif ($user->tier !== 'paid') {
+            $query->where('tier', 'free');
+        }
+
         if (!empty($validated['search'])) {
             $search = $validated['search'];
             $query->where(function ($inner) use ($search) {
@@ -79,7 +87,7 @@ class CommunityVendorController extends Controller
         ]);
     }
 
-    public function show(string $vendor)
+    public function show(Request $request, string $vendor)
     {
         $vendorModel = $this->findPublishedVendor($vendor)
             ->load([
@@ -87,6 +95,11 @@ class CommunityVendorController extends Controller
                 'publishedProducts' => fn ($query) => $query->orderBy('sort_order')->orderBy('name'),
                 'publishedDocuments',
             ]);
+        $user = $request->user();
+        if (!$user || ($user->tier !== 'paid' && $vendorModel->tier === 'premium')) {
+            abort(403, 'This vendor requires a paid membership.');
+        }
+
         $this->hydrateRatingDistributions(collect([$vendorModel]));
 
         return new CommunityVendorResource($vendorModel);

@@ -6,6 +6,10 @@ use Illuminate\Foundation\Http\Kernel as HttpKernel;
 
 class Kernel extends HttpKernel
 {
+    protected $routeMiddleware = [
+        'tier' => \App\Core\Middleware\CheckTier::class,
+    ];
+
     protected $middlewareGroups = [
         'web' => [
             // ...existing middleware...

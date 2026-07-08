@@ -124,6 +124,14 @@ Route::prefix('v1')->group(function () {
             Route::post('/user-actions/toggle', [CommunityUserActionController::class, 'toggle']);
             Route::post('/push/subscribe', [PushSubscriptionController::class, 'subscribe']);
             Route::post('/push/unsubscribe', [PushSubscriptionController::class, 'unsubscribe']);
+
+        Route::prefix('moderate')->controller(\App\Core\Http\Controllers\CommunityModerateController::class)->group(function () {
+            Route::patch('/discussions/{discussion}', 'updateDiscussion');
+            Route::delete('/discussions/{discussion}', 'deleteDiscussion');
+            Route::delete('/replies/{reply}', 'deleteReply');
+            Route::post('/users/{user}/ban', 'banUser');
+            Route::post('/users/{user}/warn', 'warnUser');
+        });
         });
 
         // Two-Factor Authentication (authenticated routes)
@@ -253,6 +261,11 @@ Route::prefix('v1')->group(function () {
                 Route::get('/', 'index');
                 Route::post('/', 'store');
                 Route::delete('/{accessCode}', 'destroy');
+            });
+
+            Route::prefix('community/reports')->controller(\App\Core\Http\Controllers\Admin\CommunityModerationController::class)->group(function () {
+                Route::get('/', 'reports');
+                Route::patch('/{report}', 'updateReport');
             });
 
             // Locations and Memberships are now provided by plugins

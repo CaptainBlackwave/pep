@@ -366,8 +366,8 @@
                  <span>{{ topic.time }}</span>
                  <button class="topic-icon-action" :class="{ active: isSavedDiscussion(topic) }" :aria-label="isSavedDiscussion(topic) ? 'Remove saved discussion' : 'Save discussion'" :title="isSavedDiscussion(topic) ? 'Saved' : 'Save'" @click.stop="toggleDiscussionSave(topic)"><PvIcon name="bookmark" /></button>
                  <button class="topic-icon-action" :class="{ active: isFollowingDiscussion(topic) }" :aria-label="isFollowingDiscussion(topic) ? 'Unfollow discussion' : 'Follow discussion'" :title="isFollowingDiscussion(topic) ? 'Following' : 'Follow'" @click.stop="toggleDiscussionFollow(topic)"><PvIcon name="bell" /></button>
-                 <button class="dots" @click.stop="toggleTopicMenu(topic.id ?? index)">⋮</button>
-                 <div v-if="activeTopicMenu === (topic.id ?? index)" class="dots-dropdown" @click.stop>
+                  <button class="dots" @click.stop="toggleTopicMenu(topic.id ?? index)">⋮</button>
+                  <div v-if="activeTopicMenu === (topic.id ?? index)" class="dots-dropdown" @click.stop>
                    <button @click="toggleDiscussionSave(topic); activeTopicMenu = null">{{ isSavedDiscussion(topic) ? 'Unsave' : 'Save' }}</button>
                    <button @click="toggleDiscussionFollow(topic); activeTopicMenu = null">{{ isFollowingDiscussion(topic) ? 'Unfollow' : 'Follow' }}</button>
                    <button @click="shareDiscussion(topic); activeTopicMenu = null">Share</button>
@@ -379,10 +379,10 @@
                       <button @click="moderateDiscussion(topic, 'hide'); activeTopicMenu = null">Hide</button>
                       <button @click="moderateDiscussion(topic, 'pin'); activeTopicMenu = null">{{ topic.isPinned ? 'Unpin' : 'Pin' }}</button>
                       <button @click="moderateDiscussion(topic, 'lock'); activeTopicMenu = null">{{ topic.isLocked ? 'Unlock' : 'Lock' }}</button>
-                    </template>
-                 </div>
-               </div>
-              <aside class="author-panel">
+                     </template>
+                  </div>
+                </div>
+               <aside class="author-panel">
                 <router-link class="avatar-wrap pv-author-link" :to="memberHref(topic.authorUsername)" :aria-label="`View ${topic.author}'s profile`" @click.stop>
                   <span v-if="topic.avatarUrl" class="avatar topic-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
                   <span v-else class="avatar topic-avatar" :class="topic.color">{{ topic.initial }}</span>
@@ -418,6 +418,10 @@
                       <PvIcon name="vote-up" />
                       <strong>{{ topic.voteScore }}</strong>
                       <small>Likes</small>
+                    </div>
+                    <div class="stat stat--clickable" @click.stop="shareDiscussion(topic)">
+                      <PvIcon name="share" />
+                      <small>Share</small>
                     </div>
                   </div>
                   <div v-if="topic.latestReply" class="last-reply">
@@ -513,6 +517,7 @@
           </div>
           <button aria-label="Reply to discussion" title="Reply" @click="jumpToReplyComposer"><PvIcon name="reply" /><span>Reply</span></button>
           <button aria-label="Quote discussion" title="Quote" @click="prepareReply(null, true)"><PvIcon name="quote" /><span>Quote</span></button>
+          <button aria-label="Share discussion" title="Share" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /><span>Share</span></button>
           <button :class="{ active: isSavedDiscussion(detailDiscussion) }" :aria-label="isSavedDiscussion(detailDiscussion) ? 'Remove saved discussion' : 'Save discussion'" :title="isSavedDiscussion(detailDiscussion) ? 'Saved' : 'Save'" @click="toggleDiscussionSave(detailDiscussion)"><PvIcon name="bookmark" /><span>{{ isSavedDiscussion(detailDiscussion) ? 'Saved' : 'Save' }}</span></button>
           <button :class="{ active: isFollowingDiscussion(detailDiscussion) }" :aria-label="isFollowingDiscussion(detailDiscussion) ? 'Unfollow discussion' : 'Follow discussion'" :title="isFollowingDiscussion(detailDiscussion) ? 'Following' : 'Follow'" @click="toggleDiscussionFollow(detailDiscussion)"><PvIcon name="bell" /><span>{{ isFollowingDiscussion(detailDiscussion) ? 'Following' : 'Follow' }}</span></button>
         </footer>
@@ -743,15 +748,7 @@
   </section>
 
   <section v-else-if="page === 'vendorReviews'" class="pv-page">
-    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
-      <div class="pv-upgrade-card">
-        <span class="pv-upgrade-icon"><PvIcon name="shield" /></span>
-        <h2>Premium Feature</h2>
-        <p>Upgrade to Premium to read and write vendor reviews with ratings, photos, and detailed feedback.</p>
-        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
-      </div>
-    </div>
-    <div v-else class="pv-content-grid pv-content-grid--vendor-index">
+    <div class="pv-content-grid pv-content-grid--vendor-index">
       <main class="pv-stack">
         <header class="pv-page-header">
           <div><h1>Vendors</h1><p>Browse vendor profiles, compare community feedback, and write a review from the vendor row.</p></div>
@@ -774,7 +771,7 @@
               <span v-if="vendor.imageUrl" class="vendor-logo"><img :src="vendor.imageUrl" :alt="vendor.name"></span>
               <span v-else class="vendor-logo vendor-logo--letter">{{ vendor.logoText }}</span>
               <div class="vendor-info">
-                <h3>{{ vendor.name }}</h3>
+                <h3>{{ vendor.name }} <span v-if="vendor.tier === 'premium'" class="pv-tier-badge pv-tier-badge--premium">Premium</span></h3>
                 <span class="trusted"><PvIcon name="check" /> {{ vendor.status }}</span>
                 <span v-if="vendor.country" class="country-badge">{{ countryFlag(vendor.country) }} {{ vendor.country }}</span>
                 <p class="vendor-meta"><PvIcon name="star" /> {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} <span>Member since {{ vendor.since || 'recently' }}</span></p>
@@ -1195,14 +1192,16 @@
   </section>
 
   <section v-else-if="page === 'vendorDetail' || page === 'reviewModal'" class="pv-page">
-    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
-      <div class="pv-upgrade-card">
-        <span class="pv-upgrade-icon"><PvIcon name="shield" /></span>
-        <h2>Premium Feature</h2>
-        <p>Upgrade to Premium to read and write vendor reviews with ratings, photos, and detailed feedback.</p>
-        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+    <template v-if="showUpgradePrompt && detailVendor?.tier === 'premium'">
+      <div class="pv-upgrade-overlay">
+        <div class="pv-upgrade-card">
+          <span class="pv-upgrade-icon"><PvIcon name="shield" /></span>
+          <h2>Premium Feature</h2>
+          <p>Upgrade to Premium to read and write vendor reviews with ratings, photos, and detailed feedback.</p>
+          <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
+        </div>
       </div>
-    </div>
+    </template>
     <div v-else-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
       <main class="pv-stack">
         <router-link to="/vendor-reviews" class="op-back">← Back to Vendors</router-link>
@@ -1212,7 +1211,7 @@
               <span v-if="detailVendor.imageUrl" class="vendor-logo"><img :src="detailVendor.imageUrl" :alt="detailVendor.name"></span>
               <span v-else class="vendor-logo vendor-logo--letter">{{ detailVendor.logoText }}</span>
               <div class="vendor-info">
-                <h3>{{ detailVendor.name }}</h3>
+                <h3>{{ detailVendor.name }} <span v-if="detailVendor.tier === 'premium'" class="pv-tier-badge pv-tier-badge--premium">Premium</span></h3>
               <span class="trusted"><PvIcon name="check" /> {{ detailVendor.status }}</span>
               <span v-if="detailVendor.country" class="country-badge">{{ countryFlag(detailVendor.country) }} {{ detailVendor.country }}</span>
               <p class="vendor-meta"><PvIcon name="star" /> {{ detailVendor.rating }} / 5 <span>{{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }}</span><span>Member since {{ detailVendor.since || 'recently' }}</span></p>
@@ -1419,7 +1418,7 @@
       <h1>Vendor not found</h1>
       <p>This vendor has not been published or does not exist.</p>
     </div>
-    <div v-if="page === 'reviewModal' && !showUpgradePrompt" class="pv-modal-backdrop">
+    <div v-if="page === 'reviewModal' && detailVendor && detailVendor.tier !== 'premium'" class="pv-modal-backdrop">
       <form v-if="detailVendor" class="pv-modal" @submit.prevent="submitVendorReview">
         <header class="pv-panel-header"><div><h2>Write a Review</h2><p class="pv-muted">Reviewing {{ detailVendor.name }}. Share your experience to help others in the community.</p></div><router-link :to="detailVendor.href" class="pv-icon-button pv-icon-button--static"><PvIcon name="close" /></router-link></header>
         <p v-if="vendorReviewFormError" class="pv-alert pv-alert--compact">{{ vendorReviewFormError }}</p>
@@ -2490,6 +2489,7 @@ interface UiVendor {
   lastActive: string
   responseRate: string
   avgResponseTime: string
+  tier: string
   productCount: number
   products: VendorProduct[]
   topProducts: VendorProduct[]
@@ -2567,6 +2567,7 @@ interface ApiVendor {
   would_buy_again_label?: string | null
   response_rate_label?: string | null
   avg_response_time?: string | null
+  tier?: string
   tags?: string[]
   product_count?: number
   products?: ApiVendorProduct[]
@@ -3081,6 +3082,7 @@ interface LegalPageContent {
 
 interface PublicSettingsResponse {
   telegram_url?: string | null
+  membership_enabled?: boolean
   legal_pages?: {
     terms?: LegalPageContent
     privacy?: LegalPageContent
@@ -3230,7 +3232,7 @@ const paymentStatusMessage = ref('')
 const subscribing = ref(false)
 
 const hasPremiumAccess = computed(() => authStore.isAuthenticated && membershipTier.value === 'paid')
-const showUpgradePrompt = computed(() => !hasPremiumAccess.value)
+const showUpgradePrompt = computed(() => membershipEnabled.value && !hasPremiumAccess.value)
 
 interface MembershipPlan {
   id: number
@@ -3433,6 +3435,7 @@ const loadingTwoFactor = ref(false)
 const savingTwoFactor = ref(false)
 const publicSettingsLoaded = ref(false)
 const publicTelegramUrl = ref('https://t.me/peptidevendors')
+const membershipEnabled = ref(true)
 const blockedUsers = ref<UiMemberProfile[]>([])
 const blockedUsersLoaded = ref(false)
 const blockingUserId = ref<number | null>(null)
@@ -3488,19 +3491,33 @@ const discussions = computed(() => {
 })
 const replies = computed(() => apiReplies.value.filter(r => r.text !== '[deleted]'))
 const discussionCategories = computed(() => apiCategories.value)
-const vendors = computed(() => {
-  const items = [...apiVendors.value]
+ const vendors = computed(() => {
+   const items = [...apiVendors.value]
 
-  if (vendorSort.value === 'reviews') {
-    return items.sort((a, b) => b.reviews - a.reviews)
-  }
+   const tierScore = (v: UiVendor) => v.tier === 'premium' ? 0 : 1
 
-  if (vendorSort.value === 'name') {
-    return items.sort((a, b) => a.name.localeCompare(b.name))
-  }
+   if (vendorSort.value === 'reviews') {
+     return items.sort((a, b) => {
+       const t = tierScore(a) - tierScore(b)
+       if (t !== 0) return t
+       return b.reviews - a.reviews
+     })
+   }
 
-  return items.sort((a, b) => Number.parseFloat(b.rating || '0') - Number.parseFloat(a.rating || '0'))
-})
+   if (vendorSort.value === 'name') {
+     return items.sort((a, b) => {
+       const t = tierScore(a) - tierScore(b)
+       if (t !== 0) return t
+       return a.name.localeCompare(b.name)
+     })
+   }
+
+   return items.sort((a, b) => {
+     const t = tierScore(a) - tierScore(b)
+     if (t !== 0) return t
+     return Number.parseFloat(b.rating || '0') - Number.parseFloat(a.rating || '0')
+   })
+ })
 const reviews = computed(() => {
   let items = [...apiVendorReviews.value]
 
@@ -3839,6 +3856,9 @@ async function loadPublicCommunitySettings(force = false): Promise<void> {
       skipDeduplication: true,
     })
     publicTelegramUrl.value = response.data.telegram_url || publicTelegramUrl.value
+    if (response.data.membership_enabled !== undefined) {
+      membershipEnabled.value = response.data.membership_enabled
+    }
   } catch {
     publicSettingsLoaded.value = true
   }
@@ -6185,6 +6205,7 @@ function mapVendor(item: ApiVendor): UiVendor {
     statusClass: item.status_class ?? '',
     country: item.country ?? '',
     rating: item.rating_label ?? (item.average_rating !== undefined ? String(item.average_rating) : ''),
+    tier: item.tier ?? 'free',
     reviews: item.review_count ?? 0,
     since: item.member_since_label ?? '',
     buyAgain: item.would_buy_again_label ?? '',

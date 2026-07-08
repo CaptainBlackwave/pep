@@ -1,7 +1,7 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 admin-api-keys-page">
     <!-- Search & Actions -->
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-4 admin-api-toolbar">
       <div class="flex-1">
         <input
           v-model="search"
@@ -37,7 +37,7 @@
     </div>
 
     <!-- API Keys Table -->
-    <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 overflow-hidden">
+    <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 overflow-hidden admin-data-card">
       <div class="overflow-x-auto">
         <table class="w-full">
           <thead>

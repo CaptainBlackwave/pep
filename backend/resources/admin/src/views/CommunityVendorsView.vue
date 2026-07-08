@@ -80,6 +80,13 @@
               </option>
             </select>
           </label>
+          <label class="block">
+            <span class="text-sm font-medium text-slate-300">Tier</span>
+            <select v-model="form.tier" class="mt-1 w-full px-4 py-3 bg-slate-900/60 border border-slate-700 rounded-xl text-white">
+              <option value="free">Free</option>
+              <option value="premium">Premium</option>
+            </select>
+          </label>
         </div>
 
         <label class="block">
@@ -581,6 +588,7 @@ const emptyForm = () => ({
   support_url: '',
   country: '',
   status: 'published',
+  tier: 'free',
 })
 
 const form = reactive(emptyForm())
@@ -632,6 +640,7 @@ async function saveVendor() {
     support_url: form.support_url || null,
     tags: tagsInput.value ? tagsInput.value.split(',').map(t => t.trim()).filter(Boolean) : null,
     status: form.status,
+    tier: form.tier,
   }
 
   try {

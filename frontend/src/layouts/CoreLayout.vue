@@ -234,7 +234,7 @@ const navItems = computed(() => {
     { to: '/notifications', label: 'Notifications', icon: 'bell', match: ['/notifications'] },
   ]
   return allItems.filter(item => {
-    if (isFree && ['/lab-results', '/vendor-reviews', '/vendor-portal', '/members', '/notifications'].includes(item.to)) {
+    if (isFree && ['/lab-results', '/members', '/notifications'].includes(item.to)) {
       return false
     }
     return true

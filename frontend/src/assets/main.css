@@ -1189,6 +1189,15 @@ table {
   line-height: 1.2;
 }
 
+.stat--clickable {
+  cursor: pointer;
+  transition: opacity 0.15s;
+}
+
+.stat--clickable:hover {
+  opacity: 0.6;
+}
+
 .last-reply {
   padding-left: 20px;
   border-left: 1px solid rgba(255,255,255,0.08);
@@ -1751,13 +1760,13 @@ table {
   position: absolute;
   right: 0;
   top: 100%;
-  min-width: 120px;
-  padding: 4px;
-  border-radius: 8px;
+  min-width: 140px;
+  padding: 6px;
+  border-radius: 10px;
   border: 1px solid rgba(255,255,255,0.1);
   background: #1a1f2e;
-  box-shadow: 0 8px 24px rgba(0,0,0,0.4);
-  z-index: 10;
+  box-shadow: 0 8px 24px rgba(0,0,0,0.5);
+  z-index: 100;
 }
 
 .dots-dropdown button {
@@ -2283,8 +2292,20 @@ table {
   pointer-events: none;
 }
 
+.pv-cookie-banner--inline {
+  position: static;
+  inset: auto;
+  width: min(100% - 28px, 760px);
+  margin: -24px auto 28px;
+  pointer-events: auto;
+}
+
 body.pv-cookie-visible {
   padding-bottom: 92px;
+}
+
+body.pv-cookie-visible:has(.pv-cookie-banner--inline) {
+  padding-bottom: 0;
 }
 
 .pv-cookie-banner-inner {
@@ -2348,6 +2369,11 @@ body.pv-cookie-visible {
 
   .pv-cookie-banner {
     inset: auto 10px calc(10px + env(safe-area-inset-bottom, 0px)) 10px;
+  }
+
+  .pv-cookie-banner--inline {
+    width: calc(100% - 28px);
+    margin: -10px auto 22px;
   }
 
   .pv-cookie-banner-inner {
@@ -3583,6 +3609,25 @@ body.pv-cookie-visible {
   color: #4ade80;
   font-weight: 700;
   font-size: 11px;
+}
+
+.pv-tier-badge {
+  display: inline-flex;
+  align-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  margin-left: 6px;
+  vertical-align: middle;
+}
+
+.pv-tier-badge--premium {
+  background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.3));
+  color: #fbbf24;
+  border: 1px solid rgba(251, 191, 36, 0.3);
 }
 
 .country-badge {
@@ -6604,11 +6649,24 @@ summary {
 .pv-login {
   min-height: 100vh;
   display: grid;
-  grid-template-rows: auto auto 1fr;
+  grid-template-rows: 1fr auto;
   justify-items: center;
-  padding: 70px 20px 32px;
+  align-items: center;
+  padding: 36px 20px 28px;
   background-size: cover;
   background-position: center;
+}
+
+.pv-login-shell {
+  width: min(1120px, 100%);
+  display: grid;
+  grid-template-columns: minmax(280px, 0.9fr) minmax(360px, 520px);
+  align-items: center;
+  gap: clamp(24px, 5vw, 72px);
+}
+
+.pv-login-shell--register {
+  grid-template-columns: minmax(280px, 0.78fr) minmax(420px, 560px);
 }
 
 .pv-brand--login {
@@ -6632,9 +6690,9 @@ summary {
 
 .pv-login-brand {
   display: grid;
-  justify-items: center;
+  justify-items: start;
   gap: 18px;
-  margin-bottom: 36px;
+  min-width: 0;
 }
 
 .pv-login-brand p {
@@ -6644,22 +6702,66 @@ summary {
   text-transform: uppercase;
 }
 
+.pv-auth-proof {
+  display: grid;
+  gap: 10px;
+  width: min(360px, 100%);
+  margin-top: 10px;
+}
+
+.pv-auth-proof span {
+  min-width: 0;
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  border-radius: 8px;
+  background: rgba(3, 7, 14, 0.38);
+  color: #eef2ff;
+  font-weight: 760;
+}
+
+.pv-auth-proof .pv-icon {
+  color: #67e8f9;
+}
+
 .pv-login-card {
-  width: min(690px, 100%);
-  padding: 44px 48px;
+  width: 100%;
+  padding: 34px;
   border: 1px solid rgba(148, 163, 184, 0.28);
-  border-radius: 14px;
-  background: rgba(12, 13, 21, 0.82);
-  backdrop-filter: blur(14px);
+  border-radius: 8px;
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.045), transparent 34%),
+    rgba(8, 12, 21, 0.9);
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+  backdrop-filter: blur(18px);
 }
 
 .pv-login-card header {
-  text-align: center;
-  margin-bottom: 28px;
+  display: grid;
+  gap: 8px;
+  margin-bottom: 24px;
+}
+
+.pv-auth-kicker {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  width: fit-content;
+  color: #67e8f9;
+  font-size: 0.78rem;
+  font-weight: 850;
+  text-transform: uppercase;
+}
+
+.pv-login-card h1 {
+  line-height: 1.05;
 }
 
 .pv-login-card p {
-  margin: 8px 0 0;
+  margin: 0;
   color: #d2d5df;
   font-size: 1.04rem;
 }
@@ -6675,20 +6777,25 @@ summary {
 
 .pv-login-form {
   display: grid;
-  gap: 22px;
+  gap: 17px;
 }
 
 .pv-input-shell {
-  min-height: 68px;
+  min-height: 56px;
   display: grid;
   grid-template-columns: 28px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 14px;
-  padding: 0 18px;
+  gap: 12px;
+  padding: 0 14px;
   border: 1px solid rgba(148, 163, 184, 0.2);
   border-radius: 8px;
   background: rgba(3, 7, 14, 0.5);
   color: var(--pv-muted);
+}
+
+.pv-input-shell:focus-within {
+  border-color: rgba(103, 232, 249, 0.46);
+  box-shadow: 0 0 0 3px rgba(8, 145, 178, 0.14);
 }
 
 .pv-input-shell input {
@@ -6696,6 +6803,73 @@ summary {
   padding: 0;
   border: 0;
   background: transparent;
+}
+
+.pv-password-button {
+  width: 36px;
+  height: 36px;
+  display: inline-grid;
+  place-items: center;
+  border: 0;
+  border-radius: 7px;
+  background: transparent;
+  color: #aab3c6;
+}
+
+.pv-password-button:hover,
+.pv-password-button:focus-visible {
+  background: rgba(255, 255, 255, 0.055);
+  color: #fff;
+}
+
+.pv-password-strength {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 10px;
+  margin-top: 8px;
+}
+
+.pv-password-strength i {
+  height: 4px;
+  overflow: hidden;
+  border-radius: 999px;
+  background: rgba(148, 163, 184, 0.22);
+}
+
+.pv-password-strength i::after {
+  content: "";
+  display: block;
+  width: 34%;
+  height: 100%;
+  border-radius: inherit;
+  background: #f59e0b;
+}
+
+.pv-password-strength[data-score="3"] i::after,
+.pv-password-strength[data-score="4"] i::after {
+  width: 68%;
+  background: #22c55e;
+}
+
+.pv-password-strength[data-score="5"] i::after {
+  width: 100%;
+  background: #67e8f9;
+}
+
+.pv-password-strength small,
+.pv-field-note {
+  color: var(--pv-muted);
+  font-size: 0.78rem;
+}
+
+.pv-field-note {
+  display: block;
+  margin-top: 8px;
+}
+
+.pv-field-note--danger {
+  color: #fca5a5;
 }
 
 .pv-form-options {
@@ -6724,7 +6898,7 @@ summary {
 }
 
 .pv-login-submit {
-  min-height: 66px;
+  min-height: 54px;
   font-size: 1.05rem;
 }
 
@@ -6760,7 +6934,8 @@ summary {
   display: grid;
   justify-items: center;
   gap: 12px;
-  margin-top: 42px;
+  width: min(1120px, 100%);
+  margin-top: 28px;
   color: var(--pv-muted);
 }
 
@@ -7355,11 +7530,33 @@ summary {
   }
 
   .pv-login {
-    padding: 36px 14px 24px;
+    align-items: start;
+    padding: 24px 14px 22px;
+  }
+
+  .pv-login-shell,
+  .pv-login-shell--register {
+    grid-template-columns: minmax(0, 1fr);
+    gap: 22px;
+  }
+
+  .pv-login-brand {
+    justify-items: center;
+    gap: 12px;
+    text-align: center;
+  }
+
+  .pv-login-brand p {
+    font-size: 0.82rem;
+  }
+
+  .pv-auth-proof {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
   }
 
   .pv-login-card {
-    padding: 28px 20px;
+    padding: 22px 16px;
   }
 
   .pv-brand--login .pv-brand-text strong {
@@ -7368,6 +7565,16 @@ summary {
 
   .pv-brand--login .pv-brand-text span {
     font-size: 1.35rem;
+  }
+
+  .pv-brand--login .pv-brand-mark {
+    width: 74px;
+    height: 50px;
+    font-size: 1.55rem;
+  }
+
+  .pv-input-shell {
+    min-height: 52px;
   }
 
   .pv-login-footer nav {

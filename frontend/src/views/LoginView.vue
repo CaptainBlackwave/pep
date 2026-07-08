@@ -1,78 +1,93 @@
 <template>
   <main class="pv-login" :style="{ backgroundImage: `linear-gradient(180deg, rgba(3,4,10,.66), rgba(3,4,10,.96)), url(${loginBackdrop})` }">
-    <section class="pv-login-brand">
-      <router-link to="/dashboard" class="pv-brand pv-brand--login">
-        <span class="pv-brand-mark">PV</span>
-        <span class="pv-brand-text">
-          <strong>Peptide</strong>
-          <span>Vendors</span>
-        </span>
-      </router-link>
-      <p>Real reviews. Real lab results. Real people.</p>
-    </section>
-
-    <section class="pv-login-card">
-      <header>
-        <h1>Welcome Back</h1>
-        <p>Log in to access the community</p>
-      </header>
-
-      <div v-if="authStore.error" class="error-message">
-        {{ authStore.error }}
-      </div>
-
-      <form class="pv-login-form" @submit.prevent="handleLogin">
-        <label for="email">
-          Email or Username
-          <span class="pv-input-shell">
-            <PvIcon name="user" />
-            <input
-              id="email"
-              v-model="form.email"
-              type="text"
-              required
-              autofocus
-              autocomplete="username"
-              placeholder="Enter your email or username"
-            >
+    <div class="pv-login-shell">
+      <section class="pv-login-brand">
+        <router-link to="/dashboard" class="pv-brand pv-brand--login">
+          <span class="pv-brand-mark">PV</span>
+          <span class="pv-brand-text">
+            <strong>Peptide</strong>
+            <span>Vendors</span>
           </span>
-        </label>
+        </router-link>
+        <p>Real reviews. Real lab results. Real people.</p>
+        <div class="pv-auth-proof" aria-label="Community highlights">
+          <span><PvIcon name="shield" /> Private community</span>
+          <span><PvIcon name="flask" /> Lab result library</span>
+          <span><PvIcon name="users" /> Member discussions</span>
+        </div>
+      </section>
 
-        <label for="password">
-          Password
-          <span class="pv-input-shell">
-            <PvIcon name="lock" />
-            <input
-              id="password"
-              v-model="form.password"
-              type="password"
-              required
-              autocomplete="current-password"
-              placeholder="Enter your password"
-            >
-            <PvIcon name="eye" />
-          </span>
-        </label>
+      <section class="pv-login-card">
+        <header>
+          <span class="pv-auth-kicker"><PvIcon name="lock" /> Secure access</span>
+          <h1>Welcome Back</h1>
+          <p>Log in to continue to the community.</p>
+        </header>
 
-        <div class="pv-form-options">
-          <label class="pv-checkbox" for="remember">
-            <input id="remember" v-model="form.remember" type="checkbox">
-            <span>Remember me</span>
-          </label>
-          <router-link to="/forgot-password">Forgot password?</router-link>
+        <div v-if="authStore.error" class="error-message">
+          {{ authStore.error }}
         </div>
 
-        <button type="submit" :disabled="authStore.loading" class="pv-primary-button pv-login-submit">
-          <span>{{ authStore.loading ? 'Signing in...' : 'Log In' }}</span>
-          <span class="pv-sr-only">Sign in</span>
-        </button>
+        <form class="pv-login-form" @submit.prevent="handleLogin">
+          <label for="email">
+            Email or Username
+            <span class="pv-input-shell">
+              <PvIcon name="user" />
+              <input
+                id="email"
+                v-model="form.email"
+                type="text"
+                required
+                autofocus
+                autocomplete="username"
+                placeholder="Enter your email or username"
+              >
+            </span>
+          </label>
 
-        <p class="pv-login-register">
-          Don&apos;t have an account?
-          <router-link to="/register">Sign Up</router-link>
-        </p>
-      </form>
-    </section>
+          <label for="password">
+            Password
+            <span class="pv-input-shell">
+              <PvIcon name="lock" />
+              <input
+                id="password"
+                v-model="form.password"
+                :type="showPassword ? 'text' : 'password'"
+                required
+                autocomplete="current-password"
+                placeholder="Enter your password"
+              >
+              <button
+                type="button"
+                class="pv-password-button"
+                :aria-label="showPassword ? 'Hide password' : 'Show password'"
+                @click="showPassword = !showPassword"
+              >
+                <PvIcon :name="showPassword ? 'eye-off' : 'eye'" />
+              </button>
+            </span>
+          </label>
+
+          <div class="pv-form-options">
+            <label class="pv-checkbox" for="remember">
+              <input id="remember" v-model="form.remember" type="checkbox">
+              <span>Remember me</span>
+            </label>
+            <router-link to="/forgot-password">Forgot password?</router-link>
+          </div>
+
+          <button type="submit" :disabled="authStore.loading" class="pv-primary-button pv-login-submit">
+            <span>{{ authStore.loading ? 'Signing in...' : 'Log In' }}</span>
+            <span class="pv-sr-only">Sign in</span>
+          </button>
+
+          <p class="pv-login-register">
+            Don&apos;t have an account?
+            <router-link to="/register">Sign Up</router-link>
+          </p>
+        </form>
+      </section>
+    </div>
 
     <footer class="pv-login-footer">
       <p>&copy; {{ currentYear }} Peptide Vendors. All rights reserved.</p>
@@ -98,6 +113,7 @@ const route = useRoute()
 const authStore = useAuthStore()
 const userStore = useUserStore()
 const currentYear = new Date().getFullYear()
+const showPassword = ref(false)
 
 const form = ref({
   email: '',

@@ -168,6 +168,11 @@ const router = createRouter({
           name: 'community-content',
           component: () => import('../views/CommunityContentView.vue')
         },
+        {
+          path: '/community-reports',
+          name: 'community-reports',
+          component: () => import('../views/CommunityReportsView.vue')
+        },
         // System
         {
           path: '/ip-bans',

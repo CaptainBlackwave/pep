@@ -1,5 +1,5 @@
 <template>
-  <div class="space-y-6">
+  <div class="space-y-6 admin-system-health-page">
     <!-- Actions -->
     <div class="flex items-center justify-end">
       <button
@@ -12,9 +12,9 @@
     </div>
 
     <!-- Overall Status -->
-    <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6">
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
+    <div class="rounded-2xl bg-slate-800/50 backdrop-blur border border-slate-700/50 p-6 admin-health-summary">
+      <div class="flex items-center justify-between admin-health-summary-inner">
+        <div class="flex items-center gap-4 admin-health-status-copy">
           <div :class="[
             'p-4 rounded-2xl',
             overallStatus === 'healthy' ? 'bg-emerald-500/20' :
@@ -31,7 +31,7 @@
             <p class="text-slate-400">Last checked: {{ lastChecked }}</p>
           </div>
         </div>
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-4 admin-health-summary-metrics">
           <div class="text-center">
             <p class="text-3xl font-bold text-emerald-400">{{ healthyServices }}</p>
             <p class="text-sm text-slate-400">Healthy</p>

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+  <div class="admin-shell min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
     <!-- Mobile Menu Overlay -->
     <Transition name="fade">
       <div v-if="mobileMenuOpen" class="fixed inset-0 bg-black/60 backdrop-blur-sm z-40 lg:hidden" @click="closeMobileMenu" />
@@ -8,6 +8,7 @@
     <aside
       :class="[
         'fixed top-0 left-0 h-full z-50 flex flex-col transition-all duration-300 ease-out',
+        'admin-sidebar',
         'bg-slate-900/95 backdrop-blur-xl border-r border-slate-700/50',
         sidebarCollapsed ? 'w-20' : 'w-72',
         mobileMenuOpen ? 'translate-x-0' : '-translate-x-full lg:translate-x-0'
@@ -90,7 +91,7 @@
       ]"
     >
       <!-- Header -->
-      <header class="sticky top-0 z-30 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50">
+      <header class="admin-header sticky top-0 z-30 backdrop-blur-xl bg-slate-900/80 border-b border-slate-700/50">
         <div class="flex items-center justify-between px-4 sm:px-6 h-[73px]">
           <div class="flex items-center gap-2 sm:gap-4 flex-1 min-w-0">
             <button
@@ -221,7 +222,7 @@
       </header>
 
       <!-- Page Content -->
-      <div class="p-4 lg:p-6">
+      <div class="admin-page-content p-4 lg:p-6">
         <router-view />
       </div>
     </main>

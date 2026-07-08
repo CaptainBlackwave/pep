@@ -1,6 +1,13 @@
 <template>
   <RouterView />
-  <div v-if="showCookieConsent" class="pv-cookie-banner" role="dialog" aria-live="polite" aria-label="Cookie notice">
+  <div
+    v-if="showCookieConsent"
+    class="pv-cookie-banner"
+    :class="cookieBannerClass"
+    role="dialog"
+    aria-live="polite"
+    aria-label="Cookie notice"
+  >
     <div class="pv-cookie-banner-inner">
       <span class="pv-cookie-icon"><PvIcon name="shield" /></span>
       <div class="pv-cookie-copy">
@@ -17,12 +24,17 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import { RouterView } from 'vue-router'
+import { computed, ref, onMounted, onUnmounted } from 'vue'
+import { RouterView, useRoute } from 'vue-router'
 import PvIcon from '@/components/peptide/PvIcon.vue'
 import ToastContainer from './components/ToastContainer.vue'
 
 const showCookieConsent = ref(false)
+const route = useRoute()
+
+const cookieBannerClass = computed(() => ({
+  'pv-cookie-banner--inline': route.name === 'login' || route.name === 'register',
+}))
 
 onMounted(() => {
   setCookieConsentVisible(!localStorage.getItem('cookie_consent'))

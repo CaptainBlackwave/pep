@@ -47,6 +47,12 @@ Route::prefix('admin')->group(function () {
 
 // Community Frontend SPA — catch all non-API non-admin routes
 
+
+Route::get('/robots.txt', function () {
+    $sitemap = rtrim(config('app.url'), '/') . '/sitemap.xml';
+    return response("User-agent: *\nAllow: /\nSitemap: {$sitemap}\n", 200)
+        ->header('Content-Type', 'text/plain');
+});
 Route::get('/sitemap.xml', function () {
     $pages = [
         ['loc' => '/home', 'priority' => '1.0', 'changefreq' => 'daily'],

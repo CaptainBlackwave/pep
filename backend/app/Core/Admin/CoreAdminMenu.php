@@ -53,6 +53,7 @@ class CoreAdminMenu
                     [ 'route' => '/community-announcements', 'label' => 'Announcements', 'icon' => 'MegaphoneIcon' ],
                     [ 'route' => '/community-access-codes', 'label' => 'Access Codes', 'icon' => 'KeyIcon' ],
                     [ 'route' => '/community-content', 'label' => 'Content Library', 'icon' => 'DocumentTextIcon' ],
+                    [ 'route' => '/community-reports', 'label' => 'Reports', 'icon' => 'FlagIcon' ],
                     [ 'route' => '/vendor-access-requests', 'label' => 'Vendor Access Requests', 'icon' => 'IdentificationIcon' ],
                 ],
             ],

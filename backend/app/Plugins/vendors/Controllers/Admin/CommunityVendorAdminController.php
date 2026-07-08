@@ -141,6 +141,7 @@ class CommunityVendorAdminController
             'tags' => ['nullable', 'array'],
             'top_products' => ['nullable', 'array'],
             'status' => ['nullable', Rule::in(['published', 'hidden'])],
+            'tier' => ['nullable', Rule::in(['free', 'premium'])],
         ]);
     }
 
