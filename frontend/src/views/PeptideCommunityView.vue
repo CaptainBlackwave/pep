@@ -517,6 +517,15 @@
           </div>
           <button aria-label="Reply to discussion" title="Reply" @click="jumpToReplyComposer"><PvIcon name="reply" /><span>Reply</span></button>
           <button aria-label="Quote discussion" title="Quote" @click="prepareReply(null, true)"><PvIcon name="quote" /><span>Quote</span></button>
+          <div v-if="hasAnyRole(['admin', 'moderator'])" style="position: relative; display: inline-block;">
+            <button aria-label="Moderate discussion" title="Moderate" @click.stop="activeModMenu = !activeModMenu"><PvIcon name="shield" /><span>Moderate</span></button>
+            <div v-if="activeModMenu" class="dots-dropdown" style="bottom: 100%; top: auto; margin-bottom: 8px; left: 0;" @click.stop>
+              <button @click="moderateDiscussion(detailDiscussion, 'hide'); activeModMenu = false">{{ detailDiscussion.status === 'hidden' ? 'Publish' : 'Hide' }}</button>
+              <button @click="moderateDiscussion(detailDiscussion, 'pin'); activeModMenu = false">{{ detailDiscussion.isPinned ? 'Unpin' : 'Pin' }}</button>
+              <button @click="moderateDiscussion(detailDiscussion, 'lock'); activeModMenu = false">{{ detailDiscussion.isLocked ? 'Unlock' : 'Lock' }}</button>
+              <button @click="moderateDiscussion(detailDiscussion, 'premium'); activeModMenu = false">{{ detailDiscussion.premiumOnly ? 'Remove Premium' : 'Make Premium' }}</button>
+            </div>
+          </div>
           <button aria-label="Share discussion" title="Share" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /><span>Share</span></button>
           <button :class="{ active: isSavedDiscussion(detailDiscussion) }" :aria-label="isSavedDiscussion(detailDiscussion) ? 'Remove saved discussion' : 'Save discussion'" :title="isSavedDiscussion(detailDiscussion) ? 'Saved' : 'Save'" @click="toggleDiscussionSave(detailDiscussion)"><PvIcon name="bookmark" /><span>{{ isSavedDiscussion(detailDiscussion) ? 'Saved' : 'Save' }}</span></button>
           <button :class="{ active: isFollowingDiscussion(detailDiscussion) }" :aria-label="isFollowingDiscussion(detailDiscussion) ? 'Unfollow discussion' : 'Follow discussion'" :title="isFollowingDiscussion(detailDiscussion) ? 'Following' : 'Follow'" @click="toggleDiscussionFollow(detailDiscussion)"><PvIcon name="bell" /><span>{{ isFollowingDiscussion(detailDiscussion) ? 'Following' : 'Follow' }}</span></button>
@@ -2126,6 +2135,7 @@ interface UiDiscussion {
   href: string
   slug?: string
   body?: string
+  status?: string
   category?: string
   categorySlug?: string
   lastActivity?: string
@@ -2186,6 +2196,7 @@ interface ApiDiscussion {
   last_activity?: string | null
   is_pinned?: boolean
   is_locked?: boolean
+  status?: string
   category?: { name?: string | null; slug?: string | null; color?: string | null } | null
   author?: { id?: number; name?: string | null; username?: string | null; initial?: string | null; avatar?: string | null; is_online?: boolean; badge?: string | null; post_count?: number } | null
   premium_only?: boolean
@@ -4666,6 +4677,7 @@ async function saveEditDiscussion(): Promise<void> {
 const showPostMenu = ref(false)
 const activeReplyMenu = ref<number | null>(null)
 const activeTopicMenu = ref<number | string | null>(null)
+const activeModMenu = ref(false)
 
 function togglePostMenu() {
   showPostMenu.value = !showPostMenu.value
@@ -4718,16 +4730,24 @@ async function deleteDiscussionFromList(topic: UiDiscussion): Promise<void> {
 }
 
 async function moderateDiscussion(topic: UiDiscussion, action: string): Promise<void> {
-  const actions: Record<string, { status?: string; is_pinned?: boolean; is_locked?: boolean }> = {
-    hide: { status: 'hidden' },
+  const actions: Record<string, { status?: string; is_pinned?: boolean; is_locked?: boolean; premium_only?: boolean }> = {
+    hide: { status: topic.status === 'hidden' ? 'published' : 'hidden' },
     pin: { is_pinned: !topic.isPinned },
     lock: { is_locked: !topic.isLocked },
+    premium: { premium_only: !topic.premiumOnly },
   }
   const payload = actions[action]
   if (!payload || !topic.id) return
   try {
-    await api.patch(`/api/v1/community/moderate/discussions/${topic.id}`, payload)
-    Object.assign(topic, payload)
+    const res = await api.patch<any>(`/api/v1/community/discussions/${topic.id}/moderate`, payload)
+    
+    // Update local state based on what the server returned
+    if (res.data && res.data.data) {
+        topic.status = res.data.data.status;
+        topic.isPinned = res.data.data.is_pinned;
+        topic.isLocked = res.data.data.is_locked;
+        topic.premiumOnly = res.data.data.premium_only;
+    }
   } catch {
     alert('Moderation action failed.')
   }
@@ -5213,6 +5233,7 @@ function mapDiscussion(item: ApiDiscussion): UiDiscussion {
     href: item.href ?? `/discussions/${item.slug}`,
     slug: item.slug,
     body: item.body ?? undefined,
+    status: item.status,
     category,
     categorySlug,
     lastActivity: item.last_activity ?? undefined,

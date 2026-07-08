@@ -235,6 +235,48 @@ class CommunityDiscussionController extends Controller
         return response()->noContent();
     }
 
+    public function moderate(Request $request, string $discussion)
+    {
+        $user = $request->user();
+        abort_unless(
+            $user && ($user->hasRole('admin') || $user->hasRole('moderator')),
+            403,
+            'You do not have permission to moderate discussions.'
+        );
+
+        $validated = $request->validate([
+            'status' => ['nullable', Rule::in(['published', 'hidden'])],
+            'is_pinned' => ['nullable', 'boolean'],
+            'is_locked' => ['nullable', 'boolean'],
+            'premium_only' => ['nullable', 'boolean'],
+        ]);
+
+        $discussionModel = $this->findDiscussion($discussion);
+
+        $discussionModel->fill($validated);
+        $discussionModel->save();
+        $discussionModel->load(['category', 'user.roles', 'user.settings']);
+
+        $this->broadcastPublicDiscussionEvent($discussionModel, 'discussion.updated', [
+            'discussion' => (new CommunityDiscussionResource($discussionModel))->resolve($request),
+        ]);
+
+        return new CommunityDiscussionResource($discussionModel);
+    }
+
+    private function findDiscussion(string $value): CommunityDiscussion
+    {
+        return CommunityDiscussion::query()
+            ->where(function ($query) use ($value) {
+                $query->where('slug', $value);
+
+                if (ctype_digit($value)) {
+                    $query->orWhere('id', (int) $value);
+                }
+            })
+            ->firstOrFail();
+    }
+
     public function reply(Request $request, string $discussion)
     {
         $discussionModel = $this->findPublishedDiscussion($discussion);
