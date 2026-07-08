@@ -19,6 +19,13 @@
           <small>{{ newDiscussion.title.length }} / 100</small>
         </span>
       </label>
+      <aside v-if="newDiscussionTitleMatches.length" class="pv-compose-similar" aria-live="polite">
+        <strong>Similar discussions</strong>
+        <router-link v-for="topic in newDiscussionTitleMatches" :key="topic.slug || topic.href" :to="topic.href" @click="closeNewDiscussion">
+          <span>{{ topic.title }}</span>
+          <small>{{ topic.replies }} replies · {{ topic.views }} views</small>
+        </router-link>
+      </aside>
       <div class="pv-compose-select-grid">
         <label class="pv-compose-field">
           <span>Category <b>*</b></span>
@@ -322,6 +329,17 @@
             <strong>{{ formatCount(category.count) }}</strong>
           </button>
         </div>
+        <div class="pv-discussion-toolbar">
+          <form class="pv-inline-search" @submit.prevent="applyDiscussionSearch">
+            <label class="pv-input-search">
+              <input v-model="discussionSearch" type="search" placeholder="Search discussions, authors, replies...">
+              <PvIcon name="search" />
+            </label>
+            <button class="pv-small-button" type="submit">Search</button>
+            <button v-if="discussionHasActiveFilters" class="pv-small-button" type="button" @click="clearDiscussionFilters">Clear</button>
+          </form>
+          <button class="pv-small-button" type="button" @click="cycleDiscussionSort">{{ discussionSortLabel }} <PvIcon name="chevron" /></button>
+        </div>
         <article class="pv-panel">
           <p v-if="discussionStatusMessage" class="pv-alert pv-alert--compact">{{ discussionStatusMessage }}</p>
           <div class="pv-topic-list">
@@ -346,43 +364,58 @@
             >
                <div class="topic-menu">
                  <span>{{ topic.time }}</span>
+                 <button class="topic-icon-action" :class="{ active: isSavedDiscussion(topic) }" :aria-label="isSavedDiscussion(topic) ? 'Remove saved discussion' : 'Save discussion'" :title="isSavedDiscussion(topic) ? 'Saved' : 'Save'" @click.stop="toggleDiscussionSave(topic)"><PvIcon name="bookmark" /></button>
+                 <button class="topic-icon-action" :class="{ active: isFollowingDiscussion(topic) }" :aria-label="isFollowingDiscussion(topic) ? 'Unfollow discussion' : 'Follow discussion'" :title="isFollowingDiscussion(topic) ? 'Following' : 'Follow'" @click.stop="toggleDiscussionFollow(topic)"><PvIcon name="bell" /></button>
                  <button class="dots" @click.stop="toggleTopicMenu(topic.id ?? index)">⋮</button>
                  <div v-if="activeTopicMenu === (topic.id ?? index)" class="dots-dropdown" @click.stop>
+                   <button @click="toggleDiscussionSave(topic); activeTopicMenu = null">{{ isSavedDiscussion(topic) ? 'Unsave' : 'Save' }}</button>
+                   <button @click="toggleDiscussionFollow(topic); activeTopicMenu = null">{{ isFollowingDiscussion(topic) ? 'Unfollow' : 'Follow' }}</button>
+                   <button @click="shareDiscussion(topic); activeTopicMenu = null">Share</button>
+                   <button @click="goToMemberProfile(topic.authorUsername); activeTopicMenu = null">View Profile</button>
                    <button @click="reportDiscussion(topic); activeTopicMenu = null">Report</button>
                    <button v-if="authStore.user?.id === topic.authorId" @click="startEditDiscussionFromList(topic); activeTopicMenu = null">Edit</button>
                    <button v-if="authStore.user?.id === topic.authorId" @click="deleteDiscussionFromList(topic); activeTopicMenu = null">Delete</button>
+                    <template v-if="hasAnyRole(['admin', 'moderator'])">
+                      <button @click="moderateDiscussion(topic, 'hide'); activeTopicMenu = null">Hide</button>
+                      <button @click="moderateDiscussion(topic, 'pin'); activeTopicMenu = null">{{ topic.isPinned ? 'Unpin' : 'Pin' }}</button>
+                      <button @click="moderateDiscussion(topic, 'lock'); activeTopicMenu = null">{{ topic.isLocked ? 'Unlock' : 'Lock' }}</button>
+                    </template>
                  </div>
                </div>
               <aside class="author-panel">
                 <router-link class="avatar-wrap pv-author-link" :to="memberHref(topic.authorUsername)" :aria-label="`View ${topic.author}'s profile`" @click.stop>
                   <span v-if="topic.avatarUrl" class="avatar topic-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
                   <span v-else class="avatar topic-avatar" :class="topic.color">{{ topic.initial }}</span>
+                  <span v-if="topic.authorOnline" class="online-indicator" aria-label="Online"></span>
                 </router-link>
-                <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>{{ topic.authorUsername }}</h4></router-link>
-                <div class="author-badge">{{ topic.authorBadge }}</div>
-                <div class="author-posts">💬 {{ topic.authorPostCount }} posts</div>
+                <div class="author-meta">
+                  <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>{{ topic.authorUsername }}</h4></router-link>
+                  <span v-if="topic.authorBadge" class="author-badge">{{ topic.authorBadge }}</span>
+                  <span class="author-presence" :class="{ online: topic.authorOnline }"><span></span>{{ topic.authorOnline ? 'Online' : 'Away' }}</span>
+                </div>
+                <div class="author-posts"><PvIcon name="message" /> {{ topic.authorPostCount }} posts</div>
               </aside>
               <main class="topic-body">
-                <span v-if="topic.tag" class="topic-type">▱ {{ topic.tag }}</span>
-                <span v-if="topic.isPinned" class="topic-type topic-type--pinned">📌 Pinned</span>
-                <span v-if="topic.isLocked" class="topic-type topic-type--locked">🔒 Locked</span>
+                <span v-if="topic.tag" class="topic-type"><PvIcon name="tag" /> {{ topic.tag }}</span>
+                <span v-if="topic.isPinned" class="topic-type topic-type--pinned"><PvIcon name="pin" /> Pinned</span>
+                <span v-if="topic.isLocked" class="topic-type topic-type--locked"><PvIcon name="lock" /> Locked</span>
                 <h2>{{ topic.title }}</h2>
                 <p class="topic-excerpt">{{ topic.excerpt }}</p>
                 <div class="divider"></div>
                 <div class="topic-bottom">
                   <div class="stats">
                     <div class="stat">
-                      <span>▱</span>
+                      <PvIcon name="message" />
                       <strong>{{ topic.replies }}</strong>
                       <small>Replies</small>
                     </div>
                     <div class="stat">
-                      <span>◉</span>
+                      <PvIcon name="eye" />
                       <strong>{{ topic.views }}</strong>
                       <small>Views</small>
                     </div>
                     <div class="stat">
-                      <span>♡</span>
+                      <PvIcon name="vote-up" />
                       <strong>{{ topic.voteScore }}</strong>
                       <small>Likes</small>
                     </div>
@@ -419,25 +452,37 @@
             <span v-if="detailDiscussion.authorOnline" class="online-indicator"></span>
           </router-link>
           <div class="op-user">
-            <router-link class="pv-author-name-link" :to="memberHref(detailDiscussion.authorUsername)"><strong>{{ detailDiscussion.authorUsername }}</strong></router-link>
-            <span class="verified">✓</span>
+            <div class="op-identity">
+              <router-link class="pv-author-name-link" :to="memberHref(detailDiscussion.authorUsername)"><strong>{{ detailDiscussion.authorUsername }}</strong></router-link>
+              <span v-if="detailDiscussion.authorBadge" class="verified">{{ detailDiscussion.authorBadge }}</span>
+              <small class="op-presence" :class="{ online: detailDiscussion.authorOnline }"><span></span>{{ detailDiscussion.authorOnline ? 'Online' : 'Away' }}</small>
+            </div>
           </div>
           <div class="op-meta">
             <span>{{ detailDiscussion.time }}</span>
             <div class="op-dots">
               <button class="dots" @click="togglePostMenu">⋯</button>
               <div v-if="showPostMenu" class="dots-dropdown" @click.self="showPostMenu = false">
+                <button @click="shareCurrentPage(detailDiscussion.title); showPostMenu = false">Share</button>
+                <button @click="toggleDiscussionSave(detailDiscussion); showPostMenu = false">{{ isSavedDiscussion(detailDiscussion) ? 'Unsave' : 'Save' }}</button>
+                <button @click="toggleDiscussionFollow(detailDiscussion); showPostMenu = false">{{ isFollowingDiscussion(detailDiscussion) ? 'Unfollow' : 'Follow' }}</button>
                 <button @click="openDiscussionReport(); showPostMenu = false">Report</button>
                 <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="startEditDiscussion(); showPostMenu = false">Edit</button>
                 <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="deleteDiscussion(); showPostMenu = false">Delete</button>
+                <template v-if="hasAnyRole(['admin', 'moderator'])">
+                  <button @click="moderateDiscussion(detailDiscussion, 'hide'); showPostMenu = false">Hide</button>
+                  <button @click="moderateDiscussion(detailDiscussion, 'pin'); showPostMenu = false">{{ detailDiscussion.isPinned ? 'Unpin' : 'Pin' }}</button>
+                  <button @click="moderateDiscussion(detailDiscussion, 'lock'); showPostMenu = false">{{ detailDiscussion.isLocked ? 'Unlock' : 'Lock' }}</button>
+                  <button @click="moderateBanAuthor(detailDiscussion); showPostMenu = false">Ban Author</button>
+                </template>
               </div>
             </div>
           </div>
         </header>
         <h1>{{ detailDiscussion.title }}</h1>
         <div v-if="detailDiscussion.isPinned || detailDiscussion.isLocked" class="op-flags">
-          <span v-if="detailDiscussion.isPinned" class="flag-pinned">📌 Pinned</span>
-          <span v-if="detailDiscussion.isLocked" class="flag-locked">🔒 Locked</span>
+          <span v-if="detailDiscussion.isPinned" class="flag-pinned"><PvIcon name="pin" /> Pinned</span>
+          <span v-if="detailDiscussion.isLocked" class="flag-locked"><PvIcon name="lock" /> Locked</span>
         </div>
         <div v-if="!isEditingDiscussion" class="op-content">
           <div class="pv-rich-text" v-html="renderFormattedText(detailDiscussion.body ?? detailDiscussion.excerpt)"></div>
@@ -468,6 +513,8 @@
           </div>
           <button aria-label="Reply to discussion" title="Reply" @click="jumpToReplyComposer"><PvIcon name="reply" /><span>Reply</span></button>
           <button aria-label="Quote discussion" title="Quote" @click="prepareReply(null, true)"><PvIcon name="quote" /><span>Quote</span></button>
+          <button :class="{ active: isSavedDiscussion(detailDiscussion) }" :aria-label="isSavedDiscussion(detailDiscussion) ? 'Remove saved discussion' : 'Save discussion'" :title="isSavedDiscussion(detailDiscussion) ? 'Saved' : 'Save'" @click="toggleDiscussionSave(detailDiscussion)"><PvIcon name="bookmark" /><span>{{ isSavedDiscussion(detailDiscussion) ? 'Saved' : 'Save' }}</span></button>
+          <button :class="{ active: isFollowingDiscussion(detailDiscussion) }" :aria-label="isFollowingDiscussion(detailDiscussion) ? 'Unfollow discussion' : 'Follow discussion'" :title="isFollowingDiscussion(detailDiscussion) ? 'Following' : 'Follow'" @click="toggleDiscussionFollow(detailDiscussion)"><PvIcon name="bell" /><span>{{ isFollowingDiscussion(detailDiscussion) ? 'Following' : 'Follow' }}</span></button>
         </footer>
       </article>
 
@@ -513,6 +560,7 @@
               <div v-if="activeReplyMenu === index" class="dots-dropdown" @click.stop>
                 <button @click="openReplyReport(reply)">Report</button>
                 <button v-if="authStore.user?.id === reply.authorId" @click="deleteReply(reply)">Delete</button>
+                <button v-if="hasAnyRole(['admin', 'moderator'])" @click="moderateHideReply(reply)">Hide</button>
               </div>
             </div>
           </div>
@@ -1103,22 +1151,22 @@
              <div><dt>Vendor Access</dt><dd>Not approved</dd></div>
              <div v-if="apiMyVendor"><dt>Existing Profile</dt><dd>{{ apiMyVendor.publishStatus }}</dd></div>
            </dl>
-           <button
-             v-if="!vendorAccessRequested"
-             class="pv-primary-button pv-full"
-             style="margin-top:12px"
-             @click="requestVendorAccess"
-           >
-             Request Vendor Access
-           </button>
-           <button
-             v-else
-             class="pv-primary-button pv-full"
-             style="margin-top:12px"
-             disabled
-           >
-             Requested
-           </button>
+            <button
+              v-if="!vendorAccessRequested"
+              class="pv-primary-button pv-full"
+              style="margin-top:12px"
+              @click="requestVendorAccess"
+            >
+              Request Vendor Access
+            </button>
+            <button
+              v-else
+              class="pv-primary-button pv-full"
+              style="margin-top:12px"
+              disabled
+            >
+              <PvIcon name="check" /> Requested
+            </button>
            <a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-small-button pv-full" style="margin-top:8px"><PvIcon name="send" /> Contact Admin on Telegram</a>
          </article>
       </main>
@@ -1527,7 +1575,7 @@
     </div>
     <div v-else class="pv-content-grid">
       <main class="pv-stack">
-        <header class="pv-page-header"><div><h1>Members</h1><p>Find contributors, moderators, reviewers, and active community voices.</p></div><router-link to="/settings/profile" class="pv-small-button"><PvIcon name="user" /> Edit Profile</router-link></header>
+        <header class="pv-page-header"><div><h1>Members</h1><p>Find contributors, moderators, reviewers, and active community voices.</p></div><router-link to="/settings" class="pv-small-button"><PvIcon name="user" /> Edit Profile</router-link></header>
         <div class="pv-metrics pv-metrics--member">
           <span><PvIcon name="users" /><strong>{{ memberStats.total }}</strong><small>Total Members</small></span>
           <span><PvIcon name="clock" /><strong>{{ memberStats.online }}</strong><small>Online Now</small></span>
@@ -1558,12 +1606,12 @@
             <button class="pv-small-button" type="button" @click="cycleMemberSort">{{ memberSortLabel }} <PvIcon name="chevron" /></button>
             <button class="pv-icon-button" type="button" @click="loadMembers"><PvIcon name="filter" /></button>
           </div>
-          <p v-if="membersLoaded && members.length === 0" class="pv-muted">No member profiles match those filters.</p>
+          <div v-if="membersLoaded && members.length === 0" class="pv-empty-inline"><PvIcon name="users" /><strong>No members found</strong><p>Try a different search term or clear the current directory filter.</p></div>
           <div class="pv-member-grid">
             <router-link v-for="member in members" :key="member.slug" :to="member.href" class="pv-member-card">
               <header class="pv-member-card-banner">
-                <span v-if="member.avatarUrl" class="pv-avatar pv-avatar--large" :class="member.color"><img :src="assetUrl(member.avatarUrl)" :alt="member.name" class="pv-avatar-img"></span>
-                <span v-else class="pv-avatar pv-avatar--large" :class="member.color">{{ member.initial }}</span>
+                <span v-if="member.avatarUrl" class="pv-avatar pv-avatar--large pv-avatar--presence" :class="member.color"><img :src="assetUrl(member.avatarUrl)" :alt="member.name" class="pv-avatar-img"><span v-if="member.isOnline" class="online-indicator"></span></span>
+                <span v-else class="pv-avatar pv-avatar--large pv-avatar--presence" :class="member.color">{{ member.initial }}<span v-if="member.isOnline" class="online-indicator"></span></span>
                 <span class="pv-member-presence" :class="{ online: member.isOnline }">{{ member.isOnline ? 'Online' : 'Away' }}</span>
               </header>
               <strong>{{ member.name }}</strong>
@@ -1642,13 +1690,19 @@
         </form>
         <p v-if="messagesStatusMessage" class="pv-muted">{{ messagesStatusMessage }}</p>
         <p v-if="messagesLoaded && chats.length === 0" class="pv-muted">No message threads yet.</p>
-        <button v-for="chat in chats" :key="chat.id" class="pv-chat-row" :class="{ active: currentThread?.id === chat.id }" @click="openMessageThread(chat.id)"><span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span><span><strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag">{{ chat.participant.role }}</em></strong><small>{{ chat.preview }}</small></span><time>{{ chat.time }}</time></button>
+        <button v-for="chat in chats" :key="chat.id" class="pv-chat-row" :class="{ active: currentThread?.id === chat.id }" @click="openMessageThread(chat.id)"><span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span><span><strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag">{{ chat.participant.role }}</em></strong><small>{{ chat.preview }}</small></span><span class="pv-chat-row-end"><time>{{ chat.time }}</time><span v-if="chat.unread > 0" class="pv-unread-badge">{{ chat.unread }}</span></span></button>
       </aside>
       <main v-if="currentThread" class="pv-chat-panel">
-        <header><button class="pv-icon-button pv-icon-button--static pv-mobile-back" @click="openMessagesInbox" aria-label="Back to threads"><PvIcon name="chevron" /></button><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div><h2>{{ currentThread.participant.name }} <span class="pv-tag">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static" aria-label="View member profile"><PvIcon name="settings" /></router-link></header>
+        <header><button class="pv-icon-button pv-icon-button--static pv-mobile-back" @click="openMessagesInbox" aria-label="Back to threads"><PvIcon name="chevron" /></button><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div><h2>{{ currentThread.participant.name }} <span class="pv-tag">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><button class="pv-icon-button pv-icon-button--static" title="Delete conversation" @click="deleteCurrentThread"><PvIcon name="trash" /></button><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static" aria-label="View member profile"><PvIcon name="user" /></router-link></header>
         <div v-if="showMessageSafetyNotice" class="pv-alert"><PvIcon name="shield" /><span>Messages are visible only to you and the recipient. Do not share personal info or make any transactions.</span><button type="button" class="pv-icon-button" aria-label="Dismiss notice" @click="showMessageSafetyNotice = false"><PvIcon name="close" /></button></div>
-        <div class="pv-chat-stream"><span class="pv-date-sep">Messages</span><MessageBubble v-for="message in currentThread.messages" :key="message.id ?? message.time" :side="message.side" :text="message.text" :time="message.time" :file="Boolean(message.attachmentName)" :attachment-name="message.attachmentName ?? ''" :attachment-label="message.attachmentLabel" :avatar-initial="message.avatarInitial || currentThread.participant.initial" :avatar-color="message.avatarColor || currentThread.participant.color" /></div>
-        <form class="pv-chat-input" @submit.prevent="sendMessage"><PvIcon name="share" /><input v-model="messageBody" placeholder="Type a message..."><PvIcon name="question" /><button class="pv-primary-button" :disabled="sendingMessage"><PvIcon name="send" /></button></form>
+        <div ref="messageStreamRef" class="pv-chat-stream">
+          <template v-for="(message, msgIdx) in currentThread.messages" :key="message.id ?? message.time">
+            <span v-if="showDateSep(currentThread.messages, msgIdx)" class="pv-date-sep">{{ formatDateSep(message.sentAt) }}</span>
+            <MessageBubble :side="message.side" :text="message.text" :time="message.time" :file="Boolean(message.attachmentName)" :attachment-name="message.attachmentName ?? ''" :attachment-label="message.attachmentLabel" :avatar-initial="message.avatarInitial || currentThread.participant.initial" :avatar-color="message.avatarColor || currentThread.participant.color" />
+          </template>
+        </div>
+        <div v-if="messageAttachmentFile" class="pv-attachment-preview"><img v-if="messageAttachmentPreviewUrl" :src="messageAttachmentPreviewUrl" alt="Attachment preview"><span><strong>{{ messageAttachmentFile.name }}</strong><small>{{ formatFileSize(messageAttachmentFile.size) }}</small></span><button type="button" class="pv-icon-button" aria-label="Remove" @click="clearMessageAttachment"><PvIcon name="close" /></button></div>
+        <form class="pv-chat-input" @submit.prevent="sendMessage"><button type="button" class="pv-icon-button pv-icon-button--static" title="Attach file" @click="messageFileInput?.click()"><PvIcon name="image" /></button><input ref="messageFileInput" type="file" accept="image/*,application/pdf" class="pv-sr-only" @change="handleMessageAttachment"><input v-model="messageBody" placeholder="Type a message..."><EmojiPicker v-model="messageBody" /><button class="pv-primary-button" :disabled="sendingMessage || (!messageBody.trim() && !messageAttachmentFile)"><PvIcon name="send" /></button></form>
       </main>
       <main v-else class="pv-chat-panel"><article class="pv-panel"><h2>No thread selected</h2><p class="pv-muted">Choose a thread to read messages.</p></article></main>
     </div>
@@ -1735,10 +1789,18 @@
     <div class="pv-content-grid">
       <main class="pv-stack">
         <header class="pv-page-header">
-          <div><h1>Notifications</h1></div>
-          <button v-if="authStore.isAuthenticated" class="pv-small-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead">Mark all as read</button>
-          <router-link to="/settings/notifications" class="pv-icon-button"><PvIcon name="settings" /></router-link>
+          <div><h1>Notifications</h1><p>Review replies, mentions, messages, vendor updates, and system notices.</p></div>
+          <div class="pv-action-row">
+            <button v-if="authStore.isAuthenticated" class="pv-small-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead"><PvIcon name="check" /> Mark all read</button>
+            <router-link to="/settings/notifications" class="pv-icon-button" aria-label="Notification settings"><PvIcon name="settings" /></router-link>
+          </div>
         </header>
+        <div class="pv-notification-summary-grid">
+          <span><PvIcon name="bell" /><strong>{{ notificationCounts.unread }}</strong><small>Unread</small></span>
+          <span><PvIcon name="message" /><strong>{{ notificationCounts.messagesUnread }}</strong><small>Messages</small></span>
+          <span><PvIcon name="discussions" /><strong>{{ notificationCounts.discussions }}</strong><small>Discussions</small></span>
+          <span><PvIcon name="megaphone" /><strong>{{ notificationCounts.announcements }}</strong><small>Announcements</small></span>
+        </div>
         <div class="pv-tabs pv-tabs--line">
           <button v-for="filter in notificationFilterTabs" :key="filter.slug" :class="{ active: activeNotificationFilter === filter.slug }" @click="setNotificationFilter(filter.slug)">
             {{ filter.label }} <span v-if="filter.count !== undefined">{{ filter.count }}</span>
@@ -1746,8 +1808,8 @@
         </div>
         <article class="pv-panel pv-notification-list">
           <p v-if="notificationStatusMessage" class="pv-muted">{{ notificationStatusMessage }}</p>
-          <p v-if="notificationsLoaded && notifications.length === 0" class="pv-muted">No notifications yet.</p>
-          <router-link v-for="item in notifications" :key="item.slug" :to="item.detailHref" class="pv-notification-row" @click="markNotificationRead(item.slug)">
+          <div v-if="notificationsLoaded && notifications.length === 0" class="pv-empty-inline"><PvIcon name="bell" /><strong>No notifications yet</strong><p>Replies, mentions, messages, and important account updates will appear here.</p></div>
+          <router-link v-for="item in notifications" :key="item.slug" :to="item.detailHref" class="pv-notification-row" :class="{ unread: item.unread }" @click="markNotificationRead(item.slug)">
             <span class="pv-large-icon" :class="item.tone"><PvIcon :name="item.icon" /></span>
             <span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em class="pv-tag" :class="item.tone">{{ item.category }}</em></span>
             <time>{{ item.time }}</time>
@@ -1782,28 +1844,60 @@
   <section v-else-if="page === 'saved'" class="pv-page">
     <div class="pv-content-grid">
       <main class="pv-stack">
-        <header class="pv-page-header"><div><h1>Saved</h1><p>Bookmarked products and content</p></div></header>
+        <header class="pv-page-header">
+          <div><h1>Saved</h1><p>Bookmarked discussions, products, and reading material.</p></div>
+          <router-link to="/discussions" class="pv-small-button"><PvIcon name="plus" /> Explore Discussions</router-link>
+        </header>
 
-        <article class="pv-panel">
-          <h2>Bookmarked Products</h2>
-          <div v-if="bookmarkedProductKeys.length === 0" class="pv-muted">No bookmarked products yet. Browse vendors and bookmark products to see them here.</div>
-          <router-link v-for="key in bookmarkedProductKeys" :key="key" :to="savedProductLink(key)" class="pv-mini-row">
-            <PvIcon name="bookmark" />
-            <span>{{ savedProductLabel(key) }}</span>
-            <PvIcon name="chevron" />
-          </router-link>
-        </article>
+        <div class="pv-saved-summary">
+          <span><PvIcon name="discussions" /><strong>{{ savedDiscussionSlugs.length }}</strong><small>Discussions</small></span>
+          <span><PvIcon name="cart" /><strong>{{ bookmarkedProductKeys.length }}</strong><small>Products</small></span>
+          <span><PvIcon name="library" /><strong>{{ bookmarkedContentSlugs.length }}</strong><small>Content</small></span>
+        </div>
 
-        <article class="pv-panel">
-          <h2>Bookmarked Content</h2>
-          <div v-if="bookmarkedContentSlugs.length === 0" class="pv-muted">No bookmarked content yet. Browse research, guides, and FAQ to bookmark them.</div>
-          <router-link v-for="slug in bookmarkedContentSlugs" :key="slug" :to="savedContentLink(slug)" class="pv-mini-row">
-            <PvIcon name="bookmark" />
-            <span>{{ slug }}</span>
-            <PvIcon name="chevron" />
-          </router-link>
-        </article>
+        <div class="pv-saved-grid">
+          <article class="pv-panel">
+            <header class="pv-panel-header"><h2>Saved Discussions</h2><span class="pv-count">{{ savedDiscussionSlugs.length }}</span></header>
+            <div v-if="savedDiscussionSlugs.length === 0" class="pv-empty-inline"><PvIcon name="bookmark" /><strong>No saved discussions yet</strong><p>Save threads from the discussion list or thread page to collect them here.</p></div>
+            <router-link v-for="slug in savedDiscussionSlugs" :key="slug" :to="savedDiscussionLink(slug)" class="pv-mini-row">
+              <PvIcon name="bookmark" />
+              <span><strong>{{ savedDiscussionLabel(slug) }}</strong><small>Discussion thread</small></span>
+              <PvIcon name="chevron" />
+            </router-link>
+          </article>
+
+          <article class="pv-panel">
+            <header class="pv-panel-header"><h2>Bookmarked Products</h2><span class="pv-count">{{ bookmarkedProductKeys.length }}</span></header>
+            <div v-if="bookmarkedProductKeys.length === 0" class="pv-empty-inline"><PvIcon name="cart" /><strong>No bookmarked products</strong><p>Browse vendors and bookmark products to see them here.</p></div>
+            <router-link v-for="key in bookmarkedProductKeys" :key="key" :to="savedProductLink(key)" class="pv-mini-row">
+              <PvIcon name="cart" />
+              <span><strong>{{ savedProductLabel(key) }}</strong><small>Vendor product</small></span>
+              <PvIcon name="chevron" />
+            </router-link>
+          </article>
+
+          <article class="pv-panel">
+            <header class="pv-panel-header"><h2>Bookmarked Content</h2><span class="pv-count">{{ bookmarkedContentSlugs.length }}</span></header>
+            <div v-if="bookmarkedContentSlugs.length === 0" class="pv-empty-inline"><PvIcon name="library" /><strong>No bookmarked content</strong><p>Browse research, guides, and FAQ to bookmark reading material.</p></div>
+            <router-link v-for="slug in bookmarkedContentSlugs" :key="slug" :to="savedContentLink(slug)" class="pv-mini-row">
+              <PvIcon name="library" />
+              <span><strong>{{ slug.replace(/[-_]/g, ' ') }}</strong><small>Saved article or guide</small></span>
+              <PvIcon name="chevron" />
+            </router-link>
+          </article>
+        </div>
       </main>
+      <aside class="pv-stack">
+        <article class="pv-panel">
+          <h2>Quick Links</h2>
+          <div class="pv-filter-list">
+            <router-link to="/discussions"><PvIcon name="discussions" /> Discussions <PvIcon name="chevron" /></router-link>
+            <router-link to="/vendor-reviews"><PvIcon name="star" /> Vendor Reviews <PvIcon name="chevron" /></router-link>
+            <router-link to="/research-library"><PvIcon name="library" /> Research Library <PvIcon name="chevron" /></router-link>
+            <router-link to="/guides"><PvIcon name="question" /> Guides &amp; FAQ <PvIcon name="chevron" /></router-link>
+          </div>
+        </article>
+      </aside>
     </div>
   </section>
 
@@ -1984,7 +2078,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, defineComponent, h, onMounted, onUnmounted, ref, watch, type PropType } from 'vue'
+import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
 import CharacterCount from '@tiptap/extension-character-count'
@@ -2000,6 +2094,7 @@ import GiphyPicker from '@/components/ui/GiphyPicker.vue'
 import api from '@/services/api'
 import { websocketService } from '@/services/websocket'
 import { useAuthStore } from '@/stores/auth'
+import { hasAnyRole } from '@/composables/usePermission'
 import type { User } from '@/types/user'
 import heroImage from '@/assets/peptide/hero-vials.png'
 import researchImage from '@/assets/peptide/research-thumbnails.png'
@@ -2517,7 +2612,7 @@ interface VendorDetailResponse {
 interface VendorProfileResponse {
   data: ApiVendor | null
   is_approved_vendor?: boolean
-  can_create_vendor_profile?: boolean
+  has_pending_request?: boolean
 }
 
 interface UiAnnouncement {
@@ -2801,6 +2896,7 @@ interface UiMessage {
   side: 'in' | 'out'
   text: string
   time: string
+  sentAt?: string | null
   attachmentName?: string | null
   attachmentMeta?: UnknownRecord
   attachmentLabel: string
@@ -2824,6 +2920,7 @@ interface ApiMessage {
   attachment_name?: string | null
   attachment_meta?: Record<string, unknown> | null
   sender?: ApiMemberProfile | null
+  sent_at?: string | null
   sent_label?: string | null
   time_ago?: string | null
 }
@@ -3276,6 +3373,10 @@ const messageRecipientSearch = ref('')
 const messageBody = ref('')
 const sendingMessage = ref(false)
 const startingMessageUserId = ref<number | null>(null)
+const messageStreamRef = ref<HTMLElement | null>(null)
+const messageFileInput = ref<HTMLInputElement | null>(null)
+const messageAttachmentFile = ref<File | null>(null)
+const messageAttachmentPreviewUrl = ref('')
 const showMessageSafetyNotice = ref(true)
 const apiNotifications = ref<UiNotification[]>([])
 const apiDetailNotification = ref<UiNotification | null>(null)
@@ -3454,6 +3555,44 @@ const memberSortLabel = computed(() => {
   if (memberSort.value === 'posts') return 'Most Posts'
   if (memberSort.value === 'reputation') return 'Reputation'
   return 'Recently Active'
+})
+const discussionSortLabel = computed(() => {
+  if (discussionSort.value === 'replies') return 'Most Replies'
+  if (discussionSort.value === 'views') return 'Most Viewed'
+  return 'Latest Activity'
+})
+const discussionHasActiveFilters = computed(() => Boolean(activeCategory.value || discussionSearch.value.trim()))
+const newDiscussionTitleMatches = computed(() => {
+  const query = normalizeDiscussionText(newDiscussion.value.title)
+  if (query.length < 6) {
+    return []
+  }
+
+  const terms = query.split(' ').filter(term => term.length > 2)
+  if (terms.length === 0) {
+    return []
+  }
+
+  return discussions.value
+    .map(topic => {
+      const title = normalizeDiscussionText(topic.title)
+      const excerpt = normalizeDiscussionText(topic.excerpt)
+      let score = title.includes(query) ? 4 : 0
+
+      for (const term of terms) {
+        if (title.includes(term)) {
+          score += 2
+        } else if (excerpt.includes(term)) {
+          score += 1
+        }
+      }
+
+      return { topic, score }
+    })
+    .filter(item => item.score >= Math.max(3, Math.min(6, terms.length * 2)))
+    .sort((a, b) => b.score - a.score || b.topic.replies - a.topic.replies)
+    .slice(0, 3)
+    .map(item => item.topic)
 })
 const topContributors = computed(() => apiTopContributorMembers.value.length > 0
   ? apiTopContributorMembers.value
@@ -4302,6 +4441,13 @@ function parseCount(value: string | number | undefined): number {
   return Number.isFinite(numeric) ? numeric * multiplier : 0
 }
 
+function normalizeDiscussionText(value?: string | null): string {
+  return plainTextFromRichText(value ?? '')
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, ' ')
+    .trim()
+}
+
 function readLocalList(key: string): string[] {
   try {
     return JSON.parse(localStorage.getItem(key) || '[]')
@@ -4450,6 +4596,10 @@ function cycleMemberSort(): void {
   memberSort.value = memberSort.value === 'active' ? 'posts' : memberSort.value === 'posts' ? 'reputation' : 'active'
 }
 
+function cycleDiscussionSort(): void {
+  discussionSort.value = discussionSort.value === 'latest' ? 'replies' : discussionSort.value === 'replies' ? 'views' : 'latest'
+}
+
 function startEditDiscussion(): void {
   if (!detailDiscussion.value) return
   editDiscussionTitle.value = detailDiscussion.value.title
@@ -4547,6 +4697,43 @@ async function deleteDiscussionFromList(topic: UiDiscussion): Promise<void> {
   }
 }
 
+async function moderateDiscussion(topic: UiDiscussion, action: string): Promise<void> {
+  const actions: Record<string, { status?: string; is_pinned?: boolean; is_locked?: boolean }> = {
+    hide: { status: 'hidden' },
+    pin: { is_pinned: !topic.isPinned },
+    lock: { is_locked: !topic.isLocked },
+  }
+  const payload = actions[action]
+  if (!payload || !topic.id) return
+  try {
+    await api.patch(`/api/v1/community/moderate/discussions/${topic.id}`, payload)
+    Object.assign(topic, payload)
+  } catch {
+    alert('Moderation action failed.')
+  }
+}
+
+async function moderateHideReply(reply: UiReply): Promise<void> {
+  if (!reply.id || !confirm('Hide this reply?')) return
+  try {
+    await api.delete(`/api/v1/community/moderate/replies/${reply.id}`)
+    reply.text = '[hidden by moderator]'
+  } catch {
+    alert('Failed to hide reply.')
+  }
+}
+
+async function moderateBanAuthor(topic: UiDiscussion): Promise<void> {
+  const reason = prompt('Ban reason:')
+  if (!reason || !topic.authorId) return
+  try {
+    await api.post(`/api/v1/community/moderate/users/${topic.authorId}/ban`, { reason })
+    alert('User banned.')
+  } catch {
+    alert('Failed to ban user.')
+  }
+}
+
 function startEditDiscussionFromList(topic: UiDiscussion): void {
   if (topic.href) {
     void router.push(topic.href + '?edit=1')
@@ -4564,6 +4751,38 @@ async function toggleMemberFollow(member: UiMemberProfile): Promise<void> {
     member.slug,
     `Following ${member.name}.`,
     `Stopped following ${member.name}.`,
+  )
+}
+
+function discussionActionKey(topic: UiDiscussion): string {
+  return topic.slug || topic.href.split('/').filter(Boolean).pop() || topic.title
+}
+
+function isFollowingDiscussion(topic: UiDiscussion): boolean {
+  return followedDiscussionSlugs.value.includes(discussionActionKey(topic))
+}
+
+function isSavedDiscussion(topic: UiDiscussion): boolean {
+  return savedDiscussionSlugs.value.includes(discussionActionKey(topic))
+}
+
+async function toggleDiscussionFollow(topic: UiDiscussion): Promise<void> {
+  await toggleCommunityAction(
+    'follow',
+    'discussion',
+    discussionActionKey(topic),
+    'Discussion followed.',
+    'Discussion unfollowed.',
+  )
+}
+
+async function toggleDiscussionSave(topic: UiDiscussion): Promise<void> {
+  await toggleCommunityAction(
+    'save',
+    'discussion',
+    discussionActionKey(topic),
+    'Discussion saved.',
+    'Discussion removed from saved.',
   )
 }
 
@@ -4593,6 +4812,12 @@ function savedContentLink(slug: string): string {
   if (slug.startsWith('guide-')) return `/guides/${slug.replace('guide-', '')}`
   if (slug.startsWith('faq-')) return `/guides#faq-${slug.replace('faq-', '')}`
   return `/research-library/${slug}`
+}
+function savedDiscussionLink(slug: string): string {
+  return `/discussions/${slug}`
+}
+function savedDiscussionLabel(slug: string): string {
+  return discussions.value.find(topic => discussionActionKey(topic) === slug)?.title ?? slug.replace(/[-_]/g, ' ')
 }
 
 function productBookmarkKey(product: VendorProduct): string {
@@ -4629,6 +4854,23 @@ async function shareCurrentPage(title = document.title): Promise<void> {
     contentStatusMessage.value = 'Link copied.'
   } catch {
     actionStatusMessage.value = 'Unable to share this page.'
+  }
+}
+
+async function shareDiscussion(topic: UiDiscussion): Promise<void> {
+  const url = new URL(topic.href, window.location.origin).toString()
+
+  try {
+    if (navigator.share) {
+      await navigator.share({ title: topic.title, url })
+    } else {
+      await navigator.clipboard.writeText(url)
+    }
+
+    actionStatusMessage.value = 'Discussion link copied.'
+    discussionStatusMessage.value = 'Discussion link copied.'
+  } catch {
+    actionStatusMessage.value = 'Unable to share discussion.'
   }
 }
 
@@ -5340,6 +5582,11 @@ function clearDiscussionFilters(): void {
   void loadDiscussions()
 }
 
+function applyDiscussionSearch(): void {
+  discussionPage.value = 1
+  void loadDiscussions()
+}
+
 function setDiscussionPage(pageNumber: number): void {
   discussionPage.value = pageNumber
   void loadDiscussions()
@@ -5347,6 +5594,10 @@ function setDiscussionPage(pageNumber: number): void {
 
 function goToDiscussion(topic: UiDiscussion): void {
   void router.push(topic.href)
+}
+
+function goToMemberProfile(username: string): void {
+  void router.push(memberHref(username))
 }
 
 async function loadMembershipPlans(): Promise<void> {
@@ -5596,6 +5847,8 @@ watch(() => route.fullPath, () => {
 onUnmounted(() => {
   stopHeartbeat()
   clearVendorReviewPhotos()
+  clearMessageAttachment()
+  clearReplyAttachment()
   if (vendorProductImagePreview.value && vendorProductImagePreview.value.startsWith('blob:')) {
     URL.revokeObjectURL(vendorProductImagePreview.value)
   }
@@ -6321,6 +6574,7 @@ async function loadVendorProfile(): Promise<void> {
     })
     apiMyVendor.value = response.data.data ? mapVendor(response.data.data) : null
     vendorPortalAccessApproved.value = Boolean(response.data.is_approved_vendor)
+    vendorAccessRequested.value = Boolean(response.data.has_pending_request)
     hydrateVendorPortalForm(apiMyVendor.value)
     if (!editingVendorProductId.value) {
       resetVendorProductForm()
@@ -6380,9 +6634,14 @@ async function requestVendorAccess(): Promise<void> {
   try {
     await api.post('/api/v1/vendor-access/request')
     vendorPortalStatusMessage.value = 'Vendor access request submitted.'
-  } catch {
-    vendorAccessRequested.value = false
-    vendorPortalStatusMessage.value = 'Failed to submit vendor access request.'
+  } catch (err) {
+    const error = err as { response?: { status?: number; data?: { message?: string } } }
+    if (error.response?.status === 409) {
+      vendorPortalStatusMessage.value = error.response?.data?.message || 'You already have a pending request.'
+    } else {
+      vendorAccessRequested.value = false
+      vendorPortalStatusMessage.value = 'Failed to submit vendor access request.'
+    }
   }
 }
 
@@ -6893,12 +7152,34 @@ function mapMessage(item: ApiMessage, participant?: UiMemberProfile): UiMessage 
     side: item.side,
     text: item.body,
     time: item.sent_label ?? item.time_ago ?? '',
+    sentAt: item.sent_at,
     attachmentName: item.attachment_name,
     attachmentMeta,
     attachmentLabel: [attachmentType, attachmentSize].filter(Boolean).join(' · '),
     avatarInitial: sender?.initial ?? '',
     avatarColor: sender?.color ?? '',
   }
+}
+
+function showDateSep(messages: UiMessage[], idx: number): boolean {
+  if (idx === 0) return true
+  const cur = messages[idx]?.sentAt
+  const prev = messages[idx - 1]?.sentAt
+  if (!cur || !prev) return false
+  return !cur.startsWith(prev.substring(0, 10))
+}
+
+function formatDateSep(sentAt?: string | null): string {
+  if (!sentAt) return ''
+  const d = new Date(sentAt)
+  const now = new Date()
+  const sameYear = d.getFullYear() === now.getFullYear()
+  if (sameYear) {
+    const diffDays = Math.floor((now.getTime() - d.getTime()) / 86400000)
+    if (diffDays === 0) return 'Today'
+    if (diffDays === 1) return 'Yesterday'
+  }
+  return d.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: sameYear ? undefined : 'numeric' })
 }
 
 async function loadResearchContent(): Promise<void> {
@@ -7218,6 +7499,7 @@ async function loadMessageThread(threadId: number): Promise<void> {
       skipDeduplication: true,
     })
     apiCurrentMessageThread.value = mapMessageThread(response.data.data)
+    scrollToBottom()
   } catch {
     apiCurrentMessageThread.value = null
   }
@@ -7277,14 +7559,29 @@ async function startMessageFromSearch(): Promise<void> {
 
 async function sendMessage(): Promise<void> {
   const body = messageBody.value.trim()
-  if (!body || !currentThread.value) {
+  if ((!body && !messageAttachmentFile.value) || !currentThread.value) {
     return
   }
 
   sendingMessage.value = true
 
   try {
-    const response = await api.post<{ data: ApiMessage }>(`/api/v1/community/messages/${currentThread.value.id}/messages`, { body })
+    let attachmentName: string | null = null
+
+    if (messageAttachmentFile.value) {
+      const formData = new FormData()
+      formData.append('image', messageAttachmentFile.value)
+      const uploadRes = await api.post<{ url?: string; path?: string }>('/api/v1/upload/image', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      attachmentName = uploadRes.data.url || uploadRes.data.path || null
+    }
+
+    const payload: Record<string, unknown> = {}
+    payload.body = body || (attachmentName ? 'Attachment' : '')
+    if (attachmentName) payload.attachment_name = attachmentName
+
+    const response = await api.post<{ data: ApiMessage }>(`/api/v1/community/messages/${currentThread.value.id}/messages`, payload)
     const message = mapMessage(response.data.data)
     apiCurrentMessageThread.value = {
       ...currentThread.value,
@@ -7293,9 +7590,53 @@ async function sendMessage(): Promise<void> {
       messages: [...currentThread.value.messages, message],
     }
     messageBody.value = ''
+    clearMessageAttachment()
+    scrollToBottom()
   } finally {
     sendingMessage.value = false
   }
+}
+
+function handleMessageAttachment(event: Event): void {
+  const input = event.target as HTMLInputElement
+  const file = input.files?.[0]
+  if (file) {
+    clearMessageAttachment()
+    messageAttachmentFile.value = file
+    messageAttachmentPreviewUrl.value = file.type.startsWith('image/') ? URL.createObjectURL(file) : ''
+  }
+  input.value = ''
+}
+
+function clearMessageAttachment(): void {
+  if (messageAttachmentPreviewUrl.value) {
+    URL.revokeObjectURL(messageAttachmentPreviewUrl.value)
+  }
+  messageAttachmentFile.value = null
+  messageAttachmentPreviewUrl.value = ''
+}
+
+function formatFileSize(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`
+  if (bytes < 1048576) return `${(bytes / 1024).toFixed(1)} KB`
+  return `${(bytes / 1048576).toFixed(1)} MB`
+}
+
+async function deleteCurrentThread(): Promise<void> {
+  if (!currentThread.value || !confirm('Delete this conversation? This cannot be undone.')) return
+  try {
+    await api.delete(`/api/v1/community/messages/${currentThread.value.id}`)
+    apiMessageThreads.value = apiMessageThreads.value.filter(c => c.id !== currentThread.value!.id)
+    apiCurrentMessageThread.value = null
+  } catch {
+    messagesStatusMessage.value = 'Failed to delete conversation.'
+  }
+}
+
+function scrollToBottom(): void {
+  nextTick(() => {
+    messageStreamRef.value?.scrollTo({ top: messageStreamRef.value.scrollHeight, behavior: 'smooth' })
+  })
 }
 
 function mapNotification(item: ApiNotification): UiNotification {

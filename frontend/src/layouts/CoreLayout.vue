@@ -74,7 +74,7 @@
               Account Settings
             </router-link>
             <a
-              v-if="authStore.user?.roles?.includes('admin') || authStore.user?.roles?.includes('moderator')"
+              v-if="hasAnyRole(['admin', 'moderator'])"
               href="/admin/dashboard"
               @click="accountMenuOpen = false"
             >
@@ -133,7 +133,7 @@
           <router-link to="/terms">Terms of Service</router-link>
           <router-link to="/privacy">Privacy Policy</router-link>
           <router-link to="/community-rules">Community Rules</router-link>
-          <a href="#" @click.prevent="resetCookieConsent" style="cursor:pointer">Cookie Settings</a>
+          <router-link to="/cookie-settings">Cookie Settings</router-link>
         </div>
       </footer>
     </aside>
@@ -152,6 +152,7 @@ import PvIcon from '@/components/peptide/PvIcon.vue'
 import { useAuthStore } from '@/stores/auth'
 import { useNotificationsStore } from '@/stores/notifications'
 import api from '@/services/api'
+import { hasAnyRole } from '@/composables/usePermission'
 
 const route = useRoute()
 const router = useRouter()
@@ -216,10 +217,6 @@ const telegramUrl = ref('https://t.me/peptidevendors')
 const membershipDisabled = ref(true)
 const showUpgradePrompt = computed(() => authStore.isAuthenticated && authStore.user?.tier === 'free' && !membershipDisabled.value)
 
-function resetCookieConsent(): void {
-  localStorage.removeItem('cookie_consent')
-  window.location.reload()
-}
 const navItems = computed(() => {
   const isAuth = authStore.isAuthenticated
   const isFree = !membershipDisabled.value && (!isAuth || authStore.user?.tier === 'free')

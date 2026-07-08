@@ -137,7 +137,8 @@ class CommunityMessageController extends Controller
     public function store(Request $request, string $thread)
     {
         $validated = $request->validate([
-            'body' => ['required', 'string', 'max:4000'],
+            'body' => ['nullable', 'string', 'max:4000'],
+            'attachment_name' => ['nullable', 'string', 'max:500'],
         ]);
 
         $threadModel = $this->findThread($request, $thread);
@@ -152,7 +153,8 @@ class CommunityMessageController extends Controller
 
         $message = $threadModel->messages()->create([
             'sender_user_id' => $request->user()->id,
-            'body' => $validated['body'],
+            'body' => $validated['body'] ?? '',
+            'attachment_name' => $validated['attachment_name'] ?? null,
             'sent_at' => now(),
         ]);
 
@@ -174,6 +176,14 @@ class CommunityMessageController extends Controller
         return (new CommunityMessageResource($message))
             ->response()
             ->setStatusCode(201);
+    }
+
+    public function destroy(Request $request, string $thread): JsonResponse
+    {
+        $threadModel = $this->findThread($request, $thread);
+        $threadModel->forceFill(['status' => 'deleted'])->save();
+
+        return response()->json(['success' => true, 'message' => 'Thread deleted.']);
     }
 
     private function findThread(Request $request, string $value): CommunityMessageThread

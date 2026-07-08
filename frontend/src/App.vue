@@ -8,7 +8,7 @@
         <p>We use cookies to keep you signed in, remember preferences, and protect the community.</p>
       </div>
       <div class="pv-cookie-actions">
-        <router-link to="/privacy" class="pv-small-button">Privacy</router-link>
+        <router-link to="/cookie-settings" class="pv-small-button">Settings</router-link>
         <button class="pv-primary-button" @click="acceptCookies">Accept</button>
       </div>
     </div>
@@ -26,9 +26,11 @@ const showCookieConsent = ref(false)
 
 onMounted(() => {
   setCookieConsentVisible(!localStorage.getItem('cookie_consent'))
+  window.addEventListener('pv-cookie-preferences-saved', hideCookieConsent)
 })
 
 onUnmounted(() => {
+  window.removeEventListener('pv-cookie-preferences-saved', hideCookieConsent)
   document.body.classList.remove('pv-cookie-visible')
 })
 
@@ -39,6 +41,11 @@ function setCookieConsentVisible(visible: boolean): void {
 
 function acceptCookies(): void {
   localStorage.setItem('cookie_consent', '1')
+  localStorage.setItem('cookie_preferences', JSON.stringify({ essential: true, preferences: true, analytics: false }))
+  setCookieConsentVisible(false)
+}
+
+function hideCookieConsent(): void {
   setCookieConsentVisible(false)
 }
 </script>

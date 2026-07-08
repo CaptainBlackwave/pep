@@ -1,9 +1,16 @@
 <template>
-  <main class="pv-page">
-    <div class="pv-content-grid">
-      <article class="pv-panel pv-prose">
-        <router-link to="/" class="pv-purple-link">Back to home</router-link>
+  <main class="pv-page pv-legal-page">
+    <section class="pv-legal-hero">
+      <span class="pv-icon-tile"><PvIcon name="document" /></span>
+      <div>
+        <p class="pv-kicker">Copyright</p>
         <h1>DMCA Takedown Policy</h1>
+        <p>How copyright owners can report allegedly infringing content hosted in the community.</p>
+      </div>
+    </section>
+
+    <div class="pv-legal-layout">
+      <article class="pv-panel pv-prose pv-legal-doc">
         <p>Peptide Vendors respects the intellectual property rights of others and expects its users to do the same. In accordance with the Digital Millennium Copyright Act (DMCA), we will respond expeditiously to notices of alleged copyright infringement.</p>
 
         <h2>Submitting a Notice</h2>
@@ -30,7 +37,14 @@
             <router-link to="/terms"><PvIcon name="document" /> Terms of Service <PvIcon name="chevron" /></router-link>
             <router-link to="/privacy"><PvIcon name="lock" /> Privacy Policy <PvIcon name="chevron" /></router-link>
             <router-link to="/community-rules"><PvIcon name="shield" /> Community Rules <PvIcon name="chevron" /></router-link>
+            <router-link to="/data-deletion"><PvIcon name="trash" /> Data Deletion <PvIcon name="chevron" /></router-link>
           </div>
+        </article>
+
+        <article class="pv-panel pv-policy-note">
+          <h2>Designated Agent</h2>
+          <p class="pv-muted">Send complete notices to:</p>
+          <a :href="'mailto:' + dmcaEmail" class="pv-primary-button pv-full"><PvIcon name="mail" /> {{ dmcaEmail }}</a>
         </article>
       </aside>
     </div>

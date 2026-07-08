@@ -55,6 +55,12 @@ const routes: RouteRecordRaw[] = [
     meta: { title: 'Community Rules' } satisfies RouteMeta,
   },
   {
+    path: '/cookie-settings',
+    name: 'cookie-settings',
+    component: () => import('@/views/CookieSettingsView.vue'),
+    meta: { title: 'Cookie Settings' } satisfies RouteMeta,
+  },
+  {
     path: '/dmca',
     name: 'dmca',
     component: () => import('@/views/DmcaView.vue'),

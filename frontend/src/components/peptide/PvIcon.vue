@@ -37,6 +37,7 @@ const icons: Record<string, string[]> = {
   plus: ['M12 5v14', 'M5 12h14'],
   chevron: ['m9 18 6-6-6-6'],
   bookmark: ['M6 4h12v17l-6-3-6 3V4Z'],
+  pin: ['M12 17v5', 'M5 3h14', 'M7 3l2 8-3 4h12l-3-4 2-8'],
   shield: ['M12 3 20 7v5c0 5-3.4 8.4-8 9-4.6-.6-8-4-8-9V7l8-4Z', 'm9 12 2 2 4-5'],
   check: ['M20 6 9 17l-5-5'],
   lock: ['M6 10h12v10H6z', 'M8 10V7a4 4 0 1 1 8 0v3'],
