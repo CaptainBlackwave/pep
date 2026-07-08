@@ -7884,6 +7884,10 @@ async function saveContentStudioItem(statusOverride?: ContentStatus): Promise<vo
 
 function editContentStudioItem(item: UiContentItem): void {
   contentStudioEditingId.value = item.id ?? null
+
+  const rawBody = item.body || ''
+  const htmlBody = rawBody.startsWith('<') ? rawBody : `<p>${rawBody.replace(/\n\n/g, '</p><p>').replace(/\n/g, '<br>')}</p>`
+
   contentStudioForm.value = {
     ...defaultContentStudioForm(),
     type: item.type,
@@ -7891,7 +7895,7 @@ function editContentStudioItem(item: UiContentItem): void {
     category: item.category,
     tag: item.tag,
     excerpt: item.excerpt,
-    body: item.body,
+    body: htmlBody,
     image_url: item.imageUrl ?? '',
     read_minutes: item.readMinutes,
     metadata_compound: String(item.metadata.compound ?? ''),
