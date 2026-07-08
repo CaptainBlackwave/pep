@@ -1456,7 +1456,7 @@
       <main class="pv-stack">
         <header class="pv-page-header">
           <div><h1>Research Library</h1><p>Explore research, studies, and educational resources on peptides and performance compounds.</p></div>
-          <router-link v-if="canUseContentStudio" :to="{ path: '/content-studio', query: { type: 'research' } }" class="pv-small-button"><PvIcon name="plus" /> Add Research</router-link>
+          <router-link v-if="canUseContentStudio" to="/research-library/new" class="pv-small-button"><PvIcon name="plus" /> Add Research</router-link>
         </header>
         <div class="pv-tabs"><button :class="{ active: activeResearchCategory === '' }" @click="activeResearchCategory = ''; loadResearchContent()">All</button><button v-for="category in contentCategories.research" :key="category.slug" :class="{ active: activeResearchCategory === category.slug }" @click="activeResearchCategory = category.slug; loadResearchContent()">{{ category.name }}</button></div>
         <div class="pv-toolbar"><label class="pv-input-search"><input v-model="researchSearch" placeholder="Search articles, compounds, topics..." @input="loadResearchContent"><PvIcon name="search" /></label><button class="pv-small-button" @click="cycleResearchSort">{{ researchSortLabel }} <PvIcon name="chevron" /></button><span class="pv-icon-button active pv-mode-indicator" aria-label="Library view"><PvIcon name="library" /></span><button class="pv-icon-button pv-icon-button--static" @click="loadResearchContent"><PvIcon name="filter" /></button></div>
@@ -1512,8 +1512,8 @@
             <p v-else>{{ block.text }}</p>
           </template>
         </article>
-        <article v-else-if="researchDetailTab === 'data'" class="pv-panel"><h2>Figures & Data</h2><dl class="pv-data-list"><div v-for="(value, key) in detailArticle.metadata" :key="key"><dt>{{ formatMetadataKey(key) }}</dt><dd>{{ formatMetadataValue(value) }}</dd></div></dl></article>
-        <article v-else-if="researchDetailTab === 'references'" class="pv-panel"><h2>References</h2><p class="pv-muted">{{ detailArticle.metadata.references ?? 'No references were attached to this article.' }}</p></article>
+        <article v-else-if="researchDetailTab === 'data'" class="pv-panel"><h2>Figures & Data</h2><dl v-if="Object.keys(articleDataMetadata).length" class="pv-data-list"><div v-for="(value, key) in articleDataMetadata" :key="key"><dt>{{ formatMetadataKey(key) }}</dt><dd>{{ formatMetadataValue(value) }}</dd></div></dl><p v-else class="pv-muted">No figures or data were attached to this article.</p></article>
+        <article v-else-if="researchDetailTab === 'references'" class="pv-panel"><h2>References</h2><p class="pv-muted">{{ articleReferences || 'No references were attached to this article.' }}</p></article>
         <article v-else class="pv-panel"><h2>Comments</h2><p class="pv-muted">Discussion comments are not attached to this article yet. Start a related topic in the community discussions.</p><router-link to="/discussions" class="pv-primary-button">Open Discussions</router-link></article>
       </main>
       <aside class="pv-stack">
@@ -1530,7 +1530,10 @@
       <main class="pv-stack">
         <header class="pv-page-header">
           <div><h1>Guides & FAQ</h1><p>Helpful guides, tutorials and answers to common questions from the community.</p></div>
-          <router-link v-if="canUseContentStudio" :to="{ path: '/content-studio', query: { type: 'guide' } }" class="pv-small-button"><PvIcon name="plus" /> Add Content</router-link>
+          <div v-if="canUseContentStudio" class="pv-action-row pv-content-create-actions">
+            <router-link to="/guides/new" class="pv-small-button"><PvIcon name="plus" /> Add Guide</router-link>
+            <router-link to="/guides/faqs/new" class="pv-small-button"><PvIcon name="question" /> Add FAQ</router-link>
+          </div>
         </header>
         <label class="pv-input-search pv-input-search--wide"><input v-model="guideSearch" placeholder="Search guides & FAQ..." @keydown.enter="loadGuidesContent"><PvIcon name="search" /></label>
         <div class="pv-guide-cats"><button :class="{ active: activeGuideCategory === '' }" @click="activeGuideCategory = ''; loadGuidesContent()"><PvIcon name="library" /><strong>All Topics</strong><small>View all</small></button><button v-for="category in contentCategories.guide" :key="category.slug" :class="{ active: activeGuideCategory === category.slug }" @click="activeGuideCategory = category.slug; loadGuidesContent()"><PvIcon name="document" /><strong>{{ category.name }}</strong><small>{{ category.count }} guides</small></button></div>
@@ -1542,7 +1545,7 @@
         </article>
         <article id="faq-list" class="pv-panel"><header class="pv-panel-header"><h2>Frequently Asked Questions</h2><a class="pv-purple-link" href="#faq-list">View all FAQ →</a></header><details v-for="faq in faqs" :key="faq.slug"><summary><PvIcon name="question" /> {{ faq.title }}</summary><p class="pv-muted">{{ faq.body || faq.excerpt }}</p></details></article>
       </main>
-      <aside class="pv-stack"><article class="pv-panel pv-help-card"><PvIcon name="question" /><h2>Need Help?</h2><p>Can&apos;t find what you&apos;re looking for?</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article><article class="pv-panel"><h2>Top FAQ Topics</h2><dl class="pv-data-list"><div v-for="category in contentCategories.faq" :key="category.slug"><dt>{{ category.name }}</dt><dd>{{ category.count }}</dd></div></dl></article><article class="pv-panel"><h2>Community Help</h2><div class="pv-mini-list"><router-link to="/discussions" class="pv-mini-row"><PvIcon name="question" /><span><strong>Ask the Community</strong><small>Get answers from experienced members</small></span><PvIcon name="chevron" /></router-link><router-link v-if="canUseContentStudio" :to="{ path: '/content-studio', query: { type: 'guide' } }" class="pv-mini-row"><PvIcon name="document" /><span><strong>Submit a Guide</strong><small>Share your knowledge with others</small></span><PvIcon name="chevron" /></router-link><router-link :to="{ path: '/discussions', query: { q: 'issue' } }" class="pv-mini-row"><PvIcon name="bell" /><span><strong>Report an Issue</strong><small>Report outdated or incorrect info</small></span><PvIcon name="chevron" /></router-link></div></article><article class="pv-panel"><h2>Popular Tags</h2><span class="pv-chip-row"><span v-for="topic in contentTopics.guide" :key="topic.name">{{ topic.name }}</span></span></article></aside>
+      <aside class="pv-stack"><article class="pv-panel pv-help-card"><PvIcon name="question" /><h2>Need Help?</h2><p>Can&apos;t find what you&apos;re looking for?</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article><article class="pv-panel"><h2>Top FAQ Topics</h2><dl class="pv-data-list"><div v-for="category in contentCategories.faq" :key="category.slug"><dt>{{ category.name }}</dt><dd>{{ category.count }}</dd></div></dl></article><article class="pv-panel"><h2>Community Help</h2><div class="pv-mini-list"><router-link to="/discussions" class="pv-mini-row"><PvIcon name="question" /><span><strong>Ask the Community</strong><small>Get answers from experienced members</small></span><PvIcon name="chevron" /></router-link><router-link v-if="canUseContentStudio" to="/guides/new" class="pv-mini-row"><PvIcon name="document" /><span><strong>Submit a Guide</strong><small>Share your knowledge with others</small></span><PvIcon name="chevron" /></router-link><router-link :to="{ path: '/discussions', query: { q: 'issue' } }" class="pv-mini-row"><PvIcon name="bell" /><span><strong>Report an Issue</strong><small>Report outdated or incorrect info</small></span><PvIcon name="chevron" /></router-link></div></article><article class="pv-panel"><h2>Popular Tags</h2><span class="pv-chip-row"><span v-for="topic in contentTopics.guide" :key="topic.name">{{ topic.name }}</span></span></article></aside>
     </div>
   </section>
 
@@ -1573,8 +1576,8 @@
     <div class="pv-content-grid">
       <main class="pv-stack">
         <header class="pv-page-header">
-          <div><h1>Content Studio</h1><p>Create research posts, guides, and FAQ entries from the frontend.</p></div>
-          <router-link to="/guides" class="pv-small-button"><PvIcon name="arrow-left" /> Guides</router-link>
+          <div><h1>{{ contentStudioTitle }}</h1><p>{{ contentStudioSubtitle }}</p></div>
+          <router-link :to="contentStudioBackHref" class="pv-small-button"><PvIcon name="arrow-left" /> {{ contentStudioBackLabel }}</router-link>
         </header>
 
         <article v-if="!authStore.isAuthenticated" class="pv-panel pv-empty-inline">
@@ -1596,40 +1599,51 @@
           <p>Your account needs the staff or content-editor role, or the community content permissions, before you can submit content.</p>
         </article>
 
-        <form v-else class="pv-form-card pv-content-studio-form" @submit.prevent="saveContentStudioItem">
+        <form v-else class="pv-form-card pv-content-studio-form" @submit.prevent="saveContentStudioItem('draft')">
           <p v-if="contentStudioStatusMessage" class="pv-alert pv-alert--compact">{{ contentStudioStatusMessage }}</p>
-          <div class="pv-content-type-picker" role="group" aria-label="Content type">
+          <div class="pv-content-studio-context">
+            <span class="pv-icon-tile"><PvIcon :name="contentStudioIcon" /></span>
+            <span><strong>{{ contentStudioDestinationLabel }}</strong><small>{{ contentStudioContextLabel }}</small></span>
+            <em>{{ contentStudioModeLabel }}</em>
+          </div>
+          <div v-if="contentStudioIsGeneric" class="pv-content-type-picker" role="group" aria-label="Content type">
             <button type="button" :class="{ active: contentStudioForm.type === 'research' }" @click="setContentStudioType('research')"><PvIcon name="library" /><span><strong>Research</strong><small>Library article</small></span></button>
             <button type="button" :class="{ active: contentStudioForm.type === 'guide' }" @click="setContentStudioType('guide')"><PvIcon name="document" /><span><strong>Guide</strong><small>Step-by-step</small></span></button>
             <button type="button" :class="{ active: contentStudioForm.type === 'faq' }" @click="setContentStudioType('faq')"><PvIcon name="question" /><span><strong>FAQ</strong><small>Quick answer</small></span></button>
           </div>
 
           <div class="pv-form-row">
-            <label>Title<input v-model="contentStudioForm.title" required maxlength="220" placeholder="Example: Safe peptide storage basics"></label>
-            <label>Category<input v-model="contentStudioForm.category" maxlength="100" placeholder="Storage, Research, Safety..."></label>
+            <label>{{ contentStudioTitleLabel }}<input v-model="contentStudioForm.title" required maxlength="220" :placeholder="contentStudioTitlePlaceholder"></label>
+            <label>{{ contentStudioCategoryLabel }}<input v-model="contentStudioForm.category" maxlength="100" :placeholder="contentStudioCategoryPlaceholder"></label>
           </div>
           <div class="pv-form-row">
-            <label>Tag<input v-model="contentStudioForm.tag" maxlength="80" placeholder="Peptides, FAQ, Beginner..."></label>
-            <label>Read Time<input v-model.number="contentStudioForm.read_minutes" min="1" max="240" type="number"></label>
+            <label>{{ contentStudioTagLabel }}<input v-model="contentStudioForm.tag" maxlength="80" :placeholder="contentStudioTagPlaceholder"></label>
+            <label v-if="contentStudioForm.type !== 'faq'">Read Time<input v-model.number="contentStudioForm.read_minutes" min="1" max="240" type="number"></label>
           </div>
-          <label>Excerpt<textarea v-model="contentStudioForm.excerpt" maxlength="500" rows="3" placeholder="Short summary shown on cards and search results."></textarea><small>{{ contentStudioForm.excerpt.length }}/500</small></label>
+          <label>{{ contentStudioExcerptLabel }}<textarea v-model="contentStudioForm.excerpt" maxlength="500" rows="3" :placeholder="contentStudioExcerptPlaceholder"></textarea><small>{{ contentStudioForm.excerpt.length }}/500</small></label>
           <div v-if="contentStudioForm.type === 'research'" class="pv-form-row">
             <label>Compound<input v-model="contentStudioForm.metadata_compound" maxlength="160" placeholder="Retatrutide, BPC-157..."></label>
-            <label>References<input v-model="contentStudioForm.metadata_references" maxlength="240" placeholder="Optional source or citation note"></label>
+            <label>Research Focus<input v-model="contentStudioForm.metadata_research_focus" maxlength="160" placeholder="Safety profile, mechanism, outcomes..."></label>
           </div>
+          <label v-if="contentStudioForm.type === 'research'">Figures &amp; Data<textarea v-model="contentStudioForm.metadata_figures_data" maxlength="4000" rows="4" placeholder="Summarise tables, figures, measurements, or data notes shown on the article data tab."></textarea></label>
+          <label v-if="contentStudioForm.type === 'research'">References<textarea v-model="contentStudioForm.metadata_references" maxlength="4000" rows="4" placeholder="Add citations, source links, study notes, or reference text for the references tab."></textarea></label>
+          <div v-if="contentStudioForm.type === 'research'" class="pv-content-studio-note"><PvIcon name="message" /><span><strong>Comments</strong><small>Published articles show comments on the article page; staff do not edit reader comments here.</small></span></div>
           <div v-else-if="contentStudioForm.type === 'guide'" class="pv-form-row">
             <label>Difficulty<select v-model="contentStudioForm.metadata_difficulty"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></label>
             <label>Guide Type<input v-model="contentStudioForm.metadata_guide_type" maxlength="80" placeholder="Tutorial, Checklist, Reference..."></label>
           </div>
-          <label>Body<TipTapComposer :key="'content-studio-' + contentStudioEditorKey" v-model="contentStudioForm.body" placeholder="Write the full content..." :max-length="50000" /></label>
-          <div class="pv-form-row">
+          <label>{{ contentStudioBodyLabel }}<TipTapComposer :key="'content-studio-' + contentStudioEditorKey" v-model="contentStudioForm.body" :placeholder="contentStudioBodyPlaceholder" :max-length="50000" /></label>
+          <div v-if="contentStudioForm.type !== 'faq'" class="pv-form-row pv-form-row--single">
             <label>Image URL<input v-model="contentStudioForm.image_url" type="url" placeholder="https://example.com/image.jpg"></label>
-            <label v-if="canPublishContent">Status<select v-model="contentStudioForm.status"><option value="draft">Draft</option><option value="published">Published</option><option value="hidden">Hidden</option></select></label>
-            <label v-else>Status<input value="Draft for review" readonly></label>
+          </div>
+          <div class="pv-content-studio-note">
+            <PvIcon name="shield" />
+            <span><strong>{{ contentStudioStatusTitle }}</strong><small>{{ contentStudioStatusLabel }}</small></span>
           </div>
           <footer class="pv-content-studio-actions">
             <button type="button" class="pv-small-button" @click="resetContentStudioForm">Clear</button>
-            <button class="pv-primary-button" :disabled="contentStudioSaving"><PvIcon name="send" /> {{ contentStudioSaving ? 'Saving...' : contentStudioEditingId ? 'Save Changes' : 'Submit Content' }}</button>
+            <button type="button" class="pv-small-button" :disabled="contentStudioSaving" @click="saveContentStudioItem('draft')"><PvIcon name="document" /> {{ contentStudioSaving ? 'Saving...' : contentStudioDraftButtonLabel }}</button>
+            <button v-if="canPublishContent" type="button" class="pv-primary-button" :disabled="contentStudioSaving" @click="saveContentStudioItem('published')"><PvIcon name="send" /> {{ contentStudioSaving ? 'Publishing...' : contentStudioPublishButtonLabel }}</button>
           </footer>
         </form>
       </main>
@@ -1645,20 +1659,25 @@
         </article>
         <article v-if="canUseContentStudio" class="pv-panel">
           <header class="pv-panel-header">
-            <h2>{{ contentStudioPermissions.can_manage ? 'Content Queue' : 'My Submissions' }}</h2>
+            <h2>{{ contentStudioQueueTitle }}</h2>
             <button class="pv-small-button" type="button" @click="loadContentStudioItems">Refresh</button>
           </header>
+          <div class="pv-content-queue-filter" role="group" aria-label="Queue status">
+            <button type="button" :class="{ active: contentStudioQueueFilter === 'all' }" @click="contentStudioQueueFilter = 'all'">All</button>
+            <button type="button" :class="{ active: contentStudioQueueFilter === 'draft' }" @click="contentStudioQueueFilter = 'draft'">Drafts</button>
+            <button v-if="canPublishContent" type="button" :class="{ active: contentStudioQueueFilter === 'published' }" @click="contentStudioQueueFilter = 'published'">Published</button>
+          </div>
           <div class="pv-content-studio-list">
-            <button v-for="item in contentStudioItems" :key="item.slug" type="button" @click="editContentStudioItem(item)">
-              <span><strong>{{ item.title }}</strong><small>{{ item.type }} · {{ item.category || 'General' }}</small></span>
+            <button v-for="item in filteredContentStudioItems" :key="item.slug" type="button" @click="editContentStudioItem(item)">
+              <span><strong>{{ item.title }}</strong><small>{{ contentStudioItemTypeLabel(item.type) }} · {{ item.category || 'General' }}</small></span>
               <em :class="`status-${item.status}`">{{ item.status }}</em>
             </button>
-            <p v-if="contentStudioLoaded && contentStudioItems.length === 0" class="pv-muted">No submissions yet.</p>
+            <p v-if="contentStudioLoaded && filteredContentStudioItems.length === 0" class="pv-muted">{{ contentStudioEmptyQueueText }}</p>
           </div>
         </article>
         <article class="pv-panel">
-          <h2>How It Works</h2>
-          <p class="pv-muted">Staff can save drafts from here. Content editors can review and publish without using the admin panel.</p>
+          <h2>{{ contentStudioWorkflowTitle }}</h2>
+          <p class="pv-muted">{{ contentStudioWorkflowCopy }}</p>
         </article>
       </aside>
     </div>
@@ -3528,6 +3547,8 @@ const defaultContentStudioForm = () => ({
   image_url: '',
   read_minutes: 5,
   metadata_compound: '',
+  metadata_research_focus: '',
+  metadata_figures_data: '',
   metadata_references: '',
   metadata_difficulty: 'Beginner',
   metadata_guide_type: '',
@@ -3541,6 +3562,7 @@ const contentStudioSaving = ref(false)
 const contentStudioStatusMessage = ref('')
 const contentStudioEditingId = ref<number | null>(null)
 const contentStudioEditorKey = ref(0)
+const contentStudioQueueFilter = ref<'all' | ContentStatus>('all')
 const contentLoaded = ref(false)
 const contentStatusMessage = ref('')
 const activeResearchCategory = ref('')
@@ -3759,6 +3781,138 @@ const hasFrontendContentPermission = computed(() => {
 })
 const canUseContentStudio = computed(() => contentStudioPermissions.value.can_create || contentStudioPermissions.value.can_update || contentStudioPermissions.value.can_manage || hasFrontendContentRole.value || hasFrontendContentPermission.value)
 const canPublishContent = computed(() => contentStudioPermissions.value.can_publish || hasAnyRole(['admin', 'moderator', 'editor', 'content-editor']) || (authStore.user?.permissions ?? []).some(permission => ['community-content.publish', 'community-content.manage'].includes(permission)))
+const contentStudioConfig: Record<ContentKind, {
+  title: string
+  itemName: string
+  subtitle: string
+  destination: string
+  context: string
+  backHref: string
+  backLabel: string
+  icon: string
+  titleLabel: string
+  titlePlaceholder: string
+  categoryLabel: string
+  categoryPlaceholder: string
+  tagLabel: string
+  tagPlaceholder: string
+  excerptLabel: string
+  excerptPlaceholder: string
+  bodyLabel: string
+  bodyPlaceholder: string
+  workflowTitle: string
+  workflowCopy: string
+}> = {
+  research: {
+    title: 'Research Library Editor',
+    itemName: 'research article',
+    subtitle: 'Create article body, figures and data, references, and the published article shell in one place.',
+    destination: 'Research Library',
+    context: 'Publishes to the Research Library article view with Article, Figures & Data, References, and Comments tabs.',
+    backHref: '/research-library',
+    backLabel: 'Research Library',
+    icon: 'library',
+    titleLabel: 'Article Title',
+    titlePlaceholder: 'Example: Retatrutide safety profile overview',
+    categoryLabel: 'Research Area',
+    categoryPlaceholder: 'Safety, Metabolism, Clinical Studies...',
+    tagLabel: 'Primary Tag',
+    tagPlaceholder: 'Retatrutide, GLP-1, Review...',
+    excerptLabel: 'Article Summary',
+    excerptPlaceholder: 'Short summary shown on research cards and search results.',
+    bodyLabel: 'Article Body',
+    bodyPlaceholder: 'Write the research article body...',
+    workflowTitle: 'Research Flow',
+    workflowCopy: 'Research articles save their main article, figures and data, and reference notes for the public article tabs. Reader comments appear after publication.',
+  },
+  guide: {
+    title: 'Guide Editor',
+    itemName: 'guide',
+    subtitle: 'Write practical guides for the Guides & FAQ page without opening the admin panel.',
+    destination: 'Guides',
+    context: 'Publishes to the guide list and guide detail pages.',
+    backHref: '/guides',
+    backLabel: 'Guides & FAQ',
+    icon: 'document',
+    titleLabel: 'Guide Title',
+    titlePlaceholder: 'Example: Safe peptide storage basics',
+    categoryLabel: 'Guide Category',
+    categoryPlaceholder: 'Storage, Safety, Getting Started...',
+    tagLabel: 'Guide Tag',
+    tagPlaceholder: 'Beginner, Checklist, Storage...',
+    excerptLabel: 'Guide Summary',
+    excerptPlaceholder: 'Short summary shown on guide cards and search results.',
+    bodyLabel: 'Guide Body',
+    bodyPlaceholder: 'Write the full guide...',
+    workflowTitle: 'Guide Flow',
+    workflowCopy: 'Guides are built for step-by-step help. Staff can submit drafts, and content editors can publish them from this frontend editor.',
+  },
+  faq: {
+    title: 'FAQ Editor',
+    itemName: 'FAQ answer',
+    subtitle: 'Create short questions and answers for the FAQ section.',
+    destination: 'Frequently Asked Questions',
+    context: 'Publishes to the FAQ list on the Guides & FAQ page.',
+    backHref: '/guides',
+    backLabel: 'Guides & FAQ',
+    icon: 'question',
+    titleLabel: 'Question',
+    titlePlaceholder: 'Example: How should peptides be stored?',
+    categoryLabel: 'FAQ Topic',
+    categoryPlaceholder: 'Storage, Safety, Ordering...',
+    tagLabel: 'FAQ Tag',
+    tagPlaceholder: 'Storage, Beginner, Safety...',
+    excerptLabel: 'Short Answer',
+    excerptPlaceholder: 'A concise answer shown in previews.',
+    bodyLabel: 'Full Answer',
+    bodyPlaceholder: 'Write the full FAQ answer...',
+    workflowTitle: 'FAQ Flow',
+    workflowCopy: 'FAQ entries are short answers that appear inside the FAQ section, separate from long-form guides and research articles.',
+  },
+}
+const activeContentStudioConfig = computed(() => contentStudioConfig[contentStudioForm.value.type])
+const contentStudioIsGeneric = computed(() => !['research', 'guide', 'faq'].includes(String(route.meta.contentType ?? '')))
+const contentStudioTitle = computed(() => contentStudioIsGeneric.value ? 'Content Studio' : activeContentStudioConfig.value.title)
+const contentStudioSubtitle = computed(() => contentStudioIsGeneric.value ? 'Choose a content type, then save a draft or publish from the frontend.' : activeContentStudioConfig.value.subtitle)
+const contentStudioBackHref = computed(() => activeContentStudioConfig.value.backHref)
+const contentStudioBackLabel = computed(() => activeContentStudioConfig.value.backLabel)
+const contentStudioIcon = computed(() => activeContentStudioConfig.value.icon)
+const contentStudioDestinationLabel = computed(() => activeContentStudioConfig.value.destination)
+const contentStudioContextLabel = computed(() => activeContentStudioConfig.value.context)
+const contentStudioModeLabel = computed(() => contentStudioEditingId.value ? `Editing ${activeContentStudioConfig.value.itemName}` : `New ${activeContentStudioConfig.value.itemName}`)
+const contentStudioTitleLabel = computed(() => activeContentStudioConfig.value.titleLabel)
+const contentStudioTitlePlaceholder = computed(() => activeContentStudioConfig.value.titlePlaceholder)
+const contentStudioCategoryLabel = computed(() => activeContentStudioConfig.value.categoryLabel)
+const contentStudioCategoryPlaceholder = computed(() => activeContentStudioConfig.value.categoryPlaceholder)
+const contentStudioTagLabel = computed(() => activeContentStudioConfig.value.tagLabel)
+const contentStudioTagPlaceholder = computed(() => activeContentStudioConfig.value.tagPlaceholder)
+const contentStudioExcerptLabel = computed(() => activeContentStudioConfig.value.excerptLabel)
+const contentStudioExcerptPlaceholder = computed(() => activeContentStudioConfig.value.excerptPlaceholder)
+const contentStudioBodyLabel = computed(() => activeContentStudioConfig.value.bodyLabel)
+const contentStudioBodyPlaceholder = computed(() => activeContentStudioConfig.value.bodyPlaceholder)
+const contentStudioDraftButtonLabel = computed(() => canPublishContent.value ? 'Save Draft' : 'Submit Draft')
+const contentStudioPublishButtonLabel = computed(() => contentStudioEditingId.value ? 'Publish Changes' : 'Publish')
+const contentStudioStatusLabel = computed(() => canPublishContent.value ? 'Use the action buttons below' : 'Draft for review')
+const contentStudioQueueTitle = computed(() => {
+  const prefix = contentStudioPermissions.value.can_manage ? '' : 'My '
+  return `${prefix}${activeContentStudioConfig.value.destination} Submissions`
+})
+const filteredContentStudioItems = computed(() => {
+  let items = [...contentStudioItems.value]
+  if (!contentStudioIsGeneric.value) {
+    items = items.filter(item => item.type === contentStudioForm.value.type)
+  }
+  if (contentStudioQueueFilter.value !== 'all') {
+    items = items.filter(item => item.status === contentStudioQueueFilter.value)
+  }
+  return items
+})
+const contentStudioEmptyQueueText = computed(() => {
+  const status = contentStudioQueueFilter.value === 'all' ? 'submissions' : `${contentStudioQueueFilter.value} submissions`
+  return `No ${activeContentStudioConfig.value.destination.toLowerCase()} ${status} yet.`
+})
+const contentStudioWorkflowTitle = computed(() => activeContentStudioConfig.value.workflowTitle)
+const contentStudioWorkflowCopy = computed(() => activeContentStudioConfig.value.workflowCopy)
 const popularTopics = computed(() => contentTopics.value.research.length > 0 ? contentTopics.value.research : contentTopics.value.guide)
 const researchSortLabel = computed(() => contentFilterOptions.value.research.sorts.find(sort => sort.value === researchSort.value)?.label ?? 'Latest Added')
 const memberEngagementScore = (member: UiMemberProfile) => Number(member.stats.posts ?? 0) + Number(member.stats.reviews ?? 0) + Number(member.stats.lab_reports ?? 0) + Number(member.stats.solutions ?? 0)
@@ -3939,6 +4093,15 @@ const detailGuideSteps = computed(() => {
   const steps = detailGuide.value?.metadata?.steps
   return Array.isArray(steps) ? steps : []
 })
+const articleDataMetadata = computed<UnknownRecord>(() => {
+  const metadata = detailArticle.value?.metadata ?? {}
+  return Object.fromEntries(Object.entries(metadata).filter(([key, value]) => {
+    if (key === 'references') return false
+    if (value === null || value === undefined) return false
+    return String(value).trim().length > 0
+  }))
+})
+const articleReferences = computed(() => formatMetadataValue(detailArticle.value?.metadata.references).trim())
 const articleBodyBlocks = computed(() => parseContentBlocks(detailArticle.value?.body ?? ''))
 const guideBodyBlocks = computed(() => parseContentBlocks(detailGuide.value?.body ?? ''))
 const articleHeadings = computed(() => articleBodyBlocks.value.filter(block => block.kind === 'heading').map(block => block.text))
@@ -7309,7 +7472,7 @@ function mapContent(item: ApiContentItem): UiContentItem {
     comments: item.comments ?? 0,
     readMinutes: item.read_minutes ?? 5,
     timeLabel: item.read_label ?? `${item.read_minutes ?? 5} min`,
-    href: item.href ?? (item.type === 'guide' ? `/guides/${item.slug}` : `/research-library/${item.slug}`),
+    href: item.href ?? (item.type === 'research' ? `/research-library/${item.slug}` : `/guides/${item.slug}`),
     imageIndex: item.image_index ?? 0,
     imageUrl: assetUrl(item.image_url),
     author,
@@ -7553,6 +7716,9 @@ async function loadContentDetails(): Promise<void> {
 }
 
 function contentTypeFromRoute(): ContentKind {
+  const routeType = String(route.meta.contentType ?? '')
+  if (routeType === 'research' || routeType === 'guide' || routeType === 'faq') return routeType
+
   const value = String(route.query.type ?? '')
   return value === 'research' || value === 'faq' ? value : 'guide'
 }
@@ -7564,6 +7730,12 @@ function setContentStudioType(type: ContentKind): void {
   }
 }
 
+function contentStudioItemTypeLabel(type: ContentKind): string {
+  if (type === 'research') return 'Research'
+  if (type === 'faq') return 'FAQ'
+  return 'Guide'
+}
+
 async function loadContentStudio(): Promise<void> {
   if (!authStore.isAuthenticated) {
     contentStudioPermissions.value = defaultContentStudioPermissions()
@@ -7572,8 +7744,17 @@ async function loadContentStudio(): Promise<void> {
     return
   }
 
+  const routeType = contentTypeFromRoute()
   if (!contentStudioEditingId.value) {
-    contentStudioForm.value.type = contentTypeFromRoute()
+    contentStudioForm.value.type = routeType
+  } else if (!contentStudioIsGeneric.value && contentStudioForm.value.type !== routeType) {
+    contentStudioEditingId.value = null
+    contentStudioForm.value = {
+      ...defaultContentStudioForm(),
+      type: routeType,
+      status: 'draft',
+    }
+    contentStudioEditorKey.value += 1
   }
 
   contentStudioLoaded.value = false
@@ -7610,6 +7791,7 @@ async function loadContentStudioItems(): Promise<void> {
       skipDeduplication: true,
       params: {
         limit: 40,
+        ...(contentStudioIsGeneric.value ? {} : { type: contentStudioForm.value.type }),
       },
     })
     contentStudioItems.value = response.data.data.map(mapContent)
@@ -7633,6 +7815,8 @@ function contentStudioMetadata(): UnknownRecord {
   if (contentStudioForm.value.type === 'research') {
     return {
       compound: contentStudioForm.value.metadata_compound || undefined,
+      research_focus: contentStudioForm.value.metadata_research_focus || undefined,
+      figures_data: contentStudioForm.value.metadata_figures_data || undefined,
       references: contentStudioForm.value.metadata_references || undefined,
     }
   }
@@ -7647,7 +7831,9 @@ function contentStudioMetadata(): UnknownRecord {
   return {}
 }
 
-function contentStudioPayload(): UnknownRecord {
+function contentStudioPayload(statusOverride?: ContentStatus): UnknownRecord {
+  const status = canPublishContent.value ? (statusOverride ?? contentStudioForm.value.status) : 'draft'
+
   return {
     type: contentStudioForm.value.type,
     title: contentStudioForm.value.title.trim(),
@@ -7658,21 +7844,22 @@ function contentStudioPayload(): UnknownRecord {
     image_url: contentStudioForm.value.image_url.trim() || undefined,
     read_minutes: Number(contentStudioForm.value.read_minutes || 5),
     metadata: contentStudioMetadata(),
-    status: canPublishContent.value ? contentStudioForm.value.status : 'draft',
+    status,
   }
 }
 
-async function saveContentStudioItem(): Promise<void> {
+async function saveContentStudioItem(statusOverride?: ContentStatus): Promise<void> {
   if (!contentStudioForm.value.title.trim() || !plainTextFromRichText(contentStudioForm.value.body).trim()) {
     contentStudioStatusMessage.value = 'Title and body are required.'
     return
   }
 
+  contentStudioForm.value.status = canPublishContent.value ? (statusOverride ?? contentStudioForm.value.status) : 'draft'
   contentStudioSaving.value = true
   contentStudioStatusMessage.value = ''
 
   try {
-    const payload = contentStudioPayload()
+    const payload = contentStudioPayload(statusOverride)
     const response = contentStudioEditingId.value
       ? await api.patch<ContentDetailResponse>(`/api/v1/community/content/${contentStudioEditingId.value}`, payload)
       : await api.post<ContentDetailResponse>('/api/v1/community/content', payload)
@@ -7708,6 +7895,8 @@ function editContentStudioItem(item: UiContentItem): void {
     image_url: item.imageUrl ?? '',
     read_minutes: item.readMinutes,
     metadata_compound: String(item.metadata.compound ?? ''),
+    metadata_research_focus: String(item.metadata.research_focus ?? ''),
+    metadata_figures_data: String(item.metadata.figures_data ?? ''),
     metadata_references: String(item.metadata.references ?? ''),
     metadata_difficulty: String(item.metadata.difficulty ?? 'Beginner'),
     metadata_guide_type: String(item.metadata.guide_type ?? ''),
