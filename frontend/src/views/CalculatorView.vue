@@ -12,7 +12,7 @@
         <form @submit.prevent class="pv-form">
           <div class="pv-form-group">
             <label>Syringe Type</label>
-            <div class="pv-syringe-options" style="grid-template-columns: repeat(2, 1fr);">
+            <div class="pv-syringe-options pv-syringe-type-options">
               <label class="pv-radio-card" :class="{ active: syringeType === 100 }">
                 <input type="radio" v-model="syringeType" :value="100" name="syringeType" />
                 <span class="pv-radio-content">
@@ -209,9 +209,15 @@ const exceedsSyringeCapacity = computed(() => {
 
 <style scoped>
 .pv-calculator-page {
-  padding: 2rem;
+  padding: 1rem;
   max-width: 1200px;
   margin: 0 auto;
+}
+
+@media (min-width: 768px) {
+  .pv-calculator-page {
+    padding: 2rem;
+  }
 }
 
 .pv-page-header {
@@ -247,8 +253,14 @@ const exceedsSyringeCapacity = computed(() => {
   background: var(--pv-panel);
   border: 1px solid var(--pv-border);
   border-radius: var(--pv-radius);
-  padding: 2rem;
+  padding: 1.25rem;
   box-shadow: 0 8px 32px rgba(0, 0, 0, 0.2);
+}
+
+@media (min-width: 768px) {
+  .pv-calculator-card, .pv-results-card {
+    padding: 2rem;
+  }
 }
 
 .pv-form {
@@ -270,13 +282,29 @@ const exceedsSyringeCapacity = computed(() => {
 
 .pv-syringe-options {
   display: grid;
-  grid-template-columns: repeat(2, 1fr);
+  grid-template-columns: 1fr;
   gap: 1rem;
+}
+
+@media (min-width: 480px) {
+  .pv-syringe-options {
+    grid-template-columns: repeat(2, 1fr);
+  }
 }
 
 @media (min-width: 1024px) {
   .pv-syringe-options {
     grid-template-columns: repeat(4, 1fr);
+  }
+}
+
+.pv-syringe-type-options {
+  grid-template-columns: repeat(2, 1fr);
+}
+
+@media (max-width: 350px) {
+  .pv-syringe-type-options {
+    grid-template-columns: 1fr;
   }
 }
 
@@ -337,6 +365,9 @@ const exceedsSyringeCapacity = computed(() => {
   padding: 0.75rem 1rem;
   padding-right: 3.5rem;
   font-size: 1.1rem;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
 }
 
 .pv-suffix {
@@ -423,11 +454,17 @@ const exceedsSyringeCapacity = computed(() => {
 }
 
 .primary-result .pv-result-value {
-  font-size: 3.5rem;
+  font-size: 2.5rem;
   font-weight: 800;
   color: var(--pv-purple);
   line-height: 1;
   text-shadow: 0 0 20px rgba(124, 58, 237, 0.4);
+}
+
+@media (min-width: 768px) {
+  .primary-result .pv-result-value {
+    font-size: 3.5rem;
+  }
 }
 
 .primary-result .pv-result-value small {
@@ -438,8 +475,14 @@ const exceedsSyringeCapacity = computed(() => {
 
 .pv-result-row {
   display: grid;
-  grid-template-columns: 1fr 1fr;
+  grid-template-columns: 1fr;
   gap: 1rem;
+}
+
+@media (min-width: 480px) {
+  .pv-result-row {
+    grid-template-columns: 1fr 1fr;
+  }
 }
 
 .pv-result-row .pv-result-value {
