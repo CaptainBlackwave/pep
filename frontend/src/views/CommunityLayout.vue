@@ -1,5 +1,5 @@
 <template>
-  <div v-if="showNewDiscussion" class="pv-modal-backdrop pv-compose-backdrop" @click.self="closeNewDiscussion">
+<div v-if="showNewDiscussion" class="pv-modal-backdrop pv-compose-backdrop" @click.self="closeNewDiscussion">
     <form class="pv-modal pv-discussion-modal" @submit.prevent="submitNewDiscussion">
       <header class="pv-compose-header">
         <span class="pv-compose-header-icon"><PvIcon name="message" /></span>
@@ -93,7 +93,7 @@
       </footer>
     </form>
   </div>
-  <div v-if="showSubmitLabResult" class="pv-modal-backdrop" @click.self="closeSubmitLabResult">
+<div v-if="showSubmitLabResult" class="pv-modal-backdrop" @click.self="closeSubmitLabResult">
     <form class="pv-modal" @submit.prevent="submitLabResult">
       <header class="pv-panel-header">
         <div>
@@ -165,8 +165,7 @@
       </footer>
     </form>
   </div>
-
-  <div v-if="showReportModal" class="pv-modal-backdrop" @click.self="closeReportModal">
+<div v-if="showReportModal" class="pv-modal-backdrop" @click.self="closeReportModal">
     <form class="pv-modal pv-modal--compact" @submit.prevent="submitReport">
       <header class="pv-panel-header">
         <div>
@@ -202,2066 +201,12 @@
       </footer>
     </form>
   </div>
-
-  <section v-if="page === 'home'" class="pv-page pv-dashboard">
-    <div class="pv-dashboard-grid">
-      <div class="pv-stack">
-        <article class="pv-hero" :style="{ backgroundImage: `linear-gradient(90deg, rgba(13,14,22,.96), rgba(13,14,22,.72) 43%, rgba(13,14,22,.22)), url(${heroImage})` }">
-          <div>
-            <h1>A trusted community for peptide information.</h1>
-            <p>Real reviews. Real lab results. Real people.</p>
-          </div>
-          <div class="pv-hero-points">
-            <span><PvIcon name="shield" /> Independent Reviews</span>
-            <span><PvIcon name="flask" /> Lab Verified</span>
-            <span><PvIcon name="users" /> Community Driven</span>
-            <span><PvIcon name="lock" /> Private & Secure</span>
-          </div>
-          <div v-if="!authStore.isAuthenticated" style="margin-top:16px">
-            <router-link to="/register" class="pv-primary-button" style="margin-right:8px">Join the Community</router-link>
-            <router-link to="/login" class="pv-small-button">Sign In</router-link>
-          </div>
-        </article>
-
-        <article class="pv-panel pv-home-links">
-          <header class="pv-panel-header">
-            <h2><PvIcon name="home" /> Explore</h2>
-          </header>
-          <div class="pv-home-link-grid">
-            <router-link to="/discussions" class="pv-home-link">
-              <span class="pv-icon-tile"><PvIcon name="discussions" /></span>
-              <span><strong>Discussions</strong><small>Open conversations</small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-            <router-link to="/research-library" class="pv-home-link">
-              <span class="pv-icon-tile"><PvIcon name="library" /></span>
-              <span><strong>Research Library</strong><small>Articles and references</small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-            <router-link to="/guides" class="pv-home-link">
-              <span class="pv-icon-tile"><PvIcon name="question" /></span>
-              <span><strong>Guides &amp; FAQ</strong><small>Safety-first reading</small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-            <router-link :to="authStore.isAuthenticated ? '/members' : '/pricing'" class="pv-home-link">
-              <span class="pv-icon-tile"><PvIcon name="users" /></span>
-              <span><strong>{{ authStore.isAuthenticated ? 'Members' : 'Premium' }}</strong><small>{{ authStore.isAuthenticated ? 'Community directory' : 'Unlock protected areas' }}</small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-          </div>
-        </article>
-
-      </div>
-
-      <aside class="pv-stack pv-right-rail">
-        <article class="pv-panel">
-          <header class="pv-panel-header">
-            <h2><PvIcon name="megaphone" /> Announcements</h2>
-            <router-link to="/announcements" class="pv-small-button">View all</router-link>
-          </header>
-          <div class="pv-mini-list">
-            <p v-if="announcementsLoaded && announcementPreview.length === 0" class="pv-muted">No announcements published yet.</p>
-            <router-link v-for="item in announcementPreview" :key="item.slug" :to="item.href" class="pv-mini-row">
-              <span><strong>{{ item.title }}</strong><small>{{ item.text }}</small><em>{{ item.time }}</em></span>
-              <small class="pv-read-more">Read more</small>
-            </router-link>
-          </div>
-        </article>
-        <article class="pv-panel pv-online-panel">
-          <header class="pv-panel-header"><h2><PvIcon name="users" /> Online Now</h2><span class="pv-count">{{ onlineActivityTotal }}</span></header>
-          <div class="pv-online-summary">
-            <span><PvIcon name="users" /><strong>{{ memberStats.online }}</strong><small>Members</small></span>
-            <span><PvIcon name="eye" /><strong>{{ memberStats.guests }}</strong><small>Guests</small></span>
-            <span><PvIcon name="clock" /><strong>{{ memberStats.visits_today }}</strong><small>Today</small></span>
-          </div>
-          <div class="pv-avatar-stack pv-avatar-stack--wrap" aria-label="Online members">
-            <router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar pv-avatar--online" :class="member.color" :title="member.name">
-              <img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name">
-              <span v-else>{{ member.initial }}</span>
-            </router-link>
-            <span v-if="onlineMemberOverflow > 0" class="pv-more">+{{ onlineMemberOverflow }}</span>
-            <span v-if="memberStats.online === 0" class="pv-muted pv-online-empty">No members online.</span>
-          </div>
-          <div v-if="onlineGuestRows.length" class="pv-viewing-list">
-            <div v-for="activity in onlineGuestRows" :key="`${activity.path}-${activity.label}`" class="pv-viewing-row">
-              <PvIcon name="eye" />
-              <span><strong>{{ activity.label }}</strong><small>{{ guestVisitorLabel(activity.visitors) }}</small></span>
-            </div>
-          </div>
-        </article>
-        <article class="pv-panel">
-          <header class="pv-panel-header">
-            <h2><PvIcon name="star" /> Top Reviewed Vendors</h2>
-            <router-link to="/vendor-reviews" class="pv-small-button">View all</router-link>
-          </header>
-          <div class="pv-ranked-list">
-            <p v-if="vendorsLoaded && vendors.length === 0" class="pv-muted">No reviewed vendors yet.</p>
-            <router-link v-for="vendor in vendors.slice(0, 5)" :key="vendor.name" :to="vendor.href" class="pv-ranked-row">
-              <span class="pv-vendor-logo"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logo }}</template></span>
-              <span><strong>{{ vendor.name }}</strong><small class="pv-stars">★★★★★ <em>{{ vendor.rating }} ({{ vendor.reviews }})</em></small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-          </div>
-        </article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'discussions'" class="pv-page">
-    <div class="pv-content-grid pv-content-grid--wide">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div>
-            <h1>Discussions</h1>
-            <p>Share knowledge. Ask questions. Get real answers.</p>
-          </div>
-          <button class="pv-primary-button" @click="openNewDiscussion"><PvIcon name="plus" /> New Discussion</button>
-        </header>
-        <div class="pv-category-strip">
-          <button
-            v-for="category in categoryFilters"
-            :key="category.slug"
-            :class="{ active: activeCategory === category.slug }"
-            @click="setDiscussionCategory(category.slug)"
-          >
-            <PvIcon :name="category.icon" />
-            <span class="pv-category-name">{{ category.name }}</span>
-            <strong>{{ formatCount(category.count) }}</strong>
-          </button>
-        </div>
-        <div class="pv-discussion-toolbar">
-          <form class="pv-inline-search" @submit.prevent="applyDiscussionSearch">
-            <label class="pv-input-search">
-              <input v-model="discussionSearch" type="search" placeholder="Search discussions, authors, replies...">
-              <PvIcon name="search" />
-            </label>
-            <button class="pv-small-button" type="submit">Search</button>
-            <button v-if="discussionHasActiveFilters" class="pv-small-button" type="button" @click="clearDiscussionFilters">Clear</button>
-          </form>
-          <button class="pv-small-button" type="button" @click="cycleDiscussionSort">{{ discussionSortLabel }} <PvIcon name="chevron" /></button>
-        </div>
-        <article class="pv-panel">
-          <p v-if="discussionStatusMessage" class="pv-alert pv-alert--compact">{{ discussionStatusMessage }}</p>
-          <div class="pv-topic-list">
-            <div v-if="discussionsLoaded && discussions.length === 0" class="pv-empty-inline">
-              <PvIcon name="message" />
-              <strong>No discussions found</strong>
-              <p>{{ activeCategory || discussionSearch ? 'Try clearing the current filters.' : 'Start the first discussion in this space.' }}</p>
-              <button v-if="activeCategory || discussionSearch" class="pv-small-button" type="button" @click="clearDiscussionFilters">Clear Filters</button>
-            </div>
-            <div v-if="!discussionsLoaded" class="pv-skeleton-stack">
-              <div v-for="i in 5" :key="i" class="pv-skeleton-card"><div class="pv-skeleton pv-skeleton--avatar"></div><div class="pv-skeleton-body"><div class="pv-skeleton pv-skeleton--line w-75"></div><div class="pv-skeleton pv-skeleton--line w-50"></div><div class="pv-skeleton pv-skeleton--line w-25"></div></div></div>
-            </div>
-            <article
-              v-for="(topic, index) in discussions"
-              :key="topic.title"
-              class="topic-card"
-              role="link"
-              tabindex="0"
-              @click="goToDiscussion(topic)"
-              @keydown.enter.prevent="goToDiscussion(topic)"
-              @keydown.space.prevent="goToDiscussion(topic)"
-            >
-               <div class="topic-menu">
-                 <span>{{ topic.time }}</span>
-                 <button class="topic-icon-action" :class="{ active: isSavedDiscussion(topic) }" :aria-label="isSavedDiscussion(topic) ? 'Remove saved discussion' : 'Save discussion'" :title="isSavedDiscussion(topic) ? 'Saved' : 'Save'" @click.stop="toggleDiscussionSave(topic)"><PvIcon name="bookmark" /></button>
-                 <button class="topic-icon-action" :class="{ active: isFollowingDiscussion(topic) }" :aria-label="isFollowingDiscussion(topic) ? 'Unfollow discussion' : 'Follow discussion'" :title="isFollowingDiscussion(topic) ? 'Following' : 'Follow'" @click.stop="toggleDiscussionFollow(topic)"><PvIcon name="bell" /></button>
-                  <button class="dots" @click.stop="toggleTopicMenu(topic.id ?? index)">⋮</button>
-                  <div v-if="activeTopicMenu === (topic.id ?? index)" class="dots-dropdown" @click.stop>
-                   <button @click="toggleDiscussionSave(topic); activeTopicMenu = null">{{ isSavedDiscussion(topic) ? 'Unsave' : 'Save' }}</button>
-                   <button @click="toggleDiscussionFollow(topic); activeTopicMenu = null">{{ isFollowingDiscussion(topic) ? 'Unfollow' : 'Follow' }}</button>
-                   <button @click="shareDiscussion(topic); activeTopicMenu = null">Share</button>
-                   <button @click="goToMemberProfile(topic.authorUsername); activeTopicMenu = null">View Profile</button>
-                   <button @click="reportDiscussion(topic); activeTopicMenu = null">Report</button>
-                   <button v-if="authStore.user?.id === topic.authorId" @click="startEditDiscussionFromList(topic); activeTopicMenu = null">Edit</button>
-                   <button v-if="authStore.user?.id === topic.authorId" @click="deleteDiscussionFromList(topic); activeTopicMenu = null">Delete</button>
-                    <template v-if="hasAnyRole(['admin', 'moderator'])">
-                      <button @click="moderateDiscussion(topic, 'hide'); activeTopicMenu = null">Hide</button>
-                      <button @click="moderateDiscussion(topic, 'pin'); activeTopicMenu = null">{{ topic.isPinned ? 'Unpin' : 'Pin' }}</button>
-                      <button @click="moderateDiscussion(topic, 'lock'); activeTopicMenu = null">{{ topic.isLocked ? 'Unlock' : 'Lock' }}</button>
-                     </template>
-                  </div>
-                </div>
-               <aside class="author-panel">
-                <router-link class="avatar-wrap pv-author-link" :to="memberHref(topic.authorUsername)" :aria-label="`View ${topic.author}'s profile`" @click.stop>
-                  <span v-if="topic.avatarUrl" class="avatar topic-avatar" :class="topic.color"><img :src="assetUrl(topic.avatarUrl)" :alt="topic.author"></span>
-                  <span v-else class="avatar topic-avatar" :class="topic.color">{{ topic.initial }}</span>
-                  <span v-if="topic.authorOnline" class="online-indicator" aria-label="Online"></span>
-                </router-link>
-                <div class="author-meta">
-                  <router-link class="pv-author-name-link" :to="memberHref(topic.authorUsername)" @click.stop><h4>{{ topic.authorUsername }}</h4></router-link>
-                  <span v-if="topic.authorBadge" class="author-badge">{{ topic.authorBadge }}</span>
-                  <span class="author-presence" :class="{ online: topic.authorOnline }"><span></span>{{ topic.authorOnline ? 'Online' : 'Away' }}</span>
-                </div>
-                <div class="author-posts"><PvIcon name="message" /> {{ topic.authorPostCount }} posts</div>
-              </aside>
-              <main class="topic-body">
-                <span v-if="topic.tag" class="topic-type"><PvIcon name="tag" /> {{ topic.tag }}</span>
-                <span v-if="topic.isPinned" class="topic-type topic-type--pinned"><PvIcon name="pin" /> Pinned</span>
-                <span v-if="topic.isLocked" class="topic-type topic-type--locked"><PvIcon name="lock" /> Locked</span>
-                <h2>{{ topic.title }}</h2>
-                <p class="topic-excerpt">{{ topic.excerpt }}</p>
-                <div class="divider"></div>
-                <div class="topic-bottom">
-                  <div class="stats">
-                    <div class="stat">
-                      <PvIcon name="message" />
-                      <strong>{{ topic.replies }}</strong>
-                      <small>Replies</small>
-                    </div>
-                    <div class="stat">
-                      <PvIcon name="eye" />
-                      <strong>{{ topic.views }}</strong>
-                      <small>Views</small>
-                    </div>
-                    <div class="stat">
-                      <PvIcon name="vote-up" />
-                      <strong>{{ topic.voteScore }}</strong>
-                      <small>Likes</small>
-                    </div>
-                    <div class="stat stat--clickable" @click.stop="shareDiscussion(topic)">
-                      <PvIcon name="share" />
-                      <small>Share</small>
-                    </div>
-                  </div>
-                  <div v-if="topic.latestReply" class="last-reply">
-                    <small>Last reply</small>
-                    <router-link class="reply-row pv-author-link" :to="memberHref(topic.latestReply.username || topic.latestReply.author)" @click.stop>
-                      <img v-if="topic.latestReply.avatar" :src="assetUrl(topic.latestReply.avatar)" :alt="topic.latestReply.author">
-                      <span v-else class="avatar-sm">{{ topic.latestReply.initial }}</span>
-                      <div>
-                        <strong>{{ topic.latestReply.username || topic.latestReply.author }}</strong>
-                        <span>{{ topic.latestReply.timeAgo }}</span>
-                      </div>
-                    </router-link>
-                  </div>
-                </div>
-              </main>
-            </article>
-          </div>
-          <PaginationBlock :meta="discussionPagination" @page="setDiscussionPage" />
-        </article>
-      </main>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'discussionDetail'" class="pv-page">
-    <div v-if="detailDiscussion" class="thread-wrap">
-      <router-link to="/discussions" class="op-back">← Back to Discussions</router-link>
-      <article class="op-card">
-        <header class="op-header">
-          <router-link class="op-avatar-link pv-author-link" :to="memberHref(detailDiscussion.authorUsername)" :aria-label="`View ${detailDiscussion.author}'s profile`">
-            <span v-if="detailDiscussion.avatarUrl" class="op-avatar"><img :src="assetUrl(detailDiscussion.avatarUrl)" :alt="detailDiscussion.author"></span>
-            <span v-else class="op-avatar op-avatar--letter">{{ detailDiscussion.initial }}</span>
-            <span v-if="detailDiscussion.authorOnline" class="online-indicator"></span>
-          </router-link>
-          <div class="op-user">
-            <div class="op-identity">
-              <router-link class="pv-author-name-link" :to="memberHref(detailDiscussion.authorUsername)"><strong>{{ detailDiscussion.authorUsername }}</strong></router-link>
-              <span v-if="detailDiscussion.authorBadge" class="verified">{{ detailDiscussion.authorBadge }}</span>
-              <small class="op-presence" :class="{ online: detailDiscussion.authorOnline }"><span></span>{{ detailDiscussion.authorOnline ? 'Online' : 'Away' }}</small>
-            </div>
-          </div>
-          <div class="op-meta">
-            <span>{{ detailDiscussion.time }}</span>
-            <div class="op-dots">
-              <button class="dots" @click="togglePostMenu">⋯</button>
-              <div v-if="showPostMenu" class="dots-dropdown" @click.self="showPostMenu = false">
-                <button @click="shareCurrentPage(detailDiscussion.title); showPostMenu = false">Share</button>
-                <button @click="toggleDiscussionSave(detailDiscussion); showPostMenu = false">{{ isSavedDiscussion(detailDiscussion) ? 'Unsave' : 'Save' }}</button>
-                <button @click="toggleDiscussionFollow(detailDiscussion); showPostMenu = false">{{ isFollowingDiscussion(detailDiscussion) ? 'Unfollow' : 'Follow' }}</button>
-                <button @click="openDiscussionReport(); showPostMenu = false">Report</button>
-                <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="startEditDiscussion(); showPostMenu = false">Edit</button>
-                <button v-if="authStore.user?.id === detailDiscussion.authorId && !isEditingDiscussion" @click="deleteDiscussion(); showPostMenu = false">Delete</button>
-                <template v-if="hasAnyRole(['admin', 'moderator'])">
-                  <button @click="moderateDiscussion(detailDiscussion, 'hide'); showPostMenu = false">Hide</button>
-                  <button @click="moderateDiscussion(detailDiscussion, 'pin'); showPostMenu = false">{{ detailDiscussion.isPinned ? 'Unpin' : 'Pin' }}</button>
-                  <button @click="moderateDiscussion(detailDiscussion, 'lock'); showPostMenu = false">{{ detailDiscussion.isLocked ? 'Unlock' : 'Lock' }}</button>
-                  <button @click="moderateBanAuthor(detailDiscussion); showPostMenu = false">Ban Author</button>
-                  <button @click="moderateWarnAuthor(detailDiscussion); showPostMenu = false">Warn Author</button>
-                </template>
-              </div>
-            </div>
-          </div>
-        </header>
-        <h1>{{ detailDiscussion.title }}</h1>
-        <div v-if="detailDiscussion.isPinned || detailDiscussion.isLocked" class="op-flags">
-          <span v-if="detailDiscussion.isPinned" class="flag-pinned"><PvIcon name="pin" /> Pinned</span>
-          <span v-if="detailDiscussion.isLocked" class="flag-locked"><PvIcon name="lock" /> Locked</span>
-        </div>
-        <div v-if="!isEditingDiscussion" class="op-content">
-          <div class="pv-rich-text" v-html="renderFormattedText(detailDiscussion.body ?? detailDiscussion.excerpt)"></div>
-        </div>
-         <div v-else class="thread-edit-form">
-           <p v-if="discussionEditError" class="pv-alert pv-alert--compact">{{ discussionEditError }}</p>
-           <input v-model="editDiscussionTitle" required maxlength="160" placeholder="Title">
-            <select v-model="editDiscussionTag" class="pv-edit-select">
-              <option value="">No tag</option>
-              <option v-for="tag in discussionTags" :key="tag" :value="tag">{{ tag }}</option>
-            </select>
-            <small class="pv-edit-label">Tag — select a topic type</small>
-            <select v-model="editDiscussionCategory" class="pv-edit-select">
-              <option v-for="cat in discussionCategories" :key="cat.slug" :value="cat.slug">{{ cat.name }}</option>
-            </select>
-            <small class="pv-edit-label">Category — select a category</small>
-           <TipTapComposer v-model="editDiscussionBody" placeholder="Update your discussion..." :max-length="10000" compact />
-          <div class="pv-form-actions">
-            <button type="button" class="pv-small-button" @click="cancelEditDiscussion">Cancel</button>
-            <button type="button" class="pv-primary-button" :disabled="discussionEditSaving" @click="saveEditDiscussion">{{ discussionEditSaving ? 'Saving...' : 'Save Changes' }}</button>
-          </div>
-        </div>
-        <footer class="op-actions">
-          <div class="vote-pill">
-            <button :class="{ active: detailDiscussion.viewerVote === 1 }" :disabled="discussionVoteLoading" aria-label="Upvote discussion" title="Upvote" @click="voteOnDiscussion(1)"><PvIcon name="vote-up" /></button>
-            <strong>{{ detailDiscussion.voteScore }}</strong>
-            <button :class="{ active: detailDiscussion.viewerVote === -1 }" :disabled="discussionVoteLoading" aria-label="Downvote discussion" title="Downvote" @click="voteOnDiscussion(-1)"><PvIcon name="vote-down" /></button>
-          </div>
-          <button aria-label="Reply to discussion" title="Reply" @click="jumpToReplyComposer"><PvIcon name="reply" /><span>Reply</span></button>
-          <button aria-label="Quote discussion" title="Quote" @click="prepareReply(null, true)"><PvIcon name="quote" /><span>Quote</span></button>
-          <div v-if="hasAnyRole(['admin', 'moderator'])" style="position: relative; display: inline-block;">
-            <button aria-label="Moderate discussion" title="Moderate" @click.stop="activeModMenu = !activeModMenu"><PvIcon name="shield" /><span>Moderate</span></button>
-            <div v-if="activeModMenu" class="dots-dropdown" style="bottom: 100%; top: auto; margin-bottom: 8px; left: 0;" @click.stop>
-              <button @click="moderateDiscussion(detailDiscussion, 'hide'); activeModMenu = false">{{ detailDiscussion.status === 'hidden' ? 'Publish' : 'Hide' }}</button>
-              <button @click="moderateDiscussion(detailDiscussion, 'pin'); activeModMenu = false">{{ detailDiscussion.isPinned ? 'Unpin' : 'Pin' }}</button>
-              <button @click="moderateDiscussion(detailDiscussion, 'lock'); activeModMenu = false">{{ detailDiscussion.isLocked ? 'Unlock' : 'Lock' }}</button>
-              <button @click="moderateDiscussion(detailDiscussion, 'premium'); activeModMenu = false">{{ detailDiscussion.premiumOnly ? 'Remove Premium' : 'Make Premium' }}</button>
-            </div>
-          </div>
-          <button aria-label="Share discussion" title="Share" @click="shareCurrentPage(detailDiscussion.title)"><PvIcon name="share" /><span>Share</span></button>
-          <button :class="{ active: isSavedDiscussion(detailDiscussion) }" :aria-label="isSavedDiscussion(detailDiscussion) ? 'Remove saved discussion' : 'Save discussion'" :title="isSavedDiscussion(detailDiscussion) ? 'Saved' : 'Save'" @click="toggleDiscussionSave(detailDiscussion)"><PvIcon name="bookmark" /><span>{{ isSavedDiscussion(detailDiscussion) ? 'Saved' : 'Save' }}</span></button>
-          <button :class="{ active: isFollowingDiscussion(detailDiscussion) }" :aria-label="isFollowingDiscussion(detailDiscussion) ? 'Unfollow discussion' : 'Follow discussion'" :title="isFollowingDiscussion(detailDiscussion) ? 'Following' : 'Follow'" @click="toggleDiscussionFollow(detailDiscussion)"><PvIcon name="bell" /><span>{{ isFollowingDiscussion(detailDiscussion) ? 'Following' : 'Follow' }}</span></button>
-        </footer>
-      </article>
-
-      <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
-
-      <article v-for="(reply, index) in replies" :key="reply.id ?? `${reply.author}-${reply.time}`" class="post-card reply-post">
-        <div class="post-left reply-left">
-          <router-link class="avatar letter-avatar reply-avatar pv-author-link" :to="memberHref(reply.authorUsername)" :aria-label="`View ${reply.author}'s profile`">
-            <span v-if="reply.avatarUrl" class="img-wrap"><img :src="assetUrl(reply.avatarUrl)" :alt="reply.author"></span>
-            <span v-else>{{ reply.initial }}</span>
-            <span v-if="reply.authorOnline" class="online-indicator"></span>
-          </router-link>
-          <router-link class="reply-name pv-author-name-link" :to="memberHref(reply.authorUsername)">{{ reply.authorUsername }}</router-link>
-        </div>
-        <div class="post-main">
-          <div class="reply-top">
-            <div class="reply-meta">
-              <span>#{{ index + 1 }}</span>
-              <span>•</span>
-              <span>{{ reply.time }}</span>
-              <span v-if="reply.authorId && reply.authorId === detailDiscussion.authorId" class="small-badge">OP</span>
-            </div>
-          </div>
-          <div class="reply-text pv-rich-text" v-html="renderFormattedText(reply.text)"></div>
-          <figure v-if="isVisualAttachment(reply)" class="pv-reply-media">
-            <img :src="reply.attachmentUrl || ''" :alt="reply.file || 'Reply attachment'">
-            <figcaption>{{ reply.file }} <span>{{ attachmentLabel(reply) }}</span></figcaption>
-          </figure>
-          <div v-else-if="reply.file" class="pv-file-card"><PvIcon name="document" /><span><strong>{{ reply.file }}</strong><small>{{ attachmentLabel(reply) || 'Attachment' }}</small></span></div>
-          <div class="divider"></div>
-          <div class="actions">
-            <div class="vote-box small">
-              <button class="vote" :class="{ active: reply.viewerVote === 1 }" :disabled="replyVoteLoading === `${reply.id}:1`" aria-label="Upvote reply" title="Upvote" @click="voteOnReply(reply, 1)"><PvIcon name="vote-up" /></button>
-              <span>{{ reply.votes }}</span>
-              <button class="vote" :class="{ active: reply.viewerVote === -1 }" :disabled="replyVoteLoading === `${reply.id}:-1`" aria-label="Downvote reply" title="Downvote" @click="voteOnReply(reply, -1)"><PvIcon name="vote-down" /></button>
-            </div>
-            <div class="action-links">
-              <button aria-label="Reply to this post" title="Reply" @click="prepareReply(reply)"><PvIcon name="reply" /><span class="action-label">Reply</span></button>
-              <button aria-label="Quote this post" title="Quote" @click="prepareReply(reply, true)"><PvIcon name="quote" /><span class="action-label">Quote</span></button>
-            </div>
-            <div class="dots-corner">
-              <button class="dots" @click.stop="toggleReplyMenu(index)">⋯</button>
-              <div v-if="activeReplyMenu === index" class="dots-dropdown" @click.stop>
-                <button @click="openReplyReport(reply)">Report</button>
-                <button v-if="authStore.user?.id === reply.authorId" @click="deleteReply(reply)">Delete</button>
-                <button v-if="hasAnyRole(['admin', 'moderator'])" @click="moderateHideReply(reply)">Hide</button>
-                <button v-if="hasAnyRole(['admin', 'moderator'])" @click="moderateBanAuthor(reply)">Ban Author</button>
-                <button v-if="hasAnyRole(['admin', 'moderator'])" @click="moderateWarnAuthor(reply)">Warn Author</button>
-              </div>
-            </div>
-          </div>
-        </div>
-      </article>
-
-      <p v-if="replyStatusMessage" class="pv-alert pv-alert--compact">{{ replyStatusMessage }}</p>
-
-      <form v-if="authStore.isAuthenticated" id="reply-composer" class="reply-composer" @submit.prevent="submitReply">
-        <div class="reply-composer-head">
-          <strong>Reply as {{ accountName() }}</strong>
-          <small>{{ plainTextFromRichText(replyBody).length }}/8000</small>
-        </div>
-        <TipTapComposer v-model="replyBody" placeholder="Write a reply..." :max-length="8000" compact />
-        <div v-if="replyAttachmentFile || replyAttachmentGifUrl" class="pv-attachment-preview">
-          <img v-if="replyAttachmentPreviewUrl || replyAttachmentGifUrl" :src="replyAttachmentPreviewUrl || replyAttachmentGifUrl" alt="Attachment preview">
-          <span><strong>{{ replyAttachmentName() }}</strong><small>{{ replyAttachmentFile ? 'Image' : 'GIF' }}</small></span>
-          <button type="button" class="pv-icon-button" aria-label="Remove" @click="clearReplyAttachment"><PvIcon name="close" /></button>
-        </div>
-        <div class="reply-composer-tools">
-          <label class="pv-icon-button" for="reply-image-upload" aria-label="Attach image"><PvIcon name="image" /></label>
-          <input id="reply-image-upload" class="pv-sr-only" type="file" accept="image/png,image/jpeg,image/webp,image/gif" @change="handleReplyAttachment">
-          <GiphyPicker @select="onGifSelect" />
-          <span class="pv-flex-spacer"></span>
-          <button type="submit" class="pv-primary-button" :disabled="submittingReply"><PvIcon name="send" /> {{ submittingReply ? 'Posting...' : 'Post Reply' }}</button>
-        </div>
-      </form>
-      <article v-else id="reply-composer" class="pv-panel pv-reply-login">
-        <span class="pv-icon-tile"><PvIcon name="lock" /></span>
-        <div>
-          <h2>Sign in to reply</h2>
-          <p class="pv-muted">Join the discussion with your account, quote posts, and upload attachments.</p>
-        </div>
-        <div class="pv-reply-login-actions">
-          <router-link :to="{ path: '/login', query: { redirect: route.fullPath } }" class="pv-primary-button">Sign In</router-link>
-          <router-link :to="{ path: '/register', query: { redirect: route.fullPath } }" class="pv-small-button">Register</router-link>
-        </div>
-      </article>
-    </div>
-    <div v-else class="pv-empty-route">
-      <h1>Discussion not found</h1>
-      <p>This discussion has not been published or does not exist.</p>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'labResults'" class="pv-page">
-    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
-      <div class="pv-upgrade-card">
-        <span class="pv-upgrade-icon"><PvIcon name="flask" /></span>
-        <h2>Premium Feature</h2>
-        <p>Upgrade to Premium to access independent lab testing reports, COAs, purity analysis, and batch data.</p>
-        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
-      </div>
-    </div>
-    <div v-else class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div><h1>Lab Results</h1><p>Independent lab testing and analysis from community members.</p></div>
-          <button class="pv-primary-button" @click="openSubmitLabResult"><PvIcon name="flask" /> Submit Lab Result</button>
-        </header>
-        <article class="pv-panel">
-          <div class="pv-toolbar">
-            <div class="pv-tabs">
-              <button :class="{ active: labTypeFilter === '' }" @click="setLabTypeFilter('')">All Results</button>
-              <button v-for="type in labFilterOptions.compound_types" :key="type" :class="{ active: labTypeFilter === type }" @click="setLabTypeFilter(type)">{{ type }}</button>
-            </div>
-            <button class="pv-small-button" type="button" @click="cycleLabSort">{{ labSortLabel }} <PvIcon name="chevron" /></button>
-            <button class="pv-icon-button" @click="applyLabFilters"><PvIcon name="filter" /></button>
-          </div>
-          <form class="pv-inline-search" @submit.prevent="applyLabFilters">
-            <label class="pv-input-search">
-              <input v-model="labSearch" placeholder="Search compounds, vendors, batches, labs..." type="search">
-              <PvIcon name="search" />
-            </label>
-            <button class="pv-small-button" type="submit">Search</button>
-            <button v-if="labHasActiveFilters" class="pv-small-button" type="button" @click="clearLabFilters">Clear</button>
-          </form>
-          <p v-if="labStatusMessage" class="pv-alert pv-alert--compact">{{ labStatusMessage }}</p>
-          <p v-if="labResultsLoaded && labResults.length === 0" class="pv-muted">No lab results found.</p>
-          <router-link v-for="result in labResults" :key="result.slug" :to="result.href" class="pv-result-row">
-            <span class="pv-coa-thumb pv-coa-thumb--large"></span>
-            <span class="pv-vial-icon" :class="result.color"><PvIcon name="flask" /></span>
-            <span class="pv-topic-main">
-              <strong>{{ result.name }}</strong>
-              <small>Vendor: {{ result.vendor }}</small>
-              <small>Batch: {{ result.batch }}</small>
-              <small>Lab: <em>{{ result.lab }}</em></small>
-              <span class="pv-chip-row"><span>{{ result.type }}</span><span>{{ result.use }}</span><span>{{ result.sampleType }}</span></span>
-            </span>
-            <span class="pv-purity pv-purity--green">{{ result.purity }}<small>Purity</small></span>
-            <span class="pv-identity"><PvIcon name="shield" /> {{ result.identityResult }}<br>Identity</span>
-            <span class="pv-date">{{ result.date }}<small>Tested Date</small></span>
-            <span class="pv-small-button">View Report</span>
-            <span class="pv-row-meta"><PvIcon name="eye" /> {{ result.views }} <PvIcon name="message" /> {{ result.comments }}</span>
-          </router-link>
-          <PaginationBlock :meta="labPagination" @page="setLabPage" />
-        </article>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel pv-filter-panel">
-          <header class="pv-panel-header"><h2>Filter Results</h2><button class="pv-purple-link" @click="clearLabFilters">Clear all</button></header>
-          <label class="pv-input-search"><input v-model="labSearch" placeholder="Search compounds, vendors..." @keydown.enter="applyLabFilters"><PvIcon name="search" /></label>
-          <label>Compound Type<select v-model="labTypeFilter"><option value="">All compound types</option><option v-for="type in labFilterOptions.compound_types" :key="type" :value="type">{{ type }}</option></select></label>
-          <label>Compound<select v-model="labCompoundFilter"><option value="">All compounds</option><option v-for="compound in labFilterOptions.compounds" :key="compound" :value="compound">{{ compound }}</option></select></label>
-          <label>Vendor<select v-model="labVendorFilter"><option value="">All vendors</option><option v-for="vendor in labFilterOptions.vendors" :key="vendor" :value="vendor">{{ vendor }}</option></select></label>
-          <label>Lab<select v-model="labLabFilter"><option value="">All labs</option><option v-for="lab in labFilterOptions.labs" :key="lab" :value="lab">{{ lab }}</option></select></label>
-          <button class="pv-primary-button pv-full" @click="applyLabFilters">Apply Filters</button>
-        </article>
-        <article class="pv-panel">
-          <h2>About Lab Results</h2>
-          <p class="pv-muted">All lab results are shared by community members for educational and harm reduction purposes only.</p>
-          <ul class="pv-check-list"><li>Independent testing</li><li>Community verified</li><li>COA and analysis reports</li><li>Batch specific results</li></ul>
-          <button class="pv-purple-link" type="button" @click="openSubmitLabResult">How to submit a lab result -></button>
-        </article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'labReport'" class="pv-page">
-    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
-      <div class="pv-upgrade-card">
-        <span class="pv-upgrade-icon"><PvIcon name="flask" /></span>
-        <h2>Premium Feature</h2>
-        <p>Upgrade to Premium to access independent lab testing reports, COAs, purity analysis, and batch data.</p>
-        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
-      </div>
-    </div>
-    <div v-else-if="detailLabResult" class="pv-content-grid">
-      <main class="pv-stack">
-        <nav class="pv-breadcrumbs">Lab Results <PvIcon name="chevron" /> {{ detailLabResult.name }} <PvIcon name="chevron" /> Report</nav>
-        <header class="pv-page-header">
-          <div><h1>{{ detailLabResult.name }} <span class="pv-success-pill">{{ detailLabResult.purity }} Purity</span></h1><p>Batch: {{ detailLabResult.batch }} · Vendor: <router-link :to="{ path: '/lab-results', query: { q: detailLabResult.vendor } }">{{ detailLabResult.vendor }}</router-link> · Lab: <router-link :to="{ path: '/lab-results', query: { q: detailLabResult.lab } }">{{ detailLabResult.lab }}</router-link></p></div>
-          <div class="pv-action-row"><button class="pv-small-button" @click="downloadLabReport"><PvIcon name="download" /> Download Report</button><button class="pv-primary-button" @click="shareCurrentPage(detailLabResult.name)"><PvIcon name="share" /> Share</button></div>
-        </header>
-        <div class="pv-tabs pv-tabs--line"><button :class="{ active: labDetailTab === 'overview' }" @click="labDetailTab = 'overview'">Report Overview</button><button :class="{ active: labDetailTab === 'certificate' }" @click="labDetailTab = 'certificate'">Full Certificate</button><button :class="{ active: labDetailTab === 'raw' }" @click="labDetailTab = 'raw'">Raw Data</button><button :class="{ active: labDetailTab === 'batch' }" @click="labDetailTab = 'batch'">Batch History</button></div>
-        <p v-if="labStatusMessage" class="pv-alert pv-alert--compact">{{ labStatusMessage }}</p>
-        <div v-if="labDetailTab === 'overview'" class="pv-report-meta">
-          <span><PvIcon name="calendar" /><small>Tested Date</small><strong>{{ detailLabResult.date }}</strong></span>
-          <span><PvIcon name="box" /><small>Received Date</small><strong>{{ detailLabResult.receivedDate }}</strong></span>
-          <span><PvIcon name="document" /><small>Report ID</small><strong>{{ detailLabResult.reportId }}</strong></span>
-          <span><PvIcon name="flask" /><small>Sample Type</small><strong>{{ detailLabResult.sampleType }}</strong></span>
-          <span><PvIcon name="shield" /><small>Sample Condition</small><strong>{{ detailLabResult.sampleCondition }}</strong></span>
-        </div>
-        <article v-if="labDetailTab === 'certificate' || labDetailTab === 'overview'" class="pv-certificate">
-          <header><strong>{{ detailLabResult.lab }}</strong><span>Certificate of Analysis</span></header>
-          <div class="pv-cert-grid">
-            <span>Client <strong>{{ detailLabResult.vendor }}</strong></span><span>Analysis Date <strong>{{ detailLabResult.date }}</strong></span>
-            <span>Sample <strong>{{ detailLabResult.name }}</strong></span><span>Report ID <strong>{{ detailLabResult.reportId }}</strong></span>
-            <span>Batch <strong>{{ detailLabResult.batch }}</strong></span><span>Receipt Date <strong>{{ detailLabResult.receivedDate }}</strong></span>
-          </div>
-          <table>
-            <thead><tr><th>Test</th><th>Result</th></tr></thead>
-            <tbody>
-              <tr v-if="detailLabResult.identityResult"><td>Identity</td><td>{{ detailLabResult.identityResult }}</td></tr>
-              <tr v-if="detailLabResult.purity"><td>Purity</td><td class="pv-green-text">{{ detailLabResult.purity }}</td></tr>
-              <tr v-if="detailLabResult.waterContent"><td>Water Content</td><td>{{ detailLabResult.waterContent }}</td></tr>
-              <tr v-if="detailLabResult.peptideContent"><td>Peptide Content</td><td>{{ detailLabResult.peptideContent }}</td></tr>
-            </tbody>
-          </table>
-        </article>
-        <article v-if="labDetailTab === 'raw'" class="pv-panel"><h2>Raw Data</h2><dl class="pv-data-list"><div><dt>Identity</dt><dd>{{ detailLabResult.identityResult || 'Not provided' }}</dd></div><div><dt>Purity</dt><dd>{{ detailLabResult.purity || 'Not provided' }}</dd></div><div><dt>Water Content</dt><dd>{{ detailLabResult.waterContent || 'Not provided' }}</dd></div><div><dt>Peptide Content</dt><dd>{{ detailLabResult.peptideContent || 'Not provided' }}</dd></div><div><dt>COA Filename</dt><dd>{{ detailLabResult.coaFilename || 'Not attached' }}</dd></div></dl></article>
-        <article v-if="labDetailTab === 'batch'" class="pv-panel"><h2>Batch History</h2><p class="pv-muted">Showing the submitted report for batch {{ detailLabResult.batch }}. Use the lab results search to find other records for this vendor, compound, or lab.</p><div class="pv-action-row"><button class="pv-small-button" @click="findCurrentBatchResults">Find this batch</button><button class="pv-small-button" @click="findCurrentVendorLabResults">Find vendor results</button></div></article>
-        <article v-if="labDetailTab === 'overview'" class="pv-panel"><h2>Additional Notes</h2><p>{{ detailLabResult.notes }}</p></article>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel">
-          <h2>Summary</h2>
-          <div class="pv-ring" :style="detailLabRingStyle"><strong>{{ detailLabResult.purity }}</strong><span>Purity</span></div>
-          <dl class="pv-data-list"><div><dt>Identity</dt><dd>{{ detailLabResult.identityResult }}</dd></div><div><dt>Purity</dt><dd>{{ detailLabResult.purity }}</dd></div><div><dt>Water Content</dt><dd>{{ detailLabResult.waterContent }}</dd></div><div><dt>Peptide Content</dt><dd>{{ detailLabResult.peptideContent }}</dd></div></dl>
-          <div class="pv-pass-box"><PvIcon name="shield" /> Overall Result <strong>{{ detailLabResult.overallResult }}</strong></div>
-        </article>
-        <article class="pv-panel"><h2>Compound Details</h2><dl class="pv-data-list"><div><dt>Compound Name</dt><dd>{{ detailLabResult.name }}</dd></div><div><dt>Type</dt><dd>{{ detailLabResult.type }}</dd></div><div><dt>Use Case</dt><dd>{{ detailLabResult.use }}</dd></div></dl></article>
-        <article class="pv-panel"><h2>About This Report</h2><p class="pv-muted">This report is provided by {{ detailLabResult.lab }} for independent testing and analysis. All testing is performed using validated analytical methods.</p><ul class="pv-check-list"><li>ISO 17025 Accredited Lab</li><li>Community Funded</li><li>Independent & Unbiased</li><li>Batch Specific Results</li></ul></article>
-      </aside>
-    </div>
-    <div v-else class="pv-empty-route">
-      <h1>Lab result not found</h1>
-      <p>This report has not been published or does not exist.</p>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'vendorReviews'" class="pv-page">
-    <div class="pv-content-grid pv-content-grid--vendor-index">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div><h1>Vendors</h1><p>Browse vendor profiles, compare community feedback, and write a review from the vendor row.</p></div>
-        </header>
-        <article class="pv-panel">
-          <div class="pv-toolbar"><div class="pv-tabs"><button :class="{ active: vendorStatusFilter === '' }" @click="setVendorStatusFilter('')">All Vendors</button><button v-for="status in vendorFilterOptions.statuses" :key="status.slug" :class="{ active: vendorStatusFilter === status.slug }" @click="setVendorStatusFilter(status.slug)">{{ status.name }}</button></div><button class="pv-small-button" type="button" @click="cycleVendorSort">{{ vendorSortLabel }} <PvIcon name="chevron" /></button><button class="pv-icon-button" @click="loadVendors"><PvIcon name="filter" /></button></div>
-          <form class="pv-inline-search" @submit.prevent="loadVendors">
-            <label class="pv-input-search">
-              <input v-model="vendorSearch" placeholder="Search vendors..." type="search">
-              <PvIcon name="search" />
-            </label>
-            <button class="pv-small-button" type="submit">Search</button>
-            <button v-if="vendorHasActiveFilters" class="pv-small-button" type="button" @click="clearVendorFilters">Clear</button>
-          </form>
-          <p v-if="vendorStatusMessage" class="pv-alert pv-alert--compact">{{ vendorStatusMessage }}</p>
-          <div v-if="vendorsLoaded && vendors.length === 0" class="pv-empty-inline"><PvIcon name="star" /><strong>{{ authStore.isAuthenticated ? 'No vendors found' : 'Sign in to browse vendors' }}</strong><p>{{ authStore.isAuthenticated ? 'Check back later for new vendors.' : 'Create an account or sign in to browse community-reviewed vendors, compare ratings, and read reviews.' }}</p><router-link v-if="!authStore.isAuthenticated" to="/register" class="pv-primary-button">Create Account</router-link></div>
-          <article v-for="vendor in vendors" :key="vendor.slug" class="vendor-card">
-            <router-link :to="vendor.href" class="vendor-arrow" :aria-label="`Open ${vendor.name}`"><PvIcon name="chevron" /></router-link>
-            <div class="vendor-top">
-              <span v-if="vendor.imageUrl" class="vendor-logo"><img :src="vendor.imageUrl" :alt="vendor.name"></span>
-              <span v-else class="vendor-logo vendor-logo--letter">{{ vendor.logoText }}</span>
-              <div class="vendor-info">
-                <h3>{{ vendor.name }} <span v-if="vendor.tier === 'premium'" class="pv-tier-badge pv-tier-badge--premium">Premium</span></h3>
-                <span class="trusted"><PvIcon name="check" /> {{ vendor.status }}</span>
-                <span v-if="vendor.country" class="country-badge">{{ countryFlag(vendor.country) }} {{ vendor.country }}</span>
-                <p class="vendor-meta"><PvIcon name="star" /> {{ vendor.reviews }} {{ vendor.reviews === 1 ? 'review' : 'reviews' }} <span>Member since {{ vendor.since || 'recently' }}</span></p>
-              </div>
-            </div>
-            <div class="vendor-tags">
-              <span v-for="chip in vendor.chips" :key="chip">{{ chip }}</span>
-            </div>
-            <div class="vendor-stats">
-              <div>
-                <strong><PvIcon name="star" /> {{ vendor.rating || '0.0' }} <small>/ 5</small></strong>
-                <span>Overall Rating</span>
-              </div>
-              <div>
-                <strong><PvIcon name="cart" /> {{ vendor.buyAgain || '0%' }}</strong>
-                <span>Would buy again</span>
-              </div>
-            </div>
-            <div class="vendor-actions">
-              <router-link :to="vendor.href" class="secondary"><PvIcon name="eye" /> View Vendor</router-link>
-              <router-link :to="`${vendor.href}/review`" class="primary"><PvIcon name="edit" /> Write Review</router-link>
-            </div>
-          </article>
-          <PaginationBlock :meta="vendorPagination" @page="setVendorPage" />
-        </article>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel"><h2>Overall Rating</h2><div class="pv-big-rating">{{ vendorStats.average_rating }} <small>/5</small> <span class="pv-stars">★★★★★</span></div><p class="pv-muted">Based on {{ formatCount(vendorStats.total_reviews) }} reviews</p></article>
-        <article class="pv-panel pv-filter-panel">
-          <header class="pv-panel-header"><h2>Filter Vendors</h2><button class="pv-text-button" type="button" @click="clearVendorFilters">Clear all</button></header>
-          <label class="pv-input-search">
-            <input v-model="vendorSearch" placeholder="Search vendors..." type="search" @keyup.enter="applyVendorFilters">
-            <PvIcon name="search" />
-          </label>
-          <label>Rating<select v-model="vendorRatingFilter"><option value="">All ratings</option><option v-for="rating in vendorFilterOptions.ratings" :key="rating" :value="String(rating)">{{ rating }}+ stars</option></select></label>
-          <label>Status<select v-model="vendorStatusFilter"><option value="">All statuses</option><option v-for="status in vendorFilterOptions.statuses" :key="status.slug" :value="status.slug">{{ status.name }}</option></select></label>
-          <label>Tag<select v-model="vendorTagFilter"><option value="">All tags</option><option v-for="tag in vendorFilterOptions.tags" :key="tag" :value="tag">{{ tag }}</option></select></label>
-          <button class="pv-primary-button pv-full" type="button" @click="applyVendorFilters">Apply Filters</button>
-        </article>
-        <article class="pv-panel"><header class="pv-panel-header"><h2>Top Vendors</h2><router-link to="/vendor-reviews" class="pv-purple-link">View all</router-link></header><div class="pv-ranked-list"><router-link v-for="(vendor, index) in topVendors" :key="vendor.name" :to="vendor.href" class="pv-ranked-row"><span class="pv-rank">{{ index + 1 }}</span><span class="pv-vendor-logo"><img v-if="vendor.imageUrl" :src="vendor.imageUrl" :alt="vendor.name"><template v-else>{{ vendor.logo }}</template></span><strong>{{ vendor.name }}</strong><span class="pv-green-text"><PvIcon name="star" /> {{ vendor.rating }}</span></router-link></div></article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'vendorPortal'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div>
-            <h1>Vendor Portal</h1>
-            <p>Manage your approved vendor listing and public contact details.</p>
-          </div>
-          <router-link v-if="apiMyVendor && apiMyVendor.publishStatus === 'published'" :to="apiMyVendor.href" class="pv-small-button">
-            View Public Profile <PvIcon name="chevron" />
-          </router-link>
-        </header>
-
-        <article v-if="!authStore.isAuthenticated" class="pv-panel pv-vendor-access-card">
-          <span class="pv-icon-tile"><PvIcon name="lock" /></span>
-          <div>
-            <h2>Sign in for vendor access</h2>
-            <p class="pv-muted">Use an account to request vendor access, manage an approved profile, and maintain public product listings.</p>
-          </div>
-          <div class="pv-reply-login-actions">
-            <router-link :to="{ path: '/login', query: { redirect: route.fullPath } }" class="pv-primary-button">Sign In</router-link>
-            <router-link :to="{ path: '/register', query: { redirect: route.fullPath } }" class="pv-small-button">Register</router-link>
-          </div>
-        </article>
-
-        <article v-if="authStore.isAuthenticated && apiMyVendor" class="pv-panel pv-vendor-owner-card">
-          <span class="pv-logo-card" :class="apiMyVendor.class"><img v-if="apiMyVendor.imageUrl" :src="apiMyVendor.imageUrl" :alt="apiMyVendor.name"><template v-else>{{ apiMyVendor.logoText }}</template></span>
-          <span>
-            <strong>{{ vendorPortalAccessApproved ? `You control ${apiMyVendor.name}` : `${apiMyVendor.name} is locked` }}</strong>
-            <small>{{ apiMyVendor.publishStatus }} profile · {{ vendorPortalAccessApproved ? 'approved vendor' : 'vendor access disabled' }}</small>
-          </span>
-          <router-link v-if="apiMyVendor.publishStatus === 'published'" :to="apiMyVendor.href" class="pv-small-button">Open Profile</router-link>
-        </article>
-
-        <p v-if="authStore.isAuthenticated && vendorPortalStatusMessage" class="pv-alert pv-alert--compact">{{ vendorPortalStatusMessage }}</p>
-        <p v-if="authStore.isAuthenticated && vendorPortalFormError" class="pv-alert pv-alert--compact">{{ vendorPortalFormError }}</p>
-
-        <form v-if="authStore.isAuthenticated && vendorPortalAccessApproved" class="pv-form-card pv-vendor-portal-form" @submit.prevent="saveVendorProfile">
-          <header class="pv-panel-header">
-            <div>
-              <h2>{{ apiMyVendor ? 'Edit Vendor Profile' : 'Set Up Vendor Profile' }}</h2>
-              <p class="pv-muted">This information appears on your vendor review page for contact and support only.</p>
-            </div>
-            <span v-if="vendorPortalLoaded" class="pv-tag trusted">approved</span>
-          </header>
-
-          <div class="pv-two-col">
-            <label>
-               Vendor Name *
-               <input v-model="vendorPortalForm.name" required maxlength="160" placeholder="Public vendor name">
-             </label>
-           </div>
-          <label>
-            About
-            <textarea v-model="vendorPortalForm.description" maxlength="4000" rows="5" placeholder="Describe support expectations, service area, and public profile details."></textarea>
-          </label>
-          <label>
-            Tags
-            <input v-model="vendorPortalForm.tags" placeholder="Comma-separated tags, e.g. Domestic, Lab Tested">
-          </label>
-
-          <div class="pv-two-col">
-            <label>
-              Website
-              <input v-model="vendorPortalForm.website_url" type="url" maxlength="255" placeholder="https://example.com">
-            </label>
-            <div class="pv-upload-control">
-              <strong>Vendor Image</strong>
-              <div class="pv-image-upload-row">
-                <span class="pv-logo-card" :class="apiMyVendor?.class"><img v-if="vendorPortalForm.image_url" :src="assetUrl(vendorPortalForm.image_url)" alt="Vendor image preview"><template v-else>{{ apiMyVendor?.logoText ?? 'V' }}</template></span>
-                <span>
-                  <small>Upload a logo or product-safe vendor image up to 5 MB.</small>
-                  <input ref="vendorImageFileInput" type="file" accept="image/*" class="pv-sr-only" @change="uploadVendorImage">
-                  <button class="pv-small-button" type="button" :disabled="uploadingVendorImage" @click="vendorImageFileInput?.click()"><PvIcon name="upload" /> {{ uploadingVendorImage ? 'Uploading...' : 'Upload Image' }}</button>
-                </span>
-              </div>
-            </div>
-          </div>
-          <div class="pv-two-col">
-            <label>
-              Support URL
-              <input v-model="vendorPortalForm.support_url" type="url" maxlength="255" placeholder="https://example.com/support">
-            </label>
-            <label>
-              Contact Email
-              <input v-model="vendorPortalForm.contact_email" type="email" maxlength="255" placeholder="support@example.com">
-            </label>
-          </div>
-          <div class="pv-two-col">
-            <label>
-              Telegram
-              <input v-model="vendorPortalForm.contact_telegram" maxlength="120" placeholder="@handle">
-            </label>
-            <label>
-              Signal
-              <input v-model="vendorPortalForm.contact_signal" maxlength="120" placeholder="Signal username or number">
-            </label>
-          </div>
-          <div class="pv-two-col">
-            <label>
-              Discord
-              <input v-model="vendorPortalForm.contact_discord" maxlength="120" placeholder="Discord handle">
-            </label>
-          </div>
-          <label>
-            Response Policy
-            <textarea v-model="vendorPortalForm.response_policy" maxlength="1000" rows="3" placeholder="Expected response times, support hours, and preferred contact channel."></textarea>
-          </label>
-          <label>
-            Public Contact Notes
-            <textarea v-model="vendorPortalForm.public_contact_notes" maxlength="1000" rows="3" placeholder="Anything members should know before contacting you."></textarea>
-          </label>
-          <footer class="pv-form-actions">
-            <button class="pv-primary-button" type="submit" :disabled="savingVendorProfile">{{ savingVendorProfile ? 'Saving...' : apiMyVendor ? 'Save Profile' : 'Publish Profile' }}</button>
-            <router-link v-if="apiMyVendor?.publishStatus === 'published'" :to="apiMyVendor.href" class="pv-small-button">Preview</router-link>
-          </footer>
-        </form>
-
-        <article v-if="authStore.isAuthenticated && vendorPortalAccessApproved && apiMyVendor" class="pv-form-card pv-vendor-product-manager">
-          <header class="pv-panel-header">
-            <div>
-              <h2>Product Catalog</h2>
-              <p class="pv-muted">Add public product listings with prices. Members must contact you outside this site to purchase.</p>
-            </div>
-            <span class="pv-count">{{ apiMyVendor.productCount }} listed</span>
-          </header>
-          <p v-if="vendorProductStatusMessage" class="pv-alert pv-alert--compact">{{ vendorProductStatusMessage }}</p>
-          <p v-if="vendorProductFormError" class="pv-alert pv-alert--compact">{{ vendorProductFormError }}</p>
-          <form class="pv-product-form" @submit.prevent="saveVendorProduct">
-            <div class="pv-two-col">
-              <label>
-                Product Name *
-                <input v-model="vendorProductForm.name" required maxlength="160" placeholder="Retatrutide">
-              </label>
-              <label>
-                Product Slug
-                <input v-model="vendorProductForm.slug" maxlength="180" pattern="[a-zA-Z0-9-]+" placeholder="retatrutide">
-              </label>
-            </div>
-            <div class="pv-two-col">
-              <label>
-                Category
-                <input v-model="vendorProductForm.category" maxlength="80" placeholder="Peptide">
-              </label>
-              <label>
-                Strength
-                <input v-model="vendorProductForm.strength" maxlength="80" placeholder="10mg">
-              </label>
-            </div>
-            <div class="pv-two-col">
-              <label>
-                Package Size
-                <input v-model="vendorProductForm.package_size" maxlength="80" placeholder="1 vial">
-              </label>
-              <label>
-                Purity / Notes
-                <input v-model="vendorProductForm.purity_label" maxlength="80" placeholder=">98%">
-              </label>
-            </div>
-            <label>
-              Description
-              <textarea v-model="vendorProductForm.description" maxlength="2000" rows="3" placeholder="Short public product description and research-use notes."></textarea>
-            </label>
-            <div class="pv-two-col">
-              <label>
-                Price
-                <input v-model="vendorProductForm.price" inputmode="decimal" placeholder="85.00">
-              </label>
-              <label>
-                Currency
-                <input v-model="vendorProductForm.currency_code" maxlength="3" placeholder="USD">
-              </label>
-            </div>
-            <fieldset class="pv-vendor-fieldset">
-              <legend>Variants</legend>
-              <p class="pv-muted" style="font-size:12px">When variants exist, each variant has its own price. The main price field becomes optional.</p>
-              <div v-if="vendorProductForm.variants.length === 0" class="pv-muted" style="font-size:12px;padding:4px 0">No variants yet.</div>
-              <div v-for="(variant, vi) in vendorProductForm.variants" :key="vi" class="pv-two-col" style="align-items:end">
-                <label>
-                  Label
-                  <input v-model="variant.label" maxlength="80" placeholder="10mg">
-                </label>
-                <label>
-                  Price
-                  <input v-model="variant.price" inputmode="decimal" placeholder="50.00">
-                </label>
-                <label>
-                  Availability
-                  <select v-model="variant.availability">
-                    <option value="in_stock">In stock</option>
-                    <option value="limited">Limited</option>
-                    <option value="out_of_stock">Out of stock</option>
-                  </select>
-                </label>
-                <button type="button" class="pv-small-button pv-small-button--danger" @click="removeVendorProductVariant(vi)">Remove</button>
-              </div>
-              <button type="button" class="pv-small-button" @click="addVendorProductVariant">+ Add Variant</button>
-            </fieldset>
-            <div class="pv-two-col">
-              <label>
-                Availability
-                <select v-model="vendorProductForm.availability">
-                  <option value="in_stock">In stock</option>
-                  <option value="limited">Limited</option>
-                  <option value="out_of_stock">Out of stock</option>
-                </select>
-              </label>
-              <label>
-                Visibility
-                <select v-model="vendorProductForm.status">
-                  <option value="published">Published</option>
-                  <option value="hidden">Hidden</option>
-                </select>
-              </label>
-            </div>
-            <label>
-              Tags
-              <input v-model="vendorProductForm.tags" placeholder="Comma-separated tags, e.g. GLP-1, Research">
-            </label>
-            <div class="pv-two-col">
-              <label>
-                Sort Order
-                <input v-model="vendorProductForm.sort_order" inputmode="numeric" placeholder="0">
-              </label>
-              <div class="pv-upload-control">
-                <strong>Product Image</strong>
-                <div class="pv-image-upload-row">
-                  <span class="pv-product-image-preview">
-                    <img v-if="vendorProductImagePreview" :src="vendorProductImagePreview" alt="Product image preview">
-                    <PvIcon v-else name="flask" />
-                  </span>
-                  <span>
-                    <small>Upload a product-safe image up to 5 MB.</small>
-                    <input ref="vendorProductImageInput" type="file" accept="image/*" class="pv-sr-only" @change="selectVendorProductImage">
-                    <button class="pv-small-button" type="button" @click="vendorProductImageInput?.click()"><PvIcon name="upload" /> Choose Image</button>
-                  </span>
-                </div>
-              </div>
-            </div>
-            <footer class="pv-form-actions">
-              <button class="pv-primary-button" type="submit" :disabled="savingVendorProduct">{{ savingVendorProduct ? 'Saving...' : editingVendorProductId ? 'Update Product' : 'Add Product' }}</button>
-              <button class="pv-small-button" type="button" @click="resetVendorProductForm">Clear</button>
-            </footer>
-          </form>
-          <div class="pv-product-manage-list">
-            <p v-if="vendorProductManageList.length === 0" class="pv-muted">No products listed yet.</p>
-            <article v-for="product in vendorProductManageList" :key="product.id ?? product.slug" class="pv-product-manage-row">
-              <span class="pv-product-thumb"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span>
-              <span>
-                <strong>{{ product.name }}</strong>
-                <small>{{ product.category || 'Uncategorised' }} · {{ product.variants?.length ? product.variants.length + ' variants' : product.priceLabel || 'No price' }} · {{ product.availabilityLabel }} · {{ product.status }}</small>
-              </span>
-              <button class="pv-small-button" type="button" @click="editVendorProduct(product)">Edit</button>
-              <button class="pv-small-button pv-small-button--danger" type="button" @click="deleteVendorProduct(product)">Delete</button>
-            </article>
-          </div>
-        </article>
-
-        <article v-if="authStore.isAuthenticated && vendorPortalAccessApproved && apiMyVendor" class="pv-form-card pv-vendor-document-manager">
-          <header class="pv-panel-header">
-            <div>
-              <h2>Documents</h2>
-              <p class="pv-muted">Upload COAs, quality reports, and other supporting documents. These will be publicly visible once published.</p>
-            </div>
-            <span class="pv-count">{{ apiMyVendor.documents.length }} uploaded</span>
-          </header>
-          <p v-if="vendorDocumentStatusMessage" class="pv-alert pv-alert--compact">{{ vendorDocumentStatusMessage }}</p>
-          <p v-if="vendorDocumentFormError" class="pv-alert pv-alert--compact">{{ vendorDocumentFormError }}</p>
-          <form class="pv-document-form" @submit.prevent="saveVendorDocument">
-            <div class="pv-two-col">
-              <label>
-                Document Title *
-                <input v-model="vendorDocumentForm.title" required maxlength="200" placeholder="Certificate of Analysis - Batch 001">
-              </label>
-              <label>
-                Category
-                <select v-model="vendorDocumentForm.category">
-                  <option value="">Select category</option>
-                  <option value="coa">Certificate of Analysis (COA)</option>
-                  <option value="quality">Quality Report</option>
-                  <option value="other">Other</option>
-                </select>
-              </label>
-            </div>
-            <label>
-              Description
-              <textarea v-model="vendorDocumentForm.description" maxlength="1000" rows="2" placeholder="Brief description of the document..."></textarea>
-            </label>
-            <label>
-              File (PDF or image, max 10 MB) *
-              <input ref="vendorDocumentFileInput" type="file" accept=".pdf,image/*" class="pv-sr-only" @change="selectVendorDocumentFile">
-              <div class="pv-upload-box" role="button" @click="vendorDocumentFileInput?.click()">
-                <PvIcon name="upload" />
-                <span>{{ vendorDocumentFilePreview ? vendorDocumentFilePreview : 'Click to choose a file' }}</span>
-                <small>PDF, PNG, JPG, WebP up to 10 MB</small>
-              </div>
-            </label>
-            <footer class="pv-form-actions">
-              <button class="pv-primary-button" type="submit" :disabled="savingVendorDocument">
-                {{ savingVendorDocument ? 'Uploading...' : 'Upload Document' }}
-              </button>
-              <button class="pv-small-button" type="button" @click="resetVendorDocumentForm">Clear</button>
-            </footer>
-          </form>
-          <div class="pv-doc-manage-list">
-            <p v-if="apiMyVendor.documents.length === 0" class="pv-muted">No documents uploaded yet.</p>
-            <article v-for="doc in documentManageList" :key="doc.id" class="pv-doc-manage-row">
-              <span class="pv-doc-icon">
-                <PvIcon :name="doc.fileType === 'image' ? 'image' : 'document'" />
-              </span>
-              <span>
-                <strong>{{ doc.title }}</strong>
-                <small>
-                  {{ doc.category ? doc.category.toUpperCase() + ' · ' : '' }}
-                  {{ doc.fileType.toUpperCase() }}
-                  {{ doc.description ? ' · ' + doc.description : '' }}
-                </small>
-              </span>
-              <a :href="doc.url" target="_blank" rel="noreferrer" class="pv-small-button">View</a>
-              <button class="pv-small-button pv-small-button--danger" type="button" @click="deleteVendorDocument(doc)">Delete</button>
-            </article>
-          </div>
-        </article>
-
-         <article v-else-if="authStore.isAuthenticated && !vendorPortalAccessApproved" class="pv-panel">
-           <h2>Vendor Access Required</h2>
-           <p class="pv-muted">Read the <router-link to="/discussions/vendor-application-process" class="pv-purple-link">Vendor Application Process</router-link> first, then follow the steps below.</p>
-           <dl class="pv-data-list">
-             <div><dt>Account</dt><dd>{{ authStore.user?.username || authStore.user?.name || 'Current user' }}</dd></div>
-             <div><dt>Vendor Access</dt><dd>Not approved</dd></div>
-             <div v-if="apiMyVendor"><dt>Existing Profile</dt><dd>{{ apiMyVendor.publishStatus }}</dd></div>
-           </dl>
-            <button
-              v-if="!vendorAccessRequested"
-              class="pv-primary-button pv-full"
-              style="margin-top:12px"
-              @click="requestVendorAccess"
-            >
-              Request Vendor Access
-            </button>
-            <button
-              v-else
-              class="pv-primary-button pv-full"
-              style="margin-top:12px"
-              disabled
-            >
-              <PvIcon name="check" /> Requested
-            </button>
-           <a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-small-button pv-full" style="margin-top:8px"><PvIcon name="send" /> Contact Admin on Telegram</a>
-         </article>
-      </main>
-
-      <aside class="pv-stack">
-        <article class="pv-panel">
-          <h2>Vendor Access</h2>
-          <dl class="pv-data-list">
-            <div><dt>Status</dt><dd>{{ !authStore.isAuthenticated ? 'Sign in required' : vendorPortalAccessApproved ? 'Approved' : 'Not approved' }}</dd></div>
-            <div><dt>Profile</dt><dd>{{ !authStore.isAuthenticated ? 'Account required' : apiMyVendor ? apiMyVendor.publishStatus : 'Not created' }}</dd></div>
-          </dl>
-          <button v-if="authStore.user?.roles?.includes('admin') && !vendorPortalAccessApproved" class="pv-primary-button pv-full" style="margin-top:12px" @click="approveVendorAccess">Approve Vendor Access</button>
-        </article>
-
-        <article class="pv-panel">
-          <h2>What Vendors Can Control</h2>
-          <ul class="pv-check-list">
-            <li>Approved vendors can edit public profile text and tags</li>
-            <li>Approved vendors can maintain support links and contact channels</li>
-            <li>Vendor images, websites, and support links are public</li>
-            <li>No sales, checkout, payments, or order handling</li>
-          </ul>
-        </article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'vendorDetail' || page === 'reviewModal'" class="pv-page">
-    <template v-if="showUpgradePrompt && detailVendor?.tier === 'premium'">
-      <div class="pv-upgrade-overlay">
-        <div class="pv-upgrade-card">
-          <span class="pv-upgrade-icon"><PvIcon name="shield" /></span>
-          <h2>Premium Feature</h2>
-          <p>Upgrade to Premium to read and write vendor reviews with ratings, photos, and detailed feedback.</p>
-          <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
-        </div>
-      </div>
-    </template>
-    <div v-else-if="detailVendor" class="pv-content-grid pv-content-grid--vendor-detail">
-      <main class="pv-stack">
-        <router-link to="/vendor-reviews" class="op-back">← Back to Vendors</router-link>
-        <article class="vendor-card vendor-card--hero">
-          <div v-if="detailVendor.imageUrl" class="vendor-hero-bg" :style="{ backgroundImage: `url(${detailVendor.imageUrl})` }"></div>
-          <div class="vendor-top">
-              <span v-if="detailVendor.imageUrl" class="vendor-logo"><img :src="detailVendor.imageUrl" :alt="detailVendor.name"></span>
-              <span v-else class="vendor-logo vendor-logo--letter">{{ detailVendor.logoText }}</span>
-              <div class="vendor-info">
-                <h3>{{ detailVendor.name }} <span v-if="detailVendor.tier === 'premium'" class="pv-tier-badge pv-tier-badge--premium">Premium</span></h3>
-              <span class="trusted"><PvIcon name="check" /> {{ detailVendor.status }}</span>
-              <span v-if="detailVendor.country" class="country-badge">{{ countryFlag(detailVendor.country) }} {{ detailVendor.country }}</span>
-              <p class="vendor-meta"><PvIcon name="star" /> {{ detailVendor.rating }} / 5 <span>{{ detailVendor.reviews }} {{ detailVendor.reviews === 1 ? 'review' : 'reviews' }}</span><span>Member since {{ detailVendor.since || 'recently' }}</span></p>
-              <div class="vendor-tags" style="margin-top:8px">
-                <span v-for="chip in detailVendor.chips" :key="chip">{{ chip }}</span>
-              </div>
-            </div>
-          </div>
-          <div class="vendor-actions" style="margin-top:16px">
-            <router-link :to="`${detailVendor.href}/review`" class="primary"><PvIcon name="edit" /> Write Review</router-link>
-            <button v-if="hasVendorContact(detailVendor)" class="secondary" @click="showVendorContactSection">Contact</button>
-            <router-link v-if="detailVendor.isOwnedByViewer" to="/vendor-portal" class="secondary">Manage</router-link>
-            <a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="secondary">Website</a>
-          </div>
-        </article>
-        <div class="pv-tabs pv-tabs--line"><button :class="{ active: vendorDetailTab === 'overview' }" @click="vendorDetailTab = 'overview'">Overview</button><button :class="{ active: vendorDetailTab === 'reviews' }" @click="vendorDetailTab = 'reviews'">Reviews ({{ detailVendor.reviews }})</button><button :class="{ active: vendorDetailTab === 'products' }" @click="vendorDetailTab = 'products'">Products ({{ detailVendor.productCount }})</button><button :class="{ active: vendorDetailTab === 'documents' }" @click="vendorDetailTab = 'documents'">Documents ({{ detailVendor.documents.length }})</button><button :class="{ active: vendorDetailTab === 'about' }" @click="vendorDetailTab = 'about'">About</button></div>
-        <article v-if="vendorDetailTab === 'overview'" class="pv-panel pv-review-summary">
-          <div class="pv-score-block"><strong>{{ detailVendor.rating }}</strong><span class="pv-stars">★★★★★</span><small>{{ detailVendor.reviews }} reviews</small></div>
-          <div class="pv-bars pv-bars--wide"><span v-for="row in detailVendor.ratingDistribution" :key="row.rating">{{ row.rating }} stars <b :style="{ '--w': `${row.percent}%` }"></b><em>{{ row.percent }}% ({{ row.count }})</em></span></div>
-          <div class="pv-rate-box"><h3>Rate this vendor</h3><p>Share your experience to help others in the community.</p><div class="pv-stars pv-stars--big">☆☆☆☆☆</div><router-link :to="`${detailVendor.href}/review`" class="pv-primary-button pv-full">Write a Review</router-link></div>
-        </article>
-        <template v-if="vendorDetailTab === 'products'">
-          <article class="pv-panel pv-product-catalog-panel">
-            <header class="pv-panel-header">
-              <div>
-                <h2>Product Catalog</h2>
-                <p class="pv-muted">{{ detailVendor.productCount }} products listed. Purchases happen off-site through vendor contact only.</p>
-              </div>
-              <button v-if="hasVendorContact(detailVendor)" class="pv-small-button" type="button" @click="showVendorContactSection"><PvIcon name="mail" /> Contact Vendor</button>
-            </header>
-            <div class="pv-toolbar pv-product-toolbar">
-              <label class="pv-input-search">
-                <input v-model="vendorProductSearch" placeholder="Search products..." type="search">
-                <PvIcon name="search" />
-              </label>
-              <label class="pv-compact-select">Category<select v-model="vendorProductCategoryFilter"><option value="">All Categories</option><option v-for="category in vendorProductCategoryOptions" :key="category" :value="category">{{ category }}</option></select></label>
-              <label class="pv-compact-select">Availability<select v-model="vendorProductAvailabilityFilter"><option value="">All Availability</option><option value="in_stock">In stock</option><option value="limited">Limited</option><option value="out_of_stock">Out of stock</option></select></label>
-              <label class="pv-compact-select">Sort<select v-model="vendorProductSort"><option value="featured">Featured</option><option value="price-low">Price low to high</option><option value="price-high">Price high to low</option><option value="name">Name A-Z</option></select></label>
-            </div>
-            <p v-if="actionStatusMessage" class="pv-alert pv-alert--compact">{{ actionStatusMessage }}</p>
-            <p v-if="filteredVendorProducts.length === 0" class="pv-muted">No public products match these filters.</p>
-            <div class="pv-product-grid">
-              <article v-for="product in filteredVendorProducts" :key="product.id ?? product.slug" class="pv-product-card">
-                <header class="pv-product-card-top">
-                  <span class="pv-product-stock" :class="product.availability === 'out_of_stock' ? 'avoid' : product.availability === 'limited' ? 'caution' : 'trusted'"><i></i>{{ product.availabilityLabel }}</span>
-                  <button class="pv-product-save-button" :class="{ active: isBookmarkedProduct(product) }" type="button" :aria-label="isBookmarkedProduct(product) ? 'Remove product bookmark' : 'Bookmark product'" @click="toggleProductBookmark(product)">
-                    <PvIcon name="bookmark" />
-                  </button>
-                </header>
-                <div class="pv-product-card-body">
-                  <span class="pv-product-card-image"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span>
-                  <div class="pv-product-card-info">
-                    <span class="pv-product-kind">{{ product.category || 'Product' }}</span>
-                    <h3>{{ product.name }}</h3>
-                    <div class="pv-product-specs">
-                      <span><PvIcon name="flask" /><strong>{{ product.strength || 'Ask' }}</strong><small>Strength</small></span>
-                      <span><PvIcon name="box" /><strong>{{ product.packageSize || 'Ask' }}</strong><small>Quantity</small></span>
-                      <span><PvIcon name="tag" /><strong>{{ product.category || 'Product' }}</strong><small>Type</small></span>
-                    </div>
-                    <p v-if="product.description" class="pv-product-description">{{ product.description }}</p>
-                    <div class="pv-product-variant-tiles">
-                      <span v-for="(variant, index) in product.variants" :key="`${variant.label}-${index}`" :class="{ active: index === 0 }" :title="`${variant.label} ${variantPrice(variant)}`">
-                        <strong>{{ variant.label }}</strong>
-                        <em>{{ variantPrice(variant) }}</em>
-                      </span>
-                      <span v-if="!product.variants.length" class="active">
-                        <strong>{{ product.strength || product.packageSize || 'Listing' }}</strong>
-                        <em>{{ product.priceLabel || 'Contact for price' }}</em>
-                      </span>
-                    </div>
-                    <span class="pv-product-review-note"><PvIcon name="star" /><template v-if="product.reviews > 0">{{ product.ratingLabel }} / 5 · {{ product.reviews }} {{ product.reviews === 1 ? 'review' : 'reviews' }}</template><template v-else>No product reviews yet</template></span>
-                    <span v-if="product.tags.length" class="pv-chip-row pv-product-chip-row"><span v-for="tag in product.tags.slice(0, 4)" :key="tag">{{ tag }}</span></span>
-                  </div>
-                </div>
-                <footer class="pv-product-card-footer">
-                  <strong>{{ productCatalogPriceLabel(product) }}</strong>
-                  <span><PvIcon name="shield" /> Verified listing</span>
-                  <button class="pv-primary-button" type="button" @click="showVendorContactSection"><PvIcon name="mail" /> Contact Vendor</button>
-                </footer>
-                <div class="pv-product-trust-strip">
-                  <span><PvIcon name="mail" /><strong>Direct Contact</strong><small>No on-site checkout</small></span>
-                  <span><PvIcon name="shield" /><strong>Trusted Vendor</strong><small>Reviewed profile</small></span>
-                  <span><PvIcon name="lock" /><strong>Research Use Only</strong><small>Not for human use</small></span>
-                </div>
-              </article>
-            </div>
-          </article>
-          <article class="pv-alert pv-alert--compact"><PvIcon name="shield" /> Product listings are informational only. This site does not process orders, carts, payments, shipping, refunds, or transactions.</article>
-        </template>
-        <template v-if="vendorDetailTab === 'documents'">
-          <article class="pv-panel pv-doc-list-panel">
-            <header class="pv-panel-header">
-              <div>
-                <h2>Documents</h2>
-                <p class="pv-muted">Certificates of analysis, quality reports, and other supporting documents from {{ detailVendor.name }}.</p>
-              </div>
-            </header>
-            <p v-if="detailVendor.documents.length === 0" class="pv-muted">No documents have been published yet.</p>
-            <div v-else class="pv-doc-list">
-              <article v-for="doc in detailVendor.documents" :key="doc.id" class="pv-doc-row">
-                <span class="pv-doc-type-icon">
-                  <PvIcon :name="doc.fileType === 'image' ? 'image' : 'document'" />
-                </span>
-                <div class="pv-doc-info">
-                  <strong>{{ doc.title }}</strong>
-                  <span class="pv-doc-meta">
-                    <span v-if="doc.category" class="pv-tag" :class="doc.category === 'coa' ? 'trusted' : 'caution'">{{ doc.category.toUpperCase() }}</span>
-                    <span>{{ doc.fileType.toUpperCase() }}</span>
-                    <span v-if="doc.description">{{ doc.description }}</span>
-                  </span>
-                </div>
-                <a :href="doc.url" target="_blank" rel="noreferrer" class="pv-primary-button">
-                  <PvIcon name="download" /> Download
-                </a>
-              </article>
-            </div>
-          </article>
-        </template>
-        <template v-if="vendorDetailTab === 'reviews'">
-          <div class="pv-toolbar pv-vendor-review-toolbar">
-            <label class="pv-compact-select">Rating<select v-model="vendorReviewRatingFilter"><option value="">All Ratings</option><option v-for="rating in [5, 4, 3, 2, 1]" :key="rating" :value="String(rating)">{{ rating }} stars</option></select></label>
-            <label class="pv-compact-select">Product<select v-model="vendorReviewProductFilter"><option value="">All Products</option><option v-for="product in vendorReviewProductOptions" :key="product" :value="product">{{ product }}</option></select></label>
-            <label class="pv-compact-select">When<select v-model="vendorReviewTimeFilter"><option value="all">All Time</option><option value="recent">Recent First</option></select></label>
-            <span class="pv-flex-spacer"></span>
-            <button class="pv-small-button" type="button" @click="toggleVendorReviewSort">{{ vendorReviewSortLabel }} <PvIcon name="chevron" /></button>
-          </div>
-          <p v-if="vendorReviewStatusMessage" class="pv-alert pv-alert--compact">{{ vendorReviewStatusMessage }}</p>
-          <p v-if="reviews.length === 0" class="pv-muted">No published reviews yet.</p>
-          <article v-for="review in reviews" :key="review.id ?? review.author" class="pv-review-row">
-            <span class="pv-avatar" :class="review.color">{{ review.initial }}</span>
-            <div>
-              <div class="pv-reply-head"><strong>{{ review.author }}</strong><span class="pv-tag" :class="review.verifiedBuyer ? 'trusted' : 'caution'">{{ review.verifiedBuyer ? 'Verified Buyer' : 'Community Review' }}</span><span>{{ review.date }}</span></div>
-              <span class="pv-stars">★★★★★ <em>{{ review.rating }}/5</em></span>
-              <h3>{{ review.title }}</h3>
-              <p>{{ review.text }}</p>
-              <span class="pv-chip-row"><span v-for="chip in review.chips" :key="chip">{{ chip }}</span></span>
-              <div v-if="review.photoUrls.length" class="pv-review-photo-grid">
-                <a v-for="photo in review.photoUrls" :key="photo" :href="photo" target="_blank" rel="noreferrer">
-                  <img :src="photo" alt="Review photo">
-                </a>
-              </div>
-              <div v-if="review.vendorResponse" class="pv-vendor-response">
-                <strong>Vendor Response</strong>
-                <p>{{ review.vendorResponse }}</p>
-                <small v-if="review.respondedAt">Responded {{ formatDate(review.respondedAt) }}</small>
-              </div>
-              <div v-if="detailVendor?.isOwnedByViewer && !review.vendorResponse && respondingReviewId !== review.id" style="margin-top:8px">
-                <button class="pv-small-button" type="button" @click="respondingReviewId = review.id; reviewResponseText = ''">Respond</button>
-              </div>
-              <div v-if="respondingReviewId === review.id" class="pv-vendor-respond-form">
-                <textarea v-model="reviewResponseText" maxlength="2000" rows="3" placeholder="Write your public response..." class="pv-vendor-response-textarea"></textarea>
-                <div style="display:flex;gap:6px;margin-top:6px">
-                  <button class="pv-primary-button" :disabled="submittingReviewResponse" @click="respondToReview(review)">{{ submittingReviewResponse ? 'Posting...' : 'Submit Response' }}</button>
-                  <button class="pv-small-button" type="button" @click="cancelVendorResponse">Cancel</button>
-                </div>
-              </div>
-            </div>
-            <button class="pv-small-button" :disabled="markingReviewHelpful === review.id" @click="markReviewHelpful(review)"><PvIcon name="thumbs" /> Helpful ({{ review.helpful }})</button>
-          </article>
-        </template>
-        <article v-if="vendorDetailTab === 'about'" class="pv-panel">
-          <h2>About {{ detailVendor.name }}</h2>
-          <p class="pv-muted">{{ detailVendor.description }}</p>
-          <dl class="pv-data-list">
-            <div><dt>Status</dt><dd><span class="pv-tag" :class="detailVendor.statusClass">{{ detailVendor.status }}</span></dd></div>
-            <div><dt>Member Since</dt><dd>{{ detailVendor.since }}</dd></div>
-            <div><dt>Last Active</dt><dd>{{ detailVendor.lastActive }}</dd></div>
-            <div><dt>Response Rate</dt><dd>{{ detailVendor.responseRate }}</dd></div>
-            <div><dt>Average Response</dt><dd>{{ detailVendor.avgResponseTime }}</dd></div>
-          </dl>
-          <div v-if="hasVendorContact(detailVendor)" class="pv-contact-list">
-            <a v-for="link in detailVendorContactLinks" :key="`${link.label}-${link.value}`" :href="link.href" target="_blank" rel="noreferrer" class="pv-contact-row">
-              <PvIcon :name="link.icon" />
-              <span><strong>{{ link.label }}</strong><small>{{ link.value }}</small></span>
-              <small class="pv-open-link">Open</small>
-            </a>
-            <p v-if="detailVendor.contact.responsePolicy" class="pv-muted"><strong>Response policy:</strong> {{ detailVendor.contact.responsePolicy }}</p>
-            <p v-if="detailVendor.contact.publicNotes" class="pv-muted">{{ detailVendor.contact.publicNotes }}</p>
-          </div>
-          <a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a>
-        </article>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel"><h2>Vendor Summary</h2><dl class="pv-data-list"><div><dt>Total Reviews</dt><dd>{{ detailVendor.reviews }}</dd></div><div><dt>Average Rating</dt><dd><span class="pv-stars">★</span> {{ detailVendor.rating }} / 5</dd></div><div><dt>Would Buy Again</dt><dd>{{ detailVendor.buyAgain }}</dd></div><div><dt>Response Rate</dt><dd>{{ detailVendor.responseRate }}</dd></div><div><dt>Avg. Response Time</dt><dd>{{ detailVendor.avgResponseTime }}</dd></div></dl></article>
-        <article v-if="hasVendorContact(detailVendor)" class="pv-panel">
-          <h2>Contact & Support</h2>
-          <div class="pv-contact-list">
-            <a v-for="link in detailVendorContactLinks" :key="`${link.label}-sidebar-${link.value}`" :href="link.href" target="_blank" rel="noreferrer" class="pv-contact-row">
-              <PvIcon :name="link.icon" />
-              <span><strong>{{ link.label }}</strong><small>{{ link.value }}</small></span>
-              <small class="pv-open-link">Open</small>
-            </a>
-          </div>
-          <p v-if="detailVendor.contact.responsePolicy" class="pv-muted">{{ detailVendor.contact.responsePolicy }}</p>
-          <p v-if="detailVendor.contact.publicNotes" class="pv-muted">{{ detailVendor.contact.publicNotes }}</p>
-          <p class="pv-muted">Vendor contact details are for support and profile verification context only.</p>
-        </article>
-        <article class="pv-panel"><h2>Top Products</h2><div class="pv-ranked-list"><span v-for="product in detailVendor.topProducts" :key="product.slug || product.name" class="pv-ranked-row"><span class="pv-vendor-logo"><img v-if="product.imageUrl" :src="product.imageUrl" :alt="product.name"><PvIcon v-else name="flask" /></span><strong>{{ product.name }}</strong><span>{{ product.priceLabel || product.availabilityLabel }}</span></span></div><button class="pv-small-button pv-full" @click="vendorDetailTab = 'products'">View all products</button></article>
-        <article class="pv-panel"><h2>Active Discussions</h2><div class="pv-mini-list"><router-link v-for="topic in discussions.slice(0, 3)" :key="topic.title" :to="topic.href" class="pv-mini-row"><PvIcon name="discussions" /><span><strong>{{ topic.title }}</strong></span><span>{{ topic.replies }}</span></router-link></div><router-link class="pv-small-button pv-full" to="/discussions">View all discussions</router-link></article>
-        <article class="pv-panel"><h2>About {{ detailVendor.name }}</h2><p class="pv-muted">{{ detailVendor.description }}</p><a v-if="detailVendor.websiteUrl" :href="detailVendor.websiteUrl" target="_blank" rel="noreferrer" class="pv-small-button">Visit Website <PvIcon name="share" /></a></article>
-      </aside>
-    </div>
-    <div v-else class="pv-empty-route">
-      <h1>Vendor not found</h1>
-      <p>This vendor has not been published or does not exist.</p>
-    </div>
-    <div v-if="page === 'reviewModal' && detailVendor && detailVendor.tier !== 'premium'" class="pv-modal-backdrop">
-      <form v-if="detailVendor" class="pv-modal" @submit.prevent="submitVendorReview">
-        <header class="pv-panel-header"><div><h2>Write a Review</h2><p class="pv-muted">Reviewing {{ detailVendor.name }}. Share your experience to help others in the community.</p></div><router-link :to="detailVendor.href" class="pv-icon-button pv-icon-button--static"><PvIcon name="close" /></router-link></header>
-        <p v-if="vendorReviewFormError" class="pv-alert pv-alert--compact">{{ vendorReviewFormError }}</p>
-         <label>Overall Rating *
-           <div class="pv-star-rating">
-             <button type="button" v-for="star in 5" :key="star" :class="{ active: star <= newVendorReview.rating }" @click="newVendorReview.rating = star">★</button>
-           </div>
-         </label>
-        <label>Review Title *<input v-model="newVendorReview.title" required maxlength="160" placeholder="Summarise your experience in a few words..."><small>{{ newVendorReview.title.length }}/160</small></label>
-        <label>Your Review *
-  <div class="pv-textarea-with-emoji">
-    <textarea v-model="newVendorReview.body" required maxlength="4000" placeholder="Tell others about your experience with this vendor. Include details about product quality, shipping, customer service, packaging, etc."></textarea>
-    <EmojiPicker v-model="newVendorReview.body" />
-  </div>
-  <small>{{ newVendorReview.body.length }}/4000</small></label>
-         <div><strong>Would you buy from this vendor again?</strong><div class="pv-choice-row"><button type="button" :class="{ active: newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = true"><PvIcon name="thumbs" /> Yes, I would</button><button type="button" :class="{ active: !newVendorReview.would_buy_again }" @click="newVendorReview.would_buy_again = false">No, I wouldn&apos;t</button></div></div>
-         <label>Review Photos *
-           <p class="pv-muted" style="font-size:13px">You must include a photo of the received product with a handwritten note showing your <strong>username</strong> and the <strong>date received</strong>. Cover any personal info before uploading.</p>
-           <input ref="vendorReviewPhotoInput" type="file" accept="image/*" multiple class="pv-sr-only" @change="selectVendorReviewPhotos">
-           <button class="pv-upload-box" type="button" @click="vendorReviewPhotoInput?.click()"><PvIcon name="image" /> Click to upload photos<br><small>PNG, JPG up to 5MB each (min 1 photo required)</small></button>
-         </label>
-        <div v-if="vendorReviewPhotoPreviews.length" class="pv-upload-preview-grid">
-          <span v-for="(preview, index) in vendorReviewPhotoPreviews" :key="preview">
-            <img :src="preview" :alt="`Review photo ${index + 1}`">
-            <button type="button" aria-label="Remove photo" @click="removeVendorReviewPhoto(index)"><PvIcon name="close" /></button>
-          </span>
-        </div>
-        <footer><router-link :to="detailVendor.href" class="pv-small-button">Cancel</router-link><button class="pv-primary-button" type="submit" :disabled="submittingVendorReview">{{ submittingVendorReview ? 'Submitting...' : 'Submit Review' }}</button></footer>
-      </form>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'researchLibrary'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div><h1>Research Library</h1><p>Explore research, studies, and educational resources on peptides and performance compounds.</p></div>
-          <router-link v-if="canUseContentStudio" to="/research-library/new" class="pv-small-button"><PvIcon name="plus" /> Add Research</router-link>
-        </header>
-        <div class="pv-tabs"><button :class="{ active: activeResearchCategory === '' }" @click="activeResearchCategory = ''; loadResearchContent()">All</button><button v-for="category in contentCategories.research" :key="category.slug" :class="{ active: activeResearchCategory === category.slug }" @click="activeResearchCategory = category.slug; loadResearchContent()">{{ category.name }}</button></div>
-        <div class="pv-toolbar"><label class="pv-input-search"><input v-model="researchSearch" placeholder="Search articles, compounds, topics..." @input="loadResearchContent"><PvIcon name="search" /></label><button class="pv-small-button" @click="cycleResearchSort">{{ researchSortLabel }} <PvIcon name="chevron" /></button><span class="pv-icon-button active pv-mode-indicator" aria-label="Library view"><PvIcon name="library" /></span><button class="pv-icon-button pv-icon-button--static" @click="loadResearchContent"><PvIcon name="filter" /></button></div>
-        <p v-if="contentStatusMessage" class="pv-form-error">{{ contentStatusMessage }}</p>
-        <p v-if="contentLoaded && articles.length === 0" class="pv-muted">No research articles published yet.</p>
-        <div class="pv-article-grid">
-           <router-link v-for="(article, index) in articles" :key="article.title" :to="article.href" class="pv-article-card">
-              <span class="pv-thumb" :style="contentThumbnailStyle(article, index)"></span>
-              <span class="pv-tag">{{ article.category }}</span>
-              <span class="pv-tag" :class="{ trusted: article.authorBadge === 'FDA Approved' }">{{ article.authorBadge }}</span>
-             <h2>{{ article.title }}</h2>
-             <p>{{ article.excerpt }}</p>
-            <footer><span><PvIcon name="calendar" /> {{ article.date }}</span><span><PvIcon name="eye" /> {{ article.views }}</span></footer>
-            <PvIcon name="bookmark" class="pv-bookmark" :class="{ active: isBookmarkedContent(article.slug) }" />
-          </router-link>
-        </div>
-        <PaginationBlock :meta="researchPagination" @page="setResearchPage" />
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel pv-filter-panel">
-          <header class="pv-panel-header"><h2>Filters</h2><button class="pv-text-button" type="button" @click="clearResearchFilters">Clear all</button></header>
-          <label class="pv-input-search">
-            <input v-model="researchSearch" placeholder="Search research library..." type="search" @keyup.enter="applyResearchFilters">
-            <PvIcon name="search" />
-          </label>
-          <label>Category<select v-model="activeResearchCategory"><option value="">All categories</option><option v-for="category in contentFilterOptions.research.categories" :key="category.slug" :value="category.slug">{{ category.name }}</option></select></label>
-          <label>Compound<select v-model="researchCompoundFilter"><option value="">All compounds</option><option v-for="compound in contentFilterOptions.research.compounds" :key="compound" :value="compound">{{ compound }}</option></select></label>
-          <label>Tag<select v-model="researchTagFilter"><option value="">All tags</option><option v-for="tag in contentFilterOptions.research.tags" :key="tag" :value="tag">{{ tag }}</option></select></label>
-          <label>Sort By<select v-model="researchSort"><option v-for="sort in contentFilterOptions.research.sorts" :key="sort.value" :value="sort.value">{{ sort.label }}</option></select></label>
-          <label>Published From<input v-model="researchPublishedFrom" :min="contentFilterOptions.research.date_bounds?.from ?? undefined" :max="contentFilterOptions.research.date_bounds?.to ?? undefined" type="date"></label>
-          <label>Published To<input v-model="researchPublishedTo" :min="contentFilterOptions.research.date_bounds?.from ?? undefined" :max="contentFilterOptions.research.date_bounds?.to ?? undefined" type="date"></label>
-          <button class="pv-primary-button pv-full" type="button" @click="applyResearchFilters">Apply Filters</button>
-        </article>
-        <article class="pv-panel"><h2>Popular Topics</h2><dl class="pv-data-list"><div v-for="topic in popularTopics" :key="topic.name"><dt>{{ topic.name }}</dt><dd>{{ topic.count }}</dd></div></dl><button class="pv-purple-link" type="button" @click="clearResearchFilters">View all topics -></button></article>
-        <article class="pv-panel"><h2>About the Library</h2><p class="pv-muted">Our research library is curated from credible sources and community contributions. Always do your own research and consult a professional.</p><router-link class="pv-purple-link" to="/guides">Submission Guidelines -></router-link></article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'researchArticle'" class="pv-page">
-    <div v-if="detailArticle" class="pv-content-grid">
-      <main class="pv-stack">
-        <nav class="pv-breadcrumbs">Research Library <PvIcon name="chevron" /> {{ detailArticle.category }} <PvIcon name="chevron" /> {{ detailArticle.title }}</nav>
-        <article class="pv-article-hero">
-          <div><span class="pv-tag">{{ detailArticle.tag }}</span><h1>{{ detailArticle.title }}</h1><p>{{ detailArticle.excerpt }}</p><div class="pv-author-line"><span class="pv-avatar purple">{{ detailArticle.authorInitial }}</span><strong>{{ detailArticle.author }}</strong><span v-if="detailArticle.authorBadge" class="pv-tag trusted">{{ detailArticle.authorBadge }}</span><span>{{ detailArticle.date }}</span><span><PvIcon name="eye" /> {{ detailArticle.timeLabel }} read</span></div></div>
-          <span class="pv-article-image" :style="contentThumbnailStyle(detailArticle)"></span>
-        </article>
-        <div class="pv-tabs pv-tabs--line"><button :class="{ active: researchDetailTab === 'article' }" @click="researchDetailTab = 'article'">Article</button><button :class="{ active: researchDetailTab === 'data' }" @click="researchDetailTab = 'data'">Figures & Data</button><button :class="{ active: researchDetailTab === 'references' }" @click="researchDetailTab = 'references'">References</button><button :class="{ active: researchDetailTab === 'comments' }" @click="researchDetailTab = 'comments'">Comments ({{ detailArticle.comments }})</button></div>
-        <article v-if="researchDetailTab === 'article'" class="pv-prose">
-          <template v-for="block in articleBodyBlocks" :key="block.text">
-            <h2 v-if="block.kind === 'heading'">{{ block.text }}</h2>
-            <ul v-else-if="block.kind === 'list'"><li v-for="item in block.items" :key="item">{{ item }}</li></ul>
-            <p v-else>{{ block.text }}</p>
-          </template>
-        </article>
-        <article v-else-if="researchDetailTab === 'data'" class="pv-panel"><h2>Figures & Data</h2><dl v-if="Object.keys(articleDataMetadata).length" class="pv-data-list"><div v-for="(value, key) in articleDataMetadata" :key="key"><dt>{{ formatMetadataKey(key) }}</dt><dd>{{ formatMetadataValue(value) }}</dd></div></dl><p v-else class="pv-muted">No figures or data were attached to this article.</p></article>
-        <article v-else-if="researchDetailTab === 'references'" class="pv-panel"><h2>References</h2><p class="pv-muted">{{ articleReferences || 'No references were attached to this article.' }}</p></article>
-        <article v-else class="pv-panel"><h2>Comments</h2><p class="pv-muted">Discussion comments are not attached to this article yet. Start a related topic in the community discussions.</p><router-link to="/discussions" class="pv-primary-button">Open Discussions</router-link></article>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Category</dt><dd>{{ detailArticle.category }}</dd></div><div><dt>Compound</dt><dd>{{ detailArticle.metadata.compound ?? detailArticle.title }}</dd></div><div v-if="detailArticle.metadata.fda_approved !== undefined"><dt>FDA Status</dt><dd>{{ detailArticle.metadata.fda_approved ? 'FDA Approved' : 'Research Only' }}</dd></div><div><dt>Views</dt><dd>{{ detailArticle.views }}</dd></div><div><dt>Read Time</dt><dd>{{ detailArticle.timeLabel }}</dd></div></dl></article>
-        <article class="pv-panel"><h2>Table of Contents</h2><ol class="pv-toc"><li v-for="heading in articleHeadings" :key="heading" :class="{ active: heading === articleHeadings[0] }" @click="scrollToHeading(heading)">{{ heading }}</li></ol></article>
-        <article class="pv-panel"><h2>Related Articles</h2><div class="pv-mini-list"><router-link v-for="(article, index) in relatedArticles" :key="article.title" :to="article.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(article, index + 1)"></span><span><strong>{{ article.title }}</strong><small>{{ article.date }}</small></span></router-link></div><router-link to="/research-library" class="pv-primary-button pv-full">View all related articles</router-link></article>
-      </aside>
-    </div>
-    <div v-else class="pv-empty-route"><h1>Research article not found</h1><p>This article has not been published or does not exist.</p></div>
-  </section>
-
-  <section v-else-if="page === 'guides'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div><h1>Guides & FAQ</h1><p>Helpful guides, tutorials and answers to common questions from the community.</p></div>
-          <div v-if="canUseContentStudio" class="pv-action-row pv-content-create-actions">
-            <router-link to="/guides/new" class="pv-small-button"><PvIcon name="plus" /> Add Guide</router-link>
-            <router-link to="/guides/faqs/new" class="pv-small-button"><PvIcon name="question" /> Add FAQ</router-link>
-          </div>
-        </header>
-        <label class="pv-input-search pv-input-search--wide"><input v-model="guideSearch" placeholder="Search guides & FAQ..." @keydown.enter="loadGuidesContent"><PvIcon name="search" /></label>
-        <div class="pv-guide-cats"><button :class="{ active: activeGuideCategory === '' }" @click="activeGuideCategory = ''; loadGuidesContent()"><PvIcon name="library" /><strong>All Topics</strong><small>View all</small></button><button v-for="category in contentCategories.guide" :key="category.slug" :class="{ active: activeGuideCategory === category.slug }" @click="activeGuideCategory = category.slug; loadGuidesContent()"><PvIcon name="document" /><strong>{{ category.name }}</strong><small>{{ category.count }} guides</small></button></div>
-        <article class="pv-panel">
-          <header class="pv-panel-header"><h2>Popular Guides</h2><router-link to="/guides" class="pv-purple-link">View all guides →</router-link></header>
-          <p v-if="contentLoaded && guides.length === 0" class="pv-muted">No guides published yet.</p>
-          <router-link v-for="(guide, index) in guides" :key="guide.title" :to="guide.href" class="pv-guide-row"><span class="pv-mini-thumb pv-guide-thumb" :style="contentThumbnailStyle(guide, index)"></span><span class="pv-topic-main"><strong>{{ guide.title }}</strong><small>{{ guide.excerpt }}</small><em>{{ guide.category }}</em></span><span><PvIcon name="document" /> {{ guide.metadata.guide_type ?? guide.type }}<br><PvIcon name="clock" /> {{ guide.timeLabel }} read<br><PvIcon name="eye" /> {{ guide.views }} views</span></router-link>
-          <PaginationBlock :meta="guidePagination" @page="setGuidePage" />
-        </article>
-        <article id="faq-list" class="pv-panel"><header class="pv-panel-header"><h2>Frequently Asked Questions</h2><a class="pv-purple-link" href="#faq-list">View all FAQ →</a></header><details v-for="faq in faqs" :key="faq.slug"><summary><PvIcon name="question" /> {{ faq.title }}</summary><p class="pv-muted">{{ faq.body || faq.excerpt }}</p></details></article>
-      </main>
-      <aside class="pv-stack"><article class="pv-panel pv-help-card"><PvIcon name="question" /><h2>Need Help?</h2><p>Can&apos;t find what you&apos;re looking for?</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article><article class="pv-panel"><h2>Top FAQ Topics</h2><dl class="pv-data-list"><div v-for="category in contentCategories.faq" :key="category.slug"><dt>{{ category.name }}</dt><dd>{{ category.count }}</dd></div></dl></article><article class="pv-panel"><h2>Community Help</h2><div class="pv-mini-list"><router-link to="/discussions" class="pv-mini-row"><PvIcon name="question" /><span><strong>Ask the Community</strong><small>Get answers from experienced members</small></span><PvIcon name="chevron" /></router-link><router-link v-if="canUseContentStudio" to="/guides/new" class="pv-mini-row"><PvIcon name="document" /><span><strong>Submit a Guide</strong><small>Share your knowledge with others</small></span><PvIcon name="chevron" /></router-link><router-link :to="{ path: '/discussions', query: { q: 'issue' } }" class="pv-mini-row"><PvIcon name="bell" /><span><strong>Report an Issue</strong><small>Report outdated or incorrect info</small></span><PvIcon name="chevron" /></router-link></div></article><article class="pv-panel"><h2>Popular Tags</h2><span class="pv-chip-row"><span v-for="topic in contentTopics.guide" :key="topic.name">{{ topic.name }}</span></span></article></aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'guideDetail'" class="pv-page">
-    <div v-if="detailGuide" class="pv-content-grid">
-      <main class="pv-stack">
-        <nav class="pv-breadcrumbs">Guides & FAQ <PvIcon name="chevron" /> {{ detailGuide.category }} <PvIcon name="chevron" /></nav>
-        <header class="pv-page-header"><div><h1>{{ detailGuide.title }}</h1><p>{{ detailGuide.excerpt }}</p><span class="pv-muted"><PvIcon name="calendar" /> {{ detailGuide.date }} · <PvIcon name="clock" /> {{ detailGuide.timeLabel }} read · <PvIcon name="eye" /> {{ detailGuide.views }} views</span></div><div class="pv-action-row"><button class="pv-small-button" @click="toggleContentBookmark(detailGuide.slug)"><PvIcon name="bookmark" /> {{ isBookmarkedContent(detailGuide.slug) ? 'Bookmarked' : 'Bookmark' }}</button><button class="pv-primary-button" @click="printCurrentPage"><PvIcon name="download" /> Print / PDF</button></div></header>
-        <span class="pv-guide-hero" :style="contentThumbnailStyle(detailGuide)"></span>
-        <article class="pv-alert"><PvIcon name="shield" /><strong>Disclaimer</strong><p>This guide is for educational purposes only and does not constitute medical advice. Always follow lab safety best practices and consult a healthcare professional for personal guidance.</p></article>
-        <article class="pv-prose">
-          <template v-for="block in guideBodyBlocks" :key="block.text">
-            <h2 v-if="block.kind === 'heading'">{{ block.text }}</h2>
-            <ul v-else-if="block.kind === 'list'"><li v-for="item in block.items" :key="item">{{ item }}</li></ul>
-            <p v-else>{{ block.text }}</p>
-          </template>
-          <h2 v-if="detailGuideSteps.length">Step-by-Step Instructions</h2>
-          <div v-if="detailGuideSteps.length" class="pv-step-list"><div v-for="(step, index) in detailGuideSteps" :key="step.title" class="pv-step"><span>{{ index + 1 }}</span><div><strong>{{ step.title }}</strong><p>{{ step.text }}</p></div><PvIcon :name="step.icon" /></div></div>
-          <div class="pv-pass-box"><PvIcon name="shield" /> <span><strong>Safety First</strong><br>When in doubt, do not use the product. Your health and safety come first.</span></div>
-        </article>
-      </main>
-      <aside class="pv-stack"><article class="pv-panel"><h2>On This Page</h2><ol class="pv-toc"><li v-for="heading in guideHeadings" :key="heading" :class="{ active: heading === guideHeadings[0] }">{{ heading }}</li></ol></article><article class="pv-panel"><h2>Quick Info</h2><dl class="pv-data-list"><div><dt>Difficulty</dt><dd><span class="pv-green-dot"></span> {{ detailGuide.metadata.difficulty ?? 'Beginner' }}</dd></div><div><dt>Time to Complete</dt><dd>{{ detailGuide.timeLabel }}</dd></div><div><dt>Category</dt><dd>{{ detailGuide.category }}</dd></div><div><dt>Last Updated</dt><dd>{{ detailGuide.date }}</dd></div></dl></article><article class="pv-panel"><h2>Related Guides</h2><div class="pv-mini-list"><router-link v-for="(guide, index) in relatedGuides" :key="guide.title" :to="guide.href" class="pv-mini-row"><span class="pv-mini-thumb" :style="contentThumbnailStyle(guide, index + 1)"></span><span><strong>{{ guide.title }}</strong><small>{{ guide.timeLabel }} read</small></span></router-link></div></article><article class="pv-panel pv-help-card"><h2>Still Need Help?</h2><p>Ask the community or submit a question.</p><router-link to="/discussions" class="pv-primary-button pv-full">Ask a Question</router-link></article></aside>
-    </div>
-    <div v-else class="pv-empty-route"><h1>Guide not found</h1><p>This guide has not been published or does not exist.</p></div>
-  </section>
-
-  <section v-else-if="page === 'contentStudio'" class="pv-page pv-content-studio-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div><h1>{{ contentStudioTitle }}</h1><p>{{ contentStudioSubtitle }}</p></div>
-          <router-link :to="contentStudioBackHref" class="pv-small-button"><PvIcon name="arrow-left" /> {{ contentStudioBackLabel }}</router-link>
-        </header>
-
-        <article v-if="!authStore.isAuthenticated" class="pv-panel pv-empty-inline">
-          <PvIcon name="lock" />
-          <strong>Sign in required</strong>
-          <p>Staff and content editors can submit content after signing in.</p>
-          <router-link to="/login" class="pv-primary-button">Sign in</router-link>
-        </article>
-
-        <article v-else-if="!contentStudioLoaded" class="pv-panel pv-empty-inline">
-          <PvIcon name="clock" />
-          <strong>Loading content access</strong>
-          <p>Checking your frontend publishing permissions.</p>
-        </article>
-
-        <article v-else-if="contentStudioLoaded && !canUseContentStudio" class="pv-panel pv-empty-inline">
-          <PvIcon name="shield" />
-          <strong>No content permissions</strong>
-          <p>Your account needs the staff or content-editor role, or the community content permissions, before you can submit content.</p>
-        </article>
-
-        <form v-else class="pv-form-card pv-content-studio-form" @submit.prevent="saveContentStudioItem('draft')">
-          <p v-if="contentStudioStatusMessage" class="pv-alert pv-alert--compact">{{ contentStudioStatusMessage }}</p>
-          <div class="pv-content-studio-context">
-            <span class="pv-icon-tile"><PvIcon :name="contentStudioIcon" /></span>
-            <span><strong>{{ contentStudioDestinationLabel }}</strong><small>{{ contentStudioContextLabel }}</small></span>
-            <em>{{ contentStudioModeLabel }}</em>
-          </div>
-          <div v-if="contentStudioIsGeneric" class="pv-content-type-picker" role="group" aria-label="Content type">
-            <button type="button" :class="{ active: contentStudioForm.type === 'research' }" @click="setContentStudioType('research')"><PvIcon name="library" /><span><strong>Research</strong><small>Library article</small></span></button>
-            <button type="button" :class="{ active: contentStudioForm.type === 'guide' }" @click="setContentStudioType('guide')"><PvIcon name="document" /><span><strong>Guide</strong><small>Step-by-step</small></span></button>
-            <button type="button" :class="{ active: contentStudioForm.type === 'faq' }" @click="setContentStudioType('faq')"><PvIcon name="question" /><span><strong>FAQ</strong><small>Quick answer</small></span></button>
-          </div>
-
-          <div class="pv-form-row">
-            <label>{{ contentStudioTitleLabel }}<input v-model="contentStudioForm.title" required maxlength="220" :placeholder="contentStudioTitlePlaceholder"></label>
-            <label>{{ contentStudioCategoryLabel }}<input v-model="contentStudioForm.category" maxlength="100" :placeholder="contentStudioCategoryPlaceholder"></label>
-          </div>
-          <div class="pv-form-row">
-            <label>{{ contentStudioTagLabel }}<input v-model="contentStudioForm.tag" maxlength="80" :placeholder="contentStudioTagPlaceholder"></label>
-            <label v-if="contentStudioForm.type !== 'faq'">Read Time<input v-model.number="contentStudioForm.read_minutes" min="1" max="240" type="number"></label>
-          </div>
-          <label>{{ contentStudioExcerptLabel }}<textarea v-model="contentStudioForm.excerpt" maxlength="500" rows="3" :placeholder="contentStudioExcerptPlaceholder"></textarea><small>{{ contentStudioForm.excerpt.length }}/500</small></label>
-          <div v-if="contentStudioForm.type === 'research'" class="pv-form-row">
-            <label>Compound<input v-model="contentStudioForm.metadata_compound" maxlength="160" placeholder="Retatrutide, BPC-157..."></label>
-            <label>Research Focus<input v-model="contentStudioForm.metadata_research_focus" maxlength="160" placeholder="Safety profile, mechanism, outcomes..."></label>
-          </div>
-          <label v-if="contentStudioForm.type === 'research'">Figures &amp; Data<textarea v-model="contentStudioForm.metadata_figures_data" maxlength="4000" rows="4" placeholder="Summarise tables, figures, measurements, or data notes shown on the article data tab."></textarea></label>
-          <label v-if="contentStudioForm.type === 'research'">References<textarea v-model="contentStudioForm.metadata_references" maxlength="4000" rows="4" placeholder="Add citations, source links, study notes, or reference text for the references tab."></textarea></label>
-          <div v-if="contentStudioForm.type === 'research'" class="pv-content-studio-note"><PvIcon name="message" /><span><strong>Comments</strong><small>Published articles show comments on the article page; staff do not edit reader comments here.</small></span></div>
-          <div v-else-if="contentStudioForm.type === 'guide'" class="pv-form-row">
-            <label>Difficulty<select v-model="contentStudioForm.metadata_difficulty"><option>Beginner</option><option>Intermediate</option><option>Advanced</option></select></label>
-            <label>Guide Type<input v-model="contentStudioForm.metadata_guide_type" maxlength="80" placeholder="Tutorial, Checklist, Reference..."></label>
-          </div>
-          <label>{{ contentStudioBodyLabel }}<TipTapComposer :key="'content-studio-' + contentStudioEditorKey" v-model="contentStudioForm.body" :placeholder="contentStudioBodyPlaceholder" :max-length="50000" /></label>
-          <div v-if="contentStudioForm.type !== 'faq'" class="pv-form-row pv-form-row--single">
-            <label>Image URL<input v-model="contentStudioForm.image_url" type="url" placeholder="https://example.com/image.jpg"></label>
-          </div>
-          <div class="pv-content-studio-note">
-            <PvIcon name="shield" />
-            <span><strong>{{ contentStudioStatusTitle }}</strong><small>{{ contentStudioStatusLabel }}</small></span>
-          </div>
-          <footer class="pv-content-studio-actions">
-            <button type="button" class="pv-small-button" @click="resetContentStudioForm">Clear</button>
-            <button type="button" class="pv-small-button" :disabled="contentStudioSaving" @click="saveContentStudioItem('draft')"><PvIcon name="document" /> {{ contentStudioSaving ? 'Saving...' : contentStudioDraftButtonLabel }}</button>
-            <button v-if="canPublishContent" type="button" class="pv-primary-button" :disabled="contentStudioSaving" @click="saveContentStudioItem('published')"><PvIcon name="send" /> {{ contentStudioSaving ? 'Publishing...' : contentStudioPublishButtonLabel }}</button>
-          </footer>
-        </form>
-      </main>
-
-      <aside class="pv-stack">
-        <article class="pv-panel">
-          <h2>Frontend Access</h2>
-          <dl class="pv-data-list">
-            <div><dt>Create</dt><dd>{{ contentStudioPermissions.can_create ? 'Allowed' : 'No' }}</dd></div>
-            <div><dt>Publish</dt><dd>{{ contentStudioPermissions.can_publish ? 'Allowed' : 'Draft only' }}</dd></div>
-            <div><dt>Scope</dt><dd>{{ contentStudioPermissions.can_manage ? 'All content' : 'Own submissions' }}</dd></div>
-          </dl>
-        </article>
-        <article v-if="canUseContentStudio" class="pv-panel">
-          <header class="pv-panel-header">
-            <h2>{{ contentStudioQueueTitle }}</h2>
-            <button class="pv-small-button" type="button" @click="loadContentStudioItems">Refresh</button>
-          </header>
-          <div class="pv-content-queue-filter" role="group" aria-label="Queue status">
-            <button type="button" :class="{ active: contentStudioQueueFilter === 'all' }" @click="contentStudioQueueFilter = 'all'">All</button>
-            <button type="button" :class="{ active: contentStudioQueueFilter === 'draft' }" @click="contentStudioQueueFilter = 'draft'">Drafts</button>
-            <button v-if="canPublishContent" type="button" :class="{ active: contentStudioQueueFilter === 'published' }" @click="contentStudioQueueFilter = 'published'">Published</button>
-          </div>
-          <div class="pv-content-studio-list">
-            <button v-for="item in filteredContentStudioItems" :key="item.slug" type="button" @click="editContentStudioItem(item)">
-              <span><strong>{{ item.title }}</strong><small>{{ contentStudioItemTypeLabel(item.type) }} · {{ item.category || 'General' }}</small></span>
-              <em :class="`status-${item.status}`">{{ item.status }}</em>
-            </button>
-            <p v-if="contentStudioLoaded && filteredContentStudioItems.length === 0" class="pv-muted">{{ contentStudioEmptyQueueText }}</p>
-          </div>
-        </article>
-        <article class="pv-panel">
-          <h2>{{ contentStudioWorkflowTitle }}</h2>
-          <p class="pv-muted">{{ contentStudioWorkflowCopy }}</p>
-        </article>
-      </aside>
-    </div>
-  </section>
-
-   <section v-else-if="page === 'members'" class="pv-page">
-    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
-      <div class="pv-upgrade-card">
-        <span class="pv-upgrade-icon"><PvIcon name="users" /></span>
-        <h2>Premium Feature</h2>
-        <p>Upgrade to Premium to browse detailed member profiles with activity history and reputation scores.</p>
-        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
-      </div>
-    </div>
-    <div v-else class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header"><div><h1>Members</h1><p>Find contributors, moderators, reviewers, and active community voices.</p></div><router-link to="/settings" class="pv-small-button"><PvIcon name="user" /> Edit Profile</router-link></header>
-        <div class="pv-metrics pv-metrics--member">
-          <span><PvIcon name="users" /><strong>{{ memberStats.total }}</strong><small>Total Members</small></span>
-          <span><PvIcon name="clock" /><strong>{{ memberStats.online }}</strong><small>Online Now</small></span>
-          <span><PvIcon name="eye" /><strong>{{ memberStats.guests }}</strong><small>Guests</small></span>
-          <span><PvIcon name="clock" /><strong>{{ memberStats.visits_today }}</strong><small>Visits Today</small></span>
-          <span><PvIcon name="shield" /><strong>{{ apiMembers.filter(member => member.isModerator).length }}</strong><small>Moderators</small></span>
-          <span><PvIcon name="star" /><strong>{{ topContributors.length }}</strong><small>Top Contributors</small></span>
-        </div>
-        <article class="pv-panel pv-member-directory">
-          <header class="pv-panel-header">
-            <div>
-              <h2>Community Directory</h2>
-              <p class="pv-muted">{{ members.length }} showing · {{ memberSortLabel }}</p>
-            </div>
-            <span class="pv-tag">{{ memberStats.total }} total</span>
-          </header>
-          <div class="pv-toolbar">
-            <label class="pv-input-search">
-              <input v-model="memberSearch" placeholder="Search members, bios, roles..." type="search" @keydown.enter="loadMembers">
-              <PvIcon name="search" />
-            </label>
-            <div class="pv-tabs">
-              <button :class="{ active: memberFilter === 'all' }" @click="memberFilter = 'all'">All</button>
-              <button :class="{ active: memberFilter === 'online' }" @click="memberFilter = 'online'">Online</button>
-              <button :class="{ active: memberFilter === 'moderators' }" @click="memberFilter = 'moderators'">Moderators</button>
-              <button :class="{ active: memberFilter === 'contributors' }" @click="memberFilter = 'contributors'">Contributors</button>
-            </div>
-            <button class="pv-small-button" type="button" @click="cycleMemberSort">{{ memberSortLabel }} <PvIcon name="chevron" /></button>
-            <button class="pv-icon-button" type="button" @click="loadMembers"><PvIcon name="filter" /></button>
-          </div>
-          <div v-if="membersLoaded && members.length === 0" class="pv-empty-inline"><PvIcon name="users" /><strong>No members found</strong><p>Try a different search term or clear the current directory filter.</p></div>
-          <div class="pv-member-grid">
-            <router-link v-for="member in members" :key="member.slug" :to="member.href" class="pv-member-card">
-              <header class="pv-member-card-banner">
-                <span v-if="member.avatarUrl" class="pv-avatar pv-avatar--large pv-avatar--presence" :class="member.color"><img :src="assetUrl(member.avatarUrl)" :alt="member.name" class="pv-avatar-img"><span v-if="member.isOnline" class="online-indicator"></span></span>
-                <span v-else class="pv-avatar pv-avatar--large pv-avatar--presence" :class="member.color">{{ member.initial }}<span v-if="member.isOnline" class="online-indicator"></span></span>
-                <span class="pv-member-presence" :class="{ online: member.isOnline }">{{ member.isOnline ? 'Online' : 'Away' }}</span>
-              </header>
-              <strong>{{ member.name }}</strong>
-              <span class="pv-chip-row">
-                <span v-if="member.isVerified" class="trusted">Verified</span>
-                <span v-if="member.isModerator" class="trusted">Moderator</span>
-                <span v-if="member.group">{{ member.group }}</span>
-              </span>
-              <p>{{ member.bio || 'No bio yet.' }}</p>
-              <dl>
-                <div><dt>Posts</dt><dd>{{ formatCount(member.stats.posts) }}</dd></div>
-                <div><dt>Reviews</dt><dd>{{ formatCount(member.stats.reviews) }}</dd></div>
-                <div><dt>Labs</dt><dd>{{ formatCount(member.stats.lab_reports) }}</dd></div>
-              </dl>
-              <footer><small>{{ member.lastActive || 'No recent activity' }}</small><PvIcon name="chevron" /></footer>
-            </router-link>
-          </div>
-          <PaginationBlock :meta="memberPagination" @page="setMemberPage" />
-        </article>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel"><h2>Top Contributors</h2><div class="pv-mini-list"><router-link v-for="member in topContributors" :key="member.slug" :to="member.href" class="pv-mini-row"><span class="pv-avatar" :class="member.color">{{ member.initial }}</span><span><strong>{{ member.name }}</strong><small>{{ formatCount(memberEngagementScore(member)) }} contributions</small></span><PvIcon name="chevron" /></router-link></div></article>
-        <article class="pv-panel pv-online-panel"><header class="pv-panel-header"><h2>Online Now</h2><span class="pv-count">{{ onlineActivityTotal }}</span></header><div class="pv-online-summary"><span><PvIcon name="users" /><strong>{{ memberStats.online }}</strong><small>Members</small></span><span><PvIcon name="eye" /><strong>{{ memberStats.guests }}</strong><small>Guests</small></span></div><div class="pv-avatar-stack pv-avatar-stack--wrap"><router-link v-for="member in onlineMembers" :key="member.slug" :to="member.href" class="pv-avatar pv-avatar--online" :class="member.color" :title="member.name"><img v-if="member.avatarUrl" :src="assetUrl(member.avatarUrl)" :alt="member.name"><span v-else>{{ member.initial }}</span></router-link><span v-if="onlineMemberOverflow > 0" class="pv-more">+{{ onlineMemberOverflow }}</span><span v-if="memberStats.online === 0" class="pv-muted pv-online-empty">Nobody online right now.</span></div><div v-if="onlineGuestRows.length" class="pv-viewing-list"><div v-for="activity in onlineGuestRows" :key="`${activity.path}-${activity.label}`" class="pv-viewing-row"><PvIcon name="eye" /><span><strong>{{ activity.label }}</strong><small>{{ guestVisitorLabel(activity.visitors) }}</small></span></div></div></article>
-        <article class="pv-panel"><h2>Member Tips</h2><ul class="pv-check-list"><li>Keep your profile bio current</li><li>Use reports for moderation issues</li><li>Message members from their profile</li><li>Reputation grows from useful posts</li></ul></article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'memberDetail'" class="pv-page">
-    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
-      <div class="pv-upgrade-card">
-        <span class="pv-upgrade-icon"><PvIcon name="users" /></span>
-        <h2>Premium Feature</h2>
-        <p>Upgrade to Premium to browse detailed member profiles with activity history and reputation scores.</p>
-        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
-      </div>
-    </div>
-    <MemberProfile v-else-if="detailMember" :profile="detailMember" />
-    <div v-else class="pv-empty-route"><h1>Member not found</h1><p>This member profile has not been published or does not exist.</p></div>
-  </section>
-
-  <section v-else-if="page === 'messages'" class="pv-page pv-messages-page">
-    <div v-if="showUpgradePrompt" class="pv-upgrade-overlay">
-      <div class="pv-upgrade-card">
-        <span class="pv-upgrade-icon"><PvIcon name="message" /></span>
-        <h2>Premium Feature</h2>
-        <p>Upgrade to Premium to send direct messages to other members for private discussions and collaboration.</p>
-        <router-link to="/pricing" class="pv-primary-button">View Pricing</router-link>
-      </div>
-    </div>
-    <div v-else class="pv-messages" :class="{ 'pv-messages--thread-active': !!currentThread }">
-      <aside class="pv-message-list">
-        <header><h1>Messages</h1><span class="pv-icon-button active pv-mode-indicator" aria-label="Primary messages"><PvIcon name="document" /></span></header>
-        <label class="pv-input-search"><input v-model="messageSearch" placeholder="Search messages..."><PvIcon name="search" /></label>
-        <div class="pv-tabs pv-tabs--line"><span class="pv-tab-label active">Primary</span></div>
-        <form class="pv-new-message" @submit.prevent="startMessageFromSearch">
-          <label class="pv-input-search">
-            <input v-model="messageRecipientSearch" placeholder="Message a member...">
-            <PvIcon name="users" />
-          </label>
-          <div v-if="messageRecipientOptions.length > 0" class="pv-recipient-list">
-            <button
-              v-for="member in messageRecipientOptions"
-              :key="member.id ?? member.slug"
-              type="button"
-              class="pv-recipient-row"
-              :disabled="startingMessageUserId === member.id"
-              @click="startMessage(member)"
-            >
-              <span class="pv-avatar" :class="member.color">{{ member.initial }}</span>
-              <span><strong>{{ member.name }}</strong><small>@{{ member.username }}</small></span>
-              <PvIcon name="message" />
-            </button>
-          </div>
-          <p v-else-if="messageRecipientSearch.trim()" class="pv-muted">No members match that search.</p>
-        </form>
-        <p v-if="messagesStatusMessage" class="pv-muted">{{ messagesStatusMessage }}</p>
-        <p v-if="messagesLoaded && chats.length === 0" class="pv-muted">No message threads yet.</p>
-        <button
-          v-for="chat in chats"
-          :key="chat.id"
-          class="pv-chat-row"
-          :class="{ active: currentThread?.id === chat.id }"
-          @click="openMessageThread(chat.id)"
-        >
-          <span class="pv-avatar" :class="chat.participant.color">{{ chat.participant.initial }}</span>
-          <span class="pv-chat-row-main">
-            <strong>{{ chat.participant.name }} <em v-if="chat.participant.role" class="pv-tag pv-chat-role">{{ chat.participant.role }}</em></strong>
-            <small>{{ chat.preview }}</small>
-          </span>
-          <span class="pv-chat-row-end"><time>{{ chat.time }}</time><span v-if="chat.unread > 0" class="pv-unread-badge">{{ chat.unread }}</span></span>
-        </button>
-      </aside>
-      <main v-if="currentThread" class="pv-chat-panel">
-        <header class="pv-chat-header"><button class="pv-icon-button pv-icon-button--static pv-mobile-back" @click="openMessagesInbox" aria-label="Back to threads"><PvIcon name="arrow-left" /></button><span class="pv-avatar" :class="currentThread.participant.color">{{ currentThread.participant.initial }}</span><div class="pv-chat-header-copy"><h2>{{ currentThread.participant.name }} <span class="pv-tag pv-chat-role">{{ currentThread.participant.role }}</span></h2><small><span class="pv-green-dot"></span> {{ currentThread.participant.lastActive }}</small></div><span class="pv-flex-spacer"></span><button class="pv-icon-button pv-icon-button--static pv-chat-delete" title="Delete conversation" @click="deleteCurrentThread"><PvIcon name="trash" /></button><router-link :to="currentThread.participant.href" class="pv-icon-button pv-icon-button--static pv-chat-profile" aria-label="View member profile"><PvIcon name="user" /></router-link></header>
-        <div v-if="showMessageSafetyNotice" class="pv-alert"><PvIcon name="shield" /><span>Messages are visible only to you and the recipient. Do not share personal info or make any transactions.</span><button type="button" class="pv-icon-button" aria-label="Dismiss notice" @click="showMessageSafetyNotice = false"><PvIcon name="close" /></button></div>
-        <div ref="messageStreamRef" class="pv-chat-stream">
-          <template v-for="(message, msgIdx) in currentThread.messages" :key="message.id ?? message.time">
-            <span v-if="showDateSep(currentThread.messages, msgIdx)" class="pv-date-sep">{{ formatDateSep(message.sentAt) }}</span>
-            <MessageBubble :side="message.side" :text="message.text" :time="message.time" :file="Boolean(message.attachmentName)" :attachment-name="message.attachmentName ?? ''" :attachment-label="message.attachmentLabel" :avatar-initial="message.avatarInitial || currentThread.participant.initial" :avatar-color="message.avatarColor || currentThread.participant.color" />
-          </template>
-        </div>
-        <div v-if="messageAttachmentFile" class="pv-attachment-preview"><img v-if="messageAttachmentPreviewUrl" :src="messageAttachmentPreviewUrl" alt="Attachment preview"><span><strong>{{ messageAttachmentFile.name }}</strong><small>{{ formatFileSize(messageAttachmentFile.size) }}</small></span><button type="button" class="pv-icon-button" aria-label="Remove" @click="clearMessageAttachment"><PvIcon name="close" /></button></div>
-        <form class="pv-chat-input" @submit.prevent="sendMessage"><button type="button" class="pv-icon-button pv-icon-button--static pv-chat-attach" title="Attach file" @click="messageFileInput?.click()"><PvIcon name="image" /></button><input ref="messageFileInput" type="file" accept="image/*,application/pdf" class="pv-sr-only" @change="handleMessageAttachment"><input v-model="messageBody" class="pv-chat-text" placeholder="Type a message..."><EmojiPicker v-model="messageBody" /><button class="pv-primary-button pv-chat-send" :disabled="sendingMessage || (!messageBody.trim() && !messageAttachmentFile)" aria-label="Send message"><PvIcon name="send" /></button></form>
-      </main>
-      <main v-else class="pv-chat-panel"><article class="pv-panel"><h2>No thread selected</h2><p class="pv-muted">Choose a thread to read messages.</p></article></main>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'announcements'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div><h1>Announcements</h1><p>Official updates and important announcements from the Peptide Vendors team.</p></div>
-          <a href="/admin/community-announcements" class="pv-primary-button"><PvIcon name="plus" /> New Announcement</a>
-        </header>
-        <div class="pv-tabs pv-tabs--line">
-          <button :class="{ active: announcementFilter === 'all' }" @click="setAnnouncementFilter('all')">All Announcements</button>
-          <button :class="{ active: announcementFilter === 'pinned' }" @click="setAnnouncementFilter('pinned')">Pinned</button>
-          <button
-            v-for="category in announcementCategories"
-            :key="category.slug"
-            :class="{ active: announcementFilter === category.slug }"
-            @click="setAnnouncementFilter(category.slug)"
-          >
-            {{ category.name }}
-          </button>
-        </div>
-        <p v-if="announcementStatusMessage" class="pv-form-error">{{ announcementStatusMessage }}</p>
-        <p v-if="announcementsLoaded && announcements.length === 0" class="pv-muted">No announcements published yet.</p>
-        <router-link v-for="announcement in announcements" :key="announcement.slug" :to="announcement.href" class="pv-announcement-row" :class="{ pinned: announcement.pinned }">
-          <span class="pv-large-icon" :class="announcement.tone"><PvIcon :name="announcement.icon" /></span>
-          <div>
-            <span v-if="announcement.pinned" class="pv-tag">PINNED</span>
-            <small :class="announcement.tone">{{ announcement.category }}</small>
-            <h2>{{ announcement.title }}</h2>
-            <p>{{ announcement.text }}</p>
-            <div class="pv-author-line"><span class="pv-avatar purple">{{ announcement.authorInitial }}</span><strong>{{ announcement.author }}</strong><span class="pv-tag">Administrator</span><span>{{ announcement.date }}</span><span><PvIcon name="message" /> {{ announcement.comments }}</span><span><PvIcon name="eye" /> {{ announcement.views }}</span></div>
-          </div>
-          <span class="pv-icon-button pv-icon-button--static"><PvIcon name="chevron" /></span>
-        </router-link>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel"><h2>About Announcements</h2><span class="pv-icon-tile"><PvIcon name="send" /></span><p>This is where we share official updates, important notices, and community announcements.</p><ul class="pv-check-list"><li>Official updates from admins</li><li>Important safety information</li><li>Platform changes & maintenance</li><li>Community news & events</li></ul></article>
-        <article class="pv-panel"><h2>Announcements Overview</h2><dl class="pv-data-list"><div><dt>Total Announcements</dt><dd>{{ announcementStats.total }}</dd></div><div><dt>Pinned</dt><dd>{{ announcementStats.pinned }}</dd></div><div><dt>This Month</dt><dd>{{ announcementStats.this_month }}</dd></div><div><dt>Total Views</dt><dd>{{ formatCount(announcementStats.total_views) }}</dd></div><div><dt>Total Comments</dt><dd>{{ announcementStats.total_comments }}</dd></div></dl></article>
-        <article class="pv-panel"><h2>Recent Categories</h2><dl class="pv-data-list"><div v-for="category in announcementCategories" :key="category.slug"><dt><span class="pv-dot" :class="category.tone"></span>{{ category.name }}</dt><dd>{{ category.count }}</dd></div></dl></article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'announcementNew'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack"><nav class="pv-breadcrumbs">Announcements <PvIcon name="chevron" /> Admin</nav><header class="pv-page-header"><div><h1>Create New Announcement</h1><p>Announcements are created and published through the existing admin panel.</p></div></header><article class="pv-form-card"><h2>Use the admin panel</h2><p>The public website reads announcements from the database. Staff can create drafts, publish updates, pin important notices, and hide old posts in the admin area.</p><a href="/admin/community-announcements" class="pv-primary-button"><PvIcon name="send" /> Open Announcement Manager</a></article></main>
-      <aside class="pv-stack"><article class="pv-panel"><h2>Announcement Flow</h2><div class="pv-mini-list"><span class="pv-mini-row"><PvIcon name="document" /><span><strong>Create or edit</strong><small>Use the admin form to write the content.</small></span></span><span class="pv-mini-row"><PvIcon name="shield" /><span><strong>Publish safely</strong><small>Only published rows appear on the public site.</small></span></span><span class="pv-mini-row"><PvIcon name="star" /><span><strong>Pin key updates</strong><small>Pinned announcements stay at the top.</small></span></span></div></article></aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'announcementDetail'" class="pv-page">
-    <div class="pv-content-grid">
-      <main v-if="detailAnnouncement" class="pv-stack">
-        <nav class="pv-breadcrumbs">Announcements <PvIcon name="chevron" /> {{ detailAnnouncement.category }} <PvIcon name="chevron" /></nav>
-        <header class="pv-page-header">
-          <div>
-            <span class="pv-tag" :class="detailAnnouncement.tone">{{ detailAnnouncement.category }}</span>
-            <h1>{{ detailAnnouncement.title }}</h1>
-            <p>{{ detailAnnouncement.text }}</p>
-            <span class="pv-muted"><PvIcon name="calendar" /> {{ detailAnnouncement.date }} · <PvIcon name="eye" /> {{ detailAnnouncement.views }} views</span>
-          </div>
-          <router-link to="/announcements" class="pv-small-button"><PvIcon name="chevron" /> All Announcements</router-link>
-        </header>
-        <article class="pv-notification-hero">
-          <span class="pv-large-icon" :class="detailAnnouncement.tone"><PvIcon :name="detailAnnouncement.icon" /></span>
-          <div><div class="pv-author-line"><span class="pv-avatar purple">{{ detailAnnouncement.authorInitial }}</span><strong>{{ detailAnnouncement.author }}</strong><span class="pv-tag">Administrator</span><span>{{ detailAnnouncement.time }}</span></div><h2>{{ detailAnnouncement.title }}</h2><p>{{ detailAnnouncement.text }}</p></div>
-        </article>
-        <article class="pv-panel pv-prose">
-          <p v-for="paragraph in announcementParagraphs" :key="paragraph">{{ paragraph }}</p>
-        </article>
-      </main>
-      <main v-else class="pv-stack"><router-link to="/announcements" class="pv-purple-link">Back to announcements</router-link><article class="pv-panel"><h1>Announcement not found</h1><p class="pv-muted">This announcement may have been unpublished.</p></article></main>
-      <aside class="pv-stack">
-        <article class="pv-panel"><h2>Announcement Details</h2><dl class="pv-data-list"><div><dt>Category</dt><dd>{{ detailAnnouncement?.category ?? '' }}</dd></div><div><dt>Published</dt><dd>{{ detailAnnouncement?.date ?? '' }}</dd></div><div><dt>Views</dt><dd>{{ detailAnnouncement?.views ?? '0' }}</dd></div><div><dt>Comments</dt><dd>{{ detailAnnouncement?.comments ?? 0 }}</dd></div></dl></article>
-        <article class="pv-panel"><h2>Related Links</h2><div class="pv-filter-list"><router-link to="/announcements"><PvIcon name="megaphone" /> Announcements <PvIcon name="chevron" /></router-link><router-link to="/discussions"><PvIcon name="message" /> Community Discussions <PvIcon name="chevron" /></router-link><router-link to="/lab-results"><PvIcon name="flask" /> Lab Results <PvIcon name="chevron" /></router-link></div></article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'notifications'" class="pv-page pv-notifications-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header pv-notifications-header">
-          <div><h1>Notifications</h1><p>Review replies, mentions, messages, vendor updates, and system notices.</p></div>
-          <div class="pv-action-row pv-notifications-actions">
-            <button v-if="authStore.isAuthenticated" class="pv-small-button pv-notification-read-button" :disabled="markingNotificationsRead" @click="markAllNotificationsRead"><PvIcon name="check" /> Mark all read</button>
-            <router-link to="/settings/notifications" class="pv-small-button pv-notification-settings-button" aria-label="Notification settings"><PvIcon name="settings" /> Settings</router-link>
-          </div>
-        </header>
-        <div class="pv-notification-quick-filter" role="group" aria-label="Notification filter">
-          <button type="button" :class="{ active: activeNotificationFilter === 'all' }" @click="setNotificationFilter('all')">
-            <PvIcon name="bell" /> All
-          </button>
-          <button type="button" :class="{ active: activeNotificationFilter === 'unread' }" @click="setNotificationFilter('unread')">
-            <PvIcon name="clock" /> Unread <span v-if="notificationCounts.unread">{{ notificationCounts.unread }}</span>
-          </button>
-        </div>
-        <article class="pv-panel pv-notification-list">
-          <p v-if="notificationStatusMessage" class="pv-muted">{{ notificationStatusMessage }}</p>
-          <div v-if="notificationsLoaded && notifications.length === 0" class="pv-empty-inline"><PvIcon name="bell" /><strong>No notifications yet</strong><p>Replies, mentions, messages, and important account updates will appear here.</p></div>
-          <router-link v-for="item in notifications" :key="item.slug" :to="item.detailHref" class="pv-notification-row" :class="{ unread: item.unread }" @click="markNotificationRead(item.slug)">
-            <span class="pv-large-icon" :class="item.tone"><PvIcon :name="item.icon" /></span>
-            <span class="pv-notification-copy">
-              <span class="pv-notification-meta">
-                <em class="pv-tag" :class="item.tone">{{ item.category }}</em>
-                <time class="pv-notification-time pv-notification-time--inline">{{ item.time }}</time>
-              </span>
-              <strong class="pv-notification-title">{{ item.title }}</strong>
-              <small class="pv-notification-text">{{ item.text }}</small>
-            </span>
-            <time class="pv-notification-time pv-notification-time--rail">{{ item.time }}</time>
-            <b v-if="item.unread" class="pv-notification-unread-dot"></b>
-          </router-link>
-        </article>
-        <PaginationBlock :meta="notificationPagination" :label="notificationPaginationLabel" @page="setNotificationPage" />
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel">
-          <h2>Filter Notifications</h2>
-          <div class="pv-filter-list">
-            <button v-for="filter in notificationFilterItems" :key="filter.slug" :class="{ active: activeNotificationFilter === filter.slug }" @click="setNotificationFilter(filter.slug)">
-              <PvIcon :name="filter.icon" /> {{ filter.label }} <strong>{{ filter.count }}</strong>
-            </button>
-          </div>
-        </article>
-        <article class="pv-panel"><h2>Notification Summary</h2><div class="pv-mini-list"><span v-for="item in notificationSummary" :key="item.label" class="pv-mini-row"><PvIcon :name="item.icon" /><span><strong>{{ item.label }}</strong><small>{{ item.latest }}</small></span><strong>{{ item.count }}</strong></span></div></article>
-        <router-link to="/settings/notifications" class="pv-panel pv-settings-link"><PvIcon name="settings" /> View Notification Settings <PvIcon name="chevron" /></router-link>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'notificationDetail'" class="pv-page pv-notification-detail-page">
-    <div class="pv-content-grid">
-      <main v-if="primaryNotification" class="pv-stack pv-notification-detail-main">
-        <router-link to="/notifications" class="pv-purple-link">Back to notifications</router-link>
-        <header class="pv-page-header pv-notification-detail-header">
-          <div>
-            <h1>Notification</h1>
-            <p>Read the update and open the related content when needed.</p>
-          </div>
-          <div class="pv-action-row pv-notification-detail-actions">
-            <button v-if="authStore.isAuthenticated && primaryNotification.unread" class="pv-small-button" :disabled="markingNotificationsRead" @click="markNotificationRead(primaryNotification.slug)"><PvIcon name="mail" /> Mark as read</button>
-            <router-link v-if="previousNotification" class="pv-icon-button pv-icon-button--static" :to="previousNotification.detailHref" aria-label="Previous notification"><PvIcon name="chevron" /></router-link>
-            <router-link v-if="nextNotification" class="pv-icon-button pv-icon-button--static" :to="nextNotification.detailHref" aria-label="Next notification"><PvIcon name="chevron" /></router-link>
-          </div>
-        </header>
-        <article class="pv-notification-hero pv-notification-detail-hero">
-          <span class="pv-large-icon" :class="primaryNotification.tone"><PvIcon :name="primaryNotification.icon" /></span>
-          <div class="pv-notification-hero-copy">
-            <div class="pv-notification-meta">
-              <span class="pv-tag" :class="primaryNotification.tone">{{ primaryNotification.category }}</span>
-              <strong>{{ primaryNotification.author }}</strong>
-              <time>{{ primaryNotification.time }}</time>
-            </div>
-            <h2 class="pv-notification-title">{{ primaryNotification.title }}</h2>
-            <p class="pv-notification-text">{{ primaryNotification.text }}</p>
-            <router-link :to="primaryNotification.href" class="pv-primary-button">Open {{ primaryNotification.category }} <PvIcon name="share" /></router-link>
-          </div>
-        </article>
-        <article class="pv-panel pv-prose pv-notification-body-card">
-          <h2>Full Message</h2>
-          <div class="pv-notification-body-copy">
-            <p v-for="paragraph in primaryNotification.bodyParagraphs" :key="paragraph">{{ paragraph }}</p>
-          </div>
-          <hr>
-          <h2>What you can do</h2>
-          <router-link :to="primaryNotification.href" class="pv-action-card pv-notification-action-card"><PvIcon :name="primaryNotification.icon" /><span><strong>Open related content</strong><small>View the full source item for this notification.</small></span><PvIcon name="chevron" /></router-link>
-          <router-link to="/discussions" class="pv-action-card pv-notification-action-card"><PvIcon name="message" /><span><strong>Join the discussion</strong><small>Discuss updates with the community.</small></span><PvIcon name="chevron" /></router-link>
-        </article>
-      </main>
-      <main v-else class="pv-stack"><router-link to="/notifications" class="pv-purple-link">Back</router-link><article class="pv-panel"><h1>Notification not found</h1><p class="pv-muted">There are no live notifications to show yet.</p></article></main>
-      <aside class="pv-stack"><article class="pv-panel"><h2>Notification Details</h2><dl class="pv-data-list"><div><dt>Type</dt><dd>{{ primaryNotification?.category ?? '' }}</dd></div><div><dt>From</dt><dd>{{ primaryNotification?.author ?? '' }}</dd></div><div><dt>Received</dt><dd>{{ primaryNotification?.time ?? '' }}</dd></div><div><dt>Status</dt><dd><span class="pv-dot purple"></span> {{ primaryNotification?.unread ? 'Unread' : 'Read' }}</dd></div></dl><hr><h2>Related Links</h2><div class="pv-filter-list"><router-link to="/lab-results"><PvIcon name="flask" /> Lab Results <PvIcon name="chevron" /></router-link><router-link to="/announcements"><PvIcon name="megaphone" /> Announcements <PvIcon name="chevron" /></router-link><router-link to="/discussions"><PvIcon name="message" /> Community Discussions <PvIcon name="chevron" /></router-link></div></article></aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'saved'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div><h1>Saved</h1><p>Bookmarked discussions, products, and reading material.</p></div>
-          <router-link to="/discussions" class="pv-small-button"><PvIcon name="plus" /> Explore Discussions</router-link>
-        </header>
-
-        <div class="pv-saved-summary">
-          <span><PvIcon name="discussions" /><strong>{{ savedDiscussionSlugs.length }}</strong><small>Discussions</small></span>
-          <span><PvIcon name="cart" /><strong>{{ bookmarkedProductKeys.length }}</strong><small>Products</small></span>
-          <span><PvIcon name="library" /><strong>{{ bookmarkedContentSlugs.length }}</strong><small>Content</small></span>
-        </div>
-
-        <div class="pv-saved-grid">
-          <article class="pv-panel">
-            <header class="pv-panel-header"><h2>Saved Discussions</h2><span class="pv-count">{{ savedDiscussionSlugs.length }}</span></header>
-            <div v-if="savedDiscussionSlugs.length === 0" class="pv-empty-inline"><PvIcon name="bookmark" /><strong>No saved discussions yet</strong><p>Save threads from the discussion list or thread page to collect them here.</p></div>
-            <router-link v-for="slug in savedDiscussionSlugs" :key="slug" :to="savedDiscussionLink(slug)" class="pv-mini-row">
-              <PvIcon name="bookmark" />
-              <span><strong>{{ savedDiscussionLabel(slug) }}</strong><small>Discussion thread</small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-          </article>
-
-          <article class="pv-panel">
-            <header class="pv-panel-header"><h2>Bookmarked Products</h2><span class="pv-count">{{ bookmarkedProductKeys.length }}</span></header>
-            <div v-if="bookmarkedProductKeys.length === 0" class="pv-empty-inline"><PvIcon name="cart" /><strong>No bookmarked products</strong><p>Browse vendors and bookmark products to see them here.</p></div>
-            <router-link v-for="key in bookmarkedProductKeys" :key="key" :to="savedProductLink(key)" class="pv-mini-row">
-              <PvIcon name="cart" />
-              <span><strong>{{ savedProductLabel(key) }}</strong><small>Vendor product</small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-          </article>
-
-          <article class="pv-panel">
-            <header class="pv-panel-header"><h2>Bookmarked Content</h2><span class="pv-count">{{ bookmarkedContentSlugs.length }}</span></header>
-            <div v-if="bookmarkedContentSlugs.length === 0" class="pv-empty-inline"><PvIcon name="library" /><strong>No bookmarked content</strong><p>Browse research, guides, and FAQ to bookmark reading material.</p></div>
-            <router-link v-for="slug in bookmarkedContentSlugs" :key="slug" :to="savedContentLink(slug)" class="pv-mini-row">
-              <PvIcon name="library" />
-              <span><strong>{{ slug.replace(/[-_]/g, ' ') }}</strong><small>Saved article or guide</small></span>
-              <PvIcon name="chevron" />
-            </router-link>
-          </article>
-        </div>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel">
-          <h2>Quick Links</h2>
-          <div class="pv-filter-list">
-            <router-link to="/discussions"><PvIcon name="discussions" /> Discussions <PvIcon name="chevron" /></router-link>
-            <router-link to="/vendor-reviews"><PvIcon name="star" /> Vendor Reviews <PvIcon name="chevron" /></router-link>
-            <router-link to="/research-library"><PvIcon name="library" /> Research Library <PvIcon name="chevron" /></router-link>
-            <router-link to="/guides"><PvIcon name="question" /> Guides &amp; FAQ <PvIcon name="chevron" /></router-link>
-          </div>
-        </article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'search'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div>
-            <h1>Search Results</h1>
-            <p v-if="searchQuery">Showing results for "<strong>{{ searchQuery }}</strong>"</p>
-          </div>
-        </header>
-        <article class="pv-panel">
-          <div v-if="searchLoading" class="pv-loading">Searching...</div>
-          <div v-else-if="searchError" class="pv-error">{{ searchError }}</div>
-          <div v-else-if="searchResults.length === 0" class="pv-muted">No results found.</div>
-          <router-link v-for="result in searchResults" :key="result.type + '-' + result.id" :to="result.url" class="pv-search-row">
-            <span class="pv-tag">{{ result.type_label }}<template v-if="result.premium"> 🔒</template></span>
-            <div>
-              <strong>{{ result.title }}</strong>
-              <p>{{ result.text }}</p>
-            </div>
-            <PvIcon name="chevron" />
-          </router-link>
-        </article>
-      </main>
-    </div>
-  </section>
-
-  <section v-else-if="page === 'pricing'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div>
-            <h1>Choose Your Plan</h1>
-            <p>Upgrade to Premium for full access to vendor reviews, lab results, and member messaging.</p>
-          </div>
-        </header>
-
-        <div class="pv-pricing-grid">
-          <article class="pv-pricing-card pv-pricing-card--free">
-            <header>
-              <h2>Free</h2>
-              <p class="pv-price"><sup>£</sup>0</p>
-              <small>Forever free</small>
-            </header>
-            <ul class="pv-check-list">
-              <li>Community Discussions</li>
-              <li>Guides &amp; FAQ</li>
-              <li>Announcements</li>
-              <li>Research Library</li>
-              <li>5 discussions per day</li>
-            </ul>
-            <div class="pv-pricing-footer">
-              <span v-if="authStore.isAuthenticated && membershipTier === 'free'" class="pv-tag trusted">Current Plan</span>
-              <span v-else-if="!authStore.isAuthenticated" class="pv-tag">Always Free</span>
-            </div>
-          </article>
-
-          <article class="pv-pricing-card pv-pricing-card--premium">
-            <header>
-              <span class="pv-badge">Popular</span>
-              <h2>Premium</h2>
-              <p class="pv-price"><sup>£</sup>{{ billingInterval === 'year' ? '10' : 'N/A' }}</p>
-              <small>per year</small>
-            </header>
-            <ul class="pv-check-list">
-              <li>Community Discussions</li>
-              <li>Guides &amp; FAQ</li>
-              <li>Announcements</li>
-              <li>Research Library</li>
-              <li>Vendor Reviews &amp; Profiles</li>
-              <li>Access to Multiple Bulk Vendors</li>
-              <li>Lab Results &amp; COAs</li>
-              <li>Member Messaging</li>
-              <li>Unlimited Discussions</li>
-            </ul>
-            <div class="pv-pricing-footer">
-              <template v-if="authStore.isAuthenticated">
-                <span v-if="membershipTier === 'paid'" class="pv-tag trusted">Active</span>
-                <div v-else class="pv-pricing-buttons">
-                  <button class="pv-primary-button pv-full" @click="subscribeWith('stripe')">
-                    <PvIcon name="lock" /> Subscribe with Card
-                  </button>
-                  <button class="pv-paypal-button pv-full" @click="subscribeWith('paypal')">
-                    Subscribe with PayPal
-                  </button>
-                </div>
-              </template>
-              <router-link v-else to="/login?redirect=/pricing" class="pv-primary-button pv-full">
-                Log In to Subscribe
-              </router-link>
-            </div>
-          </article>
-        </div>
-
-        <article class="pv-panel">
-          <h2>All Premium Features</h2>
-          <div class="pv-feature-grid">
-            <div class="pv-feature-item">
-              <PvIcon name="shield" />
-              <strong>Vendor Reviews</strong>
-              <small>Read and write verified vendor reviews with ratings, photos, and detailed feedback.</small>
-            </div>
-            <div class="pv-feature-item">
-              <PvIcon name="flask" />
-              <strong>Lab Results</strong>
-              <small>Access independent lab testing reports including COAs, purity analysis, and batch data.</small>
-            </div>
-            <div class="pv-feature-item">
-              <PvIcon name="message" />
-              <strong>Messaging</strong>
-              <small>Direct message other premium members for private discussions and collaboration.</small>
-            </div>
-            <div class="pv-feature-item">
-              <PvIcon name="users" />
-              <strong>Member Profiles</strong>
-              <small>Browse detailed member profiles with activity history and reputation scores.</small>
-            </div>
-            <div class="pv-feature-item">
-              <PvIcon name="discussions" />
-              <strong>Unlimited Discussions</strong>
-              <small>Create and participate in unlimited community discussions with no daily limits.</small>
-            </div>
-            <div class="pv-feature-item">
-              <PvIcon name="upload" />
-              <strong>File Uploads</strong>
-              <small>Attach files, images, and documents to your discussions and messages.</small>
-            </div>
-          </div>
-        </article>
-
-        <p v-if="paymentStatusMessage" class="pv-alert pv-alert--compact">{{ paymentStatusMessage }}</p>
-      </main>
-    </div>
-  </section>
-
-  <section v-else-if="page.startsWith('settings')" class="pv-page">
-    <SettingsScreens :page="page" />
-  </section>
-
-  <section v-else-if="page === 'telegramUpdates'" class="pv-page">
-    <div class="pv-content-grid">
-      <main class="pv-stack">
-        <header class="pv-page-header">
-          <div>
-            <h1>Telegram Updates</h1>
-            <p>Follow community alerts, announcements, and status updates from the Peptide Vendors team.</p>
-          </div>
-          <a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-primary-button"><PvIcon name="send" /> Join Telegram</a>
-        </header>
-        <article class="pv-panel pv-telegram-updates">
-          <span class="pv-large-icon purple"><PvIcon name="send" /></span>
-          <div>
-            <h2>Community Broadcasts</h2>
-            <p class="pv-muted">Telegram is used for quick notices when new announcements, lab results, or platform updates are published.</p>
-            <a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-small-button">Open Telegram <PvIcon name="share" /></a>
-          </div>
-        </article>
-        <div class="pv-profile-grid">
-          <article class="pv-panel"><h2>Latest Announcements</h2><div class="pv-mini-list"><router-link v-for="announcement in announcementPreview" :key="announcement.slug" :to="announcement.href" class="pv-mini-row"><PvIcon :name="announcement.icon" /><span><strong>{{ announcement.title }}</strong><small>{{ announcement.time }}</small></span><PvIcon name="chevron" /></router-link><p v-if="announcementPreview.length === 0" class="pv-muted">No announcements published yet.</p></div></article>
-          <article class="pv-panel"><h2>Notification Controls</h2><p class="pv-muted">Choose email, push, and sound preferences from account settings.</p><router-link to="/settings/notifications" class="pv-small-button">Open Notification Settings</router-link></article>
-        </div>
-      </main>
-      <aside class="pv-stack">
-        <article class="pv-panel"><h2>Telegram Link</h2><p class="pv-muted">{{ publicTelegramUrl }}</p><a :href="publicTelegramUrl" target="_blank" rel="noreferrer" class="pv-primary-button pv-full">Join Telegram</a></article>
-        <article class="pv-panel"><h2>Community Updates</h2><dl class="pv-data-list"><div><dt>Announcements</dt><dd>{{ announcementStats.total }}</dd></div><div><dt>Notifications</dt><dd>{{ notificationCounts.total }}</dd></div><div><dt>Unread</dt><dd>{{ notificationCounts.unread }}</dd></div></dl></article>
-      </aside>
-    </div>
-  </section>
-
-  <section v-else class="pv-page">
-    <div class="pv-empty-route">
-      <h1>{{ fallbackTitle }}</h1>
-      <p>The requested page does not exist.</p>
-    </div>
-  </section>
+  <router-view />
 </template>
 
 <script setup lang="ts">
+/* eslint-disable @typescript-eslint/no-explicit-any */
+
 import { computed, defineComponent, h, nextTick, onMounted, onUnmounted, ref, watch, type PropType } from 'vue'
 import { RouterLink, useRoute, useRouter } from 'vue-router'
 import { EditorContent, useEditor } from '@tiptap/vue-3'
@@ -9079,8 +7024,7 @@ const TipTapComposer = defineComponent({
           innerHTML: renderFormattedText(editor.value?.getHTML() || props.modelValue),
         })
         : h('div', { class: 'pv-tiptap-shell' }, [
-          h('div', { class: 'pv-tiptap-toolbar', 'aria-label': 'Text formatting toolbar' }, [
-            ...actionGroups.map(group => h('div', {
+          h('div', { class: 'pv-tiptap-toolbar', 'aria-label': 'Text formatting toolbar' }, actionGroups.map(group => h('div', {
               key: group.key,
               class: 'pv-tiptap-group',
               'aria-label': group.label,
@@ -9095,8 +7039,7 @@ const TipTapComposer = defineComponent({
             }, [
               h(PvIcon, { name: action.icon }),
               h('span', { class: 'pv-sr-only' }, action.title),
-            ])))),
-          ]),
+            ]))))),
           h(EditorContent, { editor: editor.value, class: 'pv-tiptap-editor' }),
           h('input', { type: 'file', ref: 'tiptapFileInput', accept: 'image/*,video/*,application/pdf', style: 'display:none', onChange: tiptapFileChange }),
           h('div', { class: 'pv-tiptap-foot' }, [
@@ -9783,4 +7726,715 @@ function authUserDate(key: string): string {
 
   return new Date(String(value)).toLocaleString(undefined, { dateStyle: 'medium', timeStyle: 'short' })
 }
+
+import { provide } from 'vue';
+
+provide('communityState', {
+  computed,
+  defineComponent,
+  h,
+  nextTick,
+  onMounted,
+  onUnmounted,
+  ref,
+  watch,
+  RouterLink,
+  useRoute,
+  useRouter,
+  EditorContent,
+  useEditor,
+  CharacterCount,
+  Image,
+  Link,
+  Placeholder,
+  Table,
+  TableCell,
+  TableHeader,
+  TableRow,
+  Youtube,
+  StarterKit,
+  PvIcon,
+  EmojiPicker,
+  GiphyPicker,
+  api,
+  websocketService,
+  useAuthStore,
+  hasAnyRole,
+  heroImage,
+  researchImage,
+  route,
+  router,
+  authStore,
+  page,
+  fallbackTitle,
+  avatarColors,
+  apiDiscussions,
+  apiDetailDiscussion,
+  apiReplies,
+  apiCategories,
+  apiDiscussionParticipants,
+  apiSimilarDiscussions,
+  discussionsLoaded,
+  discussionPagination,
+  discussionPage,
+  discussionSearch,
+  activeCategory,
+  discussionStatusMessage,
+  showNewDiscussion,
+  creatingDiscussion,
+  discussionFormError,
+  replyBody,
+  submittingReply,
+  replyStatusMessage,
+  discussionVoteLoading,
+  isEditingDiscussion,
+  editDiscussionTitle,
+  editDiscussionBody,
+  editDiscussionTag,
+  editDiscussionCategory,
+  discussionEditError,
+  discussionEditSaving,
+  replyVoteLoading,
+  showReportModal,
+  reportTarget,
+  reportReason,
+  reportDetails,
+  reportSubmitting,
+  replyAttachmentFile,
+  replyAttachmentPreviewUrl,
+  replyAttachmentGifUrl,
+  discussionSort,
+  actionStatusMessage,
+  followedDiscussionSlugs,
+  savedDiscussionSlugs,
+  followedMemberSlugs,
+  userActionsLoaded,
+  apiLabResults,
+  apiDetailLabResult,
+  labResultsLoaded,
+  labPagination,
+  labPage,
+  labStats,
+  labSort,
+  labDetailTab,
+  labSearch,
+  labTypeFilter,
+  labCompoundFilter,
+  labVendorFilter,
+  labLabFilter,
+  labFilterOptions,
+  labStatusMessage,
+  showSubmitLabResult,
+  submittingLabResult,
+  labFormError,
+  apiVendors,
+  apiTopVendors,
+  apiDetailVendor,
+  apiVendorReviews,
+  vendorsLoaded,
+  vendorPagination,
+  vendorPage,
+  vendorSearch,
+  vendorStatusFilter,
+  vendorRatingFilter,
+  vendorTagFilter,
+  vendorFilterOptions,
+  vendorStatusMessage,
+  apiMyVendor,
+  vendorPortalAccessApproved,
+  vendorAccessRequested,
+  vendorPortalLoaded,
+  vendorPortalStatusMessage,
+  vendorPortalFormError,
+  savingVendorProfile,
+  vendorImageFileInput,
+  uploadingVendorImage,
+  savingVendorDocument,
+  vendorDocumentFormError,
+  vendorDocumentStatusMessage,
+  vendorDocumentFileInput,
+  vendorDocumentFilePreview,
+  vendorDocumentForm,
+  vendorPortalForm,
+  membershipPlans,
+  membershipTier,
+  membershipStatus,
+  billingInterval,
+  paymentStatusMessage,
+  subscribing,
+  hasPremiumAccess,
+  showUpgradePrompt,
+  vendorProductFormError,
+  vendorProductStatusMessage,
+  savingVendorProduct,
+  editingVendorProductId,
+  vendorProductImageInput,
+  vendorProductImageFile,
+  vendorProductImagePreview,
+  vendorProductForm,
+  vendorReviewStatusMessage,
+  vendorReviewFormError,
+  submittingVendorReview,
+  vendorReviewPhotoInput,
+  vendorReviewPhotos,
+  vendorReviewPhotoPreviews,
+  markingReviewHelpful,
+  respondingReviewId,
+  reviewResponseText,
+  submittingReviewResponse,
+  vendorSort,
+  vendorReviewRatingFilter,
+  vendorReviewProductFilter,
+  vendorReviewTimeFilter,
+  vendorReviewSort,
+  vendorProductSearch,
+  vendorProductCategoryFilter,
+  vendorProductAvailabilityFilter,
+  vendorProductSort,
+  vendorDetailTab,
+  vendorStats,
+  apiAnnouncements,
+  apiDetailAnnouncement,
+  announcementsLoaded,
+  announcementFilter,
+  announcementStatusMessage,
+  announcementCategories,
+  announcementStats,
+  apiResearchArticles,
+  apiDetailResearchArticle,
+  apiGuides,
+  apiDetailGuide,
+  apiFaqs,
+  researchPagination,
+  guidePagination,
+  contentCategories,
+  contentTopics,
+  emptyContentFilterOptions,
+  contentFilterOptions,
+  defaultContentStudioPermissions,
+  defaultContentStudioForm,
+  contentStudioPermissions,
+  contentStudioItems,
+  contentStudioForm,
+  contentStudioLoaded,
+  contentStudioSaving,
+  contentStudioStatusMessage,
+  contentStudioEditingId,
+  contentStudioEditorKey,
+  contentStudioQueueFilter,
+  contentLoaded,
+  contentStatusMessage,
+  activeResearchCategory,
+  activeGuideCategory,
+  researchSearch,
+  researchTagFilter,
+  researchCompoundFilter,
+  researchSort,
+  researchDetailTab,
+  researchPublishedFrom,
+  researchPublishedTo,
+  researchPage,
+  guideSearch,
+  guidePage,
+  bookmarkedContentSlugs,
+  bookmarkedProductKeys,
+  apiMembers,
+  apiTopContributorMembers,
+  apiOnlineMemberSummaries,
+  apiDetailMember,
+  memberStats,
+  onlineGuestActivity,
+  membersLoaded,
+  memberPagination,
+  memberPage,
+  memberSearch,
+  memberFilter,
+  memberSort,
+  apiMessageThreads,
+  apiCurrentMessageThread,
+  messagesLoaded,
+  messagesStatusMessage,
+  messageSearch,
+  messageRecipientSearch,
+  messageBody,
+  sendingMessage,
+  startingMessageUserId,
+  messageStreamRef,
+  messageFileInput,
+  messageAttachmentFile,
+  messageAttachmentPreviewUrl,
+  showMessageSafetyNotice,
+  apiNotifications,
+  apiDetailNotification,
+  notificationsLoaded,
+  notificationPagination,
+  notificationPage,
+  notificationStatusMessage,
+  activeNotificationFilter,
+  markingNotificationsRead,
+  notificationStats,
+  notificationCategories,
+  accountForm,
+  passwordSettingsForm,
+  userSettings,
+  settingsLoaded,
+  savingSettings,
+  changingSettingsPassword,
+  settingsStatusMessage,
+  userSessions,
+  userApiTokens,
+  apiTokenForm,
+  newPlainApiToken,
+  avatarFileInput,
+  uploadingAvatar,
+  exportingAccountData,
+  signingOutEverywhere,
+  twoFactorStatus,
+  twoFactorSetup,
+  twoFactorCode,
+  twoFactorPassword,
+  twoFactorRecoveryCodes,
+  loadingTwoFactor,
+  savingTwoFactor,
+  publicSettingsLoaded,
+  publicTelegramUrl,
+  membershipEnabled,
+  blockedUsers,
+  blockedUsersLoaded,
+  blockingUserId,
+  blockingUsername,
+  blockUserSearch,
+  blockUsername,
+  revokingSessionId,
+  discussionTags,
+  discussionFileInput,
+  discussionUploading,
+  newDiscussionKey,
+  newDiscussion,
+  newDiscussionDraftKey,
+  discussionDraftStatus,
+  newLabResult,
+  newVendorReview,
+  discussions,
+  replies,
+  discussionCategories,
+  vendors,
+  reviews,
+  announcements,
+  announcementPreview,
+  articles,
+  guides,
+  faqs,
+  hasFrontendContentRole,
+  hasFrontendContentPermission,
+  canUseContentStudio,
+  canPublishContent,
+  contentStudioConfig,
+  activeContentStudioConfig,
+  contentStudioIsGeneric,
+  contentStudioTitle,
+  contentStudioSubtitle,
+  contentStudioBackHref,
+  contentStudioBackLabel,
+  contentStudioIcon,
+  contentStudioDestinationLabel,
+  contentStudioContextLabel,
+  contentStudioModeLabel,
+  contentStudioTitleLabel,
+  contentStudioTitlePlaceholder,
+  contentStudioCategoryLabel,
+  contentStudioCategoryPlaceholder,
+  contentStudioTagLabel,
+  contentStudioTagPlaceholder,
+  contentStudioExcerptLabel,
+  contentStudioExcerptPlaceholder,
+  contentStudioBodyLabel,
+  contentStudioBodyPlaceholder,
+  contentStudioDraftButtonLabel,
+  contentStudioPublishButtonLabel,
+  contentStudioStatusLabel,
+  contentStudioQueueTitle,
+  filteredContentStudioItems,
+  contentStudioEmptyQueueText,
+  contentStudioWorkflowTitle,
+  contentStudioWorkflowCopy,
+  popularTopics,
+  researchSortLabel,
+  memberEngagementScore,
+  members,
+  memberSortLabel,
+  discussionSortLabel,
+  discussionHasActiveFilters,
+  newDiscussionTitleMatches,
+  topContributors,
+  onlineMembers,
+  onlineActivityTotal,
+  onlineMemberOverflow,
+  onlineGuestRows,
+  chats,
+  messageRecipientOptions,
+  currentThread,
+  categoryFilters,
+  currentDiscussionSlug,
+  detailDiscussion,
+  detailParagraphs,
+  currentAnnouncementSlug,
+  detailAnnouncement,
+  announcementParagraphs,
+  currentContentSlug,
+  detailArticle,
+  detailGuide,
+  relatedArticles,
+  relatedGuides,
+  detailGuideSteps,
+  articleDataMetadata,
+  articleReferences,
+  articleBodyBlocks,
+  guideBodyBlocks,
+  articleHeadings,
+  guideHeadings,
+  currentMemberSlug,
+  detailMember,
+  blockableMembers,
+  defaultUserSettings,
+  userRecord,
+  backendAssetOrigin,
+  countryFlags,
+  countryFlag,
+  assetUrl,
+  extractPagination,
+  paginationText,
+  loadPublicCommunitySettings,
+  setAuthUser,
+  hydrateSettingsFromUser,
+  loadUserSettings,
+  loadUserSessions,
+  loadUserApiTokens,
+  saveUserSettings,
+  saveAccountProfile,
+  changeSettingsPassword,
+  toggleUserSetting,
+  setUserSetting,
+  createApiToken,
+  deleteApiToken,
+  revokeUserSession,
+  copyPlainApiToken,
+  settingsApiError,
+  uploadProfileAvatar,
+  loadTwoFactorStatus,
+  startTwoFactorSetup,
+  confirmTwoFactorSetup,
+  disableTwoFactor,
+  cancelTwoFactorSetup,
+  exportAccountData,
+  signOutEverywhere,
+  parseContentBlocks,
+  formatCount,
+  formatDate,
+  parseCount,
+  normalizeDiscussionText,
+  readLocalList,
+  writeLocalList,
+  toggleLocalValue,
+  loadLocalActionState,
+  applyUserActionPayload,
+  loadUserActions,
+  toggleCommunityAction,
+  syncFiltersFromRouteQuery,
+  cycleLabSort,
+  cycleVendorSort,
+  toggleVendorReviewSort,
+  showVendorContactSection,
+  cycleResearchSort,
+  cycleMemberSort,
+  cycleDiscussionSort,
+  startEditDiscussion,
+  cancelEditDiscussion,
+  saveEditDiscussion,
+  showPostMenu,
+  activeReplyMenu,
+  activeTopicMenu,
+  activeModMenu,
+  togglePostMenu,
+  toggleReplyMenu,
+  toggleTopicMenu,
+  deletingDiscussion,
+  deleteDiscussion,
+  deleteDiscussionFromList,
+  moderateDiscussion,
+  moderateHideReply,
+  moderateBanAuthor,
+  moderateWarnAuthor,
+  startEditDiscussionFromList,
+  isFollowingMember,
+  toggleMemberFollow,
+  discussionActionKey,
+  isFollowingDiscussion,
+  isSavedDiscussion,
+  toggleDiscussionFollow,
+  toggleDiscussionSave,
+  isBookmarkedContent,
+  toggleContentBookmark,
+  savedProductLink,
+  savedProductLabel,
+  savedContentLink,
+  savedDiscussionLink,
+  savedDiscussionLabel,
+  productBookmarkKey,
+  isBookmarkedProduct,
+  toggleProductBookmark,
+  shareCurrentPage,
+  shareDiscussion,
+  printCurrentPage,
+  downloadLabReport,
+  findCurrentBatchResults,
+  findCurrentVendorLabResults,
+  jumpToReplyComposer,
+  prepareReply,
+  voteOnDiscussion,
+  voteOnReply,
+  openDiscussionReport,
+  reportDiscussion,
+  openReplyReport,
+  closeReportModal,
+  submitReport,
+  deleteReply,
+  handleReplyAttachment,
+  handleDiscussionFileUpload,
+  onGifSelect,
+  clearReplyAttachment,
+  replyAttachmentName,
+  isVisualAttachment,
+  attachmentLabel,
+  formatMetadataKey,
+  formatMetadataValue,
+  normalizedVote,
+  colorForName,
+  mapDiscussion,
+  mapReply,
+  loadDiscussions,
+  loadDiscussionDetail,
+  syncCommunityContent,
+  ensureAuthenticated,
+  openNewDiscussion,
+  clearNewDiscussion,
+  closeNewDiscussion,
+  loadNewDiscussionDraft,
+  saveNewDiscussionDraft,
+  clearNewDiscussionDraft,
+  appendNewDiscussionHtml,
+  insertDiscussionAttachment,
+  submitNewDiscussion,
+  submitReply,
+  setDiscussionCategory,
+  clearDiscussionFilters,
+  applyDiscussionSearch,
+  setDiscussionPage,
+  goToDiscussion,
+  goToMemberProfile,
+  loadMembershipPlans,
+  loadMembershipStatus,
+  subscribeWith,
+  cancelSubscription,
+  wsUnsubscribers,
+  setupRealtime,
+  heartbeatInterval,
+  getGuestId,
+  currentActivityLabel,
+  syncOnlineActivity,
+  guestVisitorLabel,
+  startHeartbeat,
+  stopHeartbeat,
+  labResults,
+  currentLabSlug,
+  detailLabResult,
+  labSortLabel,
+  labHasActiveFilters,
+  detailLabRingStyle,
+  formatPercent,
+  mapLabResult,
+  loadLabResults,
+  loadLabResultDetail,
+  setLabTypeFilter,
+  applyLabFilters,
+  clearLabFilters,
+  setLabPage,
+  openSubmitLabResult,
+  closeSubmitLabResult,
+  submitLabResult,
+  currentVendorSlug,
+  detailVendor,
+  topVendors,
+  vendorHasActiveFilters,
+  vendorSortLabel,
+  vendorReviewProductOptions,
+  vendorReviewSortLabel,
+  detailVendorContactLinks,
+  vendorProductCategoryOptions,
+  productEffectivePrice,
+  filteredVendorProducts,
+  vendorProductManageList,
+  documentManageList,
+  mapVendorProduct,
+  variantPrice,
+  productCatalogPriceLabel,
+  mapVendor,
+  normalizeHandle,
+  vendorContactLinks,
+  hasVendorContact,
+  hydrateVendorPortalForm,
+  vendorPortalPayload,
+  vendorPortalError,
+  emptyVendorProductVariant,
+  addVendorProductVariant,
+  removeVendorProductVariant,
+  resetVendorProductForm,
+  editVendorProduct,
+  selectVendorProductImage,
+  vendorProductPayload,
+  saveVendorProduct,
+  deleteVendorProduct,
+  mapVendorReview,
+  loadVendors,
+  loadVendorDetail,
+  loadVendorProfile,
+  saveVendorProfile,
+  requestVendorAccess,
+  approveVendorAccess,
+  uploadVendorImage,
+  selectVendorDocumentFile,
+  resetVendorDocumentForm,
+  saveVendorDocument,
+  deleteVendorDocument,
+  selectVendorReviewPhotos,
+  removeVendorReviewPhoto,
+  clearVendorReviewPhotos,
+  cancelVendorResponse,
+  respondToReview,
+  setVendorStatusFilter,
+  applyVendorFilters,
+  clearVendorFilters,
+  setVendorPage,
+  submitVendorReview,
+  markReviewHelpful,
+  mapAnnouncement,
+  loadAnnouncements,
+  loadAnnouncementDetail,
+  setAnnouncementFilter,
+  mapContent,
+  mapMemberActivity,
+  mapMember,
+  mapMessageThread,
+  mapMessage,
+  showDateSep,
+  formatDateSep,
+  loadResearchContent,
+  applyResearchFilters,
+  clearResearchFilters,
+  setResearchPage,
+  setGuidePage,
+  setMemberPage,
+  loadGuidesContent,
+  loadFaqContent,
+  loadContentDetails,
+  contentTypeFromRoute,
+  setContentStudioType,
+  contentStudioItemTypeLabel,
+  loadContentStudio,
+  loadContentStudioPermissions,
+  loadContentStudioItems,
+  contentStudioMetadata,
+  contentStudioPayload,
+  saveContentStudioItem,
+  editContentStudioItem,
+  resetContentStudioForm,
+  loadMembers,
+  loadBlockedUsers,
+  blockMember,
+  blockMemberByUsername,
+  unblockMember,
+  loadMemberDetail,
+  loadMessages,
+  loadMessageThread,
+  openMessagesInbox,
+  openMessageThread,
+  startMessage,
+  startMessageFromSearch,
+  sendMessage,
+  handleMessageAttachment,
+  clearMessageAttachment,
+  formatFileSize,
+  deleteCurrentThread,
+  scrollToBottom,
+  mapNotification,
+  loadNotifications,
+  loadNotificationDetail,
+  scrollToHeading,
+  setNotificationFilter,
+  setNotificationPage,
+  markNotificationRead,
+  markAllNotificationsRead,
+  notifications,
+  notificationCounts,
+  notificationFilterItems,
+  notificationSummary,
+  notificationPaginationLabel,
+  currentNotificationSlug,
+  primaryNotification,
+  currentNotificationIndex,
+  previousNotification,
+  searchQuery,
+  searchResults,
+  searchLoading,
+  searchError,
+  loadSearchResults,
+  escapeHtml,
+  memberHref,
+  safeExternalUrl,
+  looksLikeRichHtml,
+  normalizeRichText,
+  plainTextFromRichText,
+  isRichTextEmpty,
+  quoteHtml,
+  linkifyMentions,
+  sanitizeRichHtml,
+  mediaEmbed,
+  formatInlineText,
+  renderFormattedText,
+  nextNotification,
+  thumbnailStyle,
+  contentThumbnailStyle,
+  TipTapComposer,
+  PaginationBlock,
+  MemberProfile,
+  memberTabPanel,
+  memberItemPanel,
+  memberBadgePanel,
+  MessageBubble,
+  SettingsScreens,
+  settingsPageTitle,
+  settingsPageDescription,
+  settingsMain,
+  settingsInput,
+  settingsSelect,
+  twoFactorSecurityPanel,
+  settingsTextarea,
+  settingsSwitchCard,
+  settingsRadioGroup,
+  sessionList,
+  apiTokensPanel,
+  settingsSummary,
+  quickActions,
+  settingsOptionPanel,
+  tipsPanel,
+  authUserValue,
+  accountName,
+  accountEmail,
+  accountInitial,
+  accountAvatar,
+  accountAvatarNode,
+  accountRole,
+  authUserDate
+});
+
 </script>

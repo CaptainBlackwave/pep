@@ -39,7 +39,13 @@
         "psr-4": {
             "App\\": "app/",
             "App\\Core\\": "app/Core/",
-            "App\\Plugins\\": "app/Plugins/",
+            "App\\Plugins\\Announcements\\": "app/Plugins/announcements/",
+            "App\\Plugins\\Community\\": "app/Plugins/community/",
+            "App\\Plugins\\ContentLibrary\\": "app/Plugins/content-library/",
+            "App\\Plugins\\Discussions\\": "app/Plugins/discussions/",
+            "App\\Plugins\\LabResults\\": "app/Plugins/lab-results/",
+            "App\\Plugins\\Testplugin\\": "app/Plugins/testplugin/",
+            "App\\Plugins\\Vendors\\": "app/Plugins/vendors/",
             "Database\\Factories\\": "database/factories/",
             "Database\\Seeders\\": "database/seeders/"
         },
@@ -82,7 +88,7 @@
         }
     },
     "config": {
-        "optimize-autoloader": true,
+        "optimize-autoloader": false,
         "preferred-install": "dist",
         "sort-packages": true,
         "allow-plugins": {
